@@ -40,6 +40,13 @@ class AppTexts {
   static const String inviteFamily = '邀请成员';
   static const String joinFamily = '加入家庭';
   static const String inviteCode = '邀请码';
+  static const String copyInviteLink = '复制邀请链接';
+  static const String editMember = '编辑';
+  static const String editProfile = '编辑档案';
+  static const String addMember = '添加成员';
+  static const String addRecipient = '添加照护对象';
+  static const String passiveUser = '被动用户（仅查看）';
+  static const String onlineCount = '人在线';
 
   // 照护对象
   static const String careRecipients = '照护对象';

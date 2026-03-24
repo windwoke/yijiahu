@@ -2,9 +2,60 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/constants.dart';
+import '../../../core/router/app_router.dart';
+import '../../../data/models/models.dart' as models;
 import '../../providers/providers.dart';
+
+/// 家庭成员 + 照护对象合并数据
+class FamilyMemberSection {
+  final String id;
+  final bool isRecipient;
+  final models.FamilyMember? member;
+  final models.CareRecipient? recipient;
+
+  const FamilyMemberSection({
+    required this.id,
+    required this.isRecipient,
+    this.member,
+    this.recipient,
+  });
+
+  String get displayName {
+    if (isRecipient) return recipient!.name;
+    return member!.nickname;
+  }
+
+  String get displayAvatar {
+    if (isRecipient) return recipient!.displayAvatar;
+    // 用名字首字做头像
+    final name = member!.nickname;
+    return name.isNotEmpty ? name[0] : '?';
+  }
+
+  String? get phone {
+    if (isRecipient) return recipient!.emergencyPhone;
+    return member!.phone;
+  }
+
+  bool get isOnline {
+    if (isRecipient) return false;
+    return member!.isOnline;
+  }
+
+  String get roleLabel {
+    if (isRecipient) return '照护对象';
+    return member!.roleLabel;
+  }
+
+  bool get isAdmin {
+    if (isRecipient) return false;
+    return member!.role == 'owner' || member!.role == 'admin';
+  }
+}
 
 class FamilyPage extends ConsumerWidget {
   const FamilyPage({super.key});
@@ -21,33 +72,45 @@ class FamilyPage extends ConsumerWidget {
       );
     }
 
+    // 并行加载成员和照护对象
     final membersAsync = ref.watch(familyMembersProvider(family.id));
+    final recipientsAsync = ref.watch(careRecipientsProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text(family.name),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.share),
-            onPressed: () {
-              // TODO: 显示邀请码
-              _showInviteDialog(context, family.inviteCode);
-            },
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          onPressed: () => context.pop(),
+        ),
+        title: const Text(
+          '家庭成员',
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
           ),
+        ),
+        centerTitle: true,
+        actions: [
+          if (family.role == 'owner' || family.role == 'admin')
+            IconButton(
+              icon: const Icon(Icons.edit_outlined, color: AppColors.textPrimary),
+              onPressed: () => _showEditFamilySheet(context, family),
+            ),
         ],
       ),
       body: membersAsync.when(
-        data: (members) => ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: members.length + 1,
-          itemBuilder: (context, index) {
-            if (index == 0) {
-              return _buildInviteCard(context, family.inviteCode);
-            }
-            final member = members[index - 1];
-            return _buildMemberCard(context, member);
+        data: (members) => recipientsAsync.when(
+          data: (recipients) {
+            final sections = _buildSections(members, recipients);
+            return _buildBody(context, ref, family, sections);
           },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => _buildBody(context, ref, family, _buildSections(members, [])),
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('加载失败: $e')),
@@ -55,138 +118,701 @@ class FamilyPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildInviteCard(BuildContext context, String inviteCode) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppColors.primary, AppColors.primaryLight],
+  List<FamilyMemberSection> _buildSections(
+    List<models.FamilyMember> members,
+    List<models.CareRecipient> recipients,
+  ) {
+    final memberSections = members
+        .where((m) => m.userId != null)
+        .map((m) => FamilyMemberSection(
+              id: m.id,
+              isRecipient: false,
+              member: m,
+            ))
+        .toList();
+
+    final recipientSections = recipients
+        .map((r) => FamilyMemberSection(
+              id: r.id,
+              isRecipient: true,
+              recipient: r,
+            ))
+        .toList();
+
+    return [...memberSections, ...recipientSections];
+  }
+
+  Widget _buildBody(
+    BuildContext context,
+    WidgetRef ref,
+    models.Family family,
+    List<FamilyMemberSection> sections,
+  ) {
+    return CustomScrollView(
+      slivers: [
+        // 家庭信息卡片（邀请码）
+        SliverToBoxAdapter(
+          child: _buildFamilyCard(context, family),
         ),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          const Icon(Icons.group_add, color: Colors.white, size: 48),
-          const SizedBox(height: 12),
-          const Text(
-            '邀请家人加入',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+        // 成员列表
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+          sliver: SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                final section = sections[index];
+                return _buildMemberCard(context, ref, family, section);
+              },
+              childCount: sections.length,
             ),
           ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              inviteCode,
-              style: const TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 8,
-                color: AppColors.textPrimary,
+        ),
+        // 底部间距 + 添加按钮
+        if (family.role == 'owner' || family.role == 'admin')
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+              child: Column(
+                children: [
+                  const Divider(color: AppColors.border),
+                  const SizedBox(height: 16),
+                  _buildAddButton(
+                    context,
+                    icon: Icons.person_add_outlined,
+                    label: '添加成员',
+                    onTap: () => _showAddMemberSheet(context),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildAddButton(
+                    context,
+                    icon: Icons.elderly_outlined,
+                    label: '添加照护对象',
+                    onTap: () => context.push(AppRoutes.addCareRecipient),
+                  ),
+                ],
               ),
             ),
+          )
+        else
+          const SliverToBoxAdapter(child: SizedBox(height: 100)),
+      ],
+    );
+  }
+
+  Widget _buildFamilyCard(BuildContext context, models.Family family) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.shadow,
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            // 家庭 emoji + 名称
+            Row(
+              children: [
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Center(
+                    child: Text('👨‍👩‍👧‍👦', style: TextStyle(fontSize: 28)),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        family.name,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceContainerLow,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              '${family.memberCount}位成员',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            const Divider(color: AppColors.border, height: 1),
+            const SizedBox(height: 16),
+            // 邀请码区域
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '邀请码',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        family.inviteCode,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 4,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => _copyInviteCode(context, family.inviteCode),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(Icons.copy, size: 16, color: AppColors.primary),
+                        SizedBox(width: 6),
+                        Text(
+                          '复制邀请链接',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMemberCard(
+    BuildContext context,
+    WidgetRef ref,
+    models.Family family,
+    FamilyMemberSection section,
+  ) {
+    final isAdmin = family.role == 'owner' || family.role == 'admin';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadow,
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
-          const SizedBox(height: 12),
-          const Text(
-            '分享邀请码或链接给家人',
-            style: TextStyle(color: Colors.white70, fontSize: 14),
+        ],
+      ),
+      child: Row(
+        children: [
+          // 头像
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: section.isRecipient
+                  ? AppColors.coral.withValues(alpha: 0.1)
+                  : AppColors.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Stack(
+              children: [
+                Center(
+                  child: section.isRecipient
+                      ? Text(section.displayAvatar,
+                          style: const TextStyle(fontSize: 24))
+                      : Text(
+                          section.displayAvatar,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                ),
+                if (section.isOnline)
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: AppColors.success,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppColors.surfaceContainerLowest,
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 14),
+          // 姓名 + 角色 + 电话
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      section.displayName,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: section.isRecipient
+                            ? AppColors.coral.withValues(alpha: 0.1)
+                            : (section.isAdmin
+                                ? AppColors.primary.withValues(alpha: 0.1)
+                                : AppColors.surfaceContainerLow),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (section.isRecipient)
+                            const SizedBox.shrink()
+                          else if (section.member?.role == 'owner')
+                            const Icon(Icons.star,
+                                size: 12, color: AppColors.primary),
+                          if (!section.isRecipient &&
+                              section.member?.role == 'owner')
+                            const SizedBox(width: 3),
+                          Text(
+                            section.isRecipient
+                                ? '照护对象'
+                                : section.member?.role == 'owner'
+                                    ? '管理员'
+                                    : '成员',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: section.isRecipient
+                                  ? AppColors.coral
+                                  : (section.isAdmin
+                                      ? AppColors.primary
+                                      : AppColors.textSecondary),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                if (section.phone != null)
+                  Row(
+                    children: [
+                      const Icon(Icons.phone_android,
+                          size: 13, color: AppColors.textSecondary),
+                      const SizedBox(width: 4),
+                      Text(
+                        _maskPhone(section.phone!),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                if (section.isRecipient)
+                  Text(
+                    '角色：被动用户（仅查看）',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary.withValues(alpha: 0.7),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          // 编辑按钮
+          if (isAdmin)
+            GestureDetector(
+              onTap: () => _showEditMemberSheet(context, ref, family, section),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  section.isRecipient ? '编辑档案' : '编辑',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddButton(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppColors.primary.withValues(alpha: 0.3),
+            width: 1.5,
+            strokeAlign: BorderSide.strokeAlignInside,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 20, color: AppColors.primary),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: AppColors.primary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _maskPhone(String phone) {
+    if (phone.length < 11) return phone;
+    return '${phone.substring(0, 3)}****${phone.substring(phone.length - 4)}';
+  }
+
+  void _copyInviteCode(BuildContext context, String code) {
+    Clipboard.setData(ClipboardData(text: code));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('邀请码已复制到剪贴板'),
+        behavior: SnackBarBehavior.floating,
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _showEditFamilySheet(BuildContext context, models.Family family) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.fromLTRB(
+          24,
+          24,
+          24,
+          MediaQuery.of(ctx).viewInsets.bottom + 24,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '编辑家庭信息',
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  // TODO: 编辑家庭名称
+                },
+                child: const Text('修改家庭名称'),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text(AppTexts.cancel),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showEditMemberSheet(
+    BuildContext context,
+    WidgetRef ref,
+    models.Family family,
+    FamilyMemberSection section,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.fromLTRB(
+          24,
+          24,
+          24,
+          MediaQuery.of(ctx).viewInsets.bottom + 24,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '编辑成员',
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              section.displayName,
+              style: const TextStyle(
+                fontSize: 14,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 24),
+            if (!section.isRecipient)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.blue,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    // TODO: 修改成员分工
+                  },
+                  child: const Text('修改分工'),
+                ),
+              ),
+            if (!section.isRecipient) const SizedBox(height: 12),
+            if (family.role == 'owner' && !section.isRecipient)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.warning,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    // TODO: 设为管理员
+                  },
+                  child: const Text('设为管理员'),
+                ),
+              ),
+            if (family.role == 'owner' && !section.isRecipient)
+              const SizedBox(height: 12),
+            if (family.role == 'owner')
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.error.withValues(alpha: 0.1),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    _confirmRemoveMember(context, ref, family, section);
+                  },
+                  child: Text(
+                    '移除${section.isRecipient ? "照护对象" : "成员"}',
+                    style: const TextStyle(color: AppColors.error),
+                  ),
+                ),
+              )
+            else
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text(AppTexts.cancel),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _confirmRemoveMember(
+    BuildContext context,
+    WidgetRef ref,
+    models.Family family,
+    FamilyMemberSection section,
+  ) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('确认移除'),
+        content: Text('确定要将 ${section.displayName} 从家庭中移除吗？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text(AppTexts.cancel),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              // TODO: 调用后端 API 移除成员
+            },
+            child: const Text(
+              '移除',
+              style: TextStyle(color: AppColors.error),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildMemberCard(BuildContext context, dynamic member) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-          child: Text(
-            member.nickname[0],
-            style: const TextStyle(
-              color: AppColors.primary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        title: Row(
-          children: [
-            Text(member.nickname),
-            if (member.role == 'owner')
-              Container(
-                margin: const EdgeInsets.only(left: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: const Text(
-                  '管理员',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-          ],
-        ),
-        subtitle: Text(member.phone ?? '未绑定手机'),
-        trailing: member.isOnline
-            ? Container(
-                width: 10,
-                height: 10,
-                decoration: const BoxDecoration(
-                  color: AppColors.success,
-                  shape: BoxShape.circle,
-                ),
-              )
-            : null,
-      ),
-    );
-  }
-
-  void _showInviteDialog(BuildContext context, String inviteCode) {
+  void _showAddMemberSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(24),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.fromLTRB(
+          24,
+          24,
+          24,
+          MediaQuery.of(ctx).viewInsets.bottom + 24,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-              '邀请家人加入',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              '添加成员',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-            const SizedBox(height: 24),
-            Text(
-              inviteCode,
-              style: const TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 8,
+            const SizedBox(height: 8),
+            const Text(
+              '通过邀请码邀请家庭成员加入',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () {
-                // TODO: 复制邀请码
-              },
-              icon: const Icon(Icons.copy),
-              label: const Text('复制邀请码'),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  // TODO: 显示邀请码
+                },
+                child: const Text('发送邀请链接'),
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text(AppTexts.cancel),
+            ),
           ],
         ),
       ),

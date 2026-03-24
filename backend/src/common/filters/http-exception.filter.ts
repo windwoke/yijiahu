@@ -38,13 +38,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
       message = exception.message;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const req = ctx.getRequest() as Record<string, any>;
+    const req = ctx.getRequest() as Record<string, unknown>;
     response.status(status).json({
       code,
       message,
       errors,
-      request_id: req?.headers?.['x-request-id'] || '',
+      request_id: (req['headers'] as Record<string, unknown> | undefined)?.['x-request-id'] || '',
       timestamp: new Date().toISOString(),
     });
   }

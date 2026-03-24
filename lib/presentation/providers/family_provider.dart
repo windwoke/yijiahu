@@ -8,20 +8,12 @@ import '../../core/network/api_client.dart';
 /// 当前选中的家庭
 final currentFamilyProvider = StateProvider<models.Family?>((ref) => null);
 
-/// 家庭列表
-final familyListProvider = FutureProvider<List<models.Family>>((ref) async {
-  final dio = ref.read(dioProvider);
-  final response = await dio.get('/families');
-  final data = response.data['data'] as List<dynamic>;
-  return data.map((e) => models.Family.fromJson(e as Map<String, dynamic>)).toList();
-});
-
 /// 家庭成员列表
 final familyMembersProvider = FutureProvider.family<List<models.FamilyMember>, String>(
   (ref, familyId) async {
     final dio = ref.read(dioProvider);
     final response = await dio.get('/families/$familyId/members');
-    final data = response.data['data'] as List<dynamic>;
+    final data = response.data as List<dynamic>;
     return data
         .map((e) => models.FamilyMember.fromJson(e as Map<String, dynamic>))
         .toList();
@@ -35,7 +27,7 @@ final careRecipientsProvider = FutureProvider<List<models.CareRecipient>>((ref) 
   if (familyId == null) return [];
 
   final response = await dio.get('/care-recipients', queryParameters: {
-    'family_id': familyId,
+    'familyId': familyId,
   });
   final data = response.data['data'] as List<dynamic>;
   return data
@@ -49,10 +41,10 @@ final todayMedicationProvider =
   (ref, recipientId) async {
     final dio = ref.read(dioProvider);
     final response = await dio.get('/medication-logs/today', queryParameters: {
-      'recipient_id': recipientId,
+      'recipientId': recipientId,
     });
     return models.TodayMedicationSummary.fromJson(
-        response.data['data'] as Map<String, dynamic>);
+        response.data as Map<String, dynamic>);
   },
 );
 
@@ -61,7 +53,7 @@ final medicationsProvider =
     FutureProvider.family<List<models.Medication>, String>((ref, recipientId) async {
   final dio = ref.read(dioProvider);
   final response = await dio.get('/medications', queryParameters: {
-    'recipient_id': recipientId,
+    'recipientId': recipientId,
   });
   final data = response.data['data'] as List<dynamic>;
   return data

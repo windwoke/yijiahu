@@ -25,9 +25,9 @@ class User extends Equatable {
       id: json['id'] as String,
       phone: json['phone'] as String,
       name: json['name'] as String?,
-      avatarUrl: json['avatar_url'] as String?,
+      avatarUrl: json['avatarUrl'] as String? ?? json['avatar_url'] as String?,
       region: json['region'] as String? ?? 'CN',
-      createdAt: DateTime.parse(json['created_at'] as String),
+      createdAt: DateTime.parse(json['createdAt'] as String? ?? json['created_at'] as String),
     );
   }
 

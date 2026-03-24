@@ -57,37 +57,45 @@ class CareRecipient extends Equatable {
     return CareRecipient(
       id: json['id'] as String,
       name: json['name'] as String,
-      avatarEmoji: json['avatar_emoji'] as String?,
-      avatarUrl: json['avatar_url'] as String?,
-      birthDate: json['birth_date'] != null
-          ? DateTime.parse(json['birth_date'] as String)
-          : null,
+      avatarEmoji: json['avatarEmoji'] as String? ?? json['avatar_emoji'] as String?,
+      avatarUrl: json['avatarUrl'] as String? ?? json['avatar_url'] as String?,
+      birthDate: json['birthDate'] != null
+          ? DateTime.parse(json['birthDate'] as String)
+          : (json['birth_date'] != null
+              ? DateTime.parse(json['birth_date'] as String)
+              : null),
       age: json['age'] as int?,
       gender: json['gender'] as String?,
-      bloodType: json['blood_type'] as String?,
+      bloodType: json['bloodType'] as String? ?? json['blood_type'] as String?,
       allergies: (json['allergies'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
           [],
-      chronicConditions: (json['chronic_conditions'] as List<dynamic>?)
+      chronicConditions: (json['chronicConditions'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          (json['chronic_conditions'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
           [],
-      emergencyContact: json['emergency_contact'] as String?,
-      emergencyPhone: json['emergency_phone'] as String?,
-      medicalHistory: json['medical_history'] as String?,
+      emergencyContact: json['emergencyContact'] as String? ?? json['emergency_contact'] as String?,
+      emergencyPhone: json['emergencyPhone'] as String? ?? json['emergency_phone'] as String?,
+      medicalHistory: json['medicalHistory'] as String? ?? json['medical_history'] as String?,
       hospital: json['hospital'] as String?,
       department: json['department'] as String?,
-      doctorName: json['doctor_name'] as String?,
-      doctorPhone: json['doctor_phone'] as String?,
-      currentAddress: json['current_address'] as String?,
+      doctorName: json['doctorName'] as String? ?? json['doctor_name'] as String?,
+      doctorPhone: json['doctorPhone'] as String? ?? json['doctor_phone'] as String?,
+      currentAddress: json['currentAddress'] as String? ?? json['current_address'] as String?,
       latitude: (json['latitude'] as num?)?.toDouble(),
       longitude: (json['longitude'] as num?)?.toDouble(),
-      isActive: json['is_active'] as bool? ?? true,
-      todayMedicationStatus: json['today_medication_status'] != null
+      isActive: json['isActive'] as bool? ?? json['is_active'] as bool? ?? true,
+      todayMedicationStatus: json['todayMedicationStatus'] != null
           ? TodayMedicationStatus.fromJson(
-              json['today_medication_status'] as Map<String, dynamic>)
-          : null,
+              json['todayMedicationStatus'] as Map<String, dynamic>)
+          : (json['today_medication_status'] != null
+              ? TodayMedicationStatus.fromJson(
+                  json['today_medication_status'] as Map<String, dynamic>)
+              : null),
     );
   }
 

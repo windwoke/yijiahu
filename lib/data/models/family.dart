@@ -35,15 +35,17 @@ class Family extends Equatable {
     return Family(
       id: json['id'] as String,
       name: json['name'] as String,
-      inviteCode: json['invite_code'] as String,
-      role: json['role'] as String? ?? 'member',
-      subscriptionPlan: _parsePlan(json['subscription_plan'] as String?),
-      subscriptionExpiresAt: json['subscription_expires_at'] != null
-          ? DateTime.parse(json['subscription_expires_at'] as String)
-          : null,
-      memberCount: json['member_count'] as int? ?? 0,
-      recipientCount: json['recipient_count'] as int? ?? 0,
-      createdAt: DateTime.parse(json['created_at'] as String),
+      inviteCode: json['inviteCode'] as String? ?? json['invite_code'] as String? ?? '',
+      role: json['myRole'] as String? ?? json['role'] as String? ?? 'member',
+      subscriptionPlan: _parsePlan(json['subscriptionPlan'] as String? ?? json['subscription_plan'] as String?),
+      subscriptionExpiresAt: json['subscriptionExpiresAt'] != null
+          ? DateTime.parse(json['subscriptionExpiresAt'] as String)
+          : (json['subscription_expires_at'] != null
+              ? DateTime.parse(json['subscription_expires_at'] as String)
+              : null),
+      memberCount: json['memberCount'] as int? ?? json['member_count'] as int? ?? 0,
+      recipientCount: json['recipientCount'] as int? ?? json['recipient_count'] as int? ?? 0,
+      createdAt: DateTime.parse(json['createdAt'] as String? ?? json['created_at'] as String),
     );
   }
 
@@ -98,13 +100,13 @@ class FamilyMember extends Equatable {
   factory FamilyMember.fromJson(Map<String, dynamic> json) {
     return FamilyMember(
       id: json['id'] as String,
-      userId: json['user_id'] as String?,
+      userId: json['userId'] as String? ?? json['user_id'] as String?,
       nickname: json['nickname'] as String,
       role: json['role'] as String,
-      avatarUrl: json['avatar_url'] as String?,
+      avatarUrl: json['avatarUrl'] as String? ?? json['avatar_url'] as String?,
       phone: json['phone'] as String?,
-      isOnline: json['is_online'] as bool? ?? false,
-      joinedAt: DateTime.parse(json['joined_at'] as String),
+      isOnline: json['isOnline'] as bool? ?? json['is_online'] as bool? ?? false,
+      joinedAt: DateTime.parse(json['joinedAt'] as String? ?? json['joined_at'] as String),
     );
   }
 

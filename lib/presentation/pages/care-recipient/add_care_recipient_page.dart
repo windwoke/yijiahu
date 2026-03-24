@@ -41,7 +41,7 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
   Future<void> _selectBirthDate() async {
     final date = await showDatePicker(
       context: context,
-      initialDate: _birthDate ?? DateTime.now(),
+      initialDate: _birthDate ?? DateTime(1970),
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
     );
@@ -72,7 +72,7 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
         'name': _nameController.text.trim(),
         'avatar': _selectedAvatar,
         'gender': _gender,
-        if (_birthDate != null) 'birthDate': _birthDate!.toIso8601String().split('T')[0],
+        if (_birthDate != null) 'birthDate': '${_birthDate!.year}-${_birthDate!.month.toString().padLeft(2, '0')}-${_birthDate!.day.toString().padLeft(2, '0')}',
         'emergencyContact': _emergencyContactController.text.trim(),
         'emergencyPhone': _emergencyPhoneController.text.trim(),
       });

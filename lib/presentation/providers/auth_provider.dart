@@ -259,6 +259,11 @@ class AuthNotifier extends Notifier<AuthState> {
         throw Exception(msg is List ? msg.join('；') : (msg ?? '修改密码失败，请重试'));
       }
       throw Exception('修改密码失败，请重试');
+    } catch (e) {
+      if (e is! Exception) {
+        throw Exception('修改密码失败，请重试');
+      }
+      rethrow;
     }
   }
 }

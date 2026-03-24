@@ -41,7 +41,7 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
   Future<void> _selectBirthDate() async {
     final date = await showDatePicker(
       context: context,
-      initialDate: _birthDate ?? DateTime(1960),
+      initialDate: _birthDate ?? DateTime.now(),
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
     );

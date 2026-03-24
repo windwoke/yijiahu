@@ -17,6 +17,11 @@ export class CreateCareRecipientDto {
   @IsOptional()
   birthDate?: string;
 
+  @ApiPropertyOptional({ example: '👴' })
+  @IsString()
+  @IsOptional()
+  avatar?: string;
+
   @ApiPropertyOptional({ example: '爷爷' })
   @IsString()
   @IsOptional()

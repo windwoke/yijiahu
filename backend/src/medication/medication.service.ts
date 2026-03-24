@@ -14,10 +14,12 @@ export class MedicationService {
   }
 
   findByRecipient(recipientId: string) {
-    return this.repo.find({
-      where: { recipientId },
-      order: { createdAt: 'ASC' },
-    });
+    if (!recipientId) return [];
+    return this.repo
+        .createQueryBuilder('m')
+        .where('m.recipientId = :recipientId', { recipientId })
+        .orderBy('m.createdAt', 'ASC')
+        .getMany();
   }
 
   async findOne(id: string) {

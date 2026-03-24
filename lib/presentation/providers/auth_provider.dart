@@ -8,7 +8,9 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/models/user.dart';
+import '../../data/models/models.dart' as models;
 import '../../core/network/api_client.dart';
+import 'family_provider.dart';
 
 /// 认证状态
 class AuthState {
@@ -53,8 +55,9 @@ class AuthNotifier extends Notifier<AuthState> {
   @override
   AuthState build() {
     _dio = ref.read(dioProvider);
-    _loadFromStorage();
     ref.onDispose(() => _countdownTimer?.cancel());
+    // 异步加载，不阻塞初始化
+    _loadFromStorage();
     return const AuthState();
   }
 
@@ -68,7 +71,19 @@ class AuthNotifier extends Notifier<AuthState> {
     if (token != null) {
       state = state.copyWith(accessToken: token);
       await _fetchCurrentUser();
+      await _loadCurrentFamily();
     }
+  }
+
+  Future<void> _loadCurrentFamily() async {
+    try {
+      final res = await _dio!.get('/users/me/family');
+      final data = res.data;
+      if (data is Map && data['family'] != null) {
+        ref.read(currentFamilyProvider.notifier).state =
+            models.Family.fromJson(data['family'] as Map<String, dynamic>);
+      }
+    } catch (_) {}
   }
 
   Future<void> _fetchCurrentUser() async {

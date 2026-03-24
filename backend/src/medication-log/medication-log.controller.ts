@@ -14,7 +14,7 @@ export class MedicationLogController {
 
   @Get('today')
   @ApiOperation({ summary: '获取今日用药汇总' })
-  getToday(@Query('recipient_id') recipientId: string) {
+  getToday(@Query('recipientId') recipientId: string) {
     return this.service.getTodaySummary(recipientId);
   }
 
@@ -30,7 +30,7 @@ export class MedicationLogController {
 
   @Get('history')
   @ApiOperation({ summary: '获取历史用药记录' })
-  getHistory(@Query('recipient_id') recipientId: string, @Query('date') date: string) {
+  getHistory(@Query('recipientId') recipientId: string, @Query('date') date: string) {
     return this.service.getHistory(recipientId, date);
   }
 }

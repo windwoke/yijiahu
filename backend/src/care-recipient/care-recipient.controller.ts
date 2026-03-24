@@ -31,13 +31,13 @@ export class CareRecipientController {
 
   @Get()
   @ApiOperation({ summary: '获取家庭照护对象列表' })
-  findByFamily(@Query('family_id') familyId: string) {
+  findByFamily(@Query('familyId') familyId: string) {
     return this.service.findByFamily(familyId);
   }
 
   @Get(':id')
   @ApiOperation({ summary: '获取照护对象详情' })
-  findOne(@Param('id') id: string, @Query('family_id') familyId: string) {
+  findOne(@Param('id') id: string, @Query('familyId') familyId: string) {
     return this.service.findOne(id, familyId);
   }
 
@@ -45,7 +45,7 @@ export class CareRecipientController {
   @ApiOperation({ summary: '更新照护对象' })
   update(
     @Param('id') id: string,
-    @Query('family_id') familyId: string,
+    @Query('familyId') familyId: string,
     @Body() dto: UpdateCareRecipientDto,
   ) {
     return this.service.update(id, familyId, dto);
@@ -53,7 +53,7 @@ export class CareRecipientController {
 
   @Delete(':id')
   @ApiOperation({ summary: '删除照护对象' })
-  delete(@Param('id') id: string, @Query('family_id') familyId: string) {
+  delete(@Param('id') id: string, @Query('familyId') familyId: string) {
     return this.service.delete(id, familyId);
   }
 }

@@ -18,7 +18,12 @@ export class CareRecipientService {
   }
 
   async findByFamily(familyId: string) {
-    return this.repo.find({ where: { familyId }, order: { createdAt: 'ASC' } });
+    if (!familyId) return [];
+    return this.repo
+        .createQueryBuilder('cr')
+        .where('cr.familyId = :familyId', { familyId })
+        .orderBy('cr.createdAt', 'ASC')
+        .getMany();
   }
 
   async findOne(recipientId: string, familyId: string) {

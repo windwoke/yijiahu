@@ -19,7 +19,7 @@ export class MedicationController {
 
   @Get()
   @ApiOperation({ summary: '获取照护对象药品列表' })
-  findByRecipient(@Query('recipient_id') recipientId: string) {
+  findByRecipient(@Query('recipientId') recipientId: string) {
     return this.service.findByRecipient(recipientId);
   }
 

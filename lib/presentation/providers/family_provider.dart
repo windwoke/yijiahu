@@ -29,7 +29,15 @@ final careRecipientsProvider = FutureProvider<List<models.CareRecipient>>((ref) 
   final response = await dio.get('/care-recipients', queryParameters: {
     'familyId': familyId,
   });
-  final data = response.data['data'] as List<dynamic>;
+  // 后端直接返回数组，不需要 data 包装
+  final List<dynamic> data;
+  if (response.data is List<dynamic>) {
+    data = response.data as List<dynamic>;
+  } else if (response.data is Map && (response.data as Map)['data'] is List) {
+    data = (response.data as Map)['data'] as List<dynamic>;
+  } else {
+    return [];
+  }
   return data
       .map((e) => models.CareRecipient.fromJson(e as Map<String, dynamic>))
       .toList();
@@ -55,7 +63,15 @@ final medicationsProvider =
   final response = await dio.get('/medications', queryParameters: {
     'recipientId': recipientId,
   });
-  final data = response.data['data'] as List<dynamic>;
+  // 后端直接返回数组，不需要 data 包装
+  final List<dynamic> data;
+  if (response.data is List<dynamic>) {
+    data = response.data as List<dynamic>;
+  } else if (response.data is Map && (response.data as Map)['data'] is List) {
+    data = (response.data as Map)['data'] as List<dynamic>;
+  } else {
+    return [];
+  }
   return data
       .map((e) => models.Medication.fromJson(e as Map<String, dynamic>))
       .toList();

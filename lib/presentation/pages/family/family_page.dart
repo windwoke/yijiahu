@@ -110,11 +110,15 @@ class FamilyPage extends ConsumerWidget {
       body: membersAsync.when(
         data: (members) => recipientsAsync.when(
           data: (recipients) {
+            final totalCount = members.length + recipients.length;
             final sections = _buildSections(members, recipients);
-            return _buildBody(context, ref, family, members.length, sections, isAdmin);
+            return _buildBody(context, ref, family, totalCount, sections, isAdmin);
           },
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => _buildBody(context, ref, family, members.length, _buildSections(members, []), isAdmin),
+          error: (e, _) {
+            final totalCount = members.length;
+            return _buildBody(context, ref, family, totalCount, _buildSections(members, []), isAdmin);
+          },
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('加载失败: $e')),

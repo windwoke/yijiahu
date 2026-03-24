@@ -49,6 +49,11 @@ android/build/
 .env
 .env.local
 .env.*.local
+# 但允许跟踪各环境配置文件
+!.env.example
+!.env.dev
+!.env.test
+!.env.prod
 *.pem
 *.p12
 *.key

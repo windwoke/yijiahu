@@ -20,9 +20,15 @@ class MedicationPage extends ConsumerWidget {
       appBar: AppBar(
         title: const Text(AppTexts.medications),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => context.go(AppRoutes.addMedication),
+          recipients.when(
+            data: (list) => list.isEmpty
+                ? const SizedBox()
+                : IconButton(
+                    icon: const Icon(Icons.add),
+                    onPressed: () => context.go(AppRoutes.addMedication),
+                  ),
+            loading: () => const SizedBox(),
+            error: (_, __) => const SizedBox(),
           ),
         ],
       ),

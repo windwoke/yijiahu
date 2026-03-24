@@ -11,6 +11,9 @@ import '../../presentation/pages/medication/add_medication_page.dart';
 import '../../presentation/pages/family/family_page.dart';
 import '../../presentation/pages/care-log/care_log_page.dart';
 import '../../presentation/pages/sos/sos_page.dart';
+import '../../presentation/pages/settings/profile_page.dart';
+import '../../presentation/pages/settings/password_change_page.dart';
+import '../../presentation/pages/care-recipient/add_care_recipient_page.dart';
 import '../../presentation/providers/auth_provider.dart';
 
 /// 路由名称
@@ -23,17 +26,20 @@ class AppRoutes {
   static const String family = '/family';
   static const String careLog = '/care-log';
   static const String sos = '/sos';
+  static const String profile = '/profile';
+  static const String passwordChange = '/profile/password-change';
+  static const String addCareRecipient = '/care-recipient/add';
 }
 
 /// 路由配置
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authStateProvider);
+  // 只监听 isLoggedIn，避免整个 authState 变化触发 router 重建
+  final isLoggedIn = ref.watch(isLoggedInProvider);
 
   return GoRouter(
     initialLocation: AppRoutes.login,
     debugLogDiagnostics: true,
     redirect: (context, state) {
-      final isLoggedIn = authState.isLoggedIn;
       final isLoggingIn = state.matchedLocation == AppRoutes.login;
 
       // 未登录，跳转登录页
@@ -80,11 +86,23 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: AppRoutes.family,
             builder: (context, state) => const FamilyPage(),
           ),
+          GoRoute(
+            path: AppRoutes.profile,
+            builder: (context, state) => const ProfilePage(),
+          ),
         ],
       ),
       GoRoute(
         path: AppRoutes.sos,
         builder: (context, state) => const SosPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.addCareRecipient,
+        builder: (context, state) => const AddCareRecipientPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.passwordChange,
+        builder: (context, state) => const PasswordChangePage(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(
@@ -115,11 +133,12 @@ class MainBottomNav extends StatelessWidget {
   const MainBottomNav({super.key});
 
   int _calculateSelectedIndex(BuildContext context) {
-    final location = GoRouterState.of(context).matchedLocation;
-    if (location.startsWith(AppRoutes.home)) return 0;
+    final location = GoRouterState.of(context).uri.path;
+    if (location == AppRoutes.home || location == '/') return 0;
     if (location.startsWith(AppRoutes.medication)) return 1;
     if (location.startsWith(AppRoutes.careLog)) return 2;
     if (location.startsWith(AppRoutes.family)) return 3;
+    if (location.startsWith(AppRoutes.profile)) return 4;
     return 0;
   }
 
@@ -136,6 +155,9 @@ class MainBottomNav extends StatelessWidget {
         break;
       case 3:
         context.go(AppRoutes.family);
+        break;
+      case 4:
+        context.go(AppRoutes.profile);
         break;
     }
   }
@@ -167,6 +189,11 @@ class MainBottomNav extends StatelessWidget {
           icon: Icon(Icons.people_outlined),
           selectedIcon: Icon(Icons.people),
           label: '家庭',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.person_outlined),
+          selectedIcon: Icon(Icons.person),
+          label: '我的',
         ),
       ],
     );

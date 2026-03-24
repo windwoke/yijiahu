@@ -1,0 +1,417 @@
+/// 添加照护对象页
+library;
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../core/constants/constants.dart';
+import '../../../core/network/api_client.dart';
+import '../../../data/models/models.dart' as models;
+import '../../providers/family_provider.dart';
+
+class AddCareRecipientPage extends ConsumerStatefulWidget {
+  const AddCareRecipientPage({super.key});
+
+  @override
+  ConsumerState<AddCareRecipientPage> createState() => _AddCareRecipientPageState();
+}
+
+class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _emergencyContactController = TextEditingController();
+  final _emergencyPhoneController = TextEditingController();
+
+  String _gender = 'male';
+  DateTime? _birthDate;
+  String? _bloodType;
+  bool _isLoading = false;
+
+  final List<String> _avatarOptions = ['👴', '👵', '👨', '👩', '🧓', '👴', '👤'];
+  String _selectedAvatar = '👴';
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emergencyContactController.dispose();
+    _emergencyPhoneController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _selectBirthDate() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _birthDate ?? DateTime(1960),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    if (date != null) {
+      setState(() => _birthDate = date);
+    }
+  }
+
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+    try {
+      final dio = ref.read(dioProvider);
+
+      // 确保有家庭，没有则自动创建
+      var family = ref.read(currentFamilyProvider);
+      if (family == null) {
+        final familyResponse = await dio.post('/families', data: {
+          'name': '我的家庭',
+        });
+        final familyData = familyResponse.data as Map<String, dynamic>;
+        family = models.Family.fromJson(familyData);
+        ref.read(currentFamilyProvider.notifier).state = family;
+      }
+
+      await dio.post('/care-recipients', data: {
+        'name': _nameController.text.trim(),
+        'avatar': _selectedAvatar,
+        'gender': _gender,
+        if (_birthDate != null) 'birthDate': _birthDate!.toIso8601String().split('T')[0],
+        'emergencyContact': _emergencyContactController.text.trim(),
+        'emergencyPhone': _emergencyPhoneController.text.trim(),
+      });
+
+      // 刷新照护对象列表
+      ref.invalidate(careRecipientsProvider);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('添加成功'), duration: Duration(seconds: 3)),
+        );
+        context.pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('添加失败: $e'), duration: const Duration(seconds: 10)),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: const Text('添加照护对象'),
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: AppColors.background,
+        surfaceTintColor: Colors.transparent,
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => context.pop(),
+        ),
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // 头像选择
+                Center(
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 72,
+                        height: 72,
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.06),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Text(_selectedAvatar, style: const TextStyle(fontSize: 40)),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        children: _avatarOptions.map((emoji) {
+                          final isSelected = emoji == _selectedAvatar;
+                          return GestureDetector(
+                            onTap: () => setState(() => _selectedAvatar = emoji),
+                            child: Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: isSelected ? AppColors.primary.withValues(alpha: 0.1) : AppColors.surface,
+                                borderRadius: BorderRadius.circular(10),
+                                border: isSelected
+                                    ? Border.all(color: AppColors.primary, width: 2)
+                                    : Border.all(color: AppColors.border),
+                              ),
+                              child: Center(
+                                child: Text(emoji, style: const TextStyle(fontSize: 22)),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // 基本信息卡片
+                _buildSectionCard([
+                  _buildTextField(
+                    controller: _nameController,
+                    label: '姓名 *',
+                    hint: '如：爷爷、奶奶',
+                    icon: Icons.person_outline,
+                    validator: (v) => v == null || v.isEmpty ? '请输入姓名' : null,
+                  ),
+                  _buildDivider(),
+                  _buildGenderSelector(),
+                  _buildDivider(),
+                  _buildDateField(),
+                ]),
+                const SizedBox(height: 16),
+
+                // 健康信息卡片
+                _buildSectionCard([
+                  _buildBloodTypeSelector(),
+                ]),
+                const SizedBox(height: 16),
+
+                // 紧急联系人卡片
+                _buildSectionCard([
+                  _buildTextField(
+                    controller: _emergencyContactController,
+                    label: '紧急联系人',
+                    hint: '如：儿子张三',
+                    icon: Icons.contacts_outlined,
+                  ),
+                  _buildDivider(),
+                  _buildTextField(
+                    controller: _emergencyPhoneController,
+                    label: '紧急联系电话',
+                    hint: '手机号',
+                    icon: Icons.phone_outlined,
+                    keyboardType: TextInputType.phone,
+                  ),
+                ]),
+                const SizedBox(height: 32),
+
+                FilledButton(
+                  onPressed: _isLoading ? null : _save,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Text('保存', style: TextStyle(fontSize: 16)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionCard(List<Widget> children) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(children: children),
+    );
+  }
+
+  Widget _buildDivider() {
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16),
+      child: Divider(height: 1, thickness: 0.5),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      child: TextFormField(
+        controller: controller,
+        keyboardType: keyboardType,
+        style: const TextStyle(fontSize: 15, color: AppColors.textPrimary),
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: hint,
+          hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+          labelStyle: const TextStyle(color: Color(0xFF00BFA5), fontSize: 14),
+          prefixIcon: Icon(icon, color: const Color(0xFF00BFA5), size: 20),
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          errorBorder: InputBorder.none,
+          focusedErrorBorder: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        ),
+        validator: validator,
+      ),
+    );
+  }
+
+  Widget _buildGenderSelector() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Text('性别', style: TextStyle(color: Colors.grey[600], fontSize: 14)),
+          const SizedBox(width: 24),
+          _genderChip('男', 'male'),
+          const SizedBox(width: 12),
+          _genderChip('女', 'female'),
+        ],
+      ),
+    );
+  }
+
+  Widget _genderChip(String label, String value) {
+    final isSelected = _gender == value;
+    return GestureDetector(
+      onTap: () => setState(() => _gender = value),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary.withValues(alpha: 0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : AppColors.border,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? AppColors.primary : AppColors.textSecondary,
+            fontSize: 14,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDateField() {
+    return InkWell(
+      onTap: _selectBirthDate,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            const Icon(Icons.cake_outlined, color: Color(0xFF00BFA5), size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '出生日期',
+                    style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _birthDate != null
+                        ? '${_birthDate!.year}-${_birthDate!.month.toString().padLeft(2, '0')}-${_birthDate!.day.toString().padLeft(2, '0')}'
+                        : '选填',
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: _birthDate != null ? AppColors.textPrimary : Colors.grey[400],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, color: Colors.grey[400]),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBloodTypeSelector() {
+    final bloodTypes = ['A', 'B', 'AB', 'O'];
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('血型', style: TextStyle(color: Colors.grey[600], fontSize: 14)),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              ...bloodTypes.map((type) {
+                final isSelected = _bloodType == type;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: GestureDetector(
+                    onTap: () => setState(() => _bloodType = isSelected ? null : type),
+                    child: Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: isSelected ? AppColors.primary.withValues(alpha: 0.1) : Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isSelected ? AppColors.primary : AppColors.border,
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          type,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}

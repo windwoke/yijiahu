@@ -3,14 +3,9 @@ library;
 
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/errors/app_exception.dart';
-
-/// API 配置
-class ApiConfig {
-  static const String baseUrl = 'https://api.yijiahu.cn/v1';
-  static const Duration connectTimeout = Duration(seconds: 30);
-  static const Duration receiveTimeout = Duration(seconds: 30);
-}
+import 'package:shared_preferences/shared_preferences.dart';
+import '../errors/app_exception.dart';
+import '../env/env_config.dart';
 
 /// Dio 实例
 final dioProvider = Provider<Dio>((ref) {
@@ -23,7 +18,7 @@ final dioProvider = Provider<Dio>((ref) {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         'X-Platform': 'app',
-        'X-Version': '1.0.0',
+        'X-Version': AppConfig.version,
       },
     ),
   );
@@ -39,21 +34,21 @@ final dioProvider = Provider<Dio>((ref) {
 
 /// 认证拦截器
 class AuthInterceptor extends Interceptor {
-  // ignore: unused_field
-  final Ref _ref;
+  final Ref ref;
 
-  AuthInterceptor(this._ref);
+  AuthInterceptor(this.ref);
 
   @override
   void onRequest(
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    // 从本地存储获取 token
-    // final token = await ref.read(tokenStorageProvider).getAccessToken();
-    // if (token != null) {
-    //   options.headers['Authorization'] = 'Bearer $token';
-    // }
+    // 从 SharedPreferences 获取 token
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('access_token');
+    if (token != null) {
+      options.headers['Authorization'] = 'Bearer $token';
+    }
     handler.next(options);
   }
 
@@ -127,7 +122,14 @@ AppException _handleBadResponse(Response? response) {
   }
 
   final code = data['code'] as int? ?? 0;
-  final message = data['message'] as String? ?? '未知错误';
+  // message 可能是 String 或 List<String>
+  String message;
+  final rawMessage = data['message'];
+  if (rawMessage is List) {
+    message = (rawMessage).join('；');
+  } else {
+    message = (rawMessage as String?) ?? '未知错误';
+  }
   final errors = data['errors'] as Map<String, dynamic>?;
 
   switch (code) {

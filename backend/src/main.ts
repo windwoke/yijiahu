@@ -1,11 +1,13 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   // 全局前缀
   app.setGlobalPrefix('v1');
@@ -38,6 +40,12 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api-docs', app, document);
+
+  // 静态文件服务（头像等上传文件）
+  (app as NestExpressApplication).useStaticAssets(
+    join(process.cwd(), 'uploads'),
+    { prefix: '/uploads/' },
+  );
 
   const port = process.env.PORT || 3000;
   void app.listen(port);

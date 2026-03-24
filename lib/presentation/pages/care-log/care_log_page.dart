@@ -6,11 +6,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/constants.dart';
 import '../../../core/utils/date_utils.dart' as app_date;
 
-class CareLogPage extends ConsumerWidget {
+class CareLogPage extends ConsumerStatefulWidget {
   const CareLogPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CareLogPage> createState() => _CareLogPageState();
+}
+
+class _CareLogPageState extends ConsumerState<CareLogPage> {
+  String? _selectedLogType;
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -18,9 +25,7 @@ class CareLogPage extends ConsumerWidget {
       ),
       body: _buildTimeline(context),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          _showAddLogDialog(context);
-        },
+        onPressed: () => _showAddLogDialog(context),
         child: const Icon(Icons.add),
       ),
     );
@@ -63,7 +68,7 @@ class CareLogPage extends ConsumerWidget {
             const SizedBox(height: 8),
             Text(
               '记录每一天的照护情况',
-              style: Theme.of(context).textTheme.bodySmall,
+              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
             ),
           ],
         ),
@@ -101,13 +106,15 @@ class CareLogPage extends ConsumerWidget {
               children: [
                 Text(
                   dateLabel,
-                  style: Theme.of(context).textTheme.bodySmall,
+                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   app_date.DateUtils.formatTime(log.time),
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  style: const TextStyle(
+                        fontSize: 14,
                         fontWeight: FontWeight.w500,
+                        color: AppColors.textPrimary,
                       ),
                 ),
               ],
@@ -137,7 +144,7 @@ class CareLogPage extends ConsumerWidget {
                       const SizedBox(width: 8),
                       Text(
                         log.author,
-                        style: Theme.of(context).textTheme.bodySmall,
+                        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                       ),
                       if (log.emoji != null) ...[
                         const Spacer(),
@@ -148,7 +155,7 @@ class CareLogPage extends ConsumerWidget {
                   const SizedBox(height: 8),
                   Text(
                     log.content,
-                    style: Theme.of(context).textTheme.bodyMedium,
+                    style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
                   ),
                 ],
               ),
@@ -178,48 +185,80 @@ class CareLogPage extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Padding(
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
         padding: EdgeInsets.fromLTRB(
-          24,
-          24,
-          24,
-          MediaQuery.of(context).viewInsets.bottom + 24,
+          20,
+          20,
+          20,
+          MediaQuery.of(context).viewInsets.bottom + 20,
+        ),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              '添加日志',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            // 顶部标题栏
+            Row(
+              children: [
+                const Text(
+                  '添加日志',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close, color: AppColors.textSecondary),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             // 日志类型选择
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: [
-                _buildTypeChip('💊 服药记录', () {}),
-                _buildTypeChip('🩺 健康数据', () {}),
-                _buildTypeChip('😊 情绪状态', () {}),
-                _buildTypeChip('🚶 活动情况', () {}),
-                _buildTypeChip('📝 其他', () {}),
+                _buildTypeChip('💊 服药记录', 'medication', () {}),
+                _buildTypeChip('🩺 健康数据', 'health', () {}),
+                _buildTypeChip('😊 情绪状态', 'emotion', () {}),
+                _buildTypeChip('🚶 活动情况', 'activity', () {}),
+                _buildTypeChip('📝 其他', 'other', () {}),
               ],
             ),
             const SizedBox(height: 16),
             TextField(
               maxLines: 3,
-              decoration: const InputDecoration(
+              style: const TextStyle(fontSize: 15, color: AppColors.textPrimary),
+              decoration: InputDecoration(
                 hintText: '今天发生了什么？',
+                hintStyle: const TextStyle(fontSize: 15, color: AppColors.textTertiary),
+                filled: true,
+                fillColor: AppColors.surfaceGray,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.all(16),
               ),
             ),
-            const SizedBox(height: 24),
-            ElevatedButton(
+            const SizedBox(height: 20),
+            FilledButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('保存'),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text('保存', style: TextStyle(fontSize: 16)),
             ),
           ],
         ),
@@ -227,10 +266,28 @@ class CareLogPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildTypeChip(String label, VoidCallback onTap) {
-    return ActionChip(
-      label: Text(label),
-      onPressed: onTap,
+  Widget _buildTypeChip(String label, String type, VoidCallback onTap) {
+    final isSelected = _selectedLogType == type;
+    return GestureDetector(
+      onTap: () {
+        // TODO: 选中类型
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary.withValues(alpha: 0.1) : AppColors.surfaceGray,
+          borderRadius: BorderRadius.circular(20),
+          border: isSelected ? Border.all(color: AppColors.primary, width: 1.5) : null,
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            color: isSelected ? AppColors.primary : AppColors.textSecondary,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+          ),
+        ),
+      ),
     );
   }
 }

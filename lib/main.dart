@@ -4,10 +4,19 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'core/theme/app_theme.dart';
 import 'core/router/app_router.dart';
+import 'core/env/env_config.dart';
 
-void main() {
+Future<void> main() async {
+  // 加载环境变量（找不到 .env 时使用默认值）
+  await dotenv.load(fileName: '.env', isOptional: true);
+
+  // 打印当前环境
+  debugPrint('🚀 启动环境: ${AppEnv.current.label}');
+  debugPrint('📡 API: ${ApiConfig.baseUrl}');
+
   WidgetsFlutterBinding.ensureInitialized();
 
   // 设置状态栏样式

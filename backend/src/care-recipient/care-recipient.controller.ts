@@ -1,8 +1,11 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, BadRequestException } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { CareRecipientService } from './care-recipient.service';
+import { FamilyMember } from '../family/entities/family-member.entity';
 import { CreateCareRecipientDto, UpdateCareRecipientDto } from './dto/care-recipient.dto';
 
 @ApiTags('照护对象')
@@ -10,13 +13,20 @@ import { CreateCareRecipientDto, UpdateCareRecipientDto } from './dto/care-recip
 @UseGuards(JwtAuthGuard)
 @Controller('care-recipients')
 export class CareRecipientController {
-  constructor(private readonly service: CareRecipientService) {}
+  constructor(
+    private readonly service: CareRecipientService,
+    @InjectRepository(FamilyMember) private memberRepo: Repository<FamilyMember>,
+  ) {}
 
   @Post()
   @ApiOperation({ summary: '添加照护对象' })
-  create(@CurrentUser('id') userId: string, @Body() dto: CreateCareRecipientDto) {
-    // TODO: 需要先从用户关联的家庭中获取 familyId
-    return this.service.create('mock-family-id', dto);
+  async create(@CurrentUser('id') userId: string, @Body() dto: CreateCareRecipientDto) {
+    // 查找用户所在的第一个家庭
+    const member = await this.memberRepo.findOne({ where: { userId } });
+    if (!member) {
+      throw new BadRequestException('请先加入一个家庭');
+    }
+    return this.service.create(member.familyId, dto);
   }
 
   @Get()

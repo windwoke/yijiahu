@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/constants.dart';
+import '../../../core/network/api_client.dart';
+import '../../providers/providers.dart';
 
 class AddMedicationPage extends ConsumerStatefulWidget {
   const AddMedicationPage({super.key});
@@ -64,8 +66,26 @@ class _AddMedicationPageState extends ConsumerState<AddMedicationPage> {
     setState(() => _isLoading = true);
 
     try {
-      // TODO: 调用 API 保存药品
-      await Future.delayed(const Duration(seconds: 1));
+      final dio = ref.read(dioProvider);
+      final recipient = ref.read(currentFamilyProvider);
+      if (recipient == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('请先选择照护对象')),
+        );
+        return;
+      }
+
+      final times = _times.map((t) {
+        return '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+      }).toList();
+
+      await dio.post('/medications', data: {
+        'recipientId': recipient.id,
+        'name': _nameController.text.trim(),
+        'dosage': _dosageController.text.trim(),
+        'times': times,
+        'instructions': _instructionsController.text.trim(),
+      });
 
       if (mounted) {
         context.pop();

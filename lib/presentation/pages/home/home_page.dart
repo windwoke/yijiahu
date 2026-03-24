@@ -3,8 +3,11 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/constants.dart';
+import '../../../core/router/app_router.dart';
 import '../../../data/models/models.dart';
+import '../../../core/network/api_client.dart';
 import '../../providers/providers.dart';
 import '../../widgets/sos_button.dart';
 import '../../widgets/medication_check_in_card.dart';
@@ -79,9 +82,7 @@ class HomePage extends ConsumerWidget {
             ),
             const SizedBox(height: 32),
             ElevatedButton.icon(
-              onPressed: () {
-                // TODO: 跳转到添加照护对象
-              },
+              onPressed: () => context.push(AppRoutes.addCareRecipient),
               icon: const Icon(Icons.add),
               label: const Text('添加照护对象'),
             ),
@@ -248,8 +249,13 @@ class HomePage extends ConsumerWidget {
           todayAsync.when(
             data: (today) => MedicationCheckInCard(
               today: today,
-              onCheckIn: (item) {
-                // TODO: 执行打卡
+              onCheckIn: (item) async {
+                if (item.id == null) return;
+                final dio = ref.read(dioProvider);
+                await dio.post('/medication-logs/${item.id}/check-in', data: {
+                  'status': 'taken',
+                });
+                ref.invalidate(todayMedicationProvider(recipient.id));
               },
             ),
             loading: () => const Card(

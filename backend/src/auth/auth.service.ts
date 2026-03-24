@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import * as bcrypt from 'bcryptjs';
 import { User } from '../user/entities/user.entity';
 import { SendCodeDto } from './dto/send-code.dto';
 import { LoginDto } from './dto/login.dto';
@@ -63,5 +64,52 @@ export class AuthService {
 
     const token = this.jwtService.sign({ sub: user.id, phone: user.phone });
     return { accessToken: token };
+  }
+
+  async changePassword(userId: string, oldPassword: string, newPassword: string) {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) throw new UnauthorizedException('用户不存在');
+
+    if (user.hashedPassword) {
+      const isValid = await bcrypt.compare(oldPassword, user.hashedPassword);
+      if (!isValid) {
+        throw new BadRequestException('旧密码错误');
+      }
+    }
+
+    user.hashedPassword = await bcrypt.hash(newPassword, 10);
+    await this.userRepo.save(user);
+    return { success: true };
+  }
+
+  async loginWithPassword(phone: string, password: string) {
+    const user = await this.userRepo.findOne({ where: { phone } });
+    if (!user) throw new BadRequestException('手机号或密码错误');
+
+    if (!user.hashedPassword) {
+      throw new BadRequestException('该账号未设置密码，请使用验证码登录');
+    }
+
+    const isValid = await bcrypt.compare(password, user.hashedPassword);
+    if (!isValid) {
+      throw new BadRequestException('手机号或密码错误');
+    }
+
+    user.lastLoginAt = new Date();
+    await this.userRepo.save(user);
+
+    const payload = { sub: user.id, phone: user.phone };
+    const token = this.jwtService.sign(payload);
+
+    return {
+      accessToken: token,
+      tokenType: 'Bearer',
+      user: {
+        id: user.id,
+        phone: user.phone,
+        name: user.name,
+        avatar: user.avatar,
+      },
+    };
   }
 }

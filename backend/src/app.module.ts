@@ -8,6 +8,7 @@ import { FamilyModule } from './family/family.module';
 import { CareRecipientModule } from './care-recipient/care-recipient.module';
 import { MedicationModule } from './medication/medication.module';
 import { MedicationLogModule } from './medication-log/medication-log.module';
+import { UploadModule } from './common/upload/upload.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { MedicationLogModule } from './medication-log/medication-log.module';
     CareRecipientModule,
     MedicationModule,
     MedicationLogModule,
+    UploadModule,
   ],
 })
 export class AppModule {}

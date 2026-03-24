@@ -16,6 +16,11 @@ class AppTexts {
   static const String taken = '已服用';
   static const String missed = '漏服';
   static const String skipped = '跳过';
+  static const String noCareRecipients = '还没有添加照护对象';
+  static const String addCareRecipientBtn = '添加照护对象';
+  static const String addCareRecipientHint = '添加爷爷、奶奶等照护对象，开始管理用药和健康';
+  static const String checkIn = '打卡';
+  static const String completed = '已完成';
 
   // 打卡
   static const String tapToCheckIn = '已服用';

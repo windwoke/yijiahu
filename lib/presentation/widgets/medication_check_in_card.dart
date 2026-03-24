@@ -18,126 +18,184 @@ class MedicationCheckInCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (today.items.isEmpty) {
-      return Card(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Center(
-            child: Text(
-              '今日暂无用药计划',
-              style: Theme.of(context).textTheme.bodyMedium,
+      return Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.shadow,
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
+          ],
+        ),
+        child: Center(
+          child: Text(
+            '今日暂无用药计划',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
           ),
         ),
       );
     }
 
-    return Card(
-      child: Column(
-        children: [
-          for (int i = 0; i < today.items.length; i++)
-            _buildMedicationItem(context, today.items[i], i),
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadow,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
         ],
+      ),
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 1.35,
+        ),
+        itemCount: today.items.length,
+        itemBuilder: (context, index) {
+          return _buildMedicationItem(context, today.items[index]);
+        },
       ),
     );
   }
 
-  Widget _buildMedicationItem(BuildContext context, MedicationLogItem item, int index) {
+  Color _getStatusColor(MedicationLogItem item) {
+    final isTaken =
+        item.status == MedicationLogStatus.taken || item.status == MedicationLogStatus.skipped;
+    if (isTaken) {
+      return AppColors.medicationDone;
+    }
+
     final isPending = item.status == MedicationLogStatus.pending ||
         item.status == MedicationLogStatus.missed;
-    final isTaken = item.status == MedicationLogStatus.taken;
-    final isSkipped = item.status == MedicationLogStatus.skipped;
-
-    Color statusColor;
-    IconData statusIcon;
-
-    if (isTaken) {
-      statusColor = AppColors.success;
-      statusIcon = Icons.check_circle;
-    } else if (isSkipped) {
-      statusColor = AppColors.warning;
-      statusIcon = Icons.remove_circle;
-    } else if (isPending) {
+    if (isPending) {
       final now = TimeOfDay.now();
       final scheduled = TimeOfDay(
         hour: int.parse(item.scheduledTime.split(':')[0]),
         minute: int.parse(item.scheduledTime.split(':')[1]),
       );
       final isOverdue = _isOverdue(now, scheduled);
-      statusColor = isOverdue ? AppColors.error : AppColors.textSecondary;
-      statusIcon = isOverdue ? Icons.warning : Icons.schedule;
-    } else {
-      statusColor = AppColors.textSecondary;
-      statusIcon = Icons.schedule;
+      if (isOverdue) {
+        return AppColors.coral;
+      }
     }
 
-    return InkWell(
-      onTap: item.canCheckIn ? () => _showCheckInSheet(context, item) : null,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: AppColors.border,
-              width: index != today.items.length - 1 ? 1 : 0,
+    return AppColors.grey300;
+  }
+
+  Widget _buildMedicationItem(BuildContext context, MedicationLogItem item) {
+    final statusColor = _getStatusColor(item);
+    final isTaken =
+        item.status == MedicationLogStatus.taken || item.status == MedicationLogStatus.skipped;
+    final canCheckIn = item.canCheckIn;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(20),
+        border: Border(
+          left: BorderSide(color: statusColor, width: 4),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadow,
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: canCheckIn ? () => _showCheckInSheet(context, item) : null,
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        item.medicationName,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                          decoration: item.status == MedicationLogStatus.skipped
+                              ? TextDecoration.lineThrough
+                              : null,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (isTaken)
+                      Icon(Icons.check_circle, color: statusColor, size: 18)
+                    else
+                      Icon(Icons.schedule, color: statusColor, size: 18),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  item.dosage,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  item.scheduledTime,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: statusColor,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const Spacer(),
+                if (canCheckIn)
+                  SizedBox(
+                    height: 36,
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => _showCheckInSheet(context, item),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: EdgeInsets.zero,
+                      ),
+                      child: const Text(
+                        AppTexts.checkIn,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  SizedBox(height: 36),
+              ],
             ),
           ),
-        ),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 50,
-              child: Text(
-                item.scheduledTime,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w500,
-                      color: statusColor,
-                    ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.medicationName,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w500,
-                          decoration:
-                              isSkipped ? TextDecoration.lineThrough : null,
-                        ),
-                  ),
-                  Text(
-                    item.dosage,
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
-              ),
-            ),
-            if (isTaken || isSkipped)
-              Icon(statusIcon, color: statusColor, size: 20)
-            else if (item.canCheckIn)
-              Container(
-                width: 72,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Center(
-                  child: Text(
-                    '打卡',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              )
-            else
-              Icon(Icons.schedule, color: statusColor, size: 20),
-          ],
         ),
       ),
     );
@@ -196,7 +254,7 @@ class MedicationCheckInCard extends StatelessWidget {
                     Icon(Icons.check, size: 40, color: Colors.white),
                     SizedBox(height: 4),
                     Text(
-                      '已服用',
+                      AppTexts.taken,
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 16,
@@ -210,7 +268,7 @@ class MedicationCheckInCard extends StatelessWidget {
             const SizedBox(height: 24),
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('稍后提醒'),
+              child: const Text(AppTexts.delayReminder),
             ),
           ],
         ),

@@ -58,4 +58,12 @@ class AppColors {
   static const Color strengthWeak    = Color(0xFFFF3B30);
   static const Color strengthMedium = Color(0xFFFFB800);
   static const Color strengthStrong = Color(0xFF34C759);
+
+  // 层级背景
+  static const Color surfaceContainerLow = Color(0xFFF4F3F1);
+  static const Color surfaceContainerLowest = Color(0xFFFFFFFF);
+  static const Color glassSurface = Color(0xCCFFFFFF);
+
+  // 药品状态色
+  static const Color medicationDone = Color(0xFF006E28);
 }

@@ -14,8 +14,29 @@ class SosButton extends StatefulWidget {
   State<SosButton> createState() => _SosButtonState();
 }
 
-class _SosButtonState extends State<SosButton> {
+class _SosButtonState extends State<SosButton>
+    with SingleTickerProviderStateMixin {
   bool _isPressed = false;
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    );
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.04).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,45 +44,49 @@ class _SosButtonState extends State<SosButton> {
       onLongPressStart: (_) => _onPressStart(),
       onLongPressEnd: (_) => _onPressEnd(),
       onLongPressCancel: () => _onPressCancel(),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        width: double.infinity,
-        height: 56,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              _isPressed ? AppColors.error : AppColors.coral,
-              _isPressed ? AppColors.coral : AppColors.coralLight,
+      child: AnimatedBuilder(
+        animation: _pulseAnimation,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _isPressed ? 1.0 : _pulseAnimation.value,
+            child: child,
+          );
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          width: double.infinity,
+          height: 56,
+          decoration: BoxDecoration(
+            color: _isPressed ? AppColors.error : AppColors.coral,
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: (_isPressed ? AppColors.error : AppColors.coral)
+                    .withValues(alpha: 0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
             ],
           ),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: (_isPressed ? AppColors.error : AppColors.coral)
-                  .withValues(alpha: 0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.emergency,
-              color: Colors.white,
-              size: 24,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              _isPressed ? '保持按压中...' : '紧急求助 SOS',
-              style: const TextStyle(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.emergency,
                 color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+                size: 24,
               ),
-            ),
-          ],
+              const SizedBox(width: 8),
+              Text(
+                _isPressed ? AppTexts.releaseToCancel : '紧急求助',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -70,6 +95,7 @@ class _SosButtonState extends State<SosButton> {
   void _onPressStart() {
     HapticFeedback.heavyImpact();
     setState(() => _isPressed = true);
+    _pulseController.stop();
     _startProgress();
   }
 
@@ -83,7 +109,6 @@ class _SosButtonState extends State<SosButton> {
     if (!_isPressed) return;
     _count++;
     if (_count >= 30) {
-      // 3秒完成
       _triggerSos();
       return;
     }
@@ -94,11 +119,13 @@ class _SosButtonState extends State<SosButton> {
     HapticFeedback.lightImpact();
     setState(() => _isPressed = false);
     _count = 0;
+    _pulseController.repeat(reverse: true);
   }
 
   void _onPressCancel() {
     setState(() => _isPressed = false);
     _count = 0;
+    _pulseController.repeat(reverse: true);
   }
 
   void _triggerSos() {

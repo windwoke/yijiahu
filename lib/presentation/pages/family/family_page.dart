@@ -107,10 +107,10 @@ class FamilyPage extends ConsumerWidget {
         data: (members) => recipientsAsync.when(
           data: (recipients) {
             final sections = _buildSections(members, recipients);
-            return _buildBody(context, ref, family, sections);
+            return _buildBody(context, ref, family, members.length, sections);
           },
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => _buildBody(context, ref, family, _buildSections(members, [])),
+          error: (e, _) => _buildBody(context, ref, family, members.length, _buildSections(members, [])),
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('加载失败: $e')),
@@ -146,13 +146,14 @@ class FamilyPage extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     models.Family family,
+    int memberCount,
     List<FamilyMemberSection> sections,
   ) {
     return CustomScrollView(
       slivers: [
         // 家庭信息卡片（邀请码）
         SliverToBoxAdapter(
-          child: _buildFamilyCard(context, family),
+          child: _buildFamilyCard(context, family, memberCount),
         ),
         // 成员列表
         SliverPadding(
@@ -199,7 +200,7 @@ class FamilyPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildFamilyCard(BuildContext context, models.Family family) {
+  Widget _buildFamilyCard(BuildContext context, models.Family family, int memberCount) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
       child: Container(
@@ -255,7 +256,7 @@ class FamilyPage extends ConsumerWidget {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              '${family.memberCount}位成员',
+                              '$memberCount位成员',
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: AppColors.textSecondary,
@@ -340,6 +341,13 @@ class FamilyPage extends ConsumerWidget {
     FamilyMemberSection section,
   ) {
     final isAdmin = family.role == 'owner' || family.role == 'admin';
+    final currentUser = ref.watch(authStateProvider).user;
+    final isCurrentUser = section.member?.userId == currentUser?.id;
+    // 当前用户用 authState 中的手机号，其他成员用 member.phone
+    final displayPhone = isCurrentUser
+        ? currentUser?.phone
+        : section.member?.phone;
+    final isOwner = section.member?.role == 'owner';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -435,16 +443,15 @@ class FamilyPage extends ConsumerWidget {
                         children: [
                           if (section.isRecipient)
                             const SizedBox.shrink()
-                          else if (section.member?.role == 'owner')
+                          else if (isOwner)
                             const Icon(Icons.star,
                                 size: 12, color: AppColors.primary),
-                          if (!section.isRecipient &&
-                              section.member?.role == 'owner')
+                          if (!section.isRecipient && isOwner)
                             const SizedBox(width: 3),
                           Text(
                             section.isRecipient
                                 ? '照护对象'
-                                : section.member?.role == 'owner'
+                                : isOwner
                                     ? '管理员'
                                     : '成员',
                             style: TextStyle(
@@ -463,14 +470,14 @@ class FamilyPage extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 4),
-                if (section.phone != null)
+                if (displayPhone != null)
                   Row(
                     children: [
                       const Icon(Icons.phone_android,
                           size: 13, color: AppColors.textSecondary),
                       const SizedBox(width: 4),
                       Text(
-                        _maskPhone(section.phone!),
+                        _maskPhone(displayPhone),
                         style: const TextStyle(
                           fontSize: 13,
                           color: AppColors.textSecondary,

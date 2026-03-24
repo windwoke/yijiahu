@@ -50,7 +50,6 @@ class AppTexts {
 
   // 照护对象
   static const String careRecipients = '照护对象';
-  static const String addRecipient = '添加照护对象';
   static const String healthInfo = '健康信息';
   static const String allergies = '过敏药物';
   static const String chronicConditions = '慢性病';

@@ -13,7 +13,7 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async sendCode(dto: SendCodeDto) {
+  sendCode(dto: SendCodeDto) {
     // TODO: 集成阿里云短信服务
     // 暂时存储到 Redis（后续实现）
     const code = '123456'; // Mock: 固定验证码

@@ -22,61 +22,39 @@ class HomePage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Stack(
-        children: [
-          // 主体 ListView
-          recipientsAsync.when(
-            data: (recipients) {
-              if (recipients.isEmpty) {
-                return _buildEmptyState(context);
-              }
-              return _buildContent(context, ref, recipients);
-            },
-            loading: () =>
-                const Center(child: CircularProgressIndicator()),
-            error: (error, stack) => Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.error_outline,
-                      size: 48, color: AppColors.error),
-                  const SizedBox(height: 16),
-                  Text('加载失败: $error'),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () =>
-                        ref.invalidate(careRecipientsProvider),
-                    child: const Text('重试'),
-                  ),
-                ],
+      body: recipientsAsync.when(
+        data: (recipients) {
+          if (recipients.isEmpty) {
+            return _buildEmptyStateWithTopBar(context, ref);
+          }
+          return _buildContentWithTopBar(context, ref, recipients);
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline,
+                  size: 48, color: AppColors.error),
+              const SizedBox(height: 16),
+              Text('加载失败: $error'),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => ref.invalidate(careRecipientsProvider),
+                child: const Text('重试'),
               ),
-            ),
+            ],
           ),
-          // Glassmorphism 固定顶栏
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: SafeArea(
-              bottom: false,
-              child: _buildGlassTopBar(context, ref),
-            ),
-          ),
-          // SOS 按钮固定在底部
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Container(
-              color: AppColors.background,
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-              child: SafeArea(
-                top: false,
-                child: const SosButton(),
-              ),
-            ),
-          ),
-        ],
+        ),
+      ),
+      // SOS 按钮固定在底部
+      bottomNavigationBar: Container(
+        color: AppColors.background,
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+        child: SafeArea(
+          top: false,
+          child: const SosButton(),
+        ),
       ),
     );
   }
@@ -179,90 +157,104 @@ class HomePage extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 88, 16, 120),
-      children: [
-        Container(
-          padding: const EdgeInsets.all(32),
-          decoration: BoxDecoration(
-            color: AppColors.surfaceContainerLowest,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.shadow,
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                '🏥',
-                style: TextStyle(fontSize: 64),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                AppTexts.noCareRecipients,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                AppTexts.addCareRecipientHint,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: AppColors.textSecondary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                height: 48,
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => context.push(AppRoutes.addCareRecipient),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                  ),
-                  child: const Text(
-                    AppTexts.addCareRecipientBtn,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+  Widget _buildEmptyStateWithTopBar(BuildContext context, WidgetRef ref) {
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(child: _buildGlassTopBar(context, ref)),
+        SliverToBoxAdapter(child: _buildEmptyStateBody(context)),
+        const SliverFillRemaining(hasScrollBody: false, child: SizedBox(height: 100)),
       ],
     );
   }
 
-  Widget _buildContent(
+  Widget _buildEmptyStateBody(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 24, 16, 100),
+      child: Container(
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.shadow,
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('🏥', style: TextStyle(fontSize: 64)),
+            const SizedBox(height: 20),
+            Text(
+              AppTexts.noCareRecipients,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              AppTexts.addCareRecipientHint,
+              style: const TextStyle(
+                fontSize: 14,
+                color: AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              height: 48,
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => context.push(AppRoutes.addCareRecipient),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                ),
+                child: const Text(
+                  AppTexts.addCareRecipientBtn,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContentWithTopBar(
     BuildContext context,
     WidgetRef ref,
     List<CareRecipient> recipients,
   ) {
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 88, 16, 120),
-      itemCount: recipients.length,
-      itemBuilder: (context, index) {
-        final recipient = recipients[index];
-        return _buildRecipientSection(context, ref, recipient);
-      },
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(child: _buildGlassTopBar(context, ref)),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+          sliver: SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                final recipient = recipients[index];
+                return _buildRecipientSection(context, ref, recipient);
+              },
+              childCount: recipients.length,
+            ),
+          ),
+        ),
+      ],
     );
   }
 

@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # PR 和 push 到 main 都运行：代码分析 + 测试
+  analyze:
+    name: Analyze & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.3'
+          channel: 'stable'
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Test
+        run: flutter test
+
+  # push 到 main 时构建 iOS（仅 macOS runner 可构建 iOS）
+  build-ios:
+    name: Build iOS
+    runs-on: macos-latest
+    needs: analyze
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.3'
+          channel: 'stable'
+          xcode-version: '16.0'
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build iOS (Simulator)
+        run: flutter build ios --simulator --no-codesign
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build
+          path: build/ios/iphonesimulator/Runner.app
+          retention-days: 7
+
+  # push 到 main 时构建 Android
+  build-android:
+    name: Build Android
+    runs-on: ubuntu-latest
+    needs: analyze
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.3'
+          channel: 'stable'
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Build Android APK (debug)
+        run: flutter build apk --debug
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 7

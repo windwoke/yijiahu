@@ -1,0 +1,73 @@
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# iOS
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/AppFrameworkInfo.plist
+ios/Podfile.lock
+
+# Xcode
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata
+*.xccheckout
+*.moved-aside
+DerivedData
+*.hmap
+*.ipa
+*.xcuserstate
+*.dSYM.zip
+*.dSYM
+
+# Android
+android/.gradle/
+android/app/build/
+android/build/
+*.jks
+*.keystore
+
+# Environment & Secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.p12
+*.key
+credentials.json
+
+# Firebase
+firebase.json
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test
+coverage/
+*.lcov
+
+# Release artifacts
+*.apk
+*.aab
+*.app
+*.ipa

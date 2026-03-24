@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+
+# Secrets
+*.pem
+*.key
+credentials.json
+
+# Logs
+logs/
+*.log

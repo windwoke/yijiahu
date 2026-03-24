@@ -1,0 +1,122 @@
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Family, SubscriptionPlan } from './entities/family.entity';
+import { FamilyMember, FamilyMemberRole } from './entities/family-member.entity';
+import { User } from '../user/entities/user.entity';
+import { CreateFamilyDto, UpdateFamilyDto, JoinFamilyDto, UpdateMemberDto } from './dto/family.dto';
+
+@Injectable()
+export class FamilyService {
+  constructor(
+    @InjectRepository(Family) private familyRepo: Repository<Family>,
+    @InjectRepository(FamilyMember) private memberRepo: Repository<FamilyMember>,
+  ) {}
+
+  private generateInviteCode(): string {
+    return Math.random().toString(36).slice(2, 8).toUpperCase();
+  }
+
+  async create(userId: string, dto: CreateFamilyDto) {
+    // 创建家庭
+    const family = this.familyRepo.create({
+      name: dto.name,
+      inviteCode: this.generateInviteCode(),
+      subscriptionPlan: SubscriptionPlan.FREE,
+    });
+    await this.familyRepo.save(family);
+
+    // 创建者自动成为 owner
+    const user = await this.memberRepo.manager.getRepository(User).findOne({ where: { id: userId } });
+    const member = this.memberRepo.create({
+      familyId: family.id,
+      userId,
+      nickname: user?.name || '家庭成员',
+      role: FamilyMemberRole.OWNER,
+    });
+    await this.memberRepo.save(member);
+
+    return this.findById(family.id, userId);
+  }
+
+  async findById(familyId: string, userId: string) {
+    const family = await this.familyRepo.findOne({ where: { id: familyId } });
+    if (!family) throw new NotFoundException('家庭不存在');
+
+    const members = await this.memberRepo.find({
+      where: { familyId },
+      relations: ['user'],
+    });
+    const myMember = members.find((m) => m.userId === userId);
+
+    return {
+      ...family,
+      myRole: myMember?.role,
+      memberCount: members.length,
+    };
+  }
+
+  async update(familyId: string, userId: string, dto: UpdateFamilyDto) {
+    await this.checkPermission(familyId, userId, [FamilyMemberRole.OWNER, FamilyMemberRole.ADMIN]);
+    await this.familyRepo.update(familyId, dto);
+    return this.findById(familyId, userId);
+  }
+
+  async join(userId: string, dto: JoinFamilyDto) {
+    const family = await this.familyRepo.findOne({ where: { inviteCode: dto.inviteCode } });
+    if (!family) throw new NotFoundException('邀请码无效');
+
+    const existing = await this.memberRepo.findOne({ where: { familyId: family.id, userId } });
+    if (existing) throw new BadRequestException('您已在该家庭中');
+
+    const user = await this.memberRepo.manager.getRepository(User).findOne({ where: { id: userId } });
+    const member = this.memberRepo.create({
+      familyId: family.id,
+      userId,
+      nickname: user?.name || '家庭成员',
+      role: FamilyMemberRole.MEMBER,
+    });
+    await this.memberRepo.save(member);
+
+    return this.findById(family.id, userId);
+  }
+
+  async leave(familyId: string, userId: string) {
+    const member = await this.memberRepo.findOne({ where: { familyId, userId } });
+    if (!member) throw new NotFoundException('您不是该家庭成员');
+    if (member.role === FamilyMemberRole.OWNER) {
+      throw new BadRequestException('创建者不能退出家庭，请先转让管理员权限');
+    }
+    await this.memberRepo.delete(member.id);
+    return { message: '已退出家庭' };
+  }
+
+  async findMembers(familyId: string, userId: string) {
+    await this.checkPermission(familyId, userId);
+    return this.memberRepo.find({
+      where: { familyId },
+      relations: ['user'],
+      order: { joinedAt: 'ASC' },
+    });
+  }
+
+  async updateMember(familyId: string, memberId: string, userId: string, dto: UpdateMemberDto) {
+    await this.checkPermission(familyId, userId, [FamilyMemberRole.OWNER, FamilyMemberRole.ADMIN]);
+    const member = await this.memberRepo.findOne({ where: { id: memberId, familyId } });
+    if (!member) throw new NotFoundException('成员不存在');
+    Object.assign(member, dto);
+    return this.memberRepo.save(member);
+  }
+
+  private async checkPermission(
+    familyId: string,
+    userId: string,
+    roles: FamilyMemberRole[] = [FamilyMemberRole.OWNER, FamilyMemberRole.ADMIN, FamilyMemberRole.MEMBER],
+  ) {
+    const member = await this.memberRepo.findOne({ where: { familyId, userId } });
+    if (!member) throw new NotFoundException('您不是该家庭成员');
+    if (!roles.includes(member.role)) {
+      throw new BadRequestException('您没有权限执行此操作');
+    }
+  }
+}

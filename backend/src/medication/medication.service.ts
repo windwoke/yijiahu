@@ -1,0 +1,40 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Medication } from './entities/medication.entity';
+import { CreateMedicationDto, UpdateMedicationDto } from './dto/medication.dto';
+
+@Injectable()
+export class MedicationService {
+  constructor(@InjectRepository(Medication) private repo: Repository<Medication>) {}
+
+  create(recipientId: string, dto: CreateMedicationDto) {
+    const medication = this.repo.create({ recipientId, ...dto });
+    return this.repo.save(medication);
+  }
+
+  findByRecipient(recipientId: string) {
+    return this.repo.find({
+      where: { recipientId },
+      order: { createdAt: 'ASC' },
+    });
+  }
+
+  async findOne(id: string) {
+    const medication = await this.repo.findOne({ where: { id } });
+    if (!medication) throw new NotFoundException('药品不存在');
+    return medication;
+  }
+
+  async update(id: string, dto: UpdateMedicationDto) {
+    await this.findOne(id);
+    await this.repo.update(id, dto);
+    return this.findOne(id);
+  }
+
+  async delete(id: string) {
+    await this.findOne(id);
+    await this.repo.delete(id);
+    return { message: '药品已删除' };
+  }
+}

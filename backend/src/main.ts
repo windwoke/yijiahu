@@ -40,7 +40,7 @@ async function bootstrap() {
   SwaggerModule.setup('api-docs', app, document);
 
   const port = process.env.PORT || 3000;
-  await app.listen(port);
+  void app.listen(port);
   console.log(`🚀 一家护 API 运行在 http://localhost:${port}`);
   console.log(`📚 API 文档 http://localhost:${port}/api-docs`);
 }

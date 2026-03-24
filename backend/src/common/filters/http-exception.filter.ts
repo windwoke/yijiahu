@@ -42,7 +42,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       code,
       message,
       errors,
-      request_id: ctx.getRequest().headers['x-request-id'] || '',
+      request_id: (ctx.getRequest() as Record<string, unknown>)['headers']?.['x-request-id'] || '',
       timestamp: new Date().toISOString(),
     });
   }

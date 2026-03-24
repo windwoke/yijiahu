@@ -19,7 +19,7 @@ export class UserController {
 
   @Patch('me')
   @ApiOperation({ summary: '更新当前用户信息' })
-  updateMe(@CurrentUser('id') userId: string, @Body() body: any) {
+  updateMe(@CurrentUser('id') userId: string, @Body() body: Record<string, unknown>) {
     return this.userService.update(userId, body);
   }
 }

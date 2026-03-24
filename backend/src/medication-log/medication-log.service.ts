@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between } from 'typeorm';
 import { MedicationLog, MedicationLogStatus } from './entities/medication-log.entity';
 import { Medication } from '../medication/entities/medication.entity';
-import { CheckInDto, CreateMedicationLogDto } from './dto/medication-log.dto';
+import { CheckInDto } from './dto/medication-log.dto';
 
 @Injectable()
 export class MedicationLogService {

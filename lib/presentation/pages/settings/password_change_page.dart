@@ -23,6 +23,38 @@ class _PasswordChangePageState extends ConsumerState<PasswordChangePage> {
   bool _obscureNew = true;
   bool _obscureConfirm = true;
 
+  /// 密码强度：0=无, 1=弱, 2=中, 3=强
+  int _passwordStrength = 0;
+  String _strengthLabel = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _newPwdController.addListener(_onPasswordChanged);
+  }
+
+  void _onPasswordChanged() {
+    final pwd = _newPwdController.text;
+    if (pwd.isEmpty) {
+      setState(() { _passwordStrength = 0; _strengthLabel = ''; });
+    } else if (pwd.length < 6) {
+      setState(() { _passwordStrength = 1; _strengthLabel = '太短，至少6位'; });
+    } else if (pwd.length < 10) {
+      setState(() { _passwordStrength = 2; _strengthLabel = '中等强度'; });
+    } else {
+      final hasUpper = pwd.contains(RegExp(r'[A-Z]'));
+      final hasDigit = pwd.contains(RegExp(r'[0-9]'));
+      final hasSpecial = pwd.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
+      if (hasUpper && hasDigit && hasSpecial) {
+        setState(() { _passwordStrength = 3; _strengthLabel = '高强度'; });
+      } else if ((hasUpper && hasDigit) || (hasUpper && hasSpecial) || (hasDigit && hasSpecial)) {
+        setState(() { _passwordStrength = 3; _strengthLabel = '强'; });
+      } else {
+        setState(() { _passwordStrength = 2; _strengthLabel = '中等强度'; });
+      }
+    }
+  }
+
   @override
   void dispose() {
     _oldPwdController.dispose();
@@ -69,7 +101,7 @@ class _PasswordChangePageState extends ConsumerState<PasswordChangePage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('修改密码'),
+        title: const Text('修改密码', style: TextStyle(fontWeight: FontWeight.w600)),
         centerTitle: true,
         elevation: 0,
         backgroundColor: AppColors.background,
@@ -83,7 +115,27 @@ class _PasswordChangePageState extends ConsumerState<PasswordChangePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 8),
+                // 说明
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline, color: AppColors.primary, size: 20),
+                      const SizedBox(width: 10),
+                      const Expanded(
+                        child: Text(
+                          '为保障账户安全，请定期更换密码',
+                          style: TextStyle(fontSize: 13, color: AppColors.primary),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
                 _buildInputCard(
                   children: [
                     _buildTextField(
@@ -118,12 +170,18 @@ class _PasswordChangePageState extends ConsumerState<PasswordChangePage> {
                     ),
                   ],
                 ),
+                // 密码强度指示器
+                if (_passwordStrength > 0) ...[
+                  const SizedBox(height: 12),
+                  _buildStrengthIndicator(),
+                ],
                 const SizedBox(height: 32),
                 FilledButton(
                   onPressed: _isLoading ? null : _submit,
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     padding: const EdgeInsets.symmetric(vertical: 16),
+                    elevation: 0,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   child: _isLoading
@@ -132,13 +190,49 @@ class _PasswordChangePageState extends ConsumerState<PasswordChangePage> {
                           height: 24,
                           child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                         )
-                      : const Text('保存', style: TextStyle(fontSize: 16)),
+                      : const Text('保存', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                 ),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildStrengthIndicator() {
+    final color = _passwordStrength == 1
+        ? AppColors.strengthWeak
+        : _passwordStrength == 2
+            ? AppColors.strengthMedium
+            : AppColors.strengthStrong;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(child: Container(height: 4, decoration: BoxDecoration(
+              color: _passwordStrength >= 1 ? color : AppColors.grey200,
+              borderRadius: BorderRadius.circular(2),
+            ))),
+            const SizedBox(width: 4),
+            Expanded(child: Container(height: 4, decoration: BoxDecoration(
+              color: _passwordStrength >= 2 ? color : AppColors.grey200,
+              borderRadius: BorderRadius.circular(2),
+            ))),
+            const SizedBox(width: 4),
+            Expanded(child: Container(height: 4, decoration: BoxDecoration(
+              color: _passwordStrength >= 3 ? color : AppColors.grey200,
+              borderRadius: BorderRadius.circular(2),
+            ))),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Text(
+          '密码强度：$_strengthLabel',
+          style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w500),
+        ),
+      ],
     );
   }
 
@@ -162,7 +256,7 @@ class _PasswordChangePageState extends ConsumerState<PasswordChangePage> {
   Widget _buildDivider() {
     return const Padding(
       padding: EdgeInsets.symmetric(horizontal: 16),
-      child: Divider(height: 1, thickness: 0.5),
+      child: Divider(height: 1, thickness: 0.5, color: AppColors.border),
     );
   }
 
@@ -179,23 +273,40 @@ class _PasswordChangePageState extends ConsumerState<PasswordChangePage> {
       child: TextFormField(
         controller: controller,
         obscureText: obscure,
-        style: const TextStyle(fontSize: 15),
+        style: const TextStyle(fontSize: 15, color: AppColors.textPrimary),
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
-          hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-          labelStyle: const TextStyle(color: Color(0xFF00BFA5), fontSize: 14),
-          prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF00BFA5), size: 20),
+          hintStyle: const TextStyle(color: AppColors.grey400, fontSize: 14),
+          labelStyle: const TextStyle(color: AppColors.primary, fontSize: 14),
+          prefixIcon: const Icon(Icons.lock_outline, color: AppColors.primary, size: 20),
           suffixIcon: IconButton(
             icon: Icon(obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                color: Colors.grey[400], size: 20),
+                color: AppColors.grey400, size: 20),
             onPressed: onToggleObscure,
           ),
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-          errorBorder: InputBorder.none,
-          focusedErrorBorder: InputBorder.none,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.border),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.border),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.primary, width: 2),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.error),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.error, width: 2),
+          ),
+          filled: true,
+          fillColor: Colors.white,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
         validator: validator,

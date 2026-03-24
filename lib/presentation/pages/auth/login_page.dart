@@ -34,11 +34,28 @@ class _PhoneFieldState extends State<_PhoneField> {
       key: const ValueKey('phone_field'),
       keyboardType: TextInputType.phone,
       maxLength: 11,
-      decoration: const InputDecoration(
+      style: const TextStyle(fontSize: 16, color: AppColors.textPrimary),
+      decoration: InputDecoration(
         labelText: '手机号',
         hintText: '请输入手机号',
-        prefixIcon: Icon(Icons.phone_outlined),
+        hintStyle: const TextStyle(color: AppColors.grey400),
+        prefixIcon: const Icon(Icons.phone_outlined, color: AppColors.grey500, size: 20),
         counterText: '',
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+        ),
       ),
     );
   }
@@ -69,12 +86,28 @@ class _CodeFieldState extends State<_CodeField> {
       key: const ValueKey('code_field'),
       keyboardType: TextInputType.number,
       maxLength: 6,
-      obscureText: true,
-      decoration: const InputDecoration(
+      style: const TextStyle(fontSize: 16, color: AppColors.textPrimary),
+      decoration: InputDecoration(
         labelText: '验证码',
         hintText: '请输入验证码',
-        prefixIcon: Icon(Icons.lock_outlined),
+        hintStyle: const TextStyle(color: AppColors.grey400),
+        prefixIcon: const Icon(Icons.lock_outlined, color: AppColors.grey500, size: 20),
         counterText: '',
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+        ),
       ),
     );
   }
@@ -105,11 +138,28 @@ class _PasswordFieldState extends State<_PasswordField> {
       key: const ValueKey('password_field'),
       obscureText: true,
       maxLength: 20,
-      decoration: const InputDecoration(
+      style: const TextStyle(fontSize: 16, color: AppColors.textPrimary),
+      decoration: InputDecoration(
         labelText: '密码',
         hintText: '请输入密码',
-        prefixIcon: Icon(Icons.lock_outline),
+        hintStyle: const TextStyle(color: AppColors.grey400),
+        prefixIcon: const Icon(Icons.lock_outline, color: AppColors.grey500, size: 20),
         counterText: '',
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+        ),
       ),
     );
   }
@@ -149,9 +199,21 @@ class _CountdownButtonState extends State<_CountdownButton> {
 
   @override
   Widget build(BuildContext context) {
-    return OutlinedButton(
+    return FilledButton(
       onPressed: _countdown > 0 ? null : _handleSendCode,
-      child: Text(_countdown > 0 ? '${_countdown}s' : '获取验证码'),
+      style: FilledButton.styleFrom(
+        backgroundColor: _countdown > 0 ? AppColors.grey200 : AppColors.primary,
+        foregroundColor: _countdown > 0 ? AppColors.grey500 : Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
+      ),
+      child: Text(
+        _countdown > 0 ? '${_countdown}s' : '获取验证码',
+        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+      ),
     );
   }
 
@@ -243,97 +305,177 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 60),
-              Center(
-                child: Column(
-                  children: [
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Icon(
-                        Icons.favorite,
-                        color: Colors.white,
-                        size: 40,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      AppTexts.appName,
-                      style: Theme.of(context).textTheme.headlineLarge,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      AppTexts.appSlogan,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
+      body: Stack(
+        children: [
+          // 品牌渐变背景
+          Positioned.fill(
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFFF0F7F4), // 淡绿背景
+                    Color(0xFFFAF9F7), // 米白背景
                   ],
                 ),
               ),
-              const SizedBox(height: 60),
-              _PhoneField(key: _phoneFieldKey),
-              const SizedBox(height: 16),
-              if (_usePassword)
-                _PasswordField(key: _passwordFieldKey)
-              else
-                Row(
-                  children: [
-                    Expanded(
-                      child: _CodeField(key: _codeFieldKey),
-                    ),
-                    const SizedBox(width: 12),
-                    SizedBox(
-                      width: 120,
-                      child: _CountdownButton(
-                        onSendCode: _sendCode,
-                      ),
-                    ),
-                  ],
-                ),
-              const SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: authState.isLoading ? null : _login,
-                child: authState.isLoading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Text('登录'),
-              ),
-              const SizedBox(height: 16),
-              Center(
-                child: TextButton(
-                  onPressed: () {
-                    setState(() => _usePassword = !_usePassword);
-                  },
-                  child: Text(
-                    _usePassword ? '验证码登录' : '密码登录',
-                    style: const TextStyle(color: Color(0xFF00BFA5)),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                AppTexts.disclaimer,
-                style: Theme.of(context).textTheme.bodySmall,
-                textAlign: TextAlign.center,
-              ),
-            ],
+            ),
           ),
-        ),
+          // 右上角装饰圆
+          Positioned(
+            top: -60,
+            right: -60,
+            child: Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.primary.withValues(alpha: 0.06),
+              ),
+            ),
+          ),
+          // 左下角装饰圆
+          Positioned(
+            bottom: 100,
+            left: -80,
+            child: Container(
+              width: 160,
+              height: 160,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.coral.withValues(alpha: 0.05),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 40),
+                  Center(
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 72,
+                          height: 72,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [AppColors.primary, AppColors.primaryLight],
+                            ),
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primary.withValues(alpha: 0.3),
+                                blurRadius: 20,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.favorite,
+                            color: Colors.white,
+                            size: 36,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          AppTexts.appName,
+                          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          AppTexts.appSlogan,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: AppColors.grey500,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 48),
+                  _PhoneField(key: _phoneFieldKey),
+                  const SizedBox(height: 16),
+                  if (_usePassword)
+                    _PasswordField(key: _passwordFieldKey)
+                  else
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _CodeField(key: _codeFieldKey),
+                        ),
+                        const SizedBox(width: 12),
+                        SizedBox(
+                          width: 120,
+                          child: _CountdownButton(
+                            onSendCode: _sendCode,
+                          ),
+                        ),
+                      ],
+                    ),
+                  const SizedBox(height: 32),
+                  ElevatedButton(
+                    onPressed: authState.isLoading ? null : _login,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: authState.isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text('登录', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                  ),
+                  const SizedBox(height: 16),
+                  Center(
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      child: TextButton(
+                        key: ValueKey(_usePassword),
+                        onPressed: () {
+                          setState(() => _usePassword = !_usePassword);
+                        },
+                        child: Text(
+                          _usePassword ? '验证码登录' : '密码登录',
+                          style: const TextStyle(
+                            color: AppColors.primary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  Text(
+                    AppTexts.disclaimer,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.grey400,
+                      fontSize: 11,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -41,4 +41,21 @@ class AppColors {
   // 边框色
   static const Color border = Color(0xFFE5E5E5);
   static const Color borderLight = Color(0xFFF0F0F0);
+
+  // 灰度色（用于文字、图标等）
+  static const Color grey50  = Color(0xFFFAFAFA);
+  static const Color grey100 = Color(0xFFF5F5F5);
+  static const Color grey200 = Color(0xFFEEEEEE);
+  static const Color grey300 = Color(0xFFE0E0E0);
+  static const Color grey400 = Color(0xFFBDBDBD);  // 占位提示文字
+  static const Color grey500 = Color(0xFF9E9E9E);  // 次要图标
+  static const Color grey600 = Color(0xFF757575);  // 次要说明文字
+  static const Color grey700 = Color(0xFF616161);  // 辅助说明
+  static const Color grey800 = Color(0xFF424242);
+  static const Color grey900 = Color(0xFF212121);
+
+  // 密码强度色
+  static const Color strengthWeak    = Color(0xFFFF3B30);
+  static const Color strengthMedium = Color(0xFFFFB800);
+  static const Color strengthStrong = Color(0xFF34C759);
 }

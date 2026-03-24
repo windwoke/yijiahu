@@ -22,12 +22,12 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
   final _emergencyContactController = TextEditingController();
   final _emergencyPhoneController = TextEditingController();
 
-  String _gender = 'male';
+  String _gender = ''; // '' = 未选择, 'male' = 男, 'female' = 女
   DateTime? _birthDate;
   String? _bloodType;
   bool _isLoading = false;
 
-  final List<String> _avatarOptions = ['👴', '👵', '👨', '👩', '🧓', '👴', '👤'];
+  final List<String> _avatarOptions = ['👴', '👵', '👨', '👩', '🧓', '🧑', '👤'];
   String _selectedAvatar = '👴';
 
   @override
@@ -277,8 +277,8 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
           labelText: label,
           hintText: hint,
           hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-          labelStyle: const TextStyle(color: Color(0xFF00BFA5), fontSize: 14),
-          prefixIcon: Icon(icon, color: const Color(0xFF00BFA5), size: 20),
+          labelStyle: const TextStyle(color: AppColors.primary, fontSize: 14),
+          prefixIcon: Icon(icon, color: AppColors.primary, size: 20),
           border: InputBorder.none,
           enabledBorder: InputBorder.none,
           focusedBorder: InputBorder.none,
@@ -301,6 +301,8 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
           _genderChip('男', 'male'),
           const SizedBox(width: 12),
           _genderChip('女', 'female'),
+          const SizedBox(width: 12),
+          _genderChip('未知', ''),
         ],
       ),
     );
@@ -337,7 +339,7 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
           children: [
-            const Icon(Icons.cake_outlined, color: Color(0xFF00BFA5), size: 20),
+            const Icon(Icons.cake_outlined, color: AppColors.primary, size: 20),
             const SizedBox(width: 12),
             Expanded(
               child: Column(

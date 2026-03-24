@@ -10,9 +10,6 @@ build/
 # iOS
 ios/Pods/
 ios/.symlinks/
-ios/Flutter/Flutter.podspec
-ios/Flutter/Generated.xcconfig
-ios/Flutter/AppFrameworkInfo.plist
 ios/Podfile.lock
 
 # Xcode

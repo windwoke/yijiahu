@@ -8,6 +8,7 @@ import { UserService } from './user.service';
 import { FamilyMember } from '../family/entities/family-member.entity';
 import { Family } from '../family/entities/family.entity';
 import { CareRecipient } from '../care-recipient/entities/care-recipient.entity';
+import { FamilyService } from '../family/family.service';
 
 @ApiTags('用户')
 @ApiBearerAuth()
@@ -19,6 +20,7 @@ export class UserController {
     @InjectRepository(FamilyMember) private memberRepo: Repository<FamilyMember>,
     @InjectRepository(Family) private familyRepo: Repository<Family>,
     @InjectRepository(CareRecipient) private recipientRepo: Repository<CareRecipient>,
+    private readonly familyService: FamilyService,
   ) {}
 
   @Get('me')
@@ -31,7 +33,6 @@ export class UserController {
   @ApiOperation({ summary: '获取当前用户所在家庭' })
   async getMyFamily(@CurrentUser('id') userId: string) {
     const members = await this.memberRepo.find({ where: { userId } });
-    if (members.length === 0) return { family: null };
 
     // 优先返回有照护对象的家庭
     for (const member of members) {
@@ -45,9 +46,14 @@ export class UserController {
     }
 
     // 没有照护对象则返回第一个
-    const firstMember = members[0];
-    const family = await this.familyRepo.findOne({ where: { id: firstMember.familyId } });
-    if (!family) return { family: null };
+    if (members.length > 0) {
+      const firstMember = members[0];
+      const family = await this.familyRepo.findOne({ where: { id: firstMember.familyId } });
+      if (family) return { family };
+    }
+
+    // 新用户：自动创建家庭
+    const family = await this.familyService.create(userId, { name: '我的家庭' });
     return { family };
   }
 

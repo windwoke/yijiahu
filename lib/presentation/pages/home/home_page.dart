@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/constants.dart';
+import '../../../core/env/env_config.dart';
 import '../../../core/router/app_router.dart';
 import '../../../data/models/models.dart';
 import '../../../core/network/api_client.dart';
@@ -22,30 +23,42 @@ class HomePage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: recipientsAsync.when(
-        data: (recipients) {
-          if (recipients.isEmpty) {
-            return _buildEmptyStateWithTopBar(context, ref);
-          }
-          return _buildContentWithTopBar(context, ref, recipients);
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.error_outline,
-                  size: 48, color: AppColors.error),
-              const SizedBox(height: 16),
-              Text('加载失败: $error'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => ref.invalidate(careRecipientsProvider),
-                child: const Text('重试'),
+      body: Stack(
+        children: [
+          // 主体内容（滚动）
+          recipientsAsync.when(
+            data: (recipients) {
+              if (recipients.isEmpty) {
+                return _buildEmptyStateBody(context, ref);
+              }
+              return _buildContentBody(context, ref, recipients);
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, stack) => Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.error_outline,
+                      size: 48, color: AppColors.error),
+                  const SizedBox(height: 16),
+                  Text('加载失败: $error'),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => ref.invalidate(careRecipientsProvider),
+                    child: const Text('重试'),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+          // 固定顶栏
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: _buildGlassTopBar(context, ref),
+          ),
+        ],
       ),
       // SOS 按钮固定在底部
       bottomNavigationBar: Container(
@@ -61,11 +74,8 @@ class HomePage extends ConsumerWidget {
 
   Widget _buildGlassTopBar(BuildContext context, WidgetRef ref) {
     final family = ref.watch(currentFamilyProvider);
-    final membersAsync = family != null
-        ? ref.watch(familyMembersProvider(family.id))
-        : null;
-    final onlineCount =
-        membersAsync?.value?.where((m) => m.isOnline).length ?? 0;
+    // 在线人数：后端暂无 presence 追踪，默认至少显示当前用户自己（1）
+    final onlineCount = 1;
 
     return Padding(
       padding: EdgeInsets.only(
@@ -91,7 +101,7 @@ class HomePage extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
-                  // 家庭 emoji
+                  // 家庭头像
                   Container(
                     width: 36,
                     height: 36,
@@ -99,11 +109,21 @@ class HomePage extends ConsumerWidget {
                       color: AppColors.surfaceContainerLow,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Center(
-                      child: Text(
-                        '👨‍👩‍👧',
-                        style: const TextStyle(fontSize: 18),
-                      ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: family?.avatarUrl != null && family!.avatarUrl!.isNotEmpty
+                          ? Image.network(
+                              ApiConfig.avatarUrl(family.avatarUrl!) ?? '',
+                              width: 36,
+                              height: 36,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => const Center(
+                                child: Text('👨‍👩‍👧', style: TextStyle(fontSize: 18)),
+                              ),
+                            )
+                          : const Center(
+                              child: Text('👨‍👩‍👧', style: TextStyle(fontSize: 18)),
+                            ),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -164,17 +184,18 @@ class HomePage extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyStateWithTopBar(BuildContext context, WidgetRef ref) {
+  Widget _buildEmptyStateBody(BuildContext context, WidgetRef ref) {
+    final topHeight = MediaQuery.of(context).padding.top + 72;
     return CustomScrollView(
       slivers: [
-        SliverToBoxAdapter(child: _buildGlassTopBar(context, ref)),
-        SliverToBoxAdapter(child: _buildEmptyStateBody(context)),
+        SliverToBoxAdapter(child: SizedBox(height: topHeight)),
+        SliverToBoxAdapter(child: _buildEmptyStateContent(context)),
         const SliverFillRemaining(hasScrollBody: false, child: SizedBox(height: 100)),
       ],
     );
   }
 
-  Widget _buildEmptyStateBody(BuildContext context) {
+  Widget _buildEmptyStateContent(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 100),
       child: Container(
@@ -241,14 +262,15 @@ class HomePage extends ConsumerWidget {
     );
   }
 
-  Widget _buildContentWithTopBar(
+  Widget _buildContentBody(
     BuildContext context,
     WidgetRef ref,
     List<CareRecipient> recipients,
   ) {
+    final topHeight = MediaQuery.of(context).padding.top + 72;
     return CustomScrollView(
       slivers: [
-        SliverToBoxAdapter(child: _buildGlassTopBar(context, ref)),
+        SliverToBoxAdapter(child: SizedBox(height: topHeight)),
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
           sliver: SliverList(

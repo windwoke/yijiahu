@@ -9,6 +9,7 @@ import '../../../core/constants/constants.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/env/env_config.dart';
 import '../../../data/models/models.dart';
+import '../../../data/models/family.dart' as models;
 import '../../providers/family_provider.dart';
 
 /// 照护日志页
@@ -73,7 +74,7 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
           SizedBox(height: MediaQuery.of(context).padding.top),
           // 照护对象切换器（全部 + 各照护人）
           recipientsAsync.when(
-            data: (recipients) => _buildRecipientSwitcher(recipients),
+            data: (recipients) => _buildRecipientSwitcher(recipients, family),
             loading: () => const SizedBox(height: 56),
             error: (_, __) => const SizedBox(height: 56),
           ),
@@ -101,7 +102,7 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
   }
 
   /// 全部 + 照护对象切换器
-  Widget _buildRecipientSwitcher(List<CareRecipient> recipients) {
+  Widget _buildRecipientSwitcher(List<CareRecipient> recipients, models.Family? family) {
     return Container(
       height: 56,
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -111,10 +112,11 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
           if (index == 0) {
-            // 全部
+            // 全部 - 使用家庭头像
             final isSelected = _selectedRecipientId == null;
             return _buildRecipientChip(
               emoji: '👨‍👩‍👧‍👦',
+              avatarUrl: family?.avatarUrl,
               name: '全部',
               isSelected: isSelected,
               onTap: () => setState(() => _selectedRecipientId = null),
@@ -135,6 +137,7 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
 
   Widget _buildRecipientChip({
     required String emoji,
+    String? avatarUrl,
     required String name,
     required bool isSelected,
     required VoidCallback onTap,
@@ -164,7 +167,19 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 18)),
+            if (avatarUrl != null && avatarUrl.isNotEmpty)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.network(
+                  ApiConfig.avatarUrl(avatarUrl) ?? '',
+                  width: 20,
+                  height: 20,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Text(emoji, style: const TextStyle(fontSize: 18)),
+                ),
+              )
+            else
+              Text(emoji, style: const TextStyle(fontSize: 18)),
             const SizedBox(width: 6),
             Text(
               name,

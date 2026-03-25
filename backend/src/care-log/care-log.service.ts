@@ -34,7 +34,7 @@ export class CareLogService {
     recipientId?: string;
     type?: string;
     limit?: number;
-  } = {}): Promise<CareLog[]> {
+  } = {}): Promise<any[]> {
     const qb = this.repo
       .createQueryBuilder('log')
       .where('log.familyId = :familyId', { familyId })
@@ -50,7 +50,16 @@ export class CareLogService {
       qb.take(options.limit);
     }
 
-    return qb.getMany();
+    const logs = await qb.getMany();
+    return logs.map(log => ({
+      id: log.id,
+      recipientId: log.recipientId,
+      authorId: log.authorId,
+      authorName: log.authorName,
+      type: log.type,
+      content: log.content,
+      createdAt: formatLocalTime(log.createdAt),
+    }));
   }
 
   async findByRecipient(recipientId: string, limit = 50): Promise<CareLog[]> {
@@ -60,4 +69,13 @@ export class CareLogService {
       take: limit,
     });
   }
+}
+
+/** 格式化日期为本地时间字符串（YYYY-MM-DD HH:mm:ss） */
+function formatLocalTime(date: Date): string {
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  // DB 存的北京时间传给 TypeORM 后变成 UTC 时间
+  // 加回 8 小时再用 UTC API 取值，得出北京时间
+  const local = new Date(date.getTime() + 8 * 60 * 60 * 1000);
+  return `${local.getUTCFullYear()}-${pad(local.getUTCMonth() + 1)}-${pad(local.getUTCDate())} ${pad(local.getUTCHours())}:${pad(local.getUTCMinutes())}:${pad(local.getUTCSeconds())}`;
 }

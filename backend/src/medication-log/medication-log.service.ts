@@ -4,6 +4,7 @@ import { Repository, Between } from 'typeorm';
 import { MedicationLog, MedicationLogStatus } from './entities/medication-log.entity';
 import { Medication } from '../medication/entities/medication.entity';
 import { FamilyMember } from '../family/entities/family-member.entity';
+import { User } from '../user/entities/user.entity';
 import { CheckInDto } from './dto/medication-log.dto';
 
 @Injectable()
@@ -12,6 +13,7 @@ export class MedicationLogService {
     @InjectRepository(MedicationLog) private logRepo: Repository<MedicationLog>,
     @InjectRepository(Medication) private medRepo: Repository<Medication>,
     @InjectRepository(FamilyMember) private memberRepo: Repository<FamilyMember>,
+    @InjectRepository(User) private userRepo: Repository<User>,
   ) {}
 
   /** 生成某一天的所有用药日志 */
@@ -143,22 +145,33 @@ export class MedicationLogService {
 
     const logs = await qb.getMany();
 
-    // 批量查打卡人姓名
-    const memberIds = logs.map(l => l.takenBy).filter(Boolean);
-    const members = memberIds.length > 0
-      ? await this.memberRepo.findBy(memberIds.map(id => ({ id } as any)))
+    // takenBy 存的是 userId，通过 User 表查姓名
+    const userIds = logs.map(l => l.takenBy).filter(Boolean);
+    const users = userIds.length > 0
+      ? await this.userRepo.findBy(userIds.map(id => ({ id } as any)))
       : [];
-    const memberMap = new Map(members.map(m => [m.id, m.nickname]));
+    const userMap = new Map(users.map(u => [u.id, u.name || u.phone]));
 
     return logs.map((log) => ({
       id: log.id,
       type: 'medication',
       content: `${log.medication?.name || ''} 已${log.status === MedicationLogStatus.TAKEN ? '服用' : '跳过'}${log.medication?.dosage ? ' · ' + log.medication.dosage : ''}`,
-      authorName: memberMap.get(log.takenBy!) || '家庭成员',
+      authorName: userMap.get(log.takenBy!) || '家庭成员',
       authorId: log.takenBy,
       recipientId: log.recipientId,
-      time: log.takenAt,
+      // 直接返回格式化好的本地时间字符串，避免时区问题
+      time: formatLocalTime(log.takenAt!),
       status: log.status,
     }));
   }
+}
+
+/** 格式化日期为本地时间字符串（YYYY-MM-DD HH:mm:ss） */
+function formatLocalTime(date: Date): string {
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  // JS Date 的 toLocaleString 在 UTC 时间下会按服务器本地时区解析
+  // DB 存的北京时间 (UTC+8) 传给 TypeORM 后变成 UTC 时间
+  // 需要加回 8 小时再取本地 API，转为北京时间
+  const local = new Date(date.getTime() + 8 * 60 * 60 * 1000);
+  return `${local.getUTCFullYear()}-${pad(local.getUTCMonth() + 1)}-${pad(local.getUTCDate())} ${pad(local.getUTCHours())}:${pad(local.getUTCMinutes())}:${pad(local.getUTCSeconds())}`;
 }

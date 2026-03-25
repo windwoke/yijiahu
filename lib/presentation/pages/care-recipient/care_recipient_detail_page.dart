@@ -727,7 +727,8 @@ class CareRecipientDetailPage extends ConsumerWidget {
             onPressed: () async {
               Navigator.pop(ctx);
               final dio = ref.read(dioProvider);
-              await dio.delete('/care-recipients/${recipient.id}');
+              final familyId = ref.read(currentFamilyProvider)?.id ?? '';
+              await dio.delete('/care-recipients/${recipient.id}', queryParameters: {'familyId': familyId});
               ref.invalidate(careRecipientsProvider);
               ref.invalidate(currentFamilyProvider);
               if (context.mounted) context.pop();

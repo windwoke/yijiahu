@@ -114,8 +114,10 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
       };
 
       if (isEditing) {
+        final familyId = ref.read(currentFamilyProvider)?.id ?? '';
         await dio.patch(
           '/care-recipients/${widget.recipient!.id}',
+          queryParameters: {'familyId': familyId},
           data: data,
         );
       } else {

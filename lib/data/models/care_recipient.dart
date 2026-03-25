@@ -91,8 +91,8 @@ class CareRecipient extends Equatable {
     final conditionsRaw = json['chronicConditions'] ?? json['chronic_conditions'];
 
     return CareRecipient(
-      id: json['id'] as String,
-      name: json['name'] as String,
+      id: json['id'] as String? ?? '',
+      name: json['name'] as String? ?? '',
       avatarEmoji: json['avatarEmoji'] as String? ?? json['avatar'] as String? ?? json['avatar_emoji'] as String? ?? '👤',
       avatarUrl: json['avatarUrl'] as String? ?? json['avatar_url'] as String?,
       birthDate: birth,
@@ -176,7 +176,7 @@ class HealthRecord extends Equatable {
 
   factory HealthRecord.fromJson(Map<String, dynamic> json) {
     return HealthRecord(
-      id: json['id'] as String,
+      id: json['id'] as String? ?? '',
       recipientId: json['recipientId'] as String? ?? json['recipient_id'] as String? ?? '',
       recordType: json['recordType'] as String? ?? json['record_type'] as String? ?? '',
       value: (json['value'] as Map<String, dynamic>?) ?? {},

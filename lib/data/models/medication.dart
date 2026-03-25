@@ -58,14 +58,13 @@ class Medication extends Equatable {
         : <String>[];
 
     return Medication(
-      id: json['id'] as String,
+      id: json['id'] as String? ?? '',
       recipientId: _str(json['recipientId']) ?? _str(json['recipient_id']) ?? '',
-      name: json['name'] as String,
+      name: json['name'] as String? ?? '',
       realName: json['realName'] as String? ?? json['real_name'] as String?,
-      dosage: json['dosage'] as String,
+      dosage: json['dosage'] as String? ?? '',
       unit: json['unit'] as String?,
-      frequency: _parseFrequency(
-          json['frequency'] as String? ?? json['frequency'] as String?),
+      frequency: _parseFrequency(json['frequency'] as String?),
       times: times,
       instructions: json['instructions'] as String?,
       startDate: _parseDate(json['startDate'] ?? json['start_date']) ?? DateTime.now(),
@@ -170,7 +169,7 @@ class MedicationLog extends Equatable {
 
   factory MedicationLog.fromJson(Map<String, dynamic> json) {
     return MedicationLog(
-      id: json['id'] as String,
+      id: json['id'] as String? ?? '',
       medicationId: json['medicationId'] as String? ?? json['medication_id'] as String? ?? '',
       medicationName: json['medicationName'] as String? ?? json['medication_name'] as String? ?? '',
       scheduledTime: json['scheduledTime'] as String? ?? json['scheduled_time'] as String? ?? '',
@@ -202,9 +201,9 @@ class MedicationLogTaker extends Equatable {
 
   factory MedicationLogTaker.fromJson(Map<String, dynamic> json) {
     return MedicationLogTaker(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      avatarUrl: json['avatar_url'] as String?,
+      id: json['id'] as String? ?? '',
+      name: json['name'] as String? ?? '',
+      avatarUrl: json['avatarUrl'] as String? ?? json['avatar_url'] as String?,
     );
   }
 

@@ -89,8 +89,10 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<void> _fetchCurrentUser() async {
     try {
       final response = await _dio!.get('/users/me');
-      final data = response.data['data'] as Map<String, dynamic>;
-      final user = User.fromJson(data);
+      // 后端直接返回用户对象，不是 {data: user}
+      final rawData = response.data;
+      if (rawData is! Map<String, dynamic>) return;
+      final user = User.fromJson(rawData);
       state = state.copyWith(user: user);
     } catch (_) {
       // token 可能已失效，忽略
@@ -168,13 +170,7 @@ class AuthNotifier extends Notifier<AuthState> {
 
       await _prefs?.setString(_tokenKey, token);
 
-      final user = User(
-        id: userData['id'] as String,
-        phone: userData['phone'] as String,
-        name: userData['name'] as String?,
-        avatarUrl: userData['avatar'] as String?,
-        createdAt: DateTime.now(),
-      );
+      final user = User.fromJson(userData);
 
       _countdownTimer?.cancel();
       ref.read(countdownProvider.notifier).state = 0;
@@ -241,13 +237,7 @@ class AuthNotifier extends Notifier<AuthState> {
       if (token == null) throw Exception('登录响应格式错误');
       final userData = data['user'] as Map<String, dynamic>;
       await _prefs?.setString(_tokenKey, token);
-      final user = User(
-        id: userData['id'] as String,
-        phone: userData['phone'] as String,
-        name: userData['name'] as String?,
-        avatarUrl: userData['avatar'] as String?,
-        createdAt: DateTime.now(),
-      );
+      final user = User.fromJson(userData);
       state = AuthState(user: user, accessToken: token, isLoading: false);
     } on DioException catch (e) {
       try {

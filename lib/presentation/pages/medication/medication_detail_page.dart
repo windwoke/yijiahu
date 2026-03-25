@@ -144,7 +144,7 @@ class MedicationDetailPage extends ConsumerWidget {
           const SizedBox(height: 16),
           _buildInfoRow('剂量', '${med.dosage}${med.unit ?? ''}'),
           _buildInfoRow('频率', _frequencyLabel(med.frequency)),
-          _buildInfoRow('开始日期', med.startDate != null ? _formatDate(med.startDate) : '未设置'),
+          _buildInfoRow('开始日期', _formatDate(med.startDate)),
           _buildInfoRow('结束日期', med.endDate != null ? _formatDate(med.endDate!) : '长期服用'),
           if (med.prescribedBy != null && med.prescribedBy!.isNotEmpty)
             _buildInfoRow('开药医生', med.prescribedBy!),

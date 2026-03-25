@@ -33,8 +33,8 @@ class Family extends Equatable {
 
   factory Family.fromJson(Map<String, dynamic> json) {
     return Family(
-      id: json['id'] as String,
-      name: json['name'] as String,
+      id: json['id'] as String? ?? '',
+      name: json['name'] as String? ?? '',
       inviteCode: json['inviteCode'] as String? ?? json['invite_code'] as String? ?? '',
       role: json['myRole'] as String? ?? json['role'] as String? ?? 'member',
       subscriptionPlan: _parsePlan(json['subscriptionPlan'] as String? ?? json['subscription_plan'] as String?),
@@ -99,14 +99,14 @@ class FamilyMember extends Equatable {
 
   factory FamilyMember.fromJson(Map<String, dynamic> json) {
     return FamilyMember(
-      id: json['id'] as String,
+      id: json['id'] as String? ?? '',
       userId: json['userId'] as String? ?? json['user_id'] as String?,
-      nickname: json['nickname'] as String,
-      role: json['role'] as String,
+      nickname: json['nickname'] as String? ?? '',
+      role: json['role'] as String? ?? 'member',
       avatarUrl: json['avatarUrl'] as String? ?? json['avatar_url'] as String?,
       phone: json['phone'] as String?,
       isOnline: json['isOnline'] as bool? ?? json['is_online'] as bool? ?? false,
-      joinedAt: DateTime.parse(json['joinedAt'] as String? ?? json['joined_at'] as String),
+      joinedAt: DateTime.tryParse(json['joinedAt'] as String? ?? json['joined_at'] as String? ?? '') ?? DateTime.now(),
     );
   }
 

@@ -64,7 +64,8 @@ class MedicationDetailPage extends ConsumerWidget {
         color: AppColors.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: AppColors.shadow, blurRadius: 12, offset: const Offset(0, 4)),
+          BoxShadow(color: AppColors.shadowSoft, blurRadius: 12, offset: const Offset(0, 4)),
+          BoxShadow(color: AppColors.shadowSoft2, blurRadius: 6, offset: const Offset(0, 2)),
         ],
       ),
       child: Row(
@@ -131,7 +132,8 @@ class MedicationDetailPage extends ConsumerWidget {
         color: AppColors.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: AppColors.shadow, blurRadius: 8, offset: const Offset(0, 2)),
+          BoxShadow(color: AppColors.shadowSoft, blurRadius: 8, offset: const Offset(0, 2)),
+          BoxShadow(color: AppColors.shadowSoft2, blurRadius: 4, offset: const Offset(0, 1)),
         ],
       ),
       child: Column(
@@ -180,7 +182,8 @@ class MedicationDetailPage extends ConsumerWidget {
         color: AppColors.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: AppColors.shadow, blurRadius: 8, offset: const Offset(0, 2)),
+          BoxShadow(color: AppColors.shadowSoft, blurRadius: 8, offset: const Offset(0, 2)),
+          BoxShadow(color: AppColors.shadowSoft2, blurRadius: 4, offset: const Offset(0, 1)),
         ],
       ),
       child: Column(
@@ -224,7 +227,8 @@ class MedicationDetailPage extends ConsumerWidget {
         color: AppColors.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: AppColors.shadow, blurRadius: 8, offset: const Offset(0, 2)),
+          BoxShadow(color: AppColors.shadowSoft, blurRadius: 8, offset: const Offset(0, 2)),
+          BoxShadow(color: AppColors.shadowSoft2, blurRadius: 4, offset: const Offset(0, 1)),
         ],
       ),
       child: Column(

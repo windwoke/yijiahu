@@ -205,9 +205,14 @@ class HomePage extends ConsumerWidget {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: AppColors.shadow,
+              color: AppColors.shadowSoft,
               blurRadius: 12,
               offset: const Offset(0, 4),
+            ),
+            BoxShadow(
+              color: AppColors.shadowSoft2,
+              blurRadius: 6,
+              offset: const Offset(0, 2),
             ),
           ],
         ),

@@ -14,12 +14,12 @@ enum CareLogType {
 
   Color get color {
     switch (this) {
-      case CareLogType.medication: return const Color(0xFF4A90D9);
-      case CareLogType.health: return const Color(0xFFFF6B6B);
-      case CareLogType.emotion: return const Color(0xFFFFB800);
-      case CareLogType.activity: return const Color(0xFF34C759);
-      case CareLogType.meal: return const Color(0xFFFF9F0A);
-      case CareLogType.other: return const Color(0xFF8E8E93);
+      case CareLogType.medication: return const Color(0xFF4A90D9); // 静谧蓝
+      case CareLogType.health: return const Color(0xFFE07B5D);     // 暖杏
+      case CareLogType.emotion: return const Color(0xFFD4A855);   // 暖琥珀
+      case CareLogType.activity: return const Color(0xFF7B9E87);  // 鼠尾草绿
+      case CareLogType.meal: return const Color(0xFFD4A855);      // 暖琥珀
+      case CareLogType.other: return const Color(0xFF6B6B6B);     // 柔和灰
     }
   }
 

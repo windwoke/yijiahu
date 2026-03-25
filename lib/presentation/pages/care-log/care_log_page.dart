@@ -489,9 +489,14 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
                     : null,
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.shadow,
+                    color: AppColors.shadowSoft,
                     blurRadius: 8,
                     offset: const Offset(0, 2),
+                  ),
+                  BoxShadow(
+                    color: AppColors.shadowSoft2,
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
                   ),
                 ],
               ),

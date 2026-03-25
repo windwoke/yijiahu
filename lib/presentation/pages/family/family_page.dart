@@ -22,6 +22,7 @@ class _ContributionCount {
   final String authorName;
   int careLogs = 0;
   int medCheckins = 0;
+  int rank = 0;
   _ContributionCount({required this.authorId, required this.authorName});
   int get total => careLogs + medCheckins;
 }
@@ -106,10 +107,6 @@ class FamilyPage extends ConsumerWidget {
         backgroundColor: AppColors.background,
         elevation: 0,
         scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          onPressed: () => context.pop(),
-        ),
         title: const Text(
           '家庭成员',
           style: TextStyle(
@@ -300,9 +297,13 @@ class FamilyPage extends ConsumerWidget {
           );
         }
 
-        // 按总贡献数排序
+        // 按总贡献数排序并设置排名
         final sortedStats = stats.values.toList()
           ..sort((a, b) => b.total.compareTo(a.total));
+        for (var i = 0; i < sortedStats.length; i++) {
+          sortedStats[i].rank = i;
+        }
+        final maxTotal = sortedStats.isEmpty ? 1 : sortedStats.first.total;
 
         return Padding(
           padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
@@ -311,12 +312,12 @@ class FamilyPage extends ConsumerWidget {
             subtitle: '${now.month}月',
             child: Column(
               children: [
-                ...sortedStats.take(5).map((s) => _buildStatRow(s)),
-                if (sortedStats.length > 5)
+                ...sortedStats.take(6).map((s) => _buildBarChartRow(context, s, maxTotal)),
+                if (sortedStats.length > 6)
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
-                      '还有 ${sortedStats.length - 5} 位成员',
+                      '还有 ${sortedStats.length - 6} 位成员',
                       style: TextStyle(
                         fontSize: 12,
                         color: AppColors.textSecondary.withValues(alpha: 0.6),
@@ -431,66 +432,74 @@ class FamilyPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatRow(_ContributionCount stat) {
+  /// 柱状图单行
+  Widget _buildBarChartRow(BuildContext context, _ContributionCount stat, int maxTotal) {
+    final fraction = maxTotal > 0 ? stat.total / maxTotal : 0.0;
+    // 颜色按排名递减：第1名深色，后续渐淡
+    final colors = [
+      AppColors.primary,
+      AppColors.primary.withValues(alpha: 0.7),
+      AppColors.primary.withValues(alpha: 0.5),
+      AppColors.primary.withValues(alpha: 0.35),
+      AppColors.primary.withValues(alpha: 0.25),
+      AppColors.primary.withValues(alpha: 0.15),
+    ];
+    final colorIdx = stat.rank < colors.length ? stat.rank : colors.length - 1;
+    final barColor = colors[colorIdx];
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Center(
-              child: Text(
-                stat.authorName.isNotEmpty ? stat.authorName[0] : '?',
+          Row(
+            children: [
+              Text(
+                stat.authorName,
                 style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
                 ),
               ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  stat.authorName,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
+              const Spacer(),
+              Text(
+                '${stat.total}',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: barColor,
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  '${stat.careLogs}条日志 · ${stat.medCheckins}次打卡',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textSecondary.withValues(alpha: 0.7),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: Stack(
+              children: [
+                Container(
+                  height: 10,
+                  width: double.infinity,
+                  color: AppColors.surfaceContainerLow,
+                ),
+                Container(
+                  height: 10,
+                  width: MediaQuery.of(context).size.width * fraction * 0.65,
+                  decoration: BoxDecoration(
+                    color: barColor,
+                    borderRadius: BorderRadius.circular(4),
                   ),
                 ),
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              '${stat.total}',
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: AppColors.primary,
-              ),
+          const SizedBox(height: 2),
+          Text(
+            '${stat.careLogs}条日志 · ${stat.medCheckins}次打卡',
+            style: TextStyle(
+              fontSize: 10,
+              color: AppColors.textSecondary.withValues(alpha: 0.6),
             ),
           ),
         ],
@@ -528,7 +537,7 @@ class FamilyPage extends ConsumerWidget {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(16),
-                    child: family.avatarUrl != null && family.avatarUrl!.startsWith('http')
+                    child: family.avatarUrl != null && family.avatarUrl!.isNotEmpty
                         ? Image.network(
                             ApiConfig.avatarUrl(family.avatarUrl!) ?? '',
                             width: 52,
@@ -709,11 +718,11 @@ class FamilyPage extends ConsumerWidget {
               child: Stack(
                 children: [
                   Center(
-                    child: section.avatarUrl != null && section.avatarUrl!.startsWith('http')
+                    child: section.avatarUrl != null && section.avatarUrl!.isNotEmpty
                         ? ClipRRect(
                             borderRadius: BorderRadius.circular(16),
                             child: Image.network(
-                              section.avatarUrl!,
+                              ApiConfig.avatarUrl(section.avatarUrl!) ?? '',
                               width: 48,
                               height: 48,
                               fit: BoxFit.cover,
@@ -1051,7 +1060,7 @@ class FamilyPage extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(20),
                           child: selectedAvatarFile != null
                               ? Image.file(selectedAvatarFile!, width: 80, height: 80, fit: BoxFit.cover)
-                              : (avatarUrl != null && avatarUrl.startsWith('http')
+                              : (avatarUrl != null && avatarUrl.isNotEmpty
                                   ? Image.network(
                                       ApiConfig.avatarUrl(avatarUrl) ?? '',
                                       width: 80,

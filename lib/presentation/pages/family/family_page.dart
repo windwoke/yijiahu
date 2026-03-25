@@ -362,187 +362,198 @@ class FamilyPage extends ConsumerWidget {
         : section.member?.phone;
     final isOwner = section.member?.role == 'owner';
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadow,
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // 头像
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: section.isRecipient
-                  ? AppColors.coral.withValues(alpha: 0.1)
-                  : AppColors.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(16),
+    return GestureDetector(
+      onTap: section.isRecipient
+          ? () {
+              if (section.recipient != null) {
+                context.push(AppRoutes.careRecipientDetail, extra: section.recipient);
+              }
+            }
+          : null,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.shadow,
+              blurRadius: 6,
+              offset: const Offset(0, 2),
             ),
-            child: Stack(
-              children: [
-                Center(
-                  child: section.avatarUrl != null && section.avatarUrl!.startsWith('http')
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: Image.network(
-                            section.avatarUrl!,
-                            width: 48,
-                            height: 48,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stack) => Text(
-                              section.displayAvatar,
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.primary),
-                            ),
-                          ),
-                        )
-                      : section.isRecipient
-                          ? Text(section.displayAvatar, style: const TextStyle(fontSize: 24))
-                          : Text(
-                              section.displayAvatar,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.primary,
+          ],
+        ),
+        child: Row(
+          children: [
+            // 头像
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: section.isRecipient
+                    ? AppColors.coral.withValues(alpha: 0.1)
+                    : AppColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Stack(
+                children: [
+                  Center(
+                    child: section.avatarUrl != null && section.avatarUrl!.startsWith('http')
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Image.network(
+                              section.avatarUrl!,
+                              width: 48,
+                              height: 48,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stack) => Text(
+                                section.displayAvatar,
+                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.primary),
                               ),
                             ),
-                ),
-                if (section.isOnline)
-                  Positioned(
-                    right: 0,
-                    bottom: 0,
-                    child: Container(
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: AppColors.success,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppColors.surfaceContainerLowest,
-                          width: 2,
+                          )
+                        : section.isRecipient
+                            ? Text(section.displayAvatar, style: const TextStyle(fontSize: 24))
+                            : Text(
+                                section.displayAvatar,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                  ),
+                  if (section.isOnline)
+                    Positioned(
+                      right: 0,
+                      bottom: 0,
+                      child: Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: AppColors.success,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: AppColors.surfaceContainerLowest,
+                            width: 2,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 14),
-          // 姓名 + 角色 + 电话
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      section.displayName,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: section.isRecipient
-                            ? AppColors.coral.withValues(alpha: 0.1)
-                            : (section.isAdmin
-                                ? AppColors.primary.withValues(alpha: 0.1)
-                                : AppColors.surfaceContainerLow),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (section.isRecipient)
-                            const SizedBox.shrink()
-                          else if (isOwner)
-                            const Icon(Icons.star,
-                                size: 12, color: AppColors.primary),
-                          if (!section.isRecipient && isOwner)
-                            const SizedBox(width: 3),
-                          Text(
-                            section.isRecipient
-                                ? '照护对象'
-                                : isOwner
-                                    ? '管理员'
-                                    : '成员',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: section.isRecipient
-                                  ? AppColors.coral
-                                  : (section.isAdmin
-                                      ? AppColors.primary
-                                      : AppColors.textSecondary),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                if (displayPhone != null)
+            const SizedBox(width: 14),
+            // 姓名 + 角色 + 电话
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Row(
                     children: [
-                      const Icon(Icons.phone_android,
-                          size: 13, color: AppColors.textSecondary),
-                      const SizedBox(width: 4),
                       Text(
-                        _maskPhone(displayPhone),
+                        section.displayName,
                         style: const TextStyle(
-                          fontSize: 13,
-                          color: AppColors.textSecondary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: section.isRecipient
+                              ? AppColors.coral.withValues(alpha: 0.1)
+                              : (section.isAdmin
+                                  ? AppColors.primary.withValues(alpha: 0.1)
+                                  : AppColors.surfaceContainerLow),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (section.isRecipient)
+                              const SizedBox.shrink()
+                            else if (isOwner)
+                              const Icon(Icons.star,
+                                  size: 12, color: AppColors.primary),
+                            if (!section.isRecipient && isOwner)
+                              const SizedBox(width: 3),
+                            Text(
+                              section.isRecipient
+                                  ? '照护对象'
+                                  : isOwner
+                                      ? '管理员'
+                                      : '成员',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: section.isRecipient
+                                    ? AppColors.coral
+                                    : (section.isAdmin
+                                        ? AppColors.primary
+                                        : AppColors.textSecondary),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                if (section.isRecipient)
-                  Text(
-                    '角色：被动用户（仅查看）',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary.withValues(alpha: 0.7),
+                  const SizedBox(height: 4),
+                  if (displayPhone != null)
+                    Row(
+                      children: [
+                        const Icon(Icons.phone_android,
+                            size: 13, color: AppColors.textSecondary),
+                        const SizedBox(width: 4),
+                        Text(
+                          _maskPhone(displayPhone),
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-              ],
+                  if (section.isRecipient)
+                    Text(
+                      '角色：被动用户（仅查看）',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary.withValues(alpha: 0.7),
+                      ),
+                    ),
+                ],
+              ),
             ),
-          ),
-          // 编辑按钮
-          if (isAdmin)
-            GestureDetector(
-              onTap: () => _showEditMemberSheet(context, ref, family, section, isAdmin),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceContainerLow,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  section.isRecipient ? '编辑档案' : '编辑',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w500,
+            // 照护对象显示箭头，家庭成员显示编辑按钮
+            if (section.isRecipient)
+              const Icon(Icons.chevron_right, color: AppColors.textSecondary)
+            else if (isAdmin)
+              GestureDetector(
+                onTap: () => _showEditMemberSheet(context, ref, family, section, isAdmin),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Text(
+                    '编辑',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

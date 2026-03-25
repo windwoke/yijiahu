@@ -4,6 +4,7 @@ library;
 import 'dart:async';
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -66,24 +67,35 @@ class AuthNotifier extends Notifier<AuthState> {
   SharedPreferences? _prefs;
 
   Future<void> _loadFromStorage() async {
+    debugPrint('[Auth] _loadFromStorage 开始');
     _prefs = await SharedPreferences.getInstance();
     final token = _prefs?.getString(_tokenKey);
+    debugPrint('[Auth] _loadFromStorage token=${token != null ? "有" : "无"}');
     if (token != null) {
       state = state.copyWith(accessToken: token);
       await _fetchCurrentUser();
       await _loadCurrentFamily();
     }
+    debugPrint('[Auth] _loadFromStorage 结束');
   }
 
   Future<void> _loadCurrentFamily() async {
     try {
+      debugPrint('[Auth] _loadCurrentFamily 开始请求, dio=$_dio');
       final res = await _dio!.get('/users/me/family');
+      debugPrint('[Auth] _loadCurrentFamily 响应: $res');
       final data = res.data;
+      debugPrint('[Auth] _loadCurrentFamily data: $data');
       if (data is Map && data['family'] != null) {
         ref.read(currentFamilyProvider.notifier).state =
             models.Family.fromJson(data['family'] as Map<String, dynamic>);
+        debugPrint('[Auth] currentFamilyProvider 已设置');
+      } else {
+        debugPrint('[Auth] _loadCurrentFamily family 为 null');
       }
-    } catch (_) {}
+    } catch (e, st) {
+      debugPrint('[Auth] _loadCurrentFamily 错误: $e\n$st');
+    }
   }
 
   Future<void> _fetchCurrentUser() async {
@@ -175,6 +187,7 @@ class AuthNotifier extends Notifier<AuthState> {
       _countdownTimer?.cancel();
       ref.read(countdownProvider.notifier).state = 0;
       state = AuthState(user: user, accessToken: token, isLoading: false);
+      debugPrint('[Auth] login 成功, user=${user.phone}, 准备加载家庭');
 
       // 登录成功后加载当前用户家庭
       await _loadCurrentFamily();
@@ -190,11 +203,12 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   Future<void> logout() async {
+    debugPrint('[Auth] logout 开始');
     _countdownTimer?.cancel();
     await _prefs?.remove(_tokenKey);
-    // 清除家庭数据，避免切换账号后残留旧数据
     ref.read(currentFamilyProvider.notifier).state = null;
     state = const AuthState();
+    debugPrint('[Auth] logout 完成');
   }
 
   /// 更新个人资料

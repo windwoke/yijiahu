@@ -1,13 +1,14 @@
 /// 照护对象详情页
 library;
 
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/constants.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/router/app_router.dart';
-import '../../../data/models/models.dart';
+import '../../../data/models/models.dart' hide Family;
 import '../../providers/family_provider.dart';
 
 class CareRecipientDetailPage extends ConsumerStatefulWidget {
@@ -20,6 +21,9 @@ class CareRecipientDetailPage extends ConsumerStatefulWidget {
 }
 
 class _CareRecipientDetailPageState extends ConsumerState<CareRecipientDetailPage> {
+  /// 健康趋势视图模式：列表 / 图表
+  bool _healthChartMode = false;
+
   @override
   Widget build(BuildContext context) {
     final recipientAsync = ref.watch(careRecipientDetailProvider(widget.recipient.id));
@@ -240,11 +244,21 @@ class _CareRecipientDetailPageState extends ConsumerState<CareRecipientDetailPag
   Widget _buildHealthTrendsSection(Map<String, List<HealthRecord>> trends) {
     final bpList = trends['bloodPressure'] ?? [];
     final glucoseList = trends['bloodGlucose'] ?? [];
-    if (bpList.isEmpty && glucoseList.isEmpty) {
-      return _buildCard(
-        title: '近期健康趋势',
-        icon: Icons.show_chart,
+    final hasData = bpList.isNotEmpty || glucoseList.isNotEmpty;
+
+    return _buildCard(
+      title: '近期健康趋势',
+      icon: Icons.show_chart,
+      headerAction: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
+          _buildViewToggle(),
+          const SizedBox(width: 8),
+          _buildQuickRecordButton(),
+        ],
+      ),
+      children: [
+        if (!hasData)
           Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 16),
@@ -253,22 +267,416 @@ class _CareRecipientDetailPageState extends ConsumerState<CareRecipientDetailPag
                   Icon(Icons.timeline_outlined, size: 36, color: AppColors.textTertiary),
                   const SizedBox(height: 8),
                   Text('暂无健康记录', style: TextStyle(color: AppColors.textTertiary)),
+                  const SizedBox(height: 16),
+                  _buildQuickRecordButton(),
                 ],
+              ),
+            ),
+          )
+        else if (_healthChartMode)
+          _buildChartView(bpList, glucoseList)
+        else
+          Column(
+            children: [
+              if (bpList.isNotEmpty) ...[
+                _buildBpTrendCard(bpList),
+                if (glucoseList.isNotEmpty) const SizedBox(height: 16),
+              ],
+              if (glucoseList.isNotEmpty) _buildGlucoseTrendCard(glucoseList),
+            ],
+          ),
+      ],
+    );
+  }
+
+  Widget _buildViewToggle() {
+    return GestureDetector(
+      onTap: () => setState(() => _healthChartMode = !_healthChartMode),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              _healthChartMode ? Icons.view_list_rounded : Icons.show_chart_rounded,
+              size: 14,
+              color: AppColors.textSecondary,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              _healthChartMode ? '列表' : '图表',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChartView(List<HealthRecord> bpList, List<HealthRecord> glucoseList) {
+    return Column(
+      children: [
+        if (bpList.isNotEmpty) ...[
+          _buildBpChart(bpList),
+          if (glucoseList.isNotEmpty) const SizedBox(height: 20),
+        ],
+        if (glucoseList.isNotEmpty) _buildGlucoseChart(glucoseList),
+        const SizedBox(height: 8),
+      ],
+    );
+  }
+
+  Widget _buildBpChart(List<HealthRecord> records) {
+    // 最多取最近7条，按时间正序排列
+    final sorted = List<HealthRecord>.from(records)
+      ..sort((a, b) => a.recordedAt.compareTo(b.recordedAt))
+      ..removeRange(0, records.length > 7 ? records.length - 7 : 0);
+
+    final sysSpots = <FlSpot>[];
+    final diaSpots = <FlSpot>[];
+    for (var i = 0; i < sorted.length; i++) {
+      final r = sorted[i];
+      if (r.systolic != null) sysSpots.add(FlSpot(i.toDouble(), r.systolic!.toDouble()));
+      if (r.diastolic != null) diaSpots.add(FlSpot(i.toDouble(), r.diastolic!.toDouble()));
+    }
+
+    final allVals = [...sysSpots.map((s) => s.y), ...diaSpots.map((s) => s.y)];
+    if (allVals.isEmpty) return const SizedBox.shrink();
+    final minY = (allVals.reduce((a, b) => a < b ? a : b) - 20).clamp(40.0, 200.0).toDouble();
+    final maxY = (allVals.reduce((a, b) => a > b ? a : b) + 20).clamp(80.0, 220.0).toDouble();
+    final pointCount = sorted.length;
+    final labelInterval = pointCount <= 5 ? 1.0 : 2.0;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.favorite, size: 16, color: AppColors.coral),
+              const SizedBox(width: 6),
+              const Text('血压趋势', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              _chartLegend('收缩压', AppColors.coral),
+              const SizedBox(width: 16),
+              _chartLegend('舒张压', AppColors.primary),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 160,
+            child: LineChart(
+              LineChartData(
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  horizontalInterval: 30,
+                  getDrawingHorizontalLine: (val) => FlLine(
+                    color: AppColors.borderLight,
+                    strokeWidth: 1,
+                  ),
+                ),
+                titlesData: FlTitlesData(
+                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 24,
+                      interval: labelInterval,
+                      getTitlesWidget: (val, meta) {
+                        final idx = val.toInt();
+                        if (idx < 0 || idx >= sorted.length || idx % labelInterval.toInt() != 0) {
+                          return const SizedBox();
+                        }
+                        final d = sorted[idx].recordedAt;
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            '${d.month}/${d.day}',
+                            style: TextStyle(fontSize: 10, color: AppColors.textTertiary),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 36,
+                      interval: 30,
+                      getTitlesWidget: (val, meta) => Text(
+                        val.toInt().toString(),
+                        style: TextStyle(fontSize: 10, color: AppColors.textTertiary),
+                      ),
+                    ),
+                  ),
+                ),
+                borderData: FlBorderData(show: false),
+                minX: 0,
+                maxX: (sorted.length - 1).toDouble().clamp(0, double.infinity),
+                minY: minY,
+                maxY: maxY,
+                extraLinesData: ExtraLinesData(
+                  horizontalLines: [
+                    // 正常范围线
+                    HorizontalLine(y: 90, color: AppColors.success.withValues(alpha: 0.5), strokeWidth: 1, dashArray: [4, 4]),
+                    HorizontalLine(y: 140, color: AppColors.success.withValues(alpha: 0.5), strokeWidth: 1, dashArray: [4, 4]),
+                  ],
+                ),
+                lineBarsData: [
+                  // 收缩压
+                  LineChartBarData(
+                    spots: sysSpots,
+                    isCurved: true,
+                    curveSmoothness: 0.3,
+                    color: AppColors.coral,
+                    barWidth: 2.5,
+                    dotData: FlDotData(
+                      show: true,
+                      getDotPainter: (spot, percent, bar, index) => FlDotCirclePainter(
+                        radius: 3.5,
+                        color: AppColors.coral,
+                        strokeWidth: 1.5,
+                        strokeColor: Colors.white,
+                      ),
+                    ),
+                    belowBarData: BarAreaData(
+                      show: true,
+                      color: AppColors.coral.withValues(alpha: 0.08),
+                    ),
+                  ),
+                  // 舒张压
+                  LineChartBarData(
+                    spots: diaSpots,
+                    isCurved: true,
+                    curveSmoothness: 0.3,
+                    color: AppColors.primary,
+                    barWidth: 2.5,
+                    dotData: FlDotData(
+                      show: true,
+                      getDotPainter: (spot, percent, bar, index) => FlDotCirclePainter(
+                        radius: 3.5,
+                        color: AppColors.primary,
+                        strokeWidth: 1.5,
+                        strokeColor: Colors.white,
+                      ),
+                    ),
+                    belowBarData: BarAreaData(
+                      show: true,
+                      color: AppColors.primary.withValues(alpha: 0.08),
+                    ),
+                  ),
+                ],
+                lineTouchData: LineTouchData(
+                  touchTooltipData: LineTouchTooltipData(
+                    getTooltipColor: (spot) => AppColors.textPrimary.withValues(alpha: 0.9),
+                    tooltipRoundedRadius: 8,
+                    tooltipPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    getTooltipItems: (touchedSpots) {
+                      return touchedSpots.map((spot) {
+                        final label = spot.barIndex == 0 ? '收缩压' : '舒张压';
+                        return LineTooltipItem(
+                          '$label ${spot.y.toInt()}',
+                          const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                        );
+                      }).toList();
+                    },
+                  ),
+                ),
               ),
             ),
           ),
         ],
-      );
+      ),
+    );
+  }
+
+  Widget _buildGlucoseChart(List<HealthRecord> records) {
+    // 最多取最近7条，按时间正序排列
+    final sorted = List<HealthRecord>.from(records)
+      ..sort((a, b) => a.recordedAt.compareTo(b.recordedAt))
+      ..removeRange(0, records.length > 7 ? records.length - 7 : 0);
+
+    final spots = <FlSpot>[];
+    for (var i = 0; i < sorted.length; i++) {
+      final r = sorted[i];
+      if (r.glucoseValue != null) {
+        // 截断显示值在 0~20 范围内，tooltip 显示真实值
+        final displayY = r.glucoseValue!.clamp(0.0, 20.0);
+        spots.add(FlSpot(i.toDouble(), displayY));
+      }
     }
-    return _buildCard(
-      title: '近期健康趋势',
-      icon: Icons.show_chart,
-      children: [
-        if (bpList.isNotEmpty) ...[
-          _buildBpTrendCard(bpList),
-          if (glucoseList.isNotEmpty) const SizedBox(height: 16),
+
+    if (spots.isEmpty) return const SizedBox.shrink();
+
+    final pointCount = sorted.length;
+    final labelInterval = pointCount <= 5 ? 1.0 : 2.0;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.monitor_heart_outlined, size: 16, color: AppColors.primary),
+              const SizedBox(width: 6),
+              const Text('血糖趋势', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+            ],
+          ),
+          const SizedBox(height: 4),
+          _chartLegend('血糖值', AppColors.primary),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 160,
+            child: LineChart(
+              LineChartData(
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  horizontalInterval: 4,
+                  getDrawingHorizontalLine: (val) => FlLine(
+                    color: AppColors.borderLight,
+                    strokeWidth: 1,
+                  ),
+                ),
+                titlesData: FlTitlesData(
+                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 24,
+                      interval: labelInterval,
+                      getTitlesWidget: (val, meta) {
+                        final idx = val.toInt();
+                        if (idx < 0 || idx >= sorted.length || idx % labelInterval.toInt() != 0) {
+                          return const SizedBox();
+                        }
+                        final d = sorted[idx].recordedAt;
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            '${d.month}/${d.day}',
+                            style: TextStyle(fontSize: 10, color: AppColors.textTertiary),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 30,
+                      interval: 4,
+                      getTitlesWidget: (val, meta) => Text(
+                        val.toInt().toString(),
+                        style: TextStyle(fontSize: 10, color: AppColors.textTertiary),
+                      ),
+                    ),
+                  ),
+                ),
+                borderData: FlBorderData(show: false),
+                minX: 0,
+                maxX: (sorted.length - 1).toDouble(),
+                minY: 0,
+                maxY: 20,
+                extraLinesData: ExtraLinesData(
+                  horizontalLines: [
+                    HorizontalLine(y: 6.1, color: AppColors.success.withValues(alpha: 0.5), strokeWidth: 1, dashArray: [4, 4]),
+                    HorizontalLine(y: 3.9, color: AppColors.success.withValues(alpha: 0.5), strokeWidth: 1, dashArray: [4, 4]),
+                  ],
+                ),
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: spots,
+                    isCurved: false,
+                    color: AppColors.primary,
+                    barWidth: 2.5,
+                    dotData: FlDotData(
+                      show: true,
+                      getDotPainter: (spot, percent, bar, index) {
+                        // 用原始数据判断是否超范围
+                        final originalVal = sorted[index].glucoseValue ?? 0;
+                        final color = originalVal > 7.0 || originalVal < 3.9 ? AppColors.coral : AppColors.primary;
+                        return FlDotCirclePainter(
+                          radius: 3.5,
+                          color: color,
+                          strokeWidth: 1.5,
+                          strokeColor: Colors.white,
+                        );
+                      },
+                    ),
+                    belowBarData: BarAreaData(
+                      show: true,
+                      color: AppColors.primary.withValues(alpha: 0.08),
+                    ),
+                  ),
+                ],
+                lineTouchData: LineTouchData(
+                  touchTooltipData: LineTouchTooltipData(
+                    getTooltipColor: (spot) => AppColors.textPrimary.withValues(alpha: 0.9),
+                    tooltipRoundedRadius: 8,
+                    tooltipPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    getTooltipItems: (touchedSpots) {
+                      return touchedSpots.map((spot) {
+                        final idx = spot.x.toInt();
+                        final realVal = idx < sorted.length ? (sorted[idx].glucoseValue?.toStringAsFixed(1) ?? '-') : '-';
+                        return LineTooltipItem(
+                          '血糖 $realVal',
+                          const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                        );
+                      }).toList();
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
-        if (glucoseList.isNotEmpty) _buildGlucoseTrendCard(glucoseList),
+      ),
+    );
+  }
+
+  Widget _chartLegend(String label, Color color) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 20,
+          height: 3,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+        ),
       ],
     );
   }
@@ -354,7 +762,7 @@ class _CareRecipientDetailPageState extends ConsumerState<CareRecipientDetailPag
         children: [
           Row(
             children: [
-              Icon(Icons.water_drop, size: 16, color: AppColors.primary),
+              Icon(Icons.monitor_heart_outlined, size: 16, color: AppColors.primary),
               const SizedBox(width: 6),
               Text('血糖（${type == 'fasting' ? '空腹' : '餐后'}）', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
             ],
@@ -520,7 +928,7 @@ class _CareRecipientDetailPageState extends ConsumerState<CareRecipientDetailPag
     );
   }
 
-  Widget _buildCard({required String title, required IconData icon, required List<Widget> children}) {
+  Widget _buildCard({required String title, required IconData icon, Widget? headerAction, required List<Widget> children}) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -538,6 +946,8 @@ class _CareRecipientDetailPageState extends ConsumerState<CareRecipientDetailPag
               Icon(icon, size: 18, color: AppColors.primary),
               const SizedBox(width: 8),
               Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+              const Spacer(),
+              if (headerAction != null) headerAction,
             ],
           ),
           const SizedBox(height: 16),
@@ -630,6 +1040,416 @@ class _CareRecipientDetailPageState extends ConsumerState<CareRecipientDetailPag
             child: const Text('删除', style: TextStyle(color: AppColors.error)),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildQuickRecordButton() {
+    return GestureDetector(
+      onTap: _showHealthRecordSheet,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppColors.primary.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.add_circle_outline, size: 14, color: AppColors.primary),
+            const SizedBox(width: 4),
+            Text(
+              '记一笔',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.primary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showHealthRecordSheet() {
+    HealthMetricType? selectedMetric;
+    final bpSysController = TextEditingController();
+    final bpDiaController = TextEditingController();
+    final glucoseController = TextEditingController();
+    String glucoseType = 'fasting';
+    final weightController = TextEditingController();
+    String weightUnit = 'kg';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          return Container(
+            padding: EdgeInsets.fromLTRB(
+              24, 24, 24,
+              MediaQuery.of(ctx).viewInsets.bottom + 24,
+            ),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: AppColors.grey200,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      const Text(
+                        '记录健康数据',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: () => Navigator.pop(ctx),
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceContainerLow,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.close, size: 18, color: AppColors.textSecondary),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    widget.recipient.name,
+                    style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // 指标选择
+                  const Text(
+                    '选择指标',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: HealthMetricType.values.map((metric) {
+                      final isSelected = metric == selectedMetric;
+                      return GestureDetector(
+                        onTap: () => setSheetState(() => selectedMetric = metric),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? AppColors.primary.withValues(alpha: 0.12)
+                                : AppColors.surfaceContainerLow,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: isSelected ? AppColors.primary : Colors.transparent,
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(metric.emoji, style: const TextStyle(fontSize: 14)),
+                              const SizedBox(width: 6),
+                              Text(
+                                metric.label,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                  color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // 正常范围提示
+                  if (selectedMetric != null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.06),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.info_outline, size: 14, color: AppColors.primary),
+                          const SizedBox(width: 8),
+                          Text(
+                            '参考范围：${selectedMetric!.normalRange}',
+                            style: TextStyle(fontSize: 12, color: AppColors.primary),
+                          ),
+                        ],
+                      ),
+                    ),
+                  const SizedBox(height: 16),
+
+                  // 健康指标输入
+                  if (selectedMetric != null)
+                    _buildHealthInputSheet(
+                      selectedMetric!,
+                      bpSysController,
+                      bpDiaController,
+                      glucoseController,
+                      glucoseType,
+                      weightController,
+                      weightUnit,
+                      (type) => setSheetState(() => glucoseType = type),
+                      (unit) => setSheetState(() => weightUnit = unit),
+                    ),
+
+                  const SizedBox(height: 24),
+
+                  SizedBox(
+                    height: 52,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        if (selectedMetric == null) return;
+
+                        bool isValid = false;
+                        if (selectedMetric == HealthMetricType.bloodPressure) {
+                          isValid = bpSysController.text.isNotEmpty && bpDiaController.text.isNotEmpty;
+                        } else if (selectedMetric == HealthMetricType.bloodGlucose) {
+                          isValid = glucoseController.text.isNotEmpty;
+                        } else {
+                          isValid = weightController.text.isNotEmpty;
+                        }
+                        if (!isValid) return;
+
+                        Navigator.pop(ctx);
+
+                        try {
+                          final dio = ref.read(dioProvider);
+                          final value = <String, dynamic>{};
+                          if (selectedMetric == HealthMetricType.bloodPressure) {
+                            value['systolic'] = int.tryParse(bpSysController.text) ?? 0;
+                            value['diastolic'] = int.tryParse(bpDiaController.text) ?? 0;
+                          } else if (selectedMetric == HealthMetricType.bloodGlucose) {
+                            value['value'] = double.tryParse(glucoseController.text) ?? 0.0;
+                            value['type'] = glucoseType;
+                          } else {
+                            value['value'] = double.tryParse(weightController.text) ?? 0.0;
+                            value['unit'] = weightUnit;
+                          }
+
+                          await dio.post('/health-records', data: {
+                            'recipientId': widget.recipient.id,
+                            'recordType': selectedMetric!.recordType,
+                            'value': value,
+                          });
+
+                          await Future.delayed(Duration.zero);
+                          ref.invalidate(healthTrendsProvider(widget.recipient.id));
+                          // 同时刷新时间线
+                          final familyId = ref.read(currentFamilyProvider)?.id;
+                          if (familyId != null) {
+                            ref.read(timelineProvider(
+                              TimelineQuery(familyId: familyId, recipientId: widget.recipient.id),
+                            ).notifier).refresh();
+                          }
+
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Text('已记录健康数据'),
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                backgroundColor: AppColors.primary,
+                              ),
+                            );
+                          }
+                        } catch (err) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('保存失败: $err'),
+                                behavior: SnackBarBehavior.floating,
+                                backgroundColor: AppColors.error,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
+                      ),
+                      child: const Text(
+                        '保存记录',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildHealthInputSheet(
+    HealthMetricType metric,
+    TextEditingController bpSys,
+    TextEditingController bpDia,
+    TextEditingController glucose,
+    String glucoseType,
+    TextEditingController weight,
+    String weightUnit,
+    void Function(String) setGlucoseType,
+    void Function(String) setWeightUnit,
+  ) {
+    switch (metric) {
+      case HealthMetricType.bloodPressure:
+        return Row(
+          children: [
+            Expanded(child: _buildNumberFieldSheet(controller: bpSys, label: '收缩压', hint: '120', unit: 'mmHg', color: AppColors.primary)),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8),
+              child: Text('/', style: TextStyle(fontSize: 24, color: AppColors.textSecondary)),
+            ),
+            Expanded(child: _buildNumberFieldSheet(controller: bpDia, label: '舒张压', hint: '80', unit: 'mmHg', color: AppColors.primary)),
+          ],
+        );
+
+      case HealthMetricType.bloodGlucose:
+        return Column(
+          children: [
+            Row(
+              children: [
+                Expanded(child: _buildNumberFieldSheet(controller: glucose, label: '血糖值', hint: '5.6', unit: 'mmol/L', color: AppColors.primary)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                _buildSubTypeChipSheet('空腹', glucoseType == 'fasting', () => setGlucoseType('fasting'), AppColors.primary),
+                const SizedBox(width: 8),
+                _buildSubTypeChipSheet('餐后', glucoseType == 'postprandial', () => setGlucoseType('postprandial'), AppColors.primary),
+              ],
+            ),
+          ],
+        );
+
+      case HealthMetricType.weight:
+        return Row(
+          children: [
+            Expanded(child: _buildNumberFieldSheet(controller: weight, label: '体重', hint: '60', unit: '', color: AppColors.primary)),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: DropdownButton<String>(
+                value: weightUnit,
+                underline: const SizedBox(),
+                items: [
+                  DropdownMenuItem(value: 'kg', child: Text('kg', style: TextStyle(color: AppColors.textPrimary))),
+                  DropdownMenuItem(value: '斤', child: Text('斤', style: TextStyle(color: AppColors.textPrimary))),
+                ],
+                onChanged: (v) { if (v != null) setWeightUnit(v); },
+              ),
+            ),
+          ],
+        );
+    }
+  }
+
+  Widget _buildNumberFieldSheet({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required String unit,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: controller,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: color),
+                  decoration: InputDecoration(
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    hintText: hint,
+                    hintStyle: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.textTertiary),
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ),
+              if (unit.isNotEmpty)
+                Text(unit, style: TextStyle(fontSize: 14, color: AppColors.textSecondary)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSubTypeChipSheet(String label, bool isSelected, VoidCallback onTap, Color color) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withValues(alpha: 0.1) : AppColors.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: isSelected ? color : Colors.transparent),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+            color: isSelected ? color : AppColors.textSecondary,
+          ),
+        ),
       ),
     );
   }

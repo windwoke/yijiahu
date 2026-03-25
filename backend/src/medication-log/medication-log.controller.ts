@@ -40,7 +40,13 @@ export class MedicationLogController {
     @Query('recipientId') recipientId?: string,
     @Query('familyId') familyId?: string,
     @Query('days') days?: string,
+    @Query('before') before?: string,  // ISO 时间戳，用于分页游标
   ) {
-    return this.service.getTimeline(recipientId, familyId, days ? parseInt(days) : 7);
+    return this.service.getTimeline(
+      recipientId,
+      familyId,
+      days ? parseInt(days) : 7,
+      before ? new Date(before) : undefined,
+    );
   }
 }

@@ -128,7 +128,7 @@ export class MedicationLogService {
   }
 
   /** 时间线用药记录（taken/skipped） */
-  async getTimeline(recipientId?: string, familyId?: string, days = 7): Promise<any[]> {
+  async getTimeline(recipientId?: string, familyId?: string, days = 7, before?: Date): Promise<any[]> {
     const qb = this.logRepo
       .createQueryBuilder('log')
       .leftJoinAndSelect('log.medication', 'medication')
@@ -138,6 +138,10 @@ export class MedicationLogService {
       .andWhere('log.takenAt IS NOT NULL')
       .orderBy('log.takenAt', 'DESC')
       .take(50);
+
+    if (before) {
+      qb.andWhere('log.takenAt < :before', { before });
+    }
 
     if (recipientId) {
       qb.andWhere('log.recipientId = :recipientId', { recipientId });

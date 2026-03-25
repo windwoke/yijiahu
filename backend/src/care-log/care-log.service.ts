@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CareLog } from './entities/care-log.entity';
+import { CareLogAttachment } from './entities/care-log-attachment.entity';
+import { CareLogAttachmentService } from './care-log-attachment.service';
 import { CreateCareLogDto } from './dto/care-log.dto';
 import { User } from '../user/entities/user.entity';
 
@@ -10,12 +12,14 @@ export class CareLogService {
   constructor(
     @InjectRepository(CareLog)
     private readonly repo: Repository<CareLog>,
+    @InjectRepository(CareLogAttachment)
+    private readonly attachmentRepo: Repository<CareLogAttachment>,
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+    private readonly attachmentService: CareLogAttachmentService,
   ) {}
 
   async create(familyId: string, userId: string, dto: CreateCareLogDto): Promise<CareLog> {
-    // 查找用户姓名
     const user = await this.userRepo.findOne({ where: { id: userId } });
     const authorName = user?.name || user?.phone || '家庭成员';
 
@@ -27,16 +31,25 @@ export class CareLogService {
       type: dto.type,
       content: dto.content,
     });
-    return this.repo.save(log);
+    const saved = await this.repo.save(log);
+
+    // 绑定附件（attachmentIds 为上传后返回的 UUID 列表）
+    if (dto.attachmentIds && dto.attachmentIds.length > 0) {
+      await this.attachmentService.updateCareLogId(dto.attachmentIds, saved.id);
+    }
+
+    return saved;
   }
 
   async findByFamily(familyId: string, options: {
     recipientId?: string;
     type?: string;
     limit?: number;
+    before?: Date;  // 分页游标：只取 createdAt < before 的记录
   } = {}): Promise<any[]> {
     const qb = this.repo
       .createQueryBuilder('log')
+      .leftJoinAndSelect('log.attachments', 'attachment')
       .where('log.familyId = :familyId', { familyId })
       .orderBy('log.createdAt', 'DESC');
 
@@ -45,6 +58,9 @@ export class CareLogService {
     }
     if (options.type) {
       qb.andWhere('log.type = :type', { type: options.type });
+    }
+    if (options.before) {
+      qb.andWhere('log.createdAt < :before', { before: options.before });
     }
     if (options.limit) {
       qb.take(options.limit);
@@ -59,6 +75,17 @@ export class CareLogService {
       type: log.type,
       content: log.content,
       createdAt: formatLocalTime(log.createdAt),
+      attachments: ((log as any).attachments || []).map((a: CareLogAttachment) => ({
+        id: a.id,
+        type: a.type,
+        url: a.url,
+        thumbnailUrl: a.thumbnailUrl,
+        size: a.size,
+        duration: a.duration,
+        width: a.width,
+        height: a.height,
+        filename: a.filename,
+      })),
     }));
   }
 

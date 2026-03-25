@@ -155,71 +155,94 @@ final medicationDetailProvider =
 });
 
 /// 时间线条目（统一展示照护日志 + 用药打卡）
+/// 支持分页加载：首次加载50条，滚动到底部自动加载更多
 final timelineProvider =
-    FutureProvider.family<List<models.TimelineEntry>, TimelineQuery>((ref, query) async {
-  try {
+    AsyncNotifierProvider.family<TimelineNotifier, List<models.TimelineEntry>, TimelineQuery>(
+  TimelineNotifier.new,
+);
+
+class TimelineNotifier extends FamilyAsyncNotifier<List<models.TimelineEntry>, TimelineQuery> {
+  static const _pageSize = 50;
+
+  @override
+  Future<List<models.TimelineEntry>> build(TimelineQuery query) async {
+    return _fetchPage(null);
+  }
+
+  /// 加载更多（分页）
+  Future<void> loadMore() async {
+    final current = state.valueOrNull ?? [];
+    if (current.isEmpty) return;
+
+    final before = current.last.time;
+    final newEntries = await _fetchPage(before);
+    if (newEntries.isEmpty) return;
+
+    state = AsyncData([...current, ...newEntries]);
+  }
+
+  /// 刷新（重新加载第一页）
+  Future<void> refresh() async {
+    state = const AsyncLoading();
+    state = AsyncData(await _fetchPage(null));
+  }
+
+  Future<List<models.TimelineEntry>> _fetchPage(DateTime? before) async {
     final dio = ref.read(dioProvider);
-    final familyId = query.familyId;
-    final recipientId = query.recipientId;
+    final familyId = arg.familyId;
+    final recipientId = arg.recipientId;
 
-    // 1. 获取照护日志
-    final careLogsParams = <String, dynamic>{
-      'familyId': familyId,
-      'limit': 50,
-    };
-    if (recipientId != null) {
-      careLogsParams['recipientId'] = recipientId;
-    }
-    final careLogsResponse = await dio.get('/care-logs', queryParameters: careLogsParams);
-    final careLogsData = careLogsResponse.data is List<dynamic>
-        ? careLogsResponse.data as List<dynamic>
-        : (careLogsResponse.data['data'] as List<dynamic>?) ?? [];
-    final careLogs = careLogsData
-        .map((e) => models.TimelineEntry.fromCareLog(e as Map<String, dynamic>))
-        .toList();
+    final List<models.TimelineEntry> all = [];
 
-    // 2. 获取用药打卡记录
-    final medParams = <String, dynamic>{
-      'days': 7,
-    };
-    if (recipientId != null) {
-      medParams['recipientId'] = recipientId;
-    }
-    final medResponse = await dio.get('/medication-logs/timeline', queryParameters: medParams);
-    final medData = medResponse.data is List<dynamic>
-        ? medResponse.data as List<dynamic>
-        : (medResponse.data['data'] as List<dynamic>?) ?? [];
-    final medLogs = medData
-        .map((e) => models.TimelineEntry.fromMedicationLog(e as Map<String, dynamic>))
-        .toList();
-
-    // 3. 获取健康记录
-    List<models.TimelineEntry> healthRecords = [];
+    // 1. 照护日志
     try {
-      final hrParams = <String, dynamic>{
-        'days': 7,
-        'limit': 20,
+      final careLogsParams = <String, dynamic>{
+        'familyId': familyId,
+        'limit': _pageSize,
       };
-      if (recipientId != null) {
-        hrParams['recipientId'] = recipientId;
-      }
-      final hrResponse = await dio.get('/health-records/recent', queryParameters: hrParams);
-      final hrData = hrResponse.data is List<dynamic>
-          ? hrResponse.data as List<dynamic>
-          : (hrResponse.data['data'] as List<dynamic>?) ?? [];
-      healthRecords = hrData
-          .map((e) => models.TimelineEntry.fromHealthRecord(e as Map<String, dynamic>))
-          .toList();
+      if (recipientId != null) careLogsParams['recipientId'] = recipientId;
+      if (before != null) careLogsParams['before'] = before.toIso8601String();
+
+      final careLogsResp = await dio.get('/care-logs', queryParameters: careLogsParams);
+      final careLogsData = careLogsResp.data is List
+          ? careLogsResp.data as List
+          : (careLogsResp.data['data'] as List?) ?? [];
+      all.addAll(careLogsData
+          .map((e) => models.TimelineEntry.fromCareLog(Map<String, dynamic>.from(e))));
     } catch (_) {}
 
-    // 4. 合并并按时间倒序
-    final all = [...careLogs, ...medLogs, ...healthRecords];
+    // 2. 用药打卡
+    try {
+      final medParams = <String, dynamic>{'days': 45, 'limit': _pageSize};
+      if (recipientId != null) medParams['recipientId'] = recipientId;
+      if (before != null) medParams['before'] = before.toIso8601String();
+
+      final medResp = await dio.get('/medication-logs/timeline', queryParameters: medParams);
+      final medData = medResp.data is List
+          ? medResp.data as List
+          : (medResp.data['data'] as List?) ?? [];
+      all.addAll(medData
+          .map((e) => models.TimelineEntry.fromMedicationLog(Map<String, dynamic>.from(e))));
+    } catch (_) {}
+
+    // 3. 健康记录
+    try {
+      final hrParams = <String, dynamic>{'days': 45, 'limit': 20};
+      if (recipientId != null) hrParams['recipientId'] = recipientId;
+      if (before != null) hrParams['before'] = before.toIso8601String();
+
+      final hrResp = await dio.get('/health-records/recent', queryParameters: hrParams);
+      final hrData = hrResp.data is List
+          ? hrResp.data as List
+          : (hrResp.data['data'] as List?) ?? [];
+      all.addAll(hrData
+          .map((e) => models.TimelineEntry.fromHealthRecord(Map<String, dynamic>.from(e))));
+    } catch (_) {}
+
     all.sort((a, b) => b.time.compareTo(a.time));
     return all;
-  } catch (err) {
-    return [];
   }
-});
+}
 
 /// 更新家庭信息（头像、名称、描述）
 Future<models.Family> updateFamily({

@@ -207,18 +207,39 @@ class MedicationCheckInCard extends StatelessWidget {
 
   Widget _buildDoneInfo(MedicationLogItem item, Color statusColor, bool isTaken) {
     final timeStr = _formatTimeStr(item.actualTime);
-    final action = isTaken ? '已打卡用药' : '已跳过用药';
-    return Text(
-      timeStr != null
-          ? '${item.takenBy!.name} $timeStr $action'
-          : '${item.takenBy!.name} $action',
-      style: TextStyle(
-        fontSize: 11,
-        color: statusColor,
-        fontWeight: FontWeight.w500,
-      ),
+    final action = isTaken ? '已服用' : '已跳过';
+    return RichText(
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
+      text: TextSpan(
+        children: [
+          TextSpan(
+            text: '$action ',
+            style: const TextStyle(
+              fontSize: 11,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          if (timeStr != null)
+            TextSpan(
+              text: '$timeStr ',
+              style: TextStyle(
+                fontSize: 11,
+                color: statusColor,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          TextSpan(
+            text: '由 ${item.takenBy!.name} 记录',
+            style: const TextStyle(
+              fontSize: 11,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

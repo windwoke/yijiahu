@@ -8,7 +8,9 @@ import '../../presentation/pages/auth/login_page.dart';
 import '../../presentation/pages/home/home_page.dart';
 import '../../presentation/pages/medication/medication_page.dart';
 import '../../presentation/pages/medication/add_medication_page.dart';
+import '../../presentation/pages/medication/medication_detail_page.dart';
 import '../../presentation/pages/family/family_page.dart';
+import '../../data/models/models.dart';
 import '../../presentation/pages/care-log/care_log_page.dart';
 import '../../presentation/pages/sos/sos_page.dart';
 import '../../presentation/pages/settings/profile_page.dart';
@@ -75,6 +77,13 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: 'add',
                 builder: (context, state) => const AddMedicationPage(),
+              ),
+              GoRoute(
+                path: ':id',
+                builder: (context, state) {
+                  final med = state.extra as Medication;
+                  return MedicationDetailPage(medication: med);
+                },
               ),
             ],
           ),

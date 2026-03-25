@@ -154,8 +154,9 @@ class _AddMedicationPageState extends ConsumerState<AddMedicationPage> {
 
       await dio.post('/medications', data: data);
 
-      // 刷新药品列表
+      // 刷新药品列表和今日用药汇总
       ref.invalidate(medicationsProvider(recipientId));
+      ref.invalidate(todayMedicationProvider(recipientId));
 
       if (mounted) {
         context.pop();

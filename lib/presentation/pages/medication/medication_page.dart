@@ -106,7 +106,7 @@ class MedicationPage extends ConsumerWidget {
                             ),
                             trailing: const Icon(Icons.chevron_right),
                             onTap: () {
-                              // TODO: 跳转到药品详情
+                              context.push('/medication/${med.id}', extra: med);
                             },
                           ),
                         );

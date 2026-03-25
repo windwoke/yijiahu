@@ -3,6 +3,7 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/models.dart' as models;
+import '../../data/models/care_log.dart';
 import '../../core/network/api_client.dart';
 
 /// 当前选中的家庭
@@ -151,4 +152,52 @@ final medicationDetailProvider =
   final dio = ref.read(dioProvider);
   final response = await dio.get('/medications/$medicationId');
   return models.Medication.fromJson(response.data as Map<String, dynamic>);
+});
+
+/// 时间线条目（统一展示照护日志 + 用药打卡）
+final timelineProvider =
+    FutureProvider.family<List<models.TimelineEntry>, TimelineQuery>((ref, query) async {
+  try {
+    final dio = ref.read(dioProvider);
+    final familyId = query.familyId;
+    final recipientId = query.recipientId;
+
+    // 1. 获取照护日志
+    final careLogsParams = <String, dynamic>{
+      'familyId': familyId,
+      'limit': 50,
+    };
+    if (recipientId != null) {
+      careLogsParams['recipientId'] = recipientId;
+    }
+    final careLogsResponse = await dio.get('/care-logs', queryParameters: careLogsParams);
+    final careLogsData = careLogsResponse.data is List<dynamic>
+        ? careLogsResponse.data as List<dynamic>
+        : (careLogsResponse.data['data'] as List<dynamic>?) ?? [];
+    final careLogs = careLogsData
+        .map((e) => models.TimelineEntry.fromCareLog(e as Map<String, dynamic>))
+        .toList();
+
+    // 2. 获取用药打卡记录
+    final medParams = <String, dynamic>{
+      'days': 7,
+    };
+    if (recipientId != null) {
+      medParams['recipientId'] = recipientId;
+    }
+    final medResponse = await dio.get('/medication-logs/timeline', queryParameters: medParams);
+    final medData = medResponse.data is List<dynamic>
+        ? medResponse.data as List<dynamic>
+        : (medResponse.data['data'] as List<dynamic>?) ?? [];
+    final medLogs = medData
+        .map((e) => models.TimelineEntry.fromMedicationLog(e as Map<String, dynamic>))
+        .toList();
+
+    // 3. 合并并按时间倒序
+    final all = [...careLogs, ...medLogs];
+    all.sort((a, b) => b.time.compareTo(a.time));
+    return all;
+  } catch (err) {
+    return [];
+  }
 });

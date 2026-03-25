@@ -33,4 +33,14 @@ export class MedicationLogController {
   getHistory(@Query('recipientId') recipientId: string, @Query('date') date: string) {
     return this.service.getHistory(recipientId, date);
   }
+
+  @Get('timeline')
+  @ApiOperation({ summary: '获取时间线用药记录（打卡记录）' })
+  getTimeline(
+    @Query('recipientId') recipientId?: string,
+    @Query('familyId') familyId?: string,
+    @Query('days') days?: string,
+  ) {
+    return this.service.getTimeline(recipientId, familyId, days ? parseInt(days) : 7);
+  }
 }

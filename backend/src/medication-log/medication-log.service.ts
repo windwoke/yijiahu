@@ -122,4 +122,33 @@ export class MedicationLogService {
       order: { scheduledTime: 'ASC' },
     });
   }
+
+  /** 时间线用药记录（taken/skipped） */
+  async getTimeline(recipientId?: string, familyId?: string, days = 7): Promise<any[]> {
+    const qb = this.logRepo
+      .createQueryBuilder('log')
+      .leftJoinAndSelect('log.medication', 'medication')
+      .where('log.status IN (:...statuses)', {
+        statuses: [MedicationLogStatus.TAKEN, MedicationLogStatus.SKIPPED],
+      })
+      .andWhere('log.takenAt IS NOT NULL')
+      .orderBy('log.takenAt', 'DESC')
+      .take(50);
+
+    if (recipientId) {
+      qb.andWhere('log.recipientId = :recipientId', { recipientId });
+    }
+
+    const logs = await qb.getMany();
+    return logs.map((log) => ({
+      id: log.id,
+      type: 'medication',
+      content: `${log.medication?.name || ''} 已${log.status === MedicationLogStatus.TAKEN ? '服用' : '跳过'}${log.medication?.dosage ? ' · ' + log.medication.dosage : ''}`,
+      authorName: log.takenBy || '家庭成员',
+      authorId: log.takenBy,
+      recipientId: log.recipientId,
+      time: log.takenAt,
+      status: log.status,
+    }));
+  }
 }

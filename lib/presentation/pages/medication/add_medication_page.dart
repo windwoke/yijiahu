@@ -182,7 +182,9 @@ class _AddMedicationPageState extends ConsumerState<AddMedicationPage> {
   @override
   Widget build(BuildContext context) {
     final recipients = ref.watch(careRecipientsProvider);
-    final recipient = recipients.valueOrNull?.firstOrNull;
+    final recipient = widget.recipientId != null
+        ? recipients.valueOrNull?.where((r) => r.id == widget.recipientId).firstOrNull
+        : recipients.valueOrNull?.firstOrNull;
 
     return Scaffold(
       backgroundColor: AppColors.background,

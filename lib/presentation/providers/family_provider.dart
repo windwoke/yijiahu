@@ -116,6 +116,14 @@ final healthTrendsProvider =
 },
 );
 
+/// 照护对象详情（按 ID 获取）
+final careRecipientDetailProvider =
+    FutureProvider.family<models.CareRecipient, String>((ref, recipientId) async {
+  final dio = ref.read(dioProvider);
+  final response = await dio.get('/care-recipients/$recipientId');
+  return models.CareRecipient.fromJson(response.data as Map<String, dynamic>);
+});
+
 /// 药品详情（按 ID 获取）
 final medicationDetailProvider =
     FutureProvider.family<models.Medication, String>((ref, medicationId) async {

@@ -10,15 +10,24 @@ import '../../../core/router/app_router.dart';
 import '../../../data/models/models.dart';
 import '../../providers/family_provider.dart';
 
-class CareRecipientDetailPage extends ConsumerWidget {
+class CareRecipientDetailPage extends ConsumerStatefulWidget {
   final CareRecipient recipient;
 
   const CareRecipientDetailPage({super.key, required this.recipient});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final medicationsAsync = ref.watch(medicationsProvider(recipient.id));
-    final healthTrendsAsync = ref.watch(healthTrendsProvider(recipient.id));
+  ConsumerState<CareRecipientDetailPage> createState() => _CareRecipientDetailPageState();
+}
+
+class _CareRecipientDetailPageState extends ConsumerState<CareRecipientDetailPage> {
+  @override
+  Widget build(BuildContext context) {
+    final recipientAsync = ref.watch(careRecipientDetailProvider(widget.recipient.id));
+    final medicationsAsync = ref.watch(medicationsProvider(widget.recipient.id));
+    final healthTrendsAsync = ref.watch(healthTrendsProvider(widget.recipient.id));
+
+    // 拿最新数据用于展示，过渡期用 widget.recipient兜底
+    final recipient = recipientAsync.valueOrNull ?? widget.recipient;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -34,7 +43,11 @@ class CareRecipientDetailPage extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_outlined, color: AppColors.primary),
-            onPressed: () => context.push(AppRoutes.addCareRecipient, extra: recipient),
+            onPressed: () async {
+              await context.push(AppRoutes.addCareRecipient, extra: recipient);
+              // 编辑返回后刷新数据
+              ref.invalidate(careRecipientDetailProvider(widget.recipient.id));
+            },
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline, color: AppColors.error),
@@ -42,31 +55,52 @@ class CareRecipientDetailPage extends ConsumerWidget {
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _buildHeaderCard(recipient),
-          const SizedBox(height: 16),
-          _buildBasicInfoCard(recipient),
-          const SizedBox(height: 16),
-          _buildHealthCard(recipient),
-          const SizedBox(height: 16),
-          // 健康趋势
-          healthTrendsAsync.when(
-            data: (trends) => _buildHealthTrendsSection(trends),
-            loading: () => const SizedBox.shrink(),
-            error: (_, __) => const SizedBox.shrink(),
-          ),
-          const SizedBox(height: 16),
-          _buildEmergencyCard(recipient),
-          const SizedBox(height: 16),
-          _buildHospitalCard(recipient),
-          const SizedBox(height: 16),
-          // 药品管理
-          _buildMedicationSection(context, ref, medicationsAsync),
-          const SizedBox(height: 24),
-        ],
+      body: recipientAsync.when(
+        loading: () => _buildBody(recipient, medicationsAsync, healthTrendsAsync),
+        data: (_) => _buildBody(recipient, medicationsAsync, healthTrendsAsync),
+        error: (_, __) => _buildBody(recipient, medicationsAsync, healthTrendsAsync),
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          await context.push('/medication/add');
+          ref.invalidate(medicationsProvider(widget.recipient.id));
+        },
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        elevation: 4,
+        icon: const Icon(Icons.add, size: 20),
+        label: const Text('添加药品', style: TextStyle(fontWeight: FontWeight.w600)),
+      ),
+    );
+  }
+
+  Widget _buildBody(
+    CareRecipient recipient,
+    AsyncValue<List<Medication>> medicationsAsync,
+    AsyncValue<Map<String, List<HealthRecord>>> healthTrendsAsync,
+  ) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        _buildHeaderCard(recipient),
+        const SizedBox(height: 16),
+        _buildBasicInfoCard(recipient),
+        const SizedBox(height: 16),
+        _buildHealthCard(recipient),
+        const SizedBox(height: 16),
+        healthTrendsAsync.when(
+          data: (trends) => _buildHealthTrendsSection(trends),
+          loading: () => const SizedBox.shrink(),
+          error: (_, __) => const SizedBox.shrink(),
+        ),
+        const SizedBox(height: 16),
+        _buildEmergencyCard(recipient),
+        const SizedBox(height: 16),
+        _buildHospitalCard(recipient),
+        const SizedBox(height: 16),
+        _buildMedicationSection(medicationsAsync),
+        const SizedBox(height: 100),
+      ],
     );
   }
 
@@ -146,21 +180,13 @@ class CareRecipientDetailPage extends ConsumerWidget {
 
   Widget _buildBasicInfoCard(CareRecipient r) {
     final items = <_InfoItem>[];
-    if (r.birthDate != null) {
-      items.add(_InfoItem('出生日期', _formatDate(r.birthDate!)));
-    }
-    if (r.gender != null && r.gender!.isNotEmpty) {
-      items.add(_InfoItem('性别', _genderLabel(r.gender!)));
-    }
-    if (r.bloodType != null && r.bloodType!.isNotEmpty) {
-      items.add(_InfoItem('血型', '${r.bloodType!}型'));
-    }
+    if (r.birthDate != null) items.add(_InfoItem('出生日期', _formatDate(r.birthDate!)));
+    if (r.gender != null && r.gender!.isNotEmpty) items.add(_InfoItem('性别', _genderLabel(r.gender!)));
+    if (r.bloodType != null && r.bloodType!.isNotEmpty) items.add(_InfoItem('血型', '${r.bloodType!}型'));
     if (r.currentAddress != null && r.currentAddress!.isNotEmpty) {
       items.add(_InfoItem('家庭住址', r.currentAddress!));
     }
-
     if (items.isEmpty) return const SizedBox.shrink();
-
     return _buildCard(
       title: '基本信息',
       icon: Icons.person_outline,
@@ -174,7 +200,6 @@ class CareRecipientDetailPage extends ConsumerWidget {
     if (!hasAllergies && !hasConditions && (r.medicalHistory == null || r.medicalHistory!.isEmpty)) {
       return const SizedBox.shrink();
     }
-
     return _buildCard(
       title: '健康信息',
       icon: Icons.favorite_outline,
@@ -206,10 +231,7 @@ class CareRecipientDetailPage extends ConsumerWidget {
           if (hasAllergies || hasConditions) const SizedBox(height: 16),
           _buildSectionLabel('病史'),
           const SizedBox(height: 8),
-          Text(
-            r.medicalHistory!,
-            style: const TextStyle(fontSize: 14, color: AppColors.textPrimary, height: 1.5),
-          ),
+          Text(r.medicalHistory!, style: const TextStyle(fontSize: 14, color: AppColors.textPrimary, height: 1.5)),
         ],
       ],
     );
@@ -218,7 +240,6 @@ class CareRecipientDetailPage extends ConsumerWidget {
   Widget _buildHealthTrendsSection(Map<String, List<HealthRecord>> trends) {
     final bpList = trends['bloodPressure'] ?? [];
     final glucoseList = trends['bloodGlucose'] ?? [];
-
     if (bpList.isEmpty && glucoseList.isEmpty) {
       return _buildCard(
         title: '近期健康趋势',
@@ -239,7 +260,6 @@ class CareRecipientDetailPage extends ConsumerWidget {
         ],
       );
     }
-
     return _buildCard(
       title: '近期健康趋势',
       icon: Icons.show_chart,
@@ -255,12 +275,10 @@ class CareRecipientDetailPage extends ConsumerWidget {
 
   Widget _buildBpTrendCard(List<HealthRecord> records) {
     final latest = records.isNotEmpty ? records.first : null;
-    final avgSystolic = records.isEmpty ? 0 : (records.map((r) => r.systolic ?? 0).reduce((a, b) => a + b) / records.length).round();
-    final avgDiastolic = records.isEmpty ? 0 : (records.map((r) => r.diastolic ?? 0).reduce((a, b) => a + b) / records.length).round();
-
-    final trend = _getBpTrend(records);
+    final avgS = records.isEmpty ? 0 : (records.map((r) => r.systolic ?? 0).reduce((a, b) => a + b) / records.length).round();
+    final avgD = records.isEmpty ? 0 : (records.map((r) => r.diastolic ?? 0).reduce((a, b) => a + b) / records.length).round();
+    final trend = records.length < 2 ? 0 : ((records[0].systolic ?? 0) > (records[1].systolic ?? 0) + 5 ? 1 : ((records[0].systolic ?? 0) < (records[1].systolic ?? 0) - 5 ? -1 : 0));
     final trendIcon = trend > 0 ? '📈' : (trend < 0 ? '📉' : '📊');
-    final trendLabel = _bpTrendLabel(trend);
     final trendColor = trend > 0 ? AppColors.coral : (trend < 0 ? AppColors.success : AppColors.textSecondary);
 
     return Container(
@@ -287,24 +305,16 @@ class CareRecipientDetailPage extends ConsumerWidget {
               children: [
                 Text(
                   '${latest.systolic}/${latest.diastolic}',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w700,
-                    color: _bpColor(latest.systolic!, latest.diastolic!),
-                  ),
+                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.w700, color: _bpColor(latest.systolic!, latest.diastolic!)),
                 ),
                 const SizedBox(width: 4),
-                Text(
-                  'mmHg',
-                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-                ),
+                Text('mmHg', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
                 const Spacer(),
-                Text('$trendIcon $trendLabel', style: TextStyle(fontSize: 13, color: trendColor, fontWeight: FontWeight.w500)),
+                Text('$trendIcon ${_bpTrendLabel(trend)}', style: TextStyle(fontSize: 13, color: trendColor, fontWeight: FontWeight.w500)),
               ],
             ),
             const SizedBox(height: 12),
           ],
-          // 最近记录
           ...records.take(3).map((r) => Padding(
             padding: const EdgeInsets.only(bottom: 6),
             child: Row(
@@ -319,7 +329,7 @@ class CareRecipientDetailPage extends ConsumerWidget {
             ),
           )),
           const SizedBox(height: 8),
-          Text('近7日均值 $avgSystolic/$avgDiastolic', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+          Text('近7日均值 $avgS/$avgD', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
         ],
       ),
     );
@@ -327,13 +337,10 @@ class CareRecipientDetailPage extends ConsumerWidget {
 
   Widget _buildGlucoseTrendCard(List<HealthRecord> records) {
     final latest = records.isNotEmpty ? records.first : null;
-    final avgValue = records.isEmpty ? 0.0 : (records.map((r) => r.glucoseValue ?? 0).reduce((a, b) => a + b) / records.length);
+    final avg = records.isEmpty ? 0.0 : (records.map((r) => r.glucoseValue ?? 0).reduce((a, b) => a + b) / records.length);
     final type = latest?.glucoseType ?? 'fasting';
-    final typeLabel = type == 'fasting' ? '空腹' : '餐后';
-
-    final trend = _getGlucoseTrend(records);
+    final trend = records.length < 2 ? 0 : ((records[0].glucoseValue ?? 0) > (records[1].glucoseValue ?? 0) + 0.5 ? 1 : ((records[0].glucoseValue ?? 0) < (records[1].glucoseValue ?? 0) - 0.5 ? -1 : 0));
     final trendIcon = trend > 0 ? '📈' : (trend < 0 ? '📉' : '📊');
-    final trendLabel = _glucoseTrendLabel(trend);
     final trendColor = trend > 0 ? AppColors.warning : (trend < 0 ? AppColors.success : AppColors.textSecondary);
 
     return Container(
@@ -349,7 +356,7 @@ class CareRecipientDetailPage extends ConsumerWidget {
             children: [
               Icon(Icons.water_drop, size: 16, color: AppColors.primary),
               const SizedBox(width: 6),
-              Text('血糖（${typeLabel}）', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+              Text('血糖（${type == 'fasting' ? '空腹' : '餐后'}）', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
             ],
           ),
           const SizedBox(height: 12),
@@ -360,18 +367,14 @@ class CareRecipientDetailPage extends ConsumerWidget {
               children: [
                 Text(
                   latest.glucoseValue!.toStringAsFixed(1),
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w700,
-                    color: _glucoseColor(latest.glucoseValue!),
-                  ),
+                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.w700, color: _glucoseColor(latest.glucoseValue!)),
                 ),
                 const SizedBox(width: 4),
                 Text('mmol/L', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
                 const SizedBox(width: 8),
                 Text(_glucoseStatus(latest.glucoseValue!), style: TextStyle(fontSize: 12, color: _glucoseColor(latest.glucoseValue!))),
                 const Spacer(),
-                Text('$trendIcon $trendLabel', style: TextStyle(fontSize: 13, color: trendColor, fontWeight: FontWeight.w500)),
+                Text('$trendIcon ${_glucoseTrendLabel(trend)}', style: TextStyle(fontSize: 13, color: trendColor, fontWeight: FontWeight.w500)),
               ],
             ),
             const SizedBox(height: 12),
@@ -392,7 +395,7 @@ class CareRecipientDetailPage extends ConsumerWidget {
             ),
           )),
           const SizedBox(height: 8),
-          Text('近7日均值 ${avgValue.toStringAsFixed(1)}', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+          Text('近7日均值 ${avg.toStringAsFixed(1)}', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
         ],
       ),
     );
@@ -403,7 +406,6 @@ class CareRecipientDetailPage extends ConsumerWidget {
         (r.emergencyPhone == null || r.emergencyPhone!.isEmpty)) {
       return const SizedBox.shrink();
     }
-
     return _buildCard(
       title: '紧急联系人',
       icon: Icons.emergency_outlined,
@@ -420,7 +422,6 @@ class CareRecipientDetailPage extends ConsumerWidget {
     final hasHospital = (r.hospital != null && r.hospital!.isNotEmpty);
     final hasDoctor = (r.doctorName != null && r.doctorName!.isNotEmpty);
     if (!hasHospital && !hasDoctor) return const SizedBox.shrink();
-
     return _buildCard(
       title: '就医信息',
       icon: Icons.local_hospital_outlined,
@@ -435,14 +436,10 @@ class CareRecipientDetailPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildMedicationSection(BuildContext context, WidgetRef ref, AsyncValue<List<Medication>> medicationsAsync) {
+  Widget _buildMedicationSection(AsyncValue<List<Medication>> medicationsAsync) {
     return _buildCard(
       title: '药品管理',
       icon: Icons.medication_outlined,
-      trailing: IconButton(
-        icon: const Icon(Icons.add_circle_outline, color: AppColors.primary, size: 22),
-        onPressed: () => context.push('/medication/add'),
-      ),
       children: [
         medicationsAsync.when(
           data: (meds) {
@@ -455,47 +452,14 @@ class CareRecipientDetailPage extends ConsumerWidget {
                     children: [
                       Icon(Icons.medication_outlined, size: 36, color: AppColors.textTertiary),
                       const SizedBox(height: 8),
-                      Text('暂无药品', style: TextStyle(color: AppColors.textTertiary)),
-                      const SizedBox(height: 8),
-                      GestureDetector(
-                        onTap: () => context.push('/medication/add'),
-                        child: Text(
-                          '+ 添加第一个药品',
-                          style: TextStyle(fontSize: 14, color: AppColors.primary, fontWeight: FontWeight.w600),
-                        ),
-                      ),
+                      Text('暂无药品，点击下方按钮添加', style: TextStyle(color: AppColors.textTertiary)),
                     ],
                   ),
                 ),
               );
             }
             return Column(
-              children: [
-                ...active.map((med) => _buildMedicationRow(context, med)),
-                const SizedBox(height: 8),
-                GestureDetector(
-                  onTap: () => context.push('/medication/add'),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.add, size: 16, color: AppColors.primary),
-                        const SizedBox(width: 4),
-                        Text(
-                          '添加新药品',
-                          style: TextStyle(fontSize: 14, color: AppColors.primary, fontWeight: FontWeight.w600),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+              children: active.map((med) => _buildMedicationRow(med)).toList(),
             );
           },
           loading: () => const Padding(
@@ -511,7 +475,7 @@ class CareRecipientDetailPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildMedicationRow(BuildContext context, Medication med) {
+  Widget _buildMedicationRow(Medication med) {
     return InkWell(
       onTap: () => context.push('/medication/${med.id}'),
       borderRadius: BorderRadius.circular(12),
@@ -545,10 +509,7 @@ class CareRecipientDetailPage extends ConsumerWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   if (med.times.isNotEmpty)
-                    Text(
-                      med.times.join(' / '),
-                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                    ),
+                    Text(med.times.join(' / '), style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                 ],
               ),
             ),
@@ -559,12 +520,7 @@ class CareRecipientDetailPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildCard({
-    required String title,
-    required IconData icon,
-    Widget? trailing,
-    required List<Widget> children,
-  }) {
+  Widget _buildCard({required String title, required IconData icon, required List<Widget> children}) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -581,18 +537,7 @@ class CareRecipientDetailPage extends ConsumerWidget {
             children: [
               Icon(icon, size: 18, color: AppColors.primary),
               const SizedBox(width: 8),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              if (trailing != null) ...[
-                const Spacer(),
-                trailing,
-              ],
+              Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
             ],
           ),
           const SizedBox(height: 16),
@@ -621,27 +566,14 @@ class CareRecipientDetailPage extends ConsumerWidget {
   }
 
   Widget _buildSectionLabel(String text) {
-    return Text(
-      text,
-      style: const TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-        color: AppColors.textSecondary,
-      ),
-    );
+    return Text(text, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textSecondary));
   }
 
   Widget _buildChip(String text, Color bgColor, Color textColor) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(fontSize: 13, color: textColor, fontWeight: FontWeight.w500),
-      ),
+      decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(20)),
+      child: Text(text, style: TextStyle(fontSize: 13, color: textColor, fontWeight: FontWeight.w500)),
     );
   }
 
@@ -653,22 +585,15 @@ class CareRecipientDetailPage extends ConsumerWidget {
     }
   }
 
-  String _formatDate(DateTime d) {
-    return '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
-  }
+  String _formatDate(DateTime d) => '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+  String _formatDateShort(DateTime d) => '${d.month}/${d.day}';
 
-  String _formatDateShort(DateTime d) {
-    return '${d.month}/${d.day}';
-  }
-
-  // 血压状态颜色
   Color _bpColor(int sys, int dia) {
-    if (sys >= 140 || dia >= 90) return AppColors.coral;       // 高
-    if (sys < 90 || dia < 60) return AppColors.warning;         // 低
-    return AppColors.success;                                     // 正常
+    if (sys >= 140 || dia >= 90) return AppColors.coral;
+    if (sys < 90 || dia < 60) return AppColors.warning;
+    return AppColors.success;
   }
 
-  // 血糖状态颜色
   Color _glucoseColor(double val) {
     if (val > 7.0 || val < 3.9) return AppColors.coral;
     if (val > 6.1) return AppColors.warning;
@@ -681,54 +606,23 @@ class CareRecipientDetailPage extends ConsumerWidget {
     return '正常';
   }
 
-  // 计算血压趋势: 1=升高, -1=降低, 0=平稳
-  int _getBpTrend(List<HealthRecord> records) {
-    if (records.length < 2) return 0;
-    final latest = records[0].systolic ?? 0;
-    final older = records[records.length > 1 ? 1 : 0].systolic ?? 0;
-    if (latest > older + 5) return 1;
-    if (latest < older - 5) return -1;
-    return 0;
-  }
-
-  int _getGlucoseTrend(List<HealthRecord> records) {
-    if (records.length < 2) return 0;
-    final latest = records[0].glucoseValue ?? 0;
-    final older = records[records.length > 1 ? 1 : 0].glucoseValue ?? 0;
-    if (latest > older + 0.5) return 1;
-    if (latest < older - 0.5) return -1;
-    return 0;
-  }
-
-  String _bpTrendLabel(int trend) {
-    if (trend > 0) return '轻微升高';
-    if (trend < 0) return '轻微下降';
-    return '稳定';
-  }
-
-  String _glucoseTrendLabel(int trend) {
-    if (trend > 0) return '轻微升高';
-    if (trend < 0) return '轻微下降';
-    return '稳定';
-  }
+  String _bpTrendLabel(int trend) => trend > 0 ? '轻微升高' : (trend < 0 ? '轻微下降' : '稳定');
+  String _glucoseTrendLabel(int trend) => trend > 0 ? '轻微升高' : (trend < 0 ? '轻微下降' : '稳定');
 
   void _confirmDelete(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('确认删除'),
-        content: Text('确定要删除"${recipient.name}"吗？此操作不可撤销。'),
+        content: Text('确定要删除"${widget.recipient.name}"吗？此操作不可撤销。'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text(AppTexts.cancel),
-          ),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text(AppTexts.cancel)),
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
               final dio = ref.read(dioProvider);
               final familyId = ref.read(currentFamilyProvider)?.id ?? '';
-              await dio.delete('/care-recipients/${recipient.id}', queryParameters: {'familyId': familyId});
+              await dio.delete('/care-recipients/${widget.recipient.id}', queryParameters: {'familyId': familyId});
               ref.invalidate(careRecipientsProvider);
               ref.invalidate(currentFamilyProvider);
               if (context.mounted) context.pop();

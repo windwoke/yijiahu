@@ -749,9 +749,12 @@ class _CareLogPageState extends ConsumerState<CareLogPage> {
                         'content': contentController.text.trim(),
                       });
 
-                      // 刷新时间线
+                      // 刷新时间线（同时刷新当前 tab 和全部 tab）
+                      // 等 Navigator.pop 完成后才 invalidate，确保主 widget 重建时能重新 watch
+                      await Future.delayed(Duration.zero);
                       final query = TimelineQuery(familyId: familyId, recipientId: _selectedRecipientId);
                       ref.invalidate(timelineProvider(query));
+                      ref.invalidate(timelineProvider(TimelineQuery(familyId: familyId)));
 
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -805,7 +808,13 @@ class _CareLogPageState extends ConsumerState<CareLogPage> {
   }
 
   String _formatTime(DateTime t) {
-    return '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+    final hour = t.hour;
+    final minute = t.minute.toString().padLeft(2, '0');
+    if (hour < 12) {
+      return '上午 ${hour.toString().padLeft(2, '0')}:$minute';
+    } else {
+      return '下午 ${(hour - 12).toString().padLeft(2, '0')}:$minute';
+    }
   }
 
   String _weekdayLabel(int w) {

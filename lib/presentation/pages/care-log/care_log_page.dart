@@ -279,12 +279,15 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
             width: 1,
           ),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-            color: isSelected ? AppColors.primary : AppColors.textSecondary,
+        child: Center(
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+              color: isSelected ? AppColors.primary : AppColors.textSecondary,
+            ),
           ),
         ),
       ),
@@ -321,7 +324,7 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
               return false;
             },
             child: ListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
               itemCount: filtered.length + 1, // +1 for loading indicator
               itemBuilder: (context, index) {
                 if (index == filtered.length) {

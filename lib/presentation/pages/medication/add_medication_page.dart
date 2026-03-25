@@ -10,7 +10,9 @@ import '../../../data/models/models.dart';
 import '../../providers/providers.dart';
 
 class AddMedicationPage extends ConsumerStatefulWidget {
-  const AddMedicationPage({super.key});
+  final String? recipientId;
+
+  const AddMedicationPage({super.key, this.recipientId});
 
   @override
   ConsumerState<AddMedicationPage> createState() => _AddMedicationPageState();
@@ -122,12 +124,17 @@ class _AddMedicationPageState extends ConsumerState<AddMedicationPage> {
 
     try {
       final dio = ref.read(dioProvider);
-      final recipients = ref.read(careRecipientsProvider).valueOrNull ?? [];
-      if (recipients.isEmpty) {
-        setState(() => _errorMessage = '请先添加照护对象');
-        return;
+
+      // 优先使用路由传入的 recipientId，否则从列表取第一个
+      String recipientId = widget.recipientId ?? '';
+      if (recipientId.isEmpty) {
+        final recipients = ref.read(careRecipientsProvider).valueOrNull ?? [];
+        if (recipients.isEmpty) {
+          setState(() => _errorMessage = '请先添加照护对象');
+          return;
+        }
+        recipientId = recipients.first.id;
       }
-      final recipientId = recipients.first.id;
 
       final times = _times.map((t) {
         return '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';

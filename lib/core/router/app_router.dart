@@ -78,7 +78,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: 'add',
-                builder: (context, state) => const AddMedicationPage(),
+                builder: (context, state) {
+                  final recipientId = state.extra as String?;
+                  return AddMedicationPage(recipientId: recipientId);
+                },
               ),
               GoRoute(
                 path: ':id',

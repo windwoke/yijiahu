@@ -441,7 +441,7 @@ class CareRecipientDetailPage extends ConsumerWidget {
       icon: Icons.medication_outlined,
       trailing: IconButton(
         icon: const Icon(Icons.add_circle_outline, color: AppColors.primary, size: 22),
-        onPressed: () => context.push('/medication/add', extra: recipient.id),
+        onPressed: () => context.push('/medication/add'),
       ),
       children: [
         medicationsAsync.when(
@@ -458,7 +458,7 @@ class CareRecipientDetailPage extends ConsumerWidget {
                       Text('暂无药品', style: TextStyle(color: AppColors.textTertiary)),
                       const SizedBox(height: 8),
                       GestureDetector(
-                        onTap: () => context.push('/medication/add', extra: recipient.id),
+                        onTap: () => context.push('/medication/add'),
                         child: Text(
                           '+ 添加第一个药品',
                           style: TextStyle(fontSize: 14, color: AppColors.primary, fontWeight: FontWeight.w600),
@@ -474,7 +474,7 @@ class CareRecipientDetailPage extends ConsumerWidget {
                 ...active.map((med) => _buildMedicationRow(context, med)),
                 const SizedBox(height: 8),
                 GestureDetector(
-                  onTap: () => context.push('/medication/add', extra: recipient.id),
+                  onTap: () => context.push('/medication/add'),
                   child: Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 10),

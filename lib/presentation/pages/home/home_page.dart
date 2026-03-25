@@ -324,98 +324,101 @@ class HomePage extends ConsumerWidget {
           today.total > 0 ? today.completed / today.total : 0.0,
     );
 
-    return Row(
-      children: [
-        // emoji 头像
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: AppColors.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Center(
-            child: Text(
-              recipient.displayAvatar,
-              style: const TextStyle(fontSize: 24),
+    return GestureDetector(
+      onTap: () => context.push(AppRoutes.careRecipientDetail, extra: recipient),
+      child: Row(
+        children: [
+          // emoji 头像
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: AppColors.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Center(
+              child: Text(
+                recipient.displayAvatar,
+                style: const TextStyle(fontSize: 24),
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: 12),
-        // 姓名 + 年龄
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    recipient.name,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  if (recipient.age != null) ...[
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceContainerLow,
-                        borderRadius: BorderRadius.circular(10),
+          const SizedBox(width: 12),
+          // 姓名 + 年龄
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      recipient.name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
                       ),
-                      child: Text(
-                        '${recipient.age}岁',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
+                    ),
+                    if (recipient.age != null) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceContainerLow,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '${recipient.age}岁',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ],
-                ],
+                ),
+                const SizedBox(height: 6),
+                // 进度条
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: progress ?? 0,
+                    backgroundColor: AppColors.grey200,
+                    valueColor:
+                        const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                    minHeight: 6,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          // 完成数 badge
+          todayAsync.whenOrNull(
+            data: (today) => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: today.completed == today.total && today.total > 0
+                    ? AppColors.medicationDone.withValues(alpha: 0.12)
+                    : AppColors.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(12),
               ),
-              const SizedBox(height: 6),
-              // 进度条
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value: progress ?? 0,
-                  backgroundColor: AppColors.grey200,
-                  valueColor:
-                      const AlwaysStoppedAnimation<Color>(AppColors.primary),
-                  minHeight: 6,
+              child: Text(
+                '${today.completed}/${today.total}',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: today.completed == today.total && today.total > 0
+                      ? AppColors.medicationDone
+                      : AppColors.textSecondary,
                 ),
               ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 12),
-        // 完成数 badge
-        todayAsync.whenOrNull(
-          data: (today) => Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: today.completed == today.total && today.total > 0
-                  ? AppColors.medicationDone.withValues(alpha: 0.12)
-                  : AppColors.surfaceContainerLow,
-              borderRadius: BorderRadius.circular(12),
             ),
-            child: Text(
-              '${today.completed}/${today.total}',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: today.completed == today.total && today.total > 0
-                    ? AppColors.medicationDone
-                    : AppColors.textSecondary,
-              ),
-            ),
-          ),
-        ) ?? const SizedBox(width: 48),
-      ],
+          ) ?? const SizedBox(width: 48),
+        ],
+      ),
     );
   }
 }

@@ -170,7 +170,7 @@ class HomePage extends ConsumerWidget {
                   IconButton(
                     onPressed: () {},
                     icon: const Icon(
-                      Icons.notifications_outlined,
+                      Icons.notifications_rounded,
                       color: AppColors.textPrimary,
                       size: 22,
                     ),

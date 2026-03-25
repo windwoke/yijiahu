@@ -281,7 +281,7 @@ class _PasswordChangePageState extends ConsumerState<PasswordChangePage> {
           labelStyle: const TextStyle(color: AppColors.primary, fontSize: 14),
           prefixIcon: const Icon(Icons.lock_outline, color: AppColors.primary, size: 20),
           suffixIcon: IconButton(
-            icon: Icon(obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+            icon: Icon(obscure ? Icons.visibility_off_rounded : Icons.visibility_rounded,
                 color: AppColors.grey400, size: 20),
             onPressed: onToggleObscure,
           ),

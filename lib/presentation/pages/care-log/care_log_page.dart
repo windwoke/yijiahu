@@ -1334,7 +1334,7 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
                 color: AppColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(Icons.add_photo_alternate_outlined, color: AppColors.primary, size: 22),
+              child: Icon(Icons.add_photo_alternate_rounded, color: AppColors.primary, size: 22),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -1476,7 +1476,7 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
               ),
             ),
             const SizedBox(height: 20),
-            _buildPickOption(ctx, Icons.photo_library_outlined, '从相册选择（图片和视频）', () => Navigator.pop(ctx, 'gallery')),
+            _buildPickOption(ctx, Icons.photo_library_rounded, '从相册选择（图片和视频）', () => Navigator.pop(ctx, 'gallery')),
           ],
         ),
       ),

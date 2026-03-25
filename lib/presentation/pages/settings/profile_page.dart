@@ -183,7 +183,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   ),
                   _buildDivider(),
                   _buildListTile(
-                    icon: Icons.phone_outlined,
+                    icon: Icons.phone_rounded,
                     title: '手机号',
                     subtitle: _maskPhone(user?.phone ?? ''),
                     readOnly: true,

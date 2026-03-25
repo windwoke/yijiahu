@@ -119,7 +119,7 @@ class FamilyPage extends ConsumerWidget {
         actions: [
           if (isAdmin)
             IconButton(
-              icon: const Icon(Icons.edit_outlined, color: AppColors.textPrimary),
+              icon: const Icon(Icons.edit_rounded, color: AppColors.textPrimary),
               onPressed: () => _showEditFamilySheet(context, ref, family),
             ),
         ],
@@ -213,7 +213,7 @@ class FamilyPage extends ConsumerWidget {
                       Expanded(
                         child: _buildAddButton(
                           context,
-                          icon: Icons.person_add_outlined,
+                          icon: Icons.person_add_rounded,
                           label: '添加成员',
                           compact: true,
                           onTap: () => _showAddMemberSheet(context),
@@ -223,7 +223,7 @@ class FamilyPage extends ConsumerWidget {
                       Expanded(
                         child: _buildAddButton(
                           context,
-                          icon: Icons.elderly_outlined,
+                          icon: Icons.elderly_rounded,
                           label: '添加照护对象',
                           compact: true,
                           onTap: () => context.push(AppRoutes.addCareRecipient),
@@ -280,7 +280,7 @@ class FamilyPage extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(vertical: 20),
                   child: Column(
                     children: [
-                      Icon(Icons.bar_chart_outlined, size: 40, color: AppColors.textSecondary.withValues(alpha: 0.4)),
+                      Icon(Icons.bar_chart_rounded, size: 40, color: AppColors.textSecondary.withValues(alpha: 0.4)),
                       const SizedBox(height: 8),
                       Text(
                         '暂无本月数据',
@@ -975,7 +975,7 @@ class FamilyPage extends ConsumerWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.book_outlined, size: 12, color: textColor),
+          Icon(Icons.book_rounded, size: 12, color: textColor),
           const SizedBox(width: 4),
           Text(
             text,

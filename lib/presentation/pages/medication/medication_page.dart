@@ -67,7 +67,7 @@ class MedicationPage extends ConsumerWidget {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.medication_outlined,
+                            const Icon(Icons.medication_rounded,
                                 size: 64, color: AppColors.textTertiary),
                             const SizedBox(height: 16),
                             const Text('还没有添加药品'),

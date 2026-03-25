@@ -46,7 +46,7 @@ class _CareRecipientDetailPageState extends ConsumerState<CareRecipientDetailPag
         title: Text(recipient.name),
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit_outlined, color: AppColors.primary),
+            icon: const Icon(Icons.edit_rounded, color: AppColors.primary),
             onPressed: () async {
               await context.push(AppRoutes.addCareRecipient, extra: recipient);
               // 编辑返回后刷新数据
@@ -265,7 +265,7 @@ class _CareRecipientDetailPageState extends ConsumerState<CareRecipientDetailPag
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Column(
                 children: [
-                  Icon(Icons.timeline_outlined, size: 36, color: AppColors.textTertiary),
+                  Icon(Icons.timeline_rounded, size: 36, color: AppColors.textTertiary),
                   const SizedBox(height: 8),
                   Text('暂无健康记录', style: TextStyle(color: AppColors.textTertiary)),
                   const SizedBox(height: 16),
@@ -542,7 +542,7 @@ class _CareRecipientDetailPageState extends ConsumerState<CareRecipientDetailPag
         children: [
           Row(
             children: [
-              Icon(Icons.monitor_heart_outlined, size: 16, color: AppColors.primary),
+              Icon(Icons.monitor_heart_rounded, size: 16, color: AppColors.primary),
               const SizedBox(width: 6),
               const Text('血糖趋势', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
             ],
@@ -763,7 +763,7 @@ class _CareRecipientDetailPageState extends ConsumerState<CareRecipientDetailPag
         children: [
           Row(
             children: [
-              Icon(Icons.monitor_heart_outlined, size: 16, color: AppColors.primary),
+              Icon(Icons.monitor_heart_rounded, size: 16, color: AppColors.primary),
               const SizedBox(width: 6),
               Text('血糖（${type == 'fasting' ? '空腹' : '餐后'}）', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
             ],
@@ -817,7 +817,7 @@ class _CareRecipientDetailPageState extends ConsumerState<CareRecipientDetailPag
     }
     return _buildCard(
       title: '紧急联系人',
-      icon: Icons.emergency_outlined,
+      icon: Icons.emergency_rounded,
       children: [
         if (r.emergencyContact != null && r.emergencyContact!.isNotEmpty)
           _buildInfoRow('联系人', r.emergencyContact!),
@@ -833,7 +833,7 @@ class _CareRecipientDetailPageState extends ConsumerState<CareRecipientDetailPag
     if (!hasHospital && !hasDoctor) return const SizedBox.shrink();
     return _buildCard(
       title: '就医信息',
-      icon: Icons.local_hospital_outlined,
+      icon: Icons.local_hospital_rounded,
       children: [
         if (hasHospital) _buildInfoRow('就诊医院', r.hospital!),
         if (r.department != null && r.department!.isNotEmpty)
@@ -848,7 +848,7 @@ class _CareRecipientDetailPageState extends ConsumerState<CareRecipientDetailPag
   Widget _buildMedicationSection(AsyncValue<List<Medication>> medicationsAsync) {
     return _buildCard(
       title: '药品管理',
-      icon: Icons.medication_outlined,
+      icon: Icons.medication_rounded,
       children: [
         medicationsAsync.when(
           data: (meds) {
@@ -859,7 +859,7 @@ class _CareRecipientDetailPageState extends ConsumerState<CareRecipientDetailPag
                 child: Center(
                   child: Column(
                     children: [
-                      Icon(Icons.medication_outlined, size: 36, color: AppColors.textTertiary),
+                      Icon(Icons.medication_rounded, size: 36, color: AppColors.textTertiary),
                       const SizedBox(height: 8),
                       Text('暂无药品，点击下方按钮添加', style: TextStyle(color: AppColors.textTertiary)),
                     ],

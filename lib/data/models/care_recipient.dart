@@ -57,7 +57,7 @@ class CareRecipient extends Equatable {
     return CareRecipient(
       id: json['id'] as String,
       name: json['name'] as String,
-      avatarEmoji: json['avatarEmoji'] as String? ?? json['avatar_emoji'] as String?,
+      avatarEmoji: json['avatar'] as String? ?? json['avatarEmoji'] as String? ?? json['avatar_emoji'] as String?,
       avatarUrl: json['avatarUrl'] as String? ?? json['avatar_url'] as String?,
       birthDate: json['birthDate'] != null
           ? DateTime.parse(json['birthDate'] as String)

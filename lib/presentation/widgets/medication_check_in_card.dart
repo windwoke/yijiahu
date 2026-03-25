@@ -57,12 +57,12 @@ class MedicationCheckInCard extends StatelessWidget {
       child: GridView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 1.35,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+          childAspectRatio: 1.1,
         ),
         itemCount: today.items.length,
         itemBuilder: (context, index) {
@@ -123,7 +123,7 @@ class MedicationCheckInCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           onTap: canCheckIn ? () => _showCheckInSheet(context, item) : null,
           child: Padding(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(12),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -134,7 +134,7 @@ class MedicationCheckInCard extends StatelessWidget {
                       child: Text(
                         item.medicationName,
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textPrimary,
                           decoration: item.status == MedicationLogStatus.skipped
@@ -145,40 +145,43 @@ class MedicationCheckInCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    if (isTaken)
-                      Icon(Icons.check_circle, color: statusColor, size: 18)
-                    else
-                      Icon(Icons.schedule, color: statusColor, size: 18),
+                    Icon(
+                      isTaken ? Icons.check_circle : Icons.schedule,
+                      color: statusColor,
+                      size: 16,
+                    ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   item.dosage,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 11,
                     color: AppColors.textSecondary,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   item.scheduledTime,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 11,
                     color: statusColor,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 if (canCheckIn) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   SizedBox(
-                    height: 36,
+                    height: 32,
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () => _showCheckInSheet(context, item),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(10),
                         ),
                         padding: EdgeInsets.zero,
                       ),
@@ -187,7 +190,7 @@ class MedicationCheckInCard extends StatelessWidget {
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
-                          fontSize: 13,
+                          fontSize: 12,
                         ),
                       ),
                     ),

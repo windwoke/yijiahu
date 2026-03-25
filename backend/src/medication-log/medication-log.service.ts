@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between } from 'typeorm';
 import { MedicationLog, MedicationLogStatus } from './entities/medication-log.entity';
 import { Medication } from '../medication/entities/medication.entity';
+import { FamilyMember } from '../family/entities/family-member.entity';
 import { CheckInDto } from './dto/medication-log.dto';
 
 @Injectable()
@@ -10,6 +11,7 @@ export class MedicationLogService {
   constructor(
     @InjectRepository(MedicationLog) private logRepo: Repository<MedicationLog>,
     @InjectRepository(Medication) private medRepo: Repository<Medication>,
+    @InjectRepository(FamilyMember) private memberRepo: Repository<FamilyMember>,
   ) {}
 
   /** 生成某一天的所有用药日志 */
@@ -140,11 +142,19 @@ export class MedicationLogService {
     }
 
     const logs = await qb.getMany();
+
+    // 批量查打卡人姓名
+    const memberIds = logs.map(l => l.takenBy).filter(Boolean);
+    const members = memberIds.length > 0
+      ? await this.memberRepo.findBy(memberIds.map(id => ({ id } as any)))
+      : [];
+    const memberMap = new Map(members.map(m => [m.id, m.nickname]));
+
     return logs.map((log) => ({
       id: log.id,
       type: 'medication',
       content: `${log.medication?.name || ''} 已${log.status === MedicationLogStatus.TAKEN ? '服用' : '跳过'}${log.medication?.dosage ? ' · ' + log.medication.dosage : ''}`,
-      authorName: log.takenBy || '家庭成员',
+      authorName: memberMap.get(log.takenBy!) || '家庭成员',
       authorId: log.takenBy,
       recipientId: log.recipientId,
       time: log.takenAt,

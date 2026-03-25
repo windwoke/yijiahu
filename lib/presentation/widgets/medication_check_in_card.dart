@@ -4,6 +4,7 @@ library;
 import 'package:flutter/material.dart';
 import '../../core/constants/constants.dart';
 import '../../data/models/models.dart';
+import 'empty_state.dart';
 
 class MedicationCheckInCard extends StatelessWidget {
   final TodayMedicationSummary today;
@@ -18,32 +19,10 @@ class MedicationCheckInCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (today.items.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceContainerLowest,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.shadowSoft,
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-            BoxShadow(
-              color: AppColors.shadowSoft2,
-              blurRadius: 4,
-              offset: const Offset(0, 1),
-            ),
-          ],
-        ),
-        child: Center(
-          child: Text(
-            '今日暂无用药计划',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-          ),
-        ),
+      return const EmptyState(
+        emoji: '💊',
+        title: '今日暂无用药计划',
+        subtitle: '记得按时服药，保持健康',
       );
     }
 

@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/constants.dart';
 import '../../../core/router/app_router.dart';
 import '../../providers/providers.dart';
+import '../../widgets/empty_state.dart';
 
 class MedicationPage extends ConsumerWidget {
   const MedicationPage({super.key});
@@ -35,8 +36,10 @@ class MedicationPage extends ConsumerWidget {
       body: recipients.when(
         data: (list) {
           if (list.isEmpty) {
-            return const Center(
-              child: Text('暂无照护对象，请先添加'),
+            return const EmptyState(
+              emoji: '👨‍👩‍👧',
+              title: '还没有添加照护对象',
+              subtitle: '添加爷爷、奶奶等照护对象，开始管理用药和健康',
             );
           }
           // 默认显示第一个照护对象的药品
@@ -63,22 +66,12 @@ class MedicationPage extends ConsumerWidget {
                 child: medsAsync.when(
                   data: (meds) {
                     if (meds.isEmpty) {
-                      return Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.medication_rounded,
-                                size: 64, color: AppColors.textTertiary),
-                            const SizedBox(height: 16),
-                            const Text('还没有添加药品'),
-                            const SizedBox(height: 16),
-                            ElevatedButton.icon(
-                              onPressed: () => context.go(AppRoutes.addMedication),
-                              icon: const Icon(Icons.add),
-                              label: const Text('添加药品'),
-                            ),
-                          ],
-                        ),
+                      return EmptyState(
+                        emoji: '💊',
+                        title: '还没有添加药品',
+                        subtitle: '为 ${recipient.name} 添加用药计划',
+                        actionLabel: '添加药品',
+                        onAction: () => context.go(AppRoutes.addMedication),
                       );
                     }
                     return ListView.builder(

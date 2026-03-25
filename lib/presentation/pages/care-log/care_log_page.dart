@@ -11,6 +11,7 @@ import '../../../core/env/env_config.dart';
 import '../../../data/models/models.dart';
 import '../../../data/models/family.dart' as models;
 import '../../providers/family_provider.dart';
+import '../../widgets/empty_state.dart';
 
 /// 照护日志页
 class CareLogPage extends ConsumerStatefulWidget {
@@ -661,43 +662,10 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
 
   /// 空状态
   Widget _buildEmptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: AppColors.surfaceContainerLow,
-                shape: BoxShape.circle,
-              ),
-              child: const Center(child: Text('📖', style: TextStyle(fontSize: 36))),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              '还没有日志',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '记录每一天的照护点滴',
-              style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              '点击下方「记一笔」开始记录',
-              style: TextStyle(fontSize: 13, color: AppColors.textTertiary),
-            ),
-          ],
-        ),
-      ),
+    return const EmptyState(
+      emoji: '📖',
+      title: '还没有日志',
+      subtitle: '记录每一天的照护点滴',
     );
   }
 

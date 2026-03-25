@@ -280,13 +280,21 @@ class FamilyPage extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(vertical: 20),
                   child: Column(
                     children: [
-                      Icon(Icons.bar_chart_rounded, size: 40, color: AppColors.textSecondary.withValues(alpha: 0.4)),
-                      const SizedBox(height: 8),
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(Icons.bar_chart_rounded, size: 28, color: AppColors.primary),
+                      ),
+                      const SizedBox(height: 10),
                       Text(
                         '暂无本月数据',
                         style: TextStyle(
                           fontSize: 13,
-                          color: AppColors.textSecondary.withValues(alpha: 0.6),
+                          color: AppColors.textSecondary,
                         ),
                       ),
                     ],

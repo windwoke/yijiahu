@@ -39,7 +39,14 @@ final careRecipientsProvider = FutureProvider<List<models.CareRecipient>>((ref) 
     return [];
   }
   return data
-      .map((e) => models.CareRecipient.fromJson(e as Map<String, dynamic>))
+      .map((e) {
+        try {
+          return models.CareRecipient.fromJson(e as Map<String, dynamic>);
+        } catch (err) {
+          return null;
+        }
+      })
+      .whereType<models.CareRecipient>()
       .toList();
 });
 
@@ -73,7 +80,14 @@ final medicationsProvider =
     return [];
   }
   return data
-      .map((e) => models.Medication.fromJson(e as Map<String, dynamic>))
+      .map((e) {
+        try {
+          return models.Medication.fromJson(e as Map<String, dynamic>);
+        } catch (err) {
+          return null;
+        }
+      })
+      .whereType<models.Medication>()
       .toList();
 });
 

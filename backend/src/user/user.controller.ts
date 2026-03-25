@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Body, UseGuards, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Patch, Body, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -7,6 +7,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { UserService } from './user.service';
 import { FamilyMember } from '../family/entities/family-member.entity';
 import { Family } from '../family/entities/family.entity';
+import { CareRecipient } from '../care-recipient/entities/care-recipient.entity';
 
 @ApiTags('用户')
 @ApiBearerAuth()
@@ -17,6 +18,7 @@ export class UserController {
     private readonly userService: UserService,
     @InjectRepository(FamilyMember) private memberRepo: Repository<FamilyMember>,
     @InjectRepository(Family) private familyRepo: Repository<Family>,
+    @InjectRepository(CareRecipient) private recipientRepo: Repository<CareRecipient>,
   ) {}
 
   @Get('me')
@@ -28,9 +30,23 @@ export class UserController {
   @Get('me/family')
   @ApiOperation({ summary: '获取当前用户所在家庭' })
   async getMyFamily(@CurrentUser('id') userId: string) {
-    const member = await this.memberRepo.findOne({ where: { userId } });
-    if (!member) return { family: null };
-    const family = await this.familyRepo.findOne({ where: { id: member.familyId } });
+    const members = await this.memberRepo.find({ where: { userId } });
+    if (members.length === 0) return { family: null };
+
+    // 优先返回有照护对象的家庭
+    for (const member of members) {
+      const hasRecipients = await this.recipientRepo.count({
+        where: { familyId: member.familyId },
+      });
+      if (hasRecipients > 0) {
+        const family = await this.familyRepo.findOne({ where: { id: member.familyId } });
+        if (family) return { family };
+      }
+    }
+
+    // 没有照护对象则返回第一个
+    const firstMember = members[0];
+    const family = await this.familyRepo.findOne({ where: { id: firstMember.familyId } });
     if (!family) return { family: null };
     return { family };
   }

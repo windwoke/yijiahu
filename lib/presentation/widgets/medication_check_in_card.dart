@@ -125,6 +125,7 @@ class MedicationCheckInCard extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
@@ -167,8 +168,8 @@ class MedicationCheckInCard extends StatelessWidget {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                const Spacer(),
-                if (canCheckIn)
+                if (canCheckIn) ...[
+                  const SizedBox(height: 8),
                   SizedBox(
                     height: 36,
                     width: double.infinity,
@@ -190,9 +191,8 @@ class MedicationCheckInCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                  )
-                else
-                  SizedBox(height: 36),
+                  ),
+                ],
               ],
             ),
           ),

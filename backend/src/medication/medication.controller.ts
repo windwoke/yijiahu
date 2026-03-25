@@ -13,7 +13,7 @@ export class MedicationController {
 
   @Post()
   @ApiOperation({ summary: '添加药品' })
-  create(@Body() body: CreateMedicationDto & { recipientId: string }) {
+  create(@Body() body: CreateMedicationDto) {
     return this.service.create(body.recipientId, body);
   }
 

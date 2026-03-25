@@ -14,6 +14,17 @@ export class UpdateFamilyDto {
   @IsString()
   @IsOptional()
   name?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  avatarUrl?: string;
+
+  @ApiPropertyOptional({ description: '家庭一句话简介' })
+  @IsString()
+  @IsOptional()
+  @MaxLength(100)
+  description?: string;
 }
 
 export class JoinFamilyDto {

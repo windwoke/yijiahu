@@ -20,8 +20,14 @@ export class Family {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column({ nullable: true })
+  avatarUrl: string;
+
   @Column()
   name: string;
+
+  @Column({ nullable: true })
+  description: string;
 
   @Column({ unique: true })
   inviteCode: string;

@@ -11,6 +11,8 @@ enum FamilyMemberRole { owner, admin, member, viewer }
 class Family extends Equatable {
   final String id;
   final String name;
+  final String? avatarUrl;
+  final String? description;
   final String inviteCode;
   final String role; // owner/admin/member/viewer
   final SubscriptionPlan subscriptionPlan;
@@ -22,6 +24,8 @@ class Family extends Equatable {
   const Family({
     required this.id,
     required this.name,
+    this.avatarUrl,
+    this.description,
     required this.inviteCode,
     required this.role,
     this.subscriptionPlan = SubscriptionPlan.free,
@@ -35,6 +39,8 @@ class Family extends Equatable {
     return Family(
       id: json['id'] as String? ?? '',
       name: json['name'] as String? ?? '',
+      avatarUrl: json['avatarUrl'] as String? ?? json['avatar_url'] as String?,
+      description: json['description'] as String?,
       inviteCode: json['inviteCode'] as String? ?? json['invite_code'] as String? ?? '',
       role: json['myRole'] as String? ?? json['role'] as String? ?? 'member',
       subscriptionPlan: _parsePlan(json['subscriptionPlan'] as String? ?? json['subscription_plan'] as String?),
@@ -68,6 +74,8 @@ class Family extends Equatable {
   List<Object?> get props => [
         id,
         name,
+        avatarUrl,
+        description,
         inviteCode,
         role,
         subscriptionPlan,

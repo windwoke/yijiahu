@@ -193,11 +193,51 @@ final timelineProvider =
         .map((e) => models.TimelineEntry.fromMedicationLog(e as Map<String, dynamic>))
         .toList();
 
-    // 3. 合并并按时间倒序
-    final all = [...careLogs, ...medLogs];
+    // 3. 获取健康记录
+    List<models.TimelineEntry> healthRecords = [];
+    try {
+      final hrParams = <String, dynamic>{
+        'days': 7,
+        'limit': 20,
+      };
+      if (recipientId != null) {
+        hrParams['recipientId'] = recipientId;
+      }
+      final hrResponse = await dio.get('/health-records/recent', queryParameters: hrParams);
+      final hrData = hrResponse.data is List<dynamic>
+          ? hrResponse.data as List<dynamic>
+          : (hrResponse.data['data'] as List<dynamic>?) ?? [];
+      healthRecords = hrData
+          .map((e) => models.TimelineEntry.fromHealthRecord(e as Map<String, dynamic>))
+          .toList();
+    } catch (_) {}
+
+    // 4. 合并并按时间倒序
+    final all = [...careLogs, ...medLogs, ...healthRecords];
     all.sort((a, b) => b.time.compareTo(a.time));
     return all;
   } catch (err) {
     return [];
   }
 });
+
+/// 更新家庭信息（头像、名称、描述）
+Future<models.Family> updateFamily({
+  required WidgetRef ref,
+  required String familyId,
+  String? name,
+  String? avatarUrl,
+  String? description,
+}) async {
+  final dio = ref.read(dioProvider);
+  final body = <String, dynamic>{};
+  if (name != null) body['name'] = name;
+  if (avatarUrl != null) body['avatarUrl'] = avatarUrl;
+  if (description != null) body['description'] = description;
+
+  final response = await dio.patch('/families/$familyId', data: body);
+  final updated = models.Family.fromJson(response.data as Map<String, dynamic>);
+  // 同步更新 currentFamilyProvider
+  ref.read(currentFamilyProvider.notifier).state = updated;
+  return updated;
+}

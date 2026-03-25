@@ -208,38 +208,44 @@ class MedicationCheckInCard extends StatelessWidget {
   Widget _buildDoneInfo(MedicationLogItem item, Color statusColor, bool isTaken) {
     final timeStr = _formatTimeStr(item.actualTime);
     final action = isTaken ? '已服用' : '已跳过';
-    return RichText(
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      text: TextSpan(
-        children: [
-          TextSpan(
-            text: '$action ',
-            style: const TextStyle(
-              fontSize: 11,
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          if (timeStr != null)
-            TextSpan(
-              text: '$timeStr ',
-              style: TextStyle(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // 第一行：时间 + 状态
+        Row(
+          children: [
+            if (timeStr != null)
+              Text(
+                '$timeStr ',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: statusColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            Text(
+              action,
+              style: const TextStyle(
                 fontSize: 11,
-                color: statusColor,
-                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
               ),
             ),
-          TextSpan(
-            text: '由 ${item.takenBy!.name} 记录',
-            style: const TextStyle(
-              fontSize: 11,
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w500,
-            ),
+          ],
+        ),
+        const SizedBox(height: 1),
+        // 第二行：谁记录的
+        Text(
+          '由 ${item.takenBy!.name} 记录',
+          style: const TextStyle(
+            fontSize: 10,
+            color: AppColors.textSecondary,
           ),
-        ],
-      ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
     );
   }
 

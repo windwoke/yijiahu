@@ -24,8 +24,6 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
   String? _selectedRecipientId;
   CareLogType? _filterType;
 
-  bool _isLoadingMore = false;
-
   @override
   void initState() {
     super.initState();
@@ -50,14 +48,10 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
   }
 
   void _loadMore() {
-    if (_isLoadingMore) return;
     final family = ref.read(currentFamilyProvider);
     if (family == null) return;
     final query = TimelineQuery(familyId: family.id, recipientId: _selectedRecipientId);
-    setState(() => _isLoadingMore = true);
-    ref.read(timelineProvider(query).notifier).loadMore().whenComplete(() {
-      if (mounted) setState(() => _isLoadingMore = false);
-    });
+    ref.read(timelineProvider(query).notifier).loadMore();
   }
 
   Future<void> _onRefresh() async {
@@ -358,16 +352,10 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 20),
       child: Center(
-        child: _isLoadingMore
-            ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : TextButton(
-                onPressed: _loadMore,
-                child: const Text('加载更多', style: TextStyle(fontSize: 13)),
-              ),
+        child: TextButton(
+          onPressed: _loadMore,
+          child: const Text('加载更多', style: TextStyle(fontSize: 13)),
+        ),
       ),
     );
   }

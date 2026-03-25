@@ -164,6 +164,9 @@ final timelineProvider =
 class TimelineNotifier extends FamilyAsyncNotifier<List<models.TimelineEntry>, TimelineQuery> {
   static const _pageSize = 50;
 
+  /// 防止并发重复加载
+  bool _isLoadingMore = false;
+
   @override
   Future<List<models.TimelineEntry>> build(TimelineQuery query) async {
     return _fetchPage(null);
@@ -171,18 +174,32 @@ class TimelineNotifier extends FamilyAsyncNotifier<List<models.TimelineEntry>, T
 
   /// 加载更多（分页）
   Future<void> loadMore() async {
-    final current = state.valueOrNull ?? [];
-    if (current.isEmpty) return;
+    // 防止并发调用
+    if (_isLoadingMore) return;
+    _isLoadingMore = true;
 
-    final before = current.last.time;
-    final newEntries = await _fetchPage(before);
-    if (newEntries.isEmpty) return;
+    try {
+      final current = state.valueOrNull ?? [];
+      if (current.isEmpty) return;
 
-    state = AsyncData([...current, ...newEntries]);
+      final before = current.last.time;
+      final newEntries = await _fetchPage(before);
+      if (newEntries.isEmpty) return;
+
+      // 追加时检查去重（防止并发返回相同数据）
+      final existingIds = current.map((e) => e.id).toSet();
+      final uniqueNew = newEntries.where((e) => !existingIds.contains(e.id)).toList();
+      if (uniqueNew.isEmpty) return;
+
+      state = AsyncData([...current, ...uniqueNew]);
+    } finally {
+      _isLoadingMore = false;
+    }
   }
 
   /// 刷新（重新加载第一页）
   Future<void> refresh() async {
+    _isLoadingMore = false;
     state = const AsyncLoading();
     state = AsyncData(await _fetchPage(null));
   }

@@ -150,7 +150,7 @@ class MainScaffold extends StatelessWidget {
   }
 }
 
-/// 底部导航栏
+/// 底部导航栏（品牌化定制）
 class MainBottomNav extends StatelessWidget {
   const MainBottomNav({super.key});
 
@@ -188,36 +188,137 @@ class MainBottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     final selectedIndex = _calculateSelectedIndex(context);
 
-    return NavigationBar(
-      selectedIndex: selectedIndex,
-      onDestinationSelected: (index) => _onItemTapped(context, index),
-      destinations: const [
-        NavigationDestination(
-          icon: Icon(Icons.home_outlined),
-          selectedIcon: Icon(Icons.home),
-          label: '首页',
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFFAF9F7),
+        border: const Border(
+          top: BorderSide(color: Color(0xFFE8E6E2), width: 0.5),
         ),
-        NavigationDestination(
-          icon: Icon(Icons.medication_outlined),
-          selectedIcon: Icon(Icons.medication),
-          label: '用药',
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0x0A000000),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+          BoxShadow(
+            color: const Color(0x06000000),
+            blurRadius: 4,
+            offset: const Offset(0, -1),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 64,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _NavItem(
+                icon: selectedIndex == 0
+                    ? Icons.home_rounded
+                    : Icons.home_outlined,
+                label: '首页',
+                isSelected: selectedIndex == 0,
+                onTap: () => _onItemTapped(context, 0),
+              ),
+              _NavItem(
+                icon: selectedIndex == 1
+                    ? Icons.medication_rounded
+                    : Icons.medication_outlined,
+                label: '用药',
+                isSelected: selectedIndex == 1,
+                onTap: () => _onItemTapped(context, 1),
+              ),
+              _NavItem(
+                icon: selectedIndex == 2
+                    ? Icons.edit_note_rounded
+                    : Icons.edit_note_outlined,
+                label: '日志',
+                isSelected: selectedIndex == 2,
+                onTap: () => _onItemTapped(context, 2),
+              ),
+              _NavItem(
+                icon: selectedIndex == 3
+                    ? Icons.people_rounded
+                    : Icons.people_outlined,
+                label: '家庭',
+                isSelected: selectedIndex == 3,
+                onTap: () => _onItemTapped(context, 3),
+              ),
+              _NavItem(
+                icon: selectedIndex == 4
+                    ? Icons.person_rounded
+                    : Icons.person_outlined,
+                label: '我的',
+                isSelected: selectedIndex == 4,
+                onTap: () => _onItemTapped(context, 4),
+              ),
+            ],
+          ),
         ),
-        NavigationDestination(
-          icon: Icon(Icons.edit_note_outlined),
-          selectedIcon: Icon(Icons.edit_note),
-          label: '日志',
+      ),
+    );
+  }
+}
+
+/// 底部导航单项
+class _NavItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _NavItem({
+    required this.icon,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const selectedColor = Color(0xFF7B9E87);   // 鼠尾草绿
+    const unselectedColor = Color(0xFFB0ADAD); // 柔和灰
+
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: SizedBox(
+        width: 64,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: isSelected ? 44 : 0,
+              height: 32,
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? selectedColor.withValues(alpha: 0.12)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Center(
+                child: Icon(
+                  icon,
+                  size: 24,
+                  color: isSelected ? selectedColor : unselectedColor,
+                ),
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                color: isSelected ? selectedColor : unselectedColor,
+              ),
+            ),
+          ],
         ),
-        NavigationDestination(
-          icon: Icon(Icons.people_outlined),
-          selectedIcon: Icon(Icons.people),
-          label: '家庭',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.person_outlined),
-          selectedIcon: Icon(Icons.person),
-          label: '我的',
-        ),
-      ],
+      ),
     );
   }
 }

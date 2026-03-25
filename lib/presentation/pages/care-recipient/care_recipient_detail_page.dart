@@ -62,7 +62,7 @@ class _CareRecipientDetailPageState extends ConsumerState<CareRecipientDetailPag
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
-          await context.push('/medication/add');
+          await context.push('/medication/add', extra: widget.recipient.id);
           ref.invalidate(medicationsProvider(widget.recipient.id));
         },
         backgroundColor: AppColors.primary,

@@ -18,6 +18,7 @@ export class MedicationService {
     return this.repo
         .createQueryBuilder('m')
         .where('m.recipientId = :recipientId', { recipientId })
+        .andWhere('m.deletedAt IS NULL')
         .orderBy('m.createdAt', 'ASC')
         .getMany();
   }
@@ -36,7 +37,8 @@ export class MedicationService {
 
   async delete(id: string) {
     await this.findOne(id);
-    await this.repo.delete(id);
+    // 软删除：设置 deletedAt
+    await this.repo.update(id, { deletedAt: new Date() } as any);
     return { message: '药品已删除' };
   }
 }

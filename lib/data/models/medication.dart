@@ -16,7 +16,7 @@ class Medication extends Equatable {
   final String dosage;
   final String? unit;
   final MedicationFrequency frequency;
-  final List<String> times; // ["08:00", "20:00"]
+  final List<String> times;
   final String? instructions;
   final DateTime startDate;
   final DateTime? endDate;
@@ -59,26 +59,32 @@ class Medication extends Equatable {
 
     return Medication(
       id: json['id'] as String,
-      recipientId: json['recipientId'] as String? ?? json['recipient_id'] as String? ?? '',
+      recipientId: _str(json['recipientId']) ?? _str(json['recipient_id']) ?? '',
       name: json['name'] as String,
-      realName: null,
+      realName: json['realName'] as String? ?? json['real_name'] as String?,
       dosage: json['dosage'] as String,
-      unit: null,
-      frequency: _parseFrequency(null),
+      unit: json['unit'] as String?,
+      frequency: _parseFrequency(
+          json['frequency'] as String? ?? json['frequency'] as String?),
       times: times,
       instructions: json['instructions'] as String?,
-      startDate: json['startDate'] != null || json['start_date'] != null
-          ? DateTime.parse((json['startDate'] ?? json['start_date']) as String)
-          : DateTime.now(),
-      endDate: json['endDate'] != null
-          ? DateTime.parse(json['endDate'] as String)
-          : (json['end_date'] != null
-              ? DateTime.parse(json['end_date'] as String)
-              : null),
-      prescribedBy: null,
+      startDate: _parseDate(json['startDate'] ?? json['start_date']) ?? DateTime.now(),
+      endDate: _parseDate(json['endDate'] ?? json['end_date']),
+      prescribedBy: json['prescribedBy'] as String? ?? json['prescribed_by'] as String?,
       isActive: json['isActive'] as bool? ?? json['is_active'] as bool? ?? true,
       todayStatus: todayStatusMap,
     );
+  }
+
+  static String? _str(dynamic v) => v as String?;
+
+  static DateTime? _parseDate(dynamic v) {
+    if (v == null) return null;
+    if (v is DateTime) return v;
+    if (v is String && v.isNotEmpty) {
+      try { return DateTime.parse(v); } catch (_) { return null; }
+    }
+    return null;
   }
 
   static MedicationFrequency _parseFrequency(String? freq) {
@@ -168,11 +174,9 @@ class MedicationLog extends Equatable {
       medicationId: json['medicationId'] as String? ?? json['medication_id'] as String? ?? '',
       medicationName: json['medicationName'] as String? ?? json['medication_name'] as String? ?? '',
       scheduledTime: json['scheduledTime'] as String? ?? json['scheduled_time'] as String? ?? '',
-      actualTime: json['takenAt'] != null
-          ? DateTime.parse(json['takenAt'] as String)
-          : (json['actual_time'] != null
-              ? DateTime.parse(json['actual_time'] as String)
-              : null),
+      actualTime: json['actualTime'] != null
+          ? DateTime.tryParse(json['actualTime'] as String? ?? '')
+          : (json['actual_time'] != null ? DateTime.tryParse(json['actual_time'] as String? ?? '') : null),
       status: MedicationTimeStatus._parseStatus(json['status'] as String?),
       takenBy: null,
       photoUrl: json['photoUrl'] as String? ?? json['photo_url'] as String?,
@@ -229,15 +233,16 @@ class TodayMedicationSummary extends Equatable {
   });
 
   factory TodayMedicationSummary.fromJson(Map<String, dynamic> json) {
-    final items = (json['items'] as List<dynamic>)
-        .map((e) => MedicationLogItem.fromJson(e as Map<String, dynamic>))
-        .toList();
-    final total = json['total'] as int? ?? 0;
-    final completed = json['completed'] as int? ?? 0;
+    final items = (json['items'] as List<dynamic>?)
+        ?.map((e) => MedicationLogItem.fromJson(e as Map<String, dynamic>))
+        .toList() ?? [];
+    final summary = json['summary'] as Map<String, dynamic>?;
+    final total = summary?['total'] as int? ?? 0;
+    final completed = summary?['completed'] as int? ?? 0;
     return TodayMedicationSummary(
-      recipientId: json['recipientId'] as String,
-      recipientName: json['recipientName'] as String?,
-      date: DateTime.parse(json['date'] as String),
+      recipientId: json['recipientId'] as String? ?? json['recipient_id'] as String? ?? '',
+      recipientName: json['recipientName'] as String? ?? json['recipient_name'] as String?,
+      date: DateTime.tryParse(json['date'] as String? ?? '') ?? DateTime.now(),
       items: items,
       total: total,
       completed: completed,
@@ -276,6 +281,13 @@ class MedicationLogItem extends Equatable {
   });
 
   factory MedicationLogItem.fromJson(Map<String, dynamic> json) {
+    // takenBy 可以是 MedicationLogTaker 对象或 string
+    MedicationLogTaker? takenByObj;
+    final takenByRaw = json['taken_by'];
+    if (takenByRaw is Map<String, dynamic>) {
+      takenByObj = MedicationLogTaker.fromJson(takenByRaw);
+    }
+
     return MedicationLogItem(
       id: json['id'] as String?,
       medicationId: json['medicationId'] as String? ?? json['medication_id'] as String? ?? '',
@@ -284,12 +296,10 @@ class MedicationLogItem extends Equatable {
       scheduledTime: json['scheduledTime'] as String? ?? json['scheduled_time'] as String? ?? '',
       scheduledAt: null,
       status: MedicationTimeStatus._parseStatus(json['status'] as String?),
-      actualTime: json['takenAt'] != null
-          ? DateTime.parse(json['takenAt'] as String)
-          : (json['actual_time'] != null
-              ? DateTime.parse(json['actual_time'] as String)
-              : null),
-      takenBy: null, // 简化处理，后端返回的 takenBy 为 string
+      actualTime: json['actualTime'] != null
+          ? DateTime.tryParse(json['actualTime'] as String? ?? '')
+          : (json['actual_time'] != null ? DateTime.tryParse(json['actual_time'] as String? ?? '') : null),
+      takenBy: takenByObj,
       photoUrl: json['photoUrl'] as String? ?? json['photo_url'] as String?,
     );
   }

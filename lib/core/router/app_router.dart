@@ -109,7 +109,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.addCareRecipient,
-        builder: (context, state) => const AddCareRecipientPage(),
+        builder: (context, state) {
+          final recipient = state.extra as CareRecipient?;
+          return AddCareRecipientPage(recipient: recipient);
+        },
       ),
       GoRoute(
         path: AppRoutes.careRecipientDetail,

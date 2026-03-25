@@ -1,4 +1,4 @@
-/// 添加照护对象页
+/// 添加/编辑照护对象页
 library;
 
 import 'package:flutter/material.dart';
@@ -10,7 +10,9 @@ import '../../../data/models/models.dart' as models;
 import '../../providers/family_provider.dart';
 
 class AddCareRecipientPage extends ConsumerStatefulWidget {
-  const AddCareRecipientPage({super.key});
+  final models.CareRecipient? recipient;
+
+  const AddCareRecipientPage({super.key, this.recipient});
 
   @override
   ConsumerState<AddCareRecipientPage> createState() => _AddCareRecipientPageState();
@@ -21,8 +23,13 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
   final _nameController = TextEditingController();
   final _emergencyContactController = TextEditingController();
   final _emergencyPhoneController = TextEditingController();
+  final _hospitalController = TextEditingController();
+  final _departmentController = TextEditingController();
+  final _doctorNameController = TextEditingController();
+  final _doctorPhoneController = TextEditingController();
+  final _medicalHistoryController = TextEditingController();
 
-  String _gender = ''; // '' = 未选择, 'male' = 男, 'female' = 女
+  String _gender = '';
   DateTime? _birthDate;
   String? _bloodType;
   bool _isLoading = false;
@@ -30,11 +37,38 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
   final List<String> _avatarOptions = ['👴', '👵', '👨', '👩', '🧓', '🧑', '👤'];
   String _selectedAvatar = '👴';
 
+  bool get isEditing => widget.recipient != null;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.recipient != null) {
+      final r = widget.recipient!;
+      _nameController.text = r.name;
+      _selectedAvatar = r.avatarEmoji ?? '👴';
+      _gender = r.gender ?? '';
+      _birthDate = r.birthDate;
+      _bloodType = r.bloodType;
+      _emergencyContactController.text = r.emergencyContact ?? '';
+      _emergencyPhoneController.text = r.emergencyPhone ?? '';
+      _hospitalController.text = r.hospital ?? '';
+      _departmentController.text = r.department ?? '';
+      _doctorNameController.text = r.doctorName ?? '';
+      _doctorPhoneController.text = r.doctorPhone ?? '';
+      _medicalHistoryController.text = r.medicalHistory ?? '';
+    }
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
     _emergencyContactController.dispose();
     _emergencyPhoneController.dispose();
+    _hospitalController.dispose();
+    _departmentController.dispose();
+    _doctorNameController.dispose();
+    _doctorPhoneController.dispose();
+    _medicalHistoryController.dispose();
     super.dispose();
   }
 
@@ -57,39 +91,56 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
     try {
       final dio = ref.read(dioProvider);
 
-      // 确保有家庭，没有则自动创建
-      var family = ref.read(currentFamilyProvider);
-      if (family == null) {
-        final familyResponse = await dio.post('/families', data: {
-          'name': '我的家庭',
-        });
-        final familyData = familyResponse.data as Map<String, dynamic>;
-        family = models.Family.fromJson(familyData);
-        ref.read(currentFamilyProvider.notifier).state = family;
-      }
-
-      await dio.post('/care-recipients', data: {
+      final data = <String, dynamic>{
         'name': _nameController.text.trim(),
-        'avatar': _selectedAvatar,
+        'avatarEmoji': _selectedAvatar,
         'gender': _gender,
-        if (_birthDate != null) 'birthDate': '${_birthDate!.year}-${_birthDate!.month.toString().padLeft(2, '0')}-${_birthDate!.day.toString().padLeft(2, '0')}',
+        if (_birthDate != null)
+          'birthDate':
+              '${_birthDate!.year}-${_birthDate!.month.toString().padLeft(2, '0')}-${_birthDate!.day.toString().padLeft(2, '0')}',
+        if (_bloodType != null) 'bloodType': _bloodType,
         'emergencyContact': _emergencyContactController.text.trim(),
         'emergencyPhone': _emergencyPhoneController.text.trim(),
-      });
+        if (_hospitalController.text.isNotEmpty)
+          'hospital': _hospitalController.text.trim(),
+        if (_departmentController.text.isNotEmpty)
+          'department': _departmentController.text.trim(),
+        if (_doctorNameController.text.isNotEmpty)
+          'doctorName': _doctorNameController.text.trim(),
+        if (_doctorPhoneController.text.isNotEmpty)
+          'doctorPhone': _doctorPhoneController.text.trim(),
+        if (_medicalHistoryController.text.isNotEmpty)
+          'medicalHistory': _medicalHistoryController.text.trim(),
+      };
 
-      // 刷新照护对象列表
+      if (isEditing) {
+        await dio.patch(
+          '/care-recipients/${widget.recipient!.id}',
+          data: data,
+        );
+      } else {
+        // 新增
+        var family = ref.read(currentFamilyProvider);
+        if (family == null) {
+          final familyResponse = await dio.post('/families', data: {'name': '我的家庭'});
+          family = models.Family.fromJson(familyResponse.data as Map<String, dynamic>);
+          ref.read(currentFamilyProvider.notifier).state = family;
+        }
+        await dio.post('/care-recipients', data: data);
+      }
+
       ref.invalidate(careRecipientsProvider);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('添加成功'), duration: Duration(seconds: 3)),
+          SnackBar(content: Text(isEditing ? '修改成功' : '添加成功'), duration: const Duration(seconds: 3)),
         );
         context.pop();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('添加失败: $e'), duration: const Duration(seconds: 10)),
+          SnackBar(content: Text('操作失败: $e'), duration: const Duration(seconds: 10)),
         );
       }
     } finally {
@@ -102,7 +153,7 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('添加照护对象'),
+        title: Text(isEditing ? '编辑照护对象' : '添加照护对象'),
         centerTitle: true,
         elevation: 0,
         backgroundColor: AppColors.background,
@@ -153,7 +204,9 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
                               width: 40,
                               height: 40,
                               decoration: BoxDecoration(
-                                color: isSelected ? AppColors.primary.withValues(alpha: 0.1) : AppColors.surface,
+                                color: isSelected
+                                    ? AppColors.primary.withValues(alpha: 0.1)
+                                    : AppColors.surface,
                                 borderRadius: BorderRadius.circular(10),
                                 border: isSelected
                                     ? Border.all(color: AppColors.primary, width: 2)
@@ -193,6 +246,51 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
                 ]),
                 const SizedBox(height: 16),
 
+                // 就医信息卡片
+                _buildSectionCard([
+                  _buildTextField(
+                    controller: _hospitalController,
+                    label: '就诊医院',
+                    hint: '如：市立医院',
+                    icon: Icons.local_hospital_outlined,
+                  ),
+                  _buildDivider(),
+                  _buildTextField(
+                    controller: _departmentController,
+                    label: '科室',
+                    hint: '如：心内科',
+                    icon: Icons.medical_services_outlined,
+                  ),
+                  _buildDivider(),
+                  _buildTextField(
+                    controller: _doctorNameController,
+                    label: '主治医生',
+                    hint: '如：王建国',
+                    icon: Icons.person_pin_outlined,
+                  ),
+                  _buildDivider(),
+                  _buildTextField(
+                    controller: _doctorPhoneController,
+                    label: '医生电话',
+                    hint: '手机号',
+                    icon: Icons.phone_outlined,
+                    keyboardType: TextInputType.phone,
+                  ),
+                ]),
+                const SizedBox(height: 16),
+
+                // 病史卡片
+                _buildSectionCard([
+                  _buildTextField(
+                    controller: _medicalHistoryController,
+                    label: '病史备注',
+                    hint: '过往病史、手术史等',
+                    icon: Icons.history_outlined,
+                    maxLines: 3,
+                  ),
+                ]),
+                const SizedBox(height: 16),
+
                 // 紧急联系人卡片
                 _buildSectionCard([
                   _buildTextField(
@@ -225,7 +323,7 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
                           height: 24,
                           child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                         )
-                      : const Text('保存', style: TextStyle(fontSize: 16)),
+                      : Text(isEditing ? '保存修改' : '保存', style: const TextStyle(fontSize: 16)),
                 ),
               ],
             ),
@@ -238,7 +336,7 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
   Widget _buildSectionCard(List<Widget> children) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -266,12 +364,14 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
     required IconData icon,
     TextInputType? keyboardType,
     String? Function(String?)? validator,
+    int maxLines = 1,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
       child: TextFormField(
         controller: controller,
         keyboardType: keyboardType,
+        maxLines: maxLines,
         style: const TextStyle(fontSize: 15, color: AppColors.textPrimary),
         decoration: InputDecoration(
           labelText: label,

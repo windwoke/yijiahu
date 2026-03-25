@@ -22,6 +22,7 @@ export class CareRecipientService {
     return this.repo
         .createQueryBuilder('cr')
         .where('cr.familyId = :familyId', { familyId })
+        .andWhere('cr.deletedAt IS NULL')
         .orderBy('cr.createdAt', 'ASC')
         .getMany();
   }
@@ -43,7 +44,7 @@ export class CareRecipientService {
 
   async delete(recipientId: string, familyId: string) {
     await this.findOne(recipientId, familyId);
-    await this.repo.delete(recipientId);
+    await this.repo.softDelete(recipientId);
     return { message: '已删除照护对象' };
   }
 

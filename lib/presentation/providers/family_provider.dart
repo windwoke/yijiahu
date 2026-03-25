@@ -76,3 +76,28 @@ final medicationsProvider =
       .map((e) => models.Medication.fromJson(e as Map<String, dynamic>))
       .toList();
 });
+
+/// 健康趋势（血压+血糖）
+final healthTrendsProvider =
+    FutureProvider.family<Map<String, List<models.HealthRecord>>, String>(
+  (ref, recipientId) async {
+  final dio = ref.read(dioProvider);
+  final response = await dio.get('/health-records/trends', queryParameters: {
+    'recipientId': recipientId,
+    'days': 7,
+  });
+  final data = response.data as Map<String, dynamic>;
+  final bpList = (data['bloodPressure'] as List<dynamic>?)
+          ?.map((e) => models.HealthRecord.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      [];
+  final glucoseList = (data['bloodGlucose'] as List<dynamic>?)
+          ?.map((e) => models.HealthRecord.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      [];
+  return {
+    'bloodPressure': bpList,
+    'bloodGlucose': glucoseList,
+  };
+},
+);

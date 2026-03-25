@@ -4,6 +4,7 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  DeleteDateColumn,
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
@@ -21,7 +22,10 @@ export class CareRecipient {
   name: string;
 
   @Column({ nullable: true })
-  avatar: string;
+  avatarEmoji: string;
+
+  @Column({ nullable: true })
+  avatarUrl: string;
 
   @Column({ nullable: true })
   gender: 'male' | 'female';
@@ -30,28 +34,55 @@ export class CareRecipient {
   birthDate: Date;
 
   @Column({ nullable: true })
-  relation: string; // 如"爷爷"、"奶奶"
+  bloodType: string;
 
   @Column({ type: 'text', nullable: true })
-  allergies: string; // 过敏药物
+  allergies: string; // 逗号分隔的字符串，前端解析为数组
 
   @Column({ type: 'text', nullable: true })
-  chronicDiseases: string; // 慢性病
+  chronicConditions: string; // 逗号分隔的字符串
 
   @Column({ type: 'text', nullable: true })
-  medications: string; // 当前用药
-
-  @Column({ type: 'text', nullable: true })
-  emergencyContact: string; // 紧急联系人
+  medicalHistory: string;
 
   @Column({ nullable: true })
-  emergencyPhone: string; // 紧急联系电话
+  hospital: string;
+
+  @Column({ nullable: true })
+  department: string;
+
+  @Column({ nullable: true })
+  doctorName: string;
+
+  @Column({ nullable: true })
+  doctorPhone: string;
+
+  @Column({ nullable: true })
+  emergencyContact: string;
+
+  @Column({ nullable: true })
+  emergencyPhone: string;
+
+  @Column({ nullable: true })
+  currentAddress: string;
+
+  @Column({ type: 'decimal', precision: 10, scale: 7, nullable: true })
+  latitude: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 7, nullable: true })
+  longitude: number;
+
+  @Column({ default: true })
+  isActive: boolean;
 
   @CreateDateColumn()
   createdAt: Date;
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @DeleteDateColumn()
+  deletedAt: Date;
 
   @ManyToOne(() => Family, (f) => f.careRecipients)
   @JoinColumn({ name: 'familyId' })

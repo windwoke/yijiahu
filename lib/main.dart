@@ -6,6 +6,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'core/theme/app_theme.dart';
 import 'core/router/app_router.dart';
 import 'core/env/env_config.dart';
@@ -19,6 +20,10 @@ Future<void> main() async {
   debugPrint('📡 API: ${ApiConfig.baseUrl}');
 
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 预缓存品牌字体（Nunito）
+  // 首次加载后自动缓存到本地，后续无网络也可用
+  GoogleFonts.getFont('Nunito');
 
   // 设置状态栏样式
   SystemChrome.setSystemUIOverlayStyle(

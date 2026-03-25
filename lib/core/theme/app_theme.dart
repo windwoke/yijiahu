@@ -3,6 +3,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_colors.dart';
 
 class AppTheme {
@@ -21,12 +22,17 @@ class AppTheme {
         surface: AppColors.surface,
       ),
       scaffoldBackgroundColor: AppColors.background,
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
         centerTitle: true,
         systemOverlayStyle: SystemUiOverlayStyle.dark,
+        titleTextStyle: GoogleFonts.getFont('Nunito',
+          fontSize: 17,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textPrimary,
+        ),
       ),
       cardTheme: CardThemeData(
         color: AppColors.surface,
@@ -114,50 +120,50 @@ class AppTheme {
           borderRadius: BorderRadius.circular(20),
         ),
       ),
-      textTheme: const TextTheme(
-        headlineLarge: TextStyle(
+      textTheme: TextTheme(
+        headlineLarge: GoogleFonts.getFont('Nunito',
           fontSize: 28,
           fontWeight: FontWeight.bold,
           color: AppColors.textPrimary,
         ),
-        headlineMedium: TextStyle(
+        headlineMedium: GoogleFonts.getFont('Nunito',
           fontSize: 24,
           fontWeight: FontWeight.bold,
           color: AppColors.textPrimary,
         ),
-        headlineSmall: TextStyle(
+        headlineSmall: GoogleFonts.getFont('Nunito',
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
         ),
-        titleLarge: TextStyle(
+        titleLarge: GoogleFonts.getFont('Nunito',
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
         ),
-        titleMedium: TextStyle(
+        titleMedium: GoogleFonts.getFont('Nunito',
           fontSize: 16,
           fontWeight: FontWeight.w500,
           color: AppColors.textPrimary,
         ),
-        titleSmall: TextStyle(
+        titleSmall: GoogleFonts.getFont('Nunito',
           fontSize: 14,
           fontWeight: FontWeight.w500,
           color: AppColors.textPrimary,
         ),
-        bodyLarge: TextStyle(
+        bodyLarge: GoogleFonts.getFont('Nunito',
           fontSize: 16,
           color: AppColors.textPrimary,
         ),
-        bodyMedium: TextStyle(
+        bodyMedium: GoogleFonts.getFont('Nunito',
           fontSize: 14,
           color: AppColors.textSecondary,
         ),
-        bodySmall: TextStyle(
+        bodySmall: GoogleFonts.getFont('Nunito',
           fontSize: 12,
           color: AppColors.textTertiary,
         ),
-        labelLarge: TextStyle(
+        labelLarge: GoogleFonts.getFont('Nunito',
           fontSize: 14,
           fontWeight: FontWeight.w500,
           color: AppColors.textPrimary,

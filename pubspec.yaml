@@ -32,6 +32,9 @@ dependencies:
   # 图表
   fl_chart: ^0.69.0
 
+  # 字体
+  google_fonts: ^6.2.1
+
   # 工具
   flutter_local_notifications: ^17.2.1+2
   intl: ^0.20.2

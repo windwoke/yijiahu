@@ -62,7 +62,7 @@ class MedicationCheckInCard extends StatelessWidget {
           crossAxisCount: 2,
           crossAxisSpacing: 10,
           mainAxisSpacing: 10,
-          childAspectRatio: 1.1,
+          childAspectRatio: 1.0,
         ),
         itemCount: today.items.length,
         itemBuilder: (context, index) {
@@ -98,8 +98,9 @@ class MedicationCheckInCard extends StatelessWidget {
 
   Widget _buildMedicationItem(BuildContext context, MedicationLogItem item) {
     final statusColor = _getStatusColor(item);
-    final isTaken =
-        item.status == MedicationLogStatus.taken || item.status == MedicationLogStatus.skipped;
+    final isTaken = item.status == MedicationLogStatus.taken;
+    final isSkipped = item.status == MedicationLogStatus.skipped;
+    final isDone = isTaken || isSkipped;
     final canCheckIn = item.canCheckIn;
 
     return Container(
@@ -125,7 +126,7 @@ class MedicationCheckInCard extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
-              mainAxisSize: MainAxisSize.min,
+              mainAxisSize: MainAxisSize.max,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
@@ -137,16 +138,14 @@ class MedicationCheckInCard extends StatelessWidget {
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textPrimary,
-                          decoration: item.status == MedicationLogStatus.skipped
-                              ? TextDecoration.lineThrough
-                              : null,
+                          decoration: isSkipped ? TextDecoration.lineThrough : null,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     Icon(
-                      isTaken ? Icons.check_circle : Icons.schedule,
+                      isDone ? Icons.check_circle : Icons.schedule,
                       color: statusColor,
                       size: 16,
                     ),
@@ -171,6 +170,42 @@ class MedicationCheckInCard extends StatelessWidget {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
+                const Spacer(),
+                // 打卡信息（已打卡/跳过时显示）
+                if (isDone && item.takenBy != null) ...[
+                  const Divider(height: 1, color: AppColors.borderLight),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(
+                        isTaken ? Icons.check : Icons.close,
+                        size: 12,
+                        color: statusColor,
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          item.takenBy!.name,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (item.actualTime != null)
+                        Text(
+                          _formatTime(item.actualTime!),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
                 if (canCheckIn) ...[
                   const SizedBox(height: 6),
                   SizedBox(
@@ -202,6 +237,12 @@ class MedicationCheckInCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _formatTime(DateTime dt) {
+    final hour = dt.hour.toString().padLeft(2, '0');
+    final minute = dt.minute.toString().padLeft(2, '0');
+    return '$hour:$minute';
   }
 
   bool _isOverdue(TimeOfDay now, TimeOfDay scheduled) {

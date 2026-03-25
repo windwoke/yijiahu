@@ -86,8 +86,8 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: ':id',
                 builder: (context, state) {
-                  final med = state.extra as Medication;
-                  return MedicationDetailPage(medication: med);
+                  final medicationId = state.uri.pathSegments.last;
+                  return MedicationDetailPage(medicationId: medicationId);
                 },
               ),
             ],

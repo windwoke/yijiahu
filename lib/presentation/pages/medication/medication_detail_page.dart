@@ -7,16 +7,16 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/constants.dart';
 import '../../../core/network/api_client.dart';
 import '../../../data/models/models.dart';
-import '../../providers/providers.dart';
+import '../../providers/family_provider.dart';
 
 class MedicationDetailPage extends ConsumerWidget {
-  final Medication medication;
+  final String medicationId;
 
-  const MedicationDetailPage({super.key, required this.medication});
+  const MedicationDetailPage({super.key, required this.medicationId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final med = medication;
+    final medAsync = ref.watch(medicationDetailProvider(medicationId));
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -32,21 +32,27 @@ class MedicationDetailPage extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.delete_outline, color: AppColors.error),
-            onPressed: () => _confirmDelete(context, ref, med),
+            onPressed: () => medAsync.whenOrNull(
+              data: (med) => _confirmDelete(context, ref, med),
+            ),
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _buildHeader(context, med),
-          const SizedBox(height: 20),
-          _buildInfoCard(context, med),
-          const SizedBox(height: 16),
-          _buildTimeCard(context, med),
-          const SizedBox(height: 16),
-          _buildHistoryCard(context, ref, med),
-        ],
+      body: medAsync.when(
+        data: (med) => ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            _buildHeader(context, med),
+            const SizedBox(height: 20),
+            _buildInfoCard(context, med),
+            const SizedBox(height: 16),
+            _buildTimeCard(context, med),
+            const SizedBox(height: 16),
+            _buildHistoryCard(context, ref, med),
+          ],
+        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('加载失败: $e')),
       ),
     );
   }

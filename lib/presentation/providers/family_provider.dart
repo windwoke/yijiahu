@@ -101,3 +101,11 @@ final healthTrendsProvider =
   };
 },
 );
+
+/// 药品详情（按 ID 获取）
+final medicationDetailProvider =
+    FutureProvider.family<models.Medication, String>((ref, medicationId) async {
+  final dio = ref.read(dioProvider);
+  final response = await dio.get('/medications/$medicationId');
+  return models.Medication.fromJson(response.data as Map<String, dynamic>);
+});

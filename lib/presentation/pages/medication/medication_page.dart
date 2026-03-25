@@ -106,7 +106,7 @@ class MedicationPage extends ConsumerWidget {
                             ),
                             trailing: const Icon(Icons.chevron_right),
                             onTap: () {
-                              context.push('/medication/${med.id}', extra: med);
+                              context.push('/medication/${med.id}');
                             },
                           ),
                         );

@@ -513,7 +513,7 @@ class CareRecipientDetailPage extends ConsumerWidget {
 
   Widget _buildMedicationRow(BuildContext context, Medication med) {
     return InkWell(
-      onTap: () => context.push('/medication/${med.id}', extra: med),
+      onTap: () => context.push('/medication/${med.id}'),
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),

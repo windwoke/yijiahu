@@ -24,27 +24,23 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
   String? _selectedRecipientId;
   CareLogType? _filterType;
 
-  late final ScrollController _scrollController;
   bool _isLoadingMore = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _scrollController = ScrollController()..addListener(_onScroll);
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _scrollController.dispose();
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      // App 从后台回到前台，刷新时间线
       final family = ref.read(currentFamilyProvider);
       if (family != null) {
         final query = TimelineQuery(familyId: family.id, recipientId: _selectedRecipientId);
@@ -53,24 +49,14 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
     }
   }
 
-  void _onScroll() {
-    if (_isLoadingMore) return;
-    if (!_scrollController.hasClients) return;
-    final max = _scrollController.position.maxScrollExtent;
-    final current = _scrollController.position.pixels;
-    // 距离底部 200px 时触发加载更多
-    if (max - current < 200) {
-      _loadMore();
-    }
-  }
-
   void _loadMore() {
+    if (_isLoadingMore) return;
     final family = ref.read(currentFamilyProvider);
     if (family == null) return;
     final query = TimelineQuery(familyId: family.id, recipientId: _selectedRecipientId);
-    _isLoadingMore = true;
+    setState(() => _isLoadingMore = true);
     ref.read(timelineProvider(query).notifier).loadMore().whenComplete(() {
-      _isLoadingMore = false;
+      if (mounted) setState(() => _isLoadingMore = false);
     });
   }
 
@@ -315,27 +301,37 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
         return RefreshIndicator(
           onRefresh: _onRefresh,
           color: AppColors.primary,
-          child: ListView.builder(
-            controller: _scrollController,
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-            itemCount: filtered.length + 1, // +1 for loading indicator
-            itemBuilder: (context, index) {
-              if (index == filtered.length) {
-                // 底部加载更多指示器
-                return _buildLoadMoreIndicator();
+          child: NotificationListener<ScrollNotification>(
+            onNotification: (notification) {
+              if (notification is ScrollEndNotification) {
+                final metrics = notification.metrics;
+                if (metrics.pixels >= metrics.maxScrollExtent - 200) {
+                  _loadMore();
+                }
               }
-              final entry = filtered[index];
-              final showDateHeader = index == 0 ||
-                  !_isSameDay(filtered[index - 1].time, entry.time);
-
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (showDateHeader) _buildDateHeader(entry.time),
-                  _buildLogCard(entry),
-                ],
-              );
+              return false;
             },
+            child: ListView.builder(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+              itemCount: filtered.length + 1, // +1 for loading indicator
+              itemBuilder: (context, index) {
+                if (index == filtered.length) {
+                  // 底部加载更多指示器
+                  return _buildLoadMoreIndicator();
+                }
+                final entry = filtered[index];
+                final showDateHeader = index == 0 ||
+                    !_isSameDay(filtered[index - 1].time, entry.time);
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (showDateHeader) _buildDateHeader(entry.time),
+                    _buildLogCard(entry),
+                  ],
+                );
+              },
+            ),
           ),
         );
       },

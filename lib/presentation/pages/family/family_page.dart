@@ -810,11 +810,9 @@ class FamilyPage extends ConsumerWidget {
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
-                                color: section.isRecipient
-                                    ? AppColors.coral
-                                    : (section.isAdmin
+                                color: section.isRecipient || section.isAdmin
                                         ? AppColors.primary
-                                        : AppColors.textSecondary),
+                                        : AppColors.textSecondary,
                               ),
                             ),
                           ],
@@ -933,7 +931,7 @@ class FamilyPage extends ConsumerWidget {
     if (section.isRecipient) {
       text = '照护对象';
       bgColor = AppColors.coral.withValues(alpha: 0.08);
-      textColor = AppColors.coral;
+      textColor = AppColors.primary;
     } else {
       switch (section.member?.role) {
         case 'owner':

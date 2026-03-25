@@ -9,7 +9,7 @@ export class MedicationService {
   constructor(@InjectRepository(Medication) private repo: Repository<Medication>) {}
 
   create(recipientId: string, dto: CreateMedicationDto) {
-    const medication = this.repo.create({ recipientId, ...dto });
+    const medication = this.repo.create(dto);
     return this.repo.save(medication);
   }
 

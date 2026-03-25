@@ -1,7 +1,11 @@
-import { IsString, IsArray, IsOptional, MaxLength, ArrayMaxSize, IsDateString, IsIn } from 'class-validator';
+import { IsString, IsArray, IsOptional, MaxLength, ArrayMaxSize, IsDateString, IsIn, IsUUID } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateMedicationDto {
+  @ApiProperty({ example: '550e8400-e29b-41d4-a716-446655440020' })
+  @IsUUID()
+  recipientId: string;
+
   @ApiProperty({ example: '血压药' })
   @IsString()
   @MaxLength(100)

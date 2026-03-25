@@ -134,22 +134,22 @@ class _AddMedicationPageState extends ConsumerState<AddMedicationPage> {
       }).toList();
 
       final data = <String, dynamic>{
-        'recipient_id': recipientId,
+        'recipientId': recipientId,
         'name': _nameController.text.trim(),
         'dosage': _dosageController.text.trim(),
         'frequency': _frequencyValue(_frequency),
         'times': times,
-        'start_date': _startDate.toIso8601String().split('T').first,
+        'startDate': _startDate.toIso8601String().split('T').first,
       };
 
       if (_instructionsController.text.trim().isNotEmpty) {
         data['instructions'] = _instructionsController.text.trim();
       }
       if (_prescribedByController.text.trim().isNotEmpty) {
-        data['prescribed_by'] = _prescribedByController.text.trim();
+        data['prescribedBy'] = _prescribedByController.text.trim();
       }
       if (_endDate != null) {
-        data['end_date'] = _endDate!.toIso8601String().split('T').first;
+        data['endDate'] = _endDate!.toIso8601String().split('T').first;
       }
 
       await dio.post('/medications', data: data);

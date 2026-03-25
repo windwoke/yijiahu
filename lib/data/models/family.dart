@@ -45,7 +45,7 @@ class Family extends Equatable {
               : null),
       memberCount: json['memberCount'] as int? ?? json['member_count'] as int? ?? 0,
       recipientCount: json['recipientCount'] as int? ?? json['recipient_count'] as int? ?? 0,
-      createdAt: DateTime.parse(json['createdAt'] as String? ?? json['created_at'] as String),
+      createdAt: DateTime.tryParse(json['createdAt'] as String? ?? json['created_at'] as String? ?? '') ?? DateTime.now(),
     );
   }
 

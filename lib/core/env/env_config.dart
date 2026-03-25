@@ -47,6 +47,13 @@ class ApiConfig {
     return '$staticRoot/$relativePath';
   }
 
+  /// 根据相对路径构建完整附件 URL
+  static String? attachmentUrl(String? relativePath) {
+    if (relativePath == null || relativePath.isEmpty) return null;
+    if (relativePath.startsWith('http')) return relativePath;
+    return '$staticRoot/$relativePath';
+  }
+
   static Duration get connectTimeout =>
       Duration(seconds: int.parse(dotenv.env['CONNECT_TIMEOUT'] ?? '30'));
 

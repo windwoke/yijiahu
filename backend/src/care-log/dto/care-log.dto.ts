@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString, IsArray } from 'class-validator';
 import { CareLogType } from '../entities/care-log.entity';
 
 export class CreateCareLogDto {
@@ -16,4 +16,10 @@ export class CreateCareLogDto {
   @IsString()
   @IsNotEmpty()
   content: string;
+
+  @ApiPropertyOptional({ description: '附件ID列表', type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  attachmentIds?: string[];
 }

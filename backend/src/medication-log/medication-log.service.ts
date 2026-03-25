@@ -77,6 +77,13 @@ export class MedicationLogService {
       order: { scheduledTime: 'ASC' },
     });
 
+    // 取出打卡人信息
+    const userIds = logs.map(l => l.takenBy).filter(Boolean);
+    const users = userIds.length > 0
+      ? await this.userRepo.findBy(userIds.map(id => ({ id } as any)))
+      : [];
+    const userMap = new Map(users.map(u => [u.id, u.name || u.phone]));
+
     const items = logs.map((log) => ({
       id: log.id,
       medicationName: log.medication?.name || '',
@@ -84,6 +91,11 @@ export class MedicationLogService {
       scheduledTime: log.scheduledTime,
       status: log.status,
       canCheckIn: log.status === MedicationLogStatus.PENDING,
+      actualTime: log.takenAt ? formatLocalTime(log.takenAt) : null,
+      takenBy: log.takenBy ? {
+        id: log.takenBy,
+        name: userMap.get(log.takenBy) || '家庭成员',
+      } : null,
     }));
 
     const completed = items.filter(

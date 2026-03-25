@@ -3,7 +3,9 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
+  OneToMany,
 } from 'typeorm';
+import { CareLogAttachment } from './care-log-attachment.entity';
 
 export enum CareLogType {
   MEDICATION = 'medication',
@@ -43,4 +45,7 @@ export class CareLog {
 
   @CreateDateColumn()
   createdAt: Date;
+
+  @OneToMany(() => CareLogAttachment, a => a.careLog)
+  attachments: CareLogAttachment[];
 }

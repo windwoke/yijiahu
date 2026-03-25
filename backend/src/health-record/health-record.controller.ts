@@ -46,4 +46,18 @@ export class HealthRecordController {
       days ? parseInt(days, 10) : 7,
     );
   }
+
+  @Get('recent')
+  @ApiOperation({ summary: '获取最近健康记录（用于时间线）' })
+  getRecent(
+    @Query('recipientId') recipientId?: string,
+    @Query('days') days?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.service.findRecent(
+      recipientId,
+      days ? parseInt(days, 10) : 7,
+      limit ? parseInt(limit, 10) : 20,
+    );
+  }
 }

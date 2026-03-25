@@ -29,6 +29,9 @@ dependencies:
   hive_flutter: ^1.1.0
   shared_preferences: ^2.2.3
 
+  # 图表
+  fl_chart: ^0.69.0
+
   # 工具
   flutter_local_notifications: ^17.2.1+2
   intl: ^0.20.2

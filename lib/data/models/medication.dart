@@ -283,8 +283,8 @@ class MedicationLogItem extends Equatable {
   factory MedicationLogItem.fromJson(Map<String, dynamic> json) {
     // takenBy 可以是 MedicationLogTaker 对象或 string
     MedicationLogTaker? takenByObj;
-    final takenByRaw = json['taken_by'];
-    if (takenByRaw is Map<String, dynamic>) {
+    final takenByRaw = json['takenBy'] as Map<String, dynamic>? ?? json['taken_by'] as Map<String, dynamic>?;
+    if (takenByRaw != null) {
       takenByObj = MedicationLogTaker.fromJson(takenByRaw);
     }
 
@@ -298,8 +298,8 @@ class MedicationLogItem extends Equatable {
       status: MedicationTimeStatus._parseStatus(json['status'] as String?),
       canCheckIn: json['canCheckIn'] as bool? ?? json['can_check_in'] as bool? ?? false,
       actualTime: json['actualTime'] != null
-          ? DateTime.tryParse(json['actualTime'] as String? ?? '')
-          : (json['actual_time'] != null ? DateTime.tryParse(json['actual_time'] as String? ?? '') : null),
+          ? DateTime.tryParse(json['actualTime'] as String)
+          : (json['actual_time'] != null ? DateTime.tryParse(json['actual_time'] as String) : null),
       takenBy: takenByObj,
       photoUrl: json['photoUrl'] as String? ?? json['photo_url'] as String?,
     );

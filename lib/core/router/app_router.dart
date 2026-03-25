@@ -75,22 +75,6 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: AppRoutes.medication,
             builder: (context, state) => const MedicationPage(),
-            routes: [
-              GoRoute(
-                path: 'add',
-                builder: (context, state) {
-                  final recipientId = state.extra as String?;
-                  return AddMedicationPage(recipientId: recipientId);
-                },
-              ),
-              GoRoute(
-                path: ':id',
-                builder: (context, state) {
-                  final medicationId = state.uri.pathSegments.last;
-                  return MedicationDetailPage(medicationId: medicationId);
-                },
-              ),
-            ],
           ),
           GoRoute(
             path: AppRoutes.careLog,
@@ -105,6 +89,20 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const ProfilePage(),
           ),
         ],
+      ),
+      GoRoute(
+        path: AppRoutes.addMedication,
+        builder: (context, state) {
+          final recipientId = state.extra as String?;
+          return AddMedicationPage(recipientId: recipientId);
+        },
+      ),
+      GoRoute(
+        path: '/medication/:id',
+        builder: (context, state) {
+          final medicationId = state.pathParameters['id']!;
+          return MedicationDetailPage(medicationId: medicationId);
+        },
       ),
       GoRoute(
         path: AppRoutes.sos,

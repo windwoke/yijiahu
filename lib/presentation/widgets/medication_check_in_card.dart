@@ -62,7 +62,7 @@ class MedicationCheckInCard extends StatelessWidget {
           crossAxisCount: 2,
           crossAxisSpacing: 10,
           mainAxisSpacing: 10,
-          childAspectRatio: 1.5,
+          childAspectRatio: 1.35,
         ),
         itemCount: today.items.length,
         itemBuilder: (context, index) {
@@ -125,119 +125,100 @@ class MedicationCheckInCard extends StatelessWidget {
           onTap: canCheckIn ? () => _showCheckInSheet(context, item) : null,
           child: Padding(
             padding: const EdgeInsets.all(12),
-            child: IntrinsicHeight(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          item.medicationName,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
-                            decoration: isSkipped ? TextDecoration.lineThrough : null,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        item.medicationName,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                          decoration: isSkipped ? TextDecoration.lineThrough : null,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      Icon(
-                        isDone ? Icons.check_circle : Icons.schedule,
-                        color: statusColor,
-                        size: 16,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    item.dosage,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: AppColors.textSecondary,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    item.scheduledTime,
-                    style: TextStyle(
-                      fontSize: 11,
+                    Icon(
+                      isDone ? Icons.check_circle : Icons.schedule,
                       color: statusColor,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const Spacer(),
-                  // 打卡信息（已打卡/跳过时显示）
-                  if (isDone && item.takenBy != null) ...[
-                    const Divider(height: 1, color: AppColors.borderLight),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Icon(
-                          isTaken ? Icons.check : Icons.close,
-                          size: 12,
-                          color: statusColor,
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            item.takenBy!.name,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: AppColors.textSecondary,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (_formatTimeStr(item.actualTime) != null)
-                          Text(
-                            _formatTimeStr(item.actualTime)!,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                      ],
+                      size: 16,
                     ),
                   ],
-                  if (canCheckIn) ...[
-                    const SizedBox(height: 6),
-                    SizedBox(
-                      height: 32,
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () => _showCheckInSheet(context, item),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          padding: EdgeInsets.zero,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  item.dosage,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textSecondary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  item.scheduledTime,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: statusColor,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // 底部：已打卡显示单行文字，未打卡显示按钮
+                if (isDone && item.takenBy != null)
+                  _buildDoneInfo(item, statusColor, isTaken)
+                else if (canCheckIn)
+                  SizedBox(
+                    height: 32,
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => _showCheckInSheet(context, item),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Text(
-                          AppTexts.checkIn,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12,
-                          ),
+                        padding: EdgeInsets.zero,
+                      ),
+                      child: const Text(
+                        AppTexts.checkIn,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
                         ),
                       ),
                     ),
-                  ],
-                ],
-              ),
+                  ),
+              ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildDoneInfo(MedicationLogItem item, Color statusColor, bool isTaken) {
+    final timeStr = _formatTimeStr(item.actualTime);
+    final action = isTaken ? '已打卡用药' : '已跳过用药';
+    return Text(
+      timeStr != null
+          ? '${item.takenBy!.name} $timeStr $action'
+          : '${item.takenBy!.name} $action',
+      style: TextStyle(
+        fontSize: 11,
+        color: statusColor,
+        fontWeight: FontWeight.w500,
+      ),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
     );
   }
 

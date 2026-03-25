@@ -236,9 +236,8 @@ class TodayMedicationSummary extends Equatable {
     final items = (json['items'] as List<dynamic>?)
         ?.map((e) => MedicationLogItem.fromJson(e as Map<String, dynamic>))
         .toList() ?? [];
-    final summary = json['summary'] as Map<String, dynamic>?;
-    final total = summary?['total'] as int? ?? 0;
-    final completed = summary?['completed'] as int? ?? 0;
+    final total = json['total'] as int? ?? 0;
+    final completed = json['completed'] as int? ?? 0;
     return TodayMedicationSummary(
       recipientId: json['recipientId'] as String? ?? json['recipient_id'] as String? ?? '',
       recipientName: json['recipientName'] as String? ?? json['recipient_name'] as String?,
@@ -263,6 +262,7 @@ class MedicationLogItem extends Equatable {
   final String scheduledTime;
   final DateTime? scheduledAt;
   final MedicationLogStatus status;
+  final bool canCheckIn;
   final DateTime? actualTime;
   final MedicationLogTaker? takenBy;
   final String? photoUrl;
@@ -275,6 +275,7 @@ class MedicationLogItem extends Equatable {
     required this.scheduledTime,
     this.scheduledAt,
     required this.status,
+    required this.canCheckIn,
     this.actualTime,
     this.takenBy,
     this.photoUrl,
@@ -296,6 +297,7 @@ class MedicationLogItem extends Equatable {
       scheduledTime: json['scheduledTime'] as String? ?? json['scheduled_time'] as String? ?? '',
       scheduledAt: null,
       status: MedicationTimeStatus._parseStatus(json['status'] as String?),
+      canCheckIn: json['canCheckIn'] as bool? ?? json['can_check_in'] as bool? ?? false,
       actualTime: json['actualTime'] != null
           ? DateTime.tryParse(json['actualTime'] as String? ?? '')
           : (json['actual_time'] != null ? DateTime.tryParse(json['actual_time'] as String? ?? '') : null),
@@ -303,10 +305,6 @@ class MedicationLogItem extends Equatable {
       photoUrl: json['photoUrl'] as String? ?? json['photo_url'] as String?,
     );
   }
-
-  bool get canCheckIn =>
-      status == MedicationLogStatus.pending ||
-      status == MedicationLogStatus.missed;
 
   @override
   List<Object?> get props =>

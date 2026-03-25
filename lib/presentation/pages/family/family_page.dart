@@ -31,9 +31,13 @@ class FamilyMemberSection {
 
   String get displayAvatar {
     if (isRecipient) return recipient!.displayAvatar;
-    // 用名字首字做头像
     final name = member!.nickname;
     return name.isNotEmpty ? name[0] : '?';
+  }
+
+  String? get avatarUrl {
+    if (isRecipient) return recipient!.avatarUrl;
+    return member!.avatarUrl;
   }
 
   String? get phone {
@@ -387,17 +391,30 @@ class FamilyPage extends ConsumerWidget {
             child: Stack(
               children: [
                 Center(
-                  child: section.isRecipient
-                      ? Text(section.displayAvatar,
-                          style: const TextStyle(fontSize: 24))
-                      : Text(
-                          section.displayAvatar,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.primary,
+                  child: section.avatarUrl != null && section.avatarUrl!.startsWith('http')
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: Image.network(
+                            section.avatarUrl!,
+                            width: 48,
+                            height: 48,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stack) => Text(
+                              section.displayAvatar,
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.primary),
+                            ),
                           ),
-                        ),
+                        )
+                      : section.isRecipient
+                          ? Text(section.displayAvatar, style: const TextStyle(fontSize: 24))
+                          : Text(
+                              section.displayAvatar,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primary,
+                              ),
+                            ),
                 ),
                 if (section.isOnline)
                   Positioned(

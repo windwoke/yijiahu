@@ -175,6 +175,9 @@ class AuthNotifier extends Notifier<AuthState> {
       _countdownTimer?.cancel();
       ref.read(countdownProvider.notifier).state = 0;
       state = AuthState(user: user, accessToken: token, isLoading: false);
+
+      // 登录成功后加载当前用户家庭
+      await _loadCurrentFamily();
     } on DioException catch (e) {
       try {
         state = state.copyWith(isLoading: false, error: handleDioError(e).message);
@@ -189,6 +192,8 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<void> logout() async {
     _countdownTimer?.cancel();
     await _prefs?.remove(_tokenKey);
+    // 清除家庭数据，避免切换账号后残留旧数据
+    ref.read(currentFamilyProvider.notifier).state = null;
     state = const AuthState();
   }
 
@@ -239,6 +244,8 @@ class AuthNotifier extends Notifier<AuthState> {
       await _prefs?.setString(_tokenKey, token);
       final user = User.fromJson(userData);
       state = AuthState(user: user, accessToken: token, isLoading: false);
+      // 登录成功后加载当前用户家庭
+      await _loadCurrentFamily();
     } on DioException catch (e) {
       try {
         state = state.copyWith(isLoading: false, error: handleDioError(e).message);

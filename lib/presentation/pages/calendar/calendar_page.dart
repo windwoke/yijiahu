@@ -203,29 +203,6 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
         cellPadding: EdgeInsets.zero,
       ),
       headerVisible: false,
-      calendarBuilders: CalendarBuilders(
-        defaultBuilder: (context, day, focusedDay) {
-          return _CalendarDayCell(
-            day: day,
-            isSelected: isSameDay(_selectedDay, day),
-            events: events[DateTime(day.year, day.month, day.day)] ?? [],
-          );
-        },
-        todayBuilder: (context, day, focusedDay) {
-          return _CalendarDayCell(
-            day: day,
-            isToday: true,
-            events: events[DateTime(day.year, day.month, day.day)] ?? [],
-          );
-        },
-        selectedBuilder: (context, day, focusedDay) {
-          return _CalendarDayCell(
-            day: day,
-            isSelected: true,
-            events: events[DateTime(day.year, day.month, day.day)] ?? [],
-          );
-        },
-      ),
     );
   }
 
@@ -770,104 +747,6 @@ class _SectionTag extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-/// 日历单元格（自定义，支持 emoji dot）
-class _CalendarDayCell extends StatelessWidget {
-  final DateTime day;
-  final bool isSelected;
-  final bool isToday;
-  final List<CalendarEvent> events;
-
-  const _CalendarDayCell({
-    required this.day,
-    this.isSelected = false,
-    this.isToday = false,
-    required this.events,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final hasAppointment = events.any((e) => e.type == EventType.appointment);
-    final hasTask = events.any((e) => e.type == EventType.task);
-    final appointmentEmoji = events
-        .where((e) => e.type == EventType.appointment)
-        .firstOrNull
-        ?.appointment
-        ?.recipient
-        ?.avatarEmoji;
-    final isWeekend = day.weekday == 6 || day.weekday == 7;
-
-    Color bgColor = Colors.transparent;
-    Color textColor = isWeekend ? AppColors.textSecondary : AppColors.textPrimary;
-
-    if (isSelected) {
-      bgColor = AppColors.primary;
-      textColor = Colors.white;
-    } else if (isToday) {
-      bgColor = AppColors.primary.withValues(alpha: 0.15);
-      textColor = AppColors.primaryDark;
-    }
-
-    return Container(
-      margin: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: bgColor,
-        shape: BoxShape.circle,
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            '${day.day}',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: isSelected || isToday ? FontWeight.w700 : FontWeight.w500,
-              color: textColor,
-            ),
-          ),
-          if (events.isNotEmpty) ...[
-            const SizedBox(height: 2),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (hasAppointment && appointmentEmoji != null)
-                  Text(appointmentEmoji, style: const TextStyle(fontSize: 7)),
-                if (hasAppointment && appointmentEmoji == null)
-                  Container(
-                    width: 5, height: 5,
-                    decoration: const BoxDecoration(
-                      color: AppColors.coral, shape: BoxShape.circle,
-                    ),
-                  ),
-                if (hasTask)
-                  Container(
-                    width: 5, height: 5,
-                    margin: const EdgeInsets.only(left: 1),
-                    decoration: const BoxDecoration(
-                      color: AppColors.blue, shape: BoxShape.circle,
-                    ),
-                  ),
-                if (events.length > 1)
-                  Container(
-                    margin: const EdgeInsets.only(left: 1),
-                    padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 0.5),
-                    decoration: BoxDecoration(
-                      color: AppColors.textTertiary,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      '+${events.length - 1}',
-                      style: const TextStyle(fontSize: 6, color: Colors.white),
-                    ),
-                  ),
-              ],
-            ),
-          ],
-        ],
-      ),
     );
   }
 }

@@ -36,11 +36,14 @@ class AppRoutes {
 }
 
 /// 路由配置
+final rootNavigatorKey = GlobalKey<NavigatorState>();
+
 final routerProvider = Provider<GoRouter>((ref) {
   // 只监听 isLoggedIn，避免整个 authState 变化触发 router 重建
   final isLoggedIn = ref.watch(isLoggedInProvider);
 
   return GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: AppRoutes.login,
     debugLogDiagnostics: true,
     redirect: (context, state) {

@@ -332,7 +332,8 @@ final subscriptionStatusProvider =
       features: models.SubscriptionFeatures(
         maxRecipients: 1,
         maxMembers: 3,
-        maxLogsPerMonth: 50,
+        maxLogsPerMonth: 200,
+        maxStorageMB: 500,
         healthReports: false,
         recurrenceReminders: false,
       ),

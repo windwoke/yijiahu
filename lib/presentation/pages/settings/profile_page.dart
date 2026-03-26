@@ -147,6 +147,12 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
     if (result == null) return;
 
+    // 如果返回 '__upgrade__'，说明用户点了升级按钮，跳转到个人中心
+    if (result == '__upgrade__') {
+      context.go(AppRoutes.profile);
+      return;
+    }
+
     try {
       final dio = ref.read(dioProvider);
       final response = await dio.post('/families', data: {'name': result.trim()});
@@ -180,7 +186,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
       if (shouldUpgrade) {
         // 用 bottom sheet 展示升级引导，体验更友好
-        final rootNav = rootNavigatorKey.currentState;
         showModalBottomSheet<void>(
           context: context,
           backgroundColor: Colors.transparent,
@@ -214,13 +219,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   width: double.infinity, height: 48,
                   child: ElevatedButton(
                     onPressed: () {
-                      rootNav?.pop(); // 关闭弹层
-                      // 等 pop 完成后用根路由器的 context 导航
-                      Future.delayed(const Duration(milliseconds: 100), () {
-                        if (rootNav?.mounted == true) {
-                          GoRouter.of(rootNav!.context).go(AppRoutes.profile);
-                        }
-                      });
+                      Navigator.pop(ctx, '__upgrade__'); // 传特殊值触发页面跳转
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.coral, foregroundColor: Colors.white,

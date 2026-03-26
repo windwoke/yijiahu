@@ -179,7 +179,7 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
         }
 
         if (shouldUpgrade) {
-          final rootNav = rootNavigatorKey.currentState;
+          final pageContext = context;
           showModalBottomSheet<void>(
             context: context,
             backgroundColor: Colors.transparent,
@@ -213,11 +213,11 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
                     width: double.infinity, height: 48,
                     child: ElevatedButton(
                       onPressed: () {
-                        rootNav?.pop(); // 关闭弹层
-                        Future.delayed(const Duration(milliseconds: 100), () {
-                          if (rootNav?.mounted == true) {
-                            GoRouter.of(rootNav!.context).go(AppRoutes.profile);
-                          }
+                        Navigator.pop(ctx); // 关闭弹层
+                        // 等动画结束后：关闭添加页 + 跳转个人中心
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          pageContext.pop();
+                          GoRouter.of(pageContext).go(AppRoutes.profile);
                         });
                       },
                       style: ElevatedButton.styleFrom(

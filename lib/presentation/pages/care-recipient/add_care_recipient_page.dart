@@ -102,7 +102,10 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
       final resp = await dio.post('/upload/avatar', data: formData);
       final url = resp.data['avatarUrl'] as String?;
       if (url != null) {
-        setState(() => _avatarUrl = url);
+        setState(() {
+          _avatarUrl = url;
+          _selectedAvatar = ''; // 有真实照片时清空 emoji 选择
+        });
       }
     } catch (e) {
       if (mounted) {

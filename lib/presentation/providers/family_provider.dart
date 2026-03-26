@@ -315,6 +315,31 @@ final myFamiliesProvider = FutureProvider<List<models.Family>>((ref) async {
   }
 });
 
+/// 订阅状态
+final subscriptionStatusProvider =
+    FutureProvider.family<models.SubscriptionStatus, String>((ref, familyId) async {
+  final dio = ref.read(dioProvider);
+  try {
+    final response = await dio.get('/subscriptions/status', queryParameters: {
+      'familyId': familyId,
+    });
+    return models.SubscriptionStatus.fromJson(response.data as Map<String, dynamic>);
+  } catch (_) {
+    // 兼容：订阅接口不可用时返回免费版状态
+    return const models.SubscriptionStatus(
+      plan: 'free',
+      status: 'free',
+      features: models.SubscriptionFeatures(
+        maxRecipients: 1,
+        maxMembers: 3,
+        maxLogsPerMonth: 50,
+        healthReports: false,
+        recurrenceReminders: false,
+      ),
+    );
+  }
+});
+
 /// 更新家庭信息（头像、名称、描述）
 Future<models.Family> updateFamily({
   required WidgetRef ref,

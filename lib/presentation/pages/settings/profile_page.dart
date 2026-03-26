@@ -294,6 +294,21 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
           const SizedBox(height: 16),
 
+          // 订阅
+          _buildSectionHeader('订阅'),
+          _buildSubscriptionCard(family?.id),
+          _buildCard([
+            _buildSettingItem(
+              icon: Icons.card_membership_outlined,
+              title: '订阅管理',
+              subtitle: '查看订阅详情',
+              trailing: const Icon(Icons.chevron_right, color: AppColors.textTertiary, size: 20),
+              onTap: () => _showSubscriptionSheet(),
+            ),
+          ]),
+
+          const SizedBox(height: 16),
+
           // 关于
           _buildSectionHeader('关于'),
           _buildCard([
@@ -564,6 +579,43 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       activeTrackColor: AppColors.primary,
       activeThumbColor: Colors.white,
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    );
+  }
+
+  // ========== 订阅相关 ==========
+
+  void _showSubscriptionSheet() {
+    final familyId = ref.read(currentFamilyProvider)?.id;
+    if (familyId == null) return;
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => _SubscriptionSheet(familyId: familyId),
+    );
+  }
+
+  Widget _buildSubscriptionCard(String? familyId) {
+    if (familyId == null) return const SizedBox.shrink();
+
+    final subAsync = ref.watch(subscriptionStatusProvider(familyId));
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: subAsync.when(
+        data: (sub) => _SubscriptionCard(sub: sub, onUpgrade: _showSubscriptionSheet),
+        loading: () => Container(
+          height: 80,
+          margin: const EdgeInsets.only(bottom: 16),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceContainerLowest,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+        ),
+        error: (_, __) => const SizedBox.shrink(),
+      ),
     );
   }
 
@@ -1066,6 +1118,452 @@ class _NameEditSheetState extends State<_NameEditSheet> {
         ],
       ),
     );
+  }
+}
+
+// ========== 订阅卡片（免费版升级 banner / 会员展示） ==========
+
+class _SubscriptionCard extends StatelessWidget {
+  final models.SubscriptionStatus sub;
+  final VoidCallback onUpgrade;
+
+  const _SubscriptionCard({required this.sub, required this.onUpgrade});
+
+  @override
+  Widget build(BuildContext context) {
+    if (sub.isPremium) {
+      return _buildPremiumCard();
+    }
+    return _buildFreeCard(context);
+  }
+
+  Widget _buildPremiumCard() {
+    final expiresAt = sub.expiresAt != null
+        ? _formatDate(sub.expiresAt!)
+        : null;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF5C8268), Color(0xFF7B9E87)],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.25),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.25),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.workspace_premium_rounded, color: Colors.white, size: 24),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      sub.planLabel,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.25),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        sub.statusLabel,
+                        style: const TextStyle(fontSize: 11, color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  expiresAt != null ? '有效期至 $expiresAt' : '永久有效',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.white.withValues(alpha: 0.85),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.check_circle_rounded, color: Colors.white70, size: 20),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFreeCard(BuildContext context) {
+    return GestureDetector(
+      onTap: onUpgrade,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border, width: 1),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.coral.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.local_offer_outlined, color: AppColors.coral, size: 24),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '解锁全部功能',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '升级会员，解锁更多照护对象和家庭成员',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary.withValues(alpha: 0.8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.coral,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Text(
+                '立即升级',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatDate(String iso) {
+    try {
+      final d = DateTime.parse(iso);
+      return '${d.year}年${d.month}月${d.day}日';
+    } catch (_) {
+      return iso;
+    }
+  }
+}
+
+// ========== 订阅详情底部弹层 ==========
+
+class _SubscriptionSheet extends ConsumerWidget {
+  final String familyId;
+
+  const _SubscriptionSheet({required this.familyId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final subAsync = ref.watch(subscriptionStatusProvider(familyId));
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(context).viewInsets.bottom + 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.grey200,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            '订阅管理',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 20),
+          subAsync.when(
+            data: (sub) => Column(
+              children: [
+                // 当前状态
+                _buildStatusCard(sub),
+                const SizedBox(height: 16),
+                // 功能对比
+                _buildFeatureList(sub.features),
+                const SizedBox(height: 16),
+                // 升级按钮
+                if (!sub.isPremium)
+                  SizedBox(
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('会员购买即将上线，请关注后续更新'),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.coral,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                        textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      ),
+                      child: const Text('升级会员'),
+                    ),
+                  ),
+              ],
+            ),
+            loading: () => const SizedBox(
+              height: 100,
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (e, _) => Text('加载失败: $e', style: const TextStyle(color: AppColors.error)),
+          ),
+          const SizedBox(height: 12),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('关闭', style: TextStyle(color: AppColors.grey500)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusCard(models.SubscriptionStatus sub) {
+    final isPremium = sub.isPremium;
+    final expiresAt = sub.expiresAt != null ? _formatDate(sub.expiresAt!) : null;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isPremium
+            ? AppColors.primary.withValues(alpha: 0.08)
+            : AppColors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(16),
+        border: isPremium
+            ? Border.all(color: AppColors.primary.withValues(alpha: 0.3), width: 1.5)
+            : null,
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: isPremium
+                      ? AppColors.primary.withValues(alpha: 0.2)
+                      : AppColors.grey200,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  isPremium ? Icons.workspace_premium_rounded : Icons.person_outline_rounded,
+                  color: isPremium ? AppColors.primary : AppColors.grey500,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      sub.planLabel,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: isPremium ? AppColors.primary : AppColors.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      isPremium
+                          ? (expiresAt != null ? '有效期至 $expiresAt' : '永久有效')
+                          : '当前版本',
+                      style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isPremium ? AppColors.success.withValues(alpha: 0.15) : AppColors.grey200,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  sub.statusLabel,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: isPremium ? AppColors.success : AppColors.grey600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeatureList(models.SubscriptionFeatures features) {
+    final items = <(IconData, String, String, String, bool)>[
+      (
+        Icons.family_restroom_outlined,
+        '照护对象',
+        '1 位',
+        features.maxRecipients == -1 ? '不限' : '${features.maxRecipients} 位',
+        true,
+      ),
+      (
+        Icons.group_outlined,
+        '家庭成员',
+        '3 人',
+        features.maxMembers == -1 ? '不限' : '${features.maxMembers} 人',
+        true,
+      ),
+      (
+        Icons.edit_note_outlined,
+        '每月日志',
+        '50 条',
+        features.maxLogsPerMonth == -1 ? '不限' : '${features.maxLogsPerMonth} 条',
+        true,
+      ),
+      (
+        Icons.summarize_outlined,
+        '健康报告',
+        '—',
+        features.healthReports ? '支持' : '—',
+        false,
+      ),
+      (
+        Icons.repeat_rounded,
+        '周期提醒',
+        '—',
+        features.recurrenceReminders ? '支持' : '—',
+        false,
+      ),
+    ];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: items.asMap().entries.map((entry) {
+          final index = entry.key;
+          final item = entry.value;
+          final isPremiumOnly = item.$5;
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  children: [
+                    Icon(item.$1, color: AppColors.primary, size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(item.$2,
+                          style: const TextStyle(fontSize: 14, color: AppColors.textPrimary)),
+                    ),
+                    Text(
+                      item.$3,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: isPremiumOnly ? AppColors.textTertiary : AppColors.textSecondary,
+                        decoration: isPremiumOnly ? TextDecoration.lineThrough : null,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        item.$4,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isPremiumOnly ? AppColors.textTertiary : AppColors.success,
+                          fontWeight: isPremiumOnly ? FontWeight.normal : FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (index < items.length - 1)
+                const Padding(
+                  padding: EdgeInsets.only(left: 48),
+                  child: Divider(height: 1, thickness: 0.5, color: AppColors.border),
+                ),
+            ],
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  String _formatDate(String iso) {
+    try {
+      final d = DateTime.parse(iso);
+      return '${d.year}年${d.month}月${d.day}日';
+    } catch (_) {
+      return iso;
+    }
   }
 }
 

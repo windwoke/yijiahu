@@ -136,3 +136,87 @@ class FamilyMember extends Equatable {
   @override
   List<Object?> get props => [id, userId, nickname, role, isOnline];
 }
+
+/// 订阅状态
+class SubscriptionStatus extends Equatable {
+  final String plan; // free / premium / annual
+  final String status; // active / expired / free
+  final String? expiresAt;
+  final SubscriptionFeatures features;
+
+  const SubscriptionStatus({
+    required this.plan,
+    required this.status,
+    this.expiresAt,
+    required this.features,
+  });
+
+  factory SubscriptionStatus.fromJson(Map<String, dynamic> json) {
+    return SubscriptionStatus(
+      plan: json['plan'] as String? ?? 'free',
+      status: json['status'] as String? ?? 'free',
+      expiresAt: json['expiresAt'] as String?,
+      features: SubscriptionFeatures.fromJson(
+        json['features'] as Map<String, dynamic>? ?? {},
+      ),
+    );
+  }
+
+  String get planLabel {
+    switch (plan) {
+      case 'premium':
+        return '月度会员';
+      case 'annual':
+        return '年度会员';
+      default:
+        return '免费版';
+    }
+  }
+
+  String get statusLabel {
+    switch (status) {
+      case 'active':
+        return '生效中';
+      case 'expired':
+        return '已过期';
+      default:
+        return '免费版';
+    }
+  }
+
+  bool get isPremium => plan != 'free' && status == 'active';
+
+  @override
+  List<Object?> get props => [plan, status, expiresAt, features];
+}
+
+/// 套餐功能
+class SubscriptionFeatures extends Equatable {
+  final int maxRecipients;
+  final int maxMembers;
+  final int maxLogsPerMonth;
+  final bool healthReports;
+  final bool recurrenceReminders;
+
+  const SubscriptionFeatures({
+    required this.maxRecipients,
+    required this.maxMembers,
+    required this.maxLogsPerMonth,
+    required this.healthReports,
+    required this.recurrenceReminders,
+  });
+
+  factory SubscriptionFeatures.fromJson(Map<String, dynamic> json) {
+    return SubscriptionFeatures(
+      maxRecipients: json['maxRecipients'] as int? ?? 1,
+      maxMembers: json['maxMembers'] as int? ?? 3,
+      maxLogsPerMonth: json['maxLogsPerMonth'] as int? ?? 50,
+      healthReports: json['healthReports'] as bool? ?? false,
+      recurrenceReminders: json['recurrenceReminders'] as bool? ?? false,
+    );
+  }
+
+  @override
+  List<Object?> get props =>
+      [maxRecipients, maxMembers, maxLogsPerMonth, healthReports, recurrenceReminders];
+}

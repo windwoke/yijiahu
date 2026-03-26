@@ -66,25 +66,23 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          _buildMonthHeader(),
-          SizedBox(
-            height: 290,
-            child: eventsAsync.when(
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            _buildMonthHeader(),
+            eventsAsync.when(
               data: (events) => _buildCalendar(events),
               loading: () => _buildCalendar({}),
               error: (e, _) => _buildCalendar({}),
             ),
-          ),
-          Container(
-            height: 1,
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            color: AppColors.border,
-          ),
-          // 即将到来的复诊
-          Expanded(child: _buildUpcomingSection(familyId)),
-        ],
+            Container(
+              height: 1,
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              color: AppColors.border,
+            ),
+            _buildUpcomingSection(familyId),
+          ],
+        ),
       ),
     );
   }
@@ -168,7 +166,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
         });
       },
       locale: 'zh_CN',
-      daysOfWeekHeight: 36,
+      daysOfWeekHeight: 30,
       daysOfWeekStyle: const DaysOfWeekStyle(
         weekdayStyle: TextStyle(
           fontSize: 12,
@@ -201,7 +199,8 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
         defaultTextStyle: const TextStyle(color: AppColors.textPrimary),
         weekendTextStyle: const TextStyle(color: AppColors.textSecondary),
         outsideTextStyle: const TextStyle(color: AppColors.textTertiary),
-        cellMargin: const EdgeInsets.all(4),
+        cellMargin: const EdgeInsets.all(2),
+        cellPadding: EdgeInsets.zero,
       ),
       headerVisible: false,
       calendarBuilders: CalendarBuilders(
@@ -238,14 +237,11 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
     );
     final eventsAsync = ref.watch(calendarEventsProvider(query));
 
-    // 固定标签高度，让列表自适应剩余空间
-    const tabHeight = 44.0;
-
     return Column(
       children: [
-        // 切换标签（固定高度）
+        // 切换标签
         Container(
-          height: tabHeight,
+          height: 44,
           padding: const EdgeInsets.symmetric(horizontal: 16),
           alignment: Alignment.centerLeft,
           child: Row(
@@ -275,29 +271,16 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
             ],
           ),
         ),
-        // 列表（通过 LayoutBuilder 感知高度，可独立滚动）
-        Expanded(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return eventsAsync.when(
-                data: (allEvents) {
-                  if (_showList) {
-                    return SizedBox(
-                      height: constraints.maxHeight,
-                      child: _buildListView(allEvents, familyId),
-                    );
-                  } else {
-                    return SizedBox(
-                      height: constraints.maxHeight,
-                      child: _buildDayView(allEvents, familyId),
-                    );
-                  }
-                },
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Center(child: Text('加载失败: $e')),
-              );
-            },
-          ),
+        eventsAsync.when(
+          data: (allEvents) {
+            if (_showList) {
+              return _buildListView(allEvents, familyId);
+            } else {
+              return _buildDayView(allEvents, familyId);
+            }
+          },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => Center(child: Text('加载失败: $e')),
         ),
       ],
     );

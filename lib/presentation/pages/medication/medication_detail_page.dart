@@ -333,9 +333,9 @@ class MedicationDetailPage extends ConsumerWidget {
             ),
           ),
           const SizedBox(width: 12),
-          // 时间
+          // 时间（固定宽度避免换行）
           SizedBox(
-            width: 70,
+            width: 100,
             child: Text(
               timeStr,
               style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
@@ -354,11 +354,35 @@ class MedicationDetailPage extends ConsumerWidget {
             ),
           ),
           const Spacer(),
-          // 操作人
+          // 操作人头像+名字
           if (log.authorName != null && log.authorName!.isNotEmpty)
-            Text(
-              log.authorName!,
-              style: TextStyle(fontSize: 13, color: AppColors.textTertiary),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      log.authorName!.substring(0, 1),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  log.authorName!,
+                  style: TextStyle(fontSize: 13, color: AppColors.textTertiary),
+                ),
+              ],
             ),
         ],
       ),

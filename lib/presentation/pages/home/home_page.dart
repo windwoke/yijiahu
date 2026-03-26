@@ -841,7 +841,13 @@ class _TaskHomeCard extends ConsumerWidget {
                 final dio = ref.read(dioProvider);
                 await dio.post('/family-tasks/${task.id}/complete',
                     queryParameters: {'familyId': familyId});
+                final now = DateTime.now();
                 ref.invalidate(upcomingTasksProvider(familyId));
+                ref.invalidate(calendarEventsProvider(CalendarQuery(
+                  familyId: familyId,
+                  year: now.year,
+                  month: now.month,
+                )));
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('任务已完成')),

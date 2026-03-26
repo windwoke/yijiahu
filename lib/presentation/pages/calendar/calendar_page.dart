@@ -66,27 +66,27 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          _buildMonthHeader(),
-          SizedBox(
-            height: 280,
-            child: eventsAsync.when(
-              data: (events) => _buildCalendar(events),
-              loading: () => _buildCalendar({}),
-              error: (e, _) => _buildCalendar({}),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            _buildMonthHeader(),
+            SizedBox(
+              height: 300,
+              child: eventsAsync.when(
+                data: (events) => _buildCalendar(events),
+                loading: () => _buildCalendar({}),
+                error: (e, _) => _buildCalendar({}),
+              ),
             ),
-          ),
-          Container(
-            height: 1,
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            color: AppColors.border,
-          ),
-          // 即将到来的复诊
-          Expanded(
-            child: _buildUpcomingSection(familyId),
-          ),
-        ],
+            Container(
+              height: 1,
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              color: AppColors.border,
+            ),
+            // 即将到来的复诊
+            _buildUpcomingSection(familyId),
+          ],
+        ),
       ),
     );
   }
@@ -272,18 +272,16 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
             ],
           ),
         ),
-        Expanded(
-          child: eventsAsync.when(
-            data: (allEvents) {
-              if (_showList) {
-                return _buildListView(allEvents, familyId);
-              } else {
-                return _buildDayView(allEvents, familyId);
-              }
-            },
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('加载失败: $e')),
-          ),
+        eventsAsync.when(
+          data: (allEvents) {
+            if (_showList) {
+              return _buildListView(allEvents, familyId);
+            } else {
+              return _buildDayView(allEvents, familyId);
+            }
+          },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => Center(child: Text('加载失败: $e')),
         ),
       ],
     );

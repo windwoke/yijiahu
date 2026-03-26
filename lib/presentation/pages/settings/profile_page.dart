@@ -1428,7 +1428,7 @@ class _SubscriptionSheet extends ConsumerWidget {
                 _buildStatusCard(sub),
                 const SizedBox(height: 16),
                 // 功能对比
-                _buildFeatureList(sub.features),
+                _buildFeatureList(sub.features, sub.isPremium),
                 const SizedBox(height: 16),
                 // 升级按钮
                 if (!sub.isPremium)
@@ -1550,103 +1550,147 @@ class _SubscriptionSheet extends ConsumerWidget {
     );
   }
 
-  Widget _buildFeatureList(models.SubscriptionFeatures features) {
-    final items = <(IconData, String, String, String, bool)>[
+  Widget _buildFeatureList(models.SubscriptionFeatures features, bool isPremium) {
+    // 会员版各项上限
+    const premiumRecipients = 5;
+    const premiumMembers = 10;
+    const premiumLogs = -1; // 不限
+
+    final items = <(IconData, String, String, String)>[
       (
         Icons.family_restroom_outlined,
         '照护对象',
-        '1 位',
         features.maxRecipients == -1 ? '不限' : '${features.maxRecipients} 位',
-        true,
+        isPremium ? '✓' : (premiumRecipients == -1 ? '不限' : '$premiumRecipients 位'),
       ),
       (
         Icons.group_outlined,
         '家庭成员',
-        '3 人',
         features.maxMembers == -1 ? '不限' : '${features.maxMembers} 人',
-        true,
+        isPremium ? '✓' : (premiumMembers == -1 ? '不限' : '$premiumMembers 人'),
       ),
       (
         Icons.edit_note_outlined,
         '每月日志',
-        '50 条',
         features.maxLogsPerMonth == -1 ? '不限' : '${features.maxLogsPerMonth} 条',
-        true,
+        isPremium ? '✓' : (premiumLogs == -1 ? '不限' : '$premiumLogs 条'),
       ),
       (
         Icons.summarize_outlined,
         '健康报告',
-        '—',
         features.healthReports ? '支持' : '—',
-        false,
+        isPremium ? '✓' : '支持',
       ),
       (
         Icons.repeat_rounded,
         '周期提醒',
-        '—',
         features.recurrenceReminders ? '支持' : '—',
-        false,
+        isPremium ? '✓' : '支持',
       ),
     ];
 
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: items.asMap().entries.map((entry) {
-          final index = entry.key;
-          final item = entry.value;
-          final isPremiumOnly = item.$5;
-          return Column(
+    return Column(
+      children: [
+        // 表头
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceContainerLow,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+          ),
+          child: Row(
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Row(
-                  children: [
-                    Icon(item.$1, color: AppColors.primary, size: 20),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(item.$2,
-                          style: const TextStyle(fontSize: 14, color: AppColors.textPrimary)),
-                    ),
-                    Text(
-                      item.$3,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: isPremiumOnly ? AppColors.textTertiary : AppColors.textSecondary,
-                        decoration: isPremiumOnly ? TextDecoration.lineThrough : null,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        item.$4,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: isPremiumOnly ? AppColors.textTertiary : AppColors.success,
-                          fontWeight: isPremiumOnly ? FontWeight.normal : FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
+              const SizedBox(width: 32), // icon 占位
+              const SizedBox(width: 12),
+              const Expanded(flex: 3, child: Text('功能', style: TextStyle(fontSize: 12, color: AppColors.textTertiary))),
+              Expanded(
+                flex: 2,
+                child: Text(
+                  isPremium ? '当前' : '基础版',
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+                  textAlign: TextAlign.center,
                 ),
               ),
-              if (index < items.length - 1)
-                const Padding(
-                  padding: EdgeInsets.only(left: 48),
-                  child: Divider(height: 1, thickness: 0.5, color: AppColors.border),
+              Expanded(
+                flex: 2,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.coral.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    isPremium ? '会员' : '会员版',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.coral),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
+              ),
             ],
-          );
-        }).toList(),
-      ),
+          ),
+        ),
+        // 表格内容
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
+            border: Border.all(color: AppColors.border, width: 0.5),
+          ),
+          child: Column(
+            children: items.asMap().entries.map((entry) {
+              final index = entry.key;
+              final item = entry.value;
+              final isCurrentBetter = !isPremium &&
+                  (item.$3 != '—' && (item.$4 == '✓' || item.$4 == '支持'));
+              return Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Row(
+                      children: [
+                        Icon(item.$1, color: AppColors.primary, size: 18),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          flex: 3,
+                          child: Text(item.$2,
+                              style: const TextStyle(fontSize: 14, color: AppColors.textPrimary)),
+                        ),
+                        Expanded(
+                          flex: 2,
+                          child: Text(
+                            item.$3,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: isCurrentBetter ? AppColors.success : AppColors.textSecondary,
+                              fontWeight: isCurrentBetter ? FontWeight.w600 : FontWeight.normal,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        Expanded(
+                          flex: 2,
+                          child: item.$4 == '✓'
+                              ? const Icon(Icons.check_rounded, color: AppColors.success, size: 18)
+                              : Text(
+                                  item.$4,
+                                  style: const TextStyle(fontSize: 13, color: AppColors.success),
+                                  textAlign: TextAlign.center,
+                                ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (index < items.length - 1)
+                    const Padding(
+                      padding: EdgeInsets.only(left: 46),
+                      child: Divider(height: 1, thickness: 0.5, color: AppColors.border),
+                    ),
+                ],
+              );
+            }).toList(),
+          ),
+        ),
+      ],
     );
   }
 

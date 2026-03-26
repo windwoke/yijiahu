@@ -632,14 +632,20 @@ class _SwitchFamilySheet extends ConsumerWidget {
                       onTap: () {
                         final oldFamilyId = currentFamily?.id;
                         ref.read(currentFamilyProvider.notifier).state = f;
-                        ref.invalidate(careRecipientsProvider);
-                        ref.invalidate(familyMembersProvider(f.id));
-                        // 清除旧家庭的 timeline 缓存，防止切换后显示旧数据
+
+                        // 清除旧家庭所有缓存
                         if (oldFamilyId != null) {
                           ref.invalidate(timelineProvider(
                             TimelineQuery(familyId: oldFamilyId),
                           ));
+                          ref.invalidate(familyMembersProvider(oldFamilyId));
                         }
+
+                        // 刷新新家庭数据 + 家庭列表
+                        ref.invalidate(myFamiliesProvider);
+                        ref.invalidate(careRecipientsProvider);
+                        ref.invalidate(familyMembersProvider(f.id));
+
                         Navigator.pop(context);
                       },
                       borderRadius: BorderRadius.circular(12),

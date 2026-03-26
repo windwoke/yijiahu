@@ -13,6 +13,7 @@ import '../../../data/models/models.dart' as models;
 import '../../../core/network/api_client.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/family_provider.dart';
+import '../../../data/models/care_log.dart';
 
 class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
@@ -629,9 +630,16 @@ class _SwitchFamilySheet extends ConsumerWidget {
                     padding: const EdgeInsets.only(bottom: 8),
                     child: InkWell(
                       onTap: () {
+                        final oldFamilyId = currentFamily?.id;
                         ref.read(currentFamilyProvider.notifier).state = f;
                         ref.invalidate(careRecipientsProvider);
                         ref.invalidate(familyMembersProvider(f.id));
+                        // 清除旧家庭的 timeline 缓存，防止切换后显示旧数据
+                        if (oldFamilyId != null) {
+                          ref.invalidate(timelineProvider(
+                            TimelineQuery(familyId: oldFamilyId),
+                          ));
+                        }
                         Navigator.pop(context);
                       },
                       borderRadius: BorderRadius.circular(12),

@@ -57,6 +57,26 @@ export class UserController {
     return { family };
   }
 
+  @Get('me/families')
+  @ApiOperation({ summary: '获取当前用户所有家庭列表' })
+  async getMyFamilies(@CurrentUser('id') userId: string) {
+    const members = await this.memberRepo.find({ where: { userId } });
+    if (members.length === 0) return { families: [] };
+
+    const familyIds = members.map((m) => m.familyId);
+    const families = await this.familyRepo
+      .createQueryBuilder('family')
+      .where('family.id IN (:...ids)', { ids: familyIds })
+      .getMany();
+
+    const result = families.map((f) => ({
+      family: f,
+      role: members.find((m) => m.familyId === f.id)?.role,
+    }));
+
+    return { families: result };
+  }
+
   @Patch('me')
   @ApiOperation({ summary: '更新当前用户信息' })
   updateMe(@CurrentUser('id') userId: string, @Body() body: Record<string, unknown>) {

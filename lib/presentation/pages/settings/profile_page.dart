@@ -9,6 +9,8 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/env/env_config.dart';
 import '../../../core/constants/constants.dart';
+import '../../../data/models/models.dart' as models;
+import '../../../core/network/api_client.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/family_provider.dart';
 
@@ -88,6 +90,82 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     }
   }
 
+  // ========== 家庭操作 ==========
+
+  Future<void> _showSwitchFamilySheet() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => _SwitchFamilySheet(),
+    );
+  }
+
+  Future<void> _showJoinFamilySheet() async {
+    final result = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _JoinFamilySheet(),
+    );
+
+    if (result == null) return;
+
+    try {
+      final dio = ref.read(dioProvider);
+      await dio.post('/families/join', data: {'inviteCode': result.trim()});
+      // 刷新家庭列表和当前家庭
+      ref.invalidate(myFamiliesProvider);
+      await ref.read(myFamiliesProvider.future);
+      final families = ref.read(myFamiliesProvider).valueOrNull ?? [];
+      if (families.isNotEmpty) {
+        ref.read(currentFamilyProvider.notifier).state = families.last;
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('加入成功'), duration: Duration(seconds: 2)),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('加入失败: $e'), duration: const Duration(seconds: 3)),
+        );
+      }
+    }
+  }
+
+  Future<void> _showCreateFamilySheet() async {
+    final result = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _CreateFamilySheet(),
+    );
+
+    if (result == null) return;
+
+    try {
+      final dio = ref.read(dioProvider);
+      final response = await dio.post('/families', data: {'name': result.trim()});
+      final family = models.Family.fromJson(response.data as Map<String, dynamic>);
+      // 切换到新家庭
+      ref.read(currentFamilyProvider.notifier).state = family;
+      ref.invalidate(myFamiliesProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('创建成功：$result'), duration: const Duration(seconds: 2)),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('创建失败: $e'), duration: const Duration(seconds: 3)),
+        );
+      }
+    }
+  }
+
   // ========== 页面结构 ==========
 
   @override
@@ -98,189 +176,158 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Column(
+      body: ListView(
+        padding: EdgeInsets.only(
+          top: MediaQuery.of(context).padding.top + 16,
+          bottom: MediaQuery.of(context).padding.bottom + 32,
+        ),
         children: [
-          Expanded(
-            child: ListView(
-              padding: EdgeInsets.only(
-                top: MediaQuery.of(context).padding.top + 16,
-                bottom: MediaQuery.of(context).padding.bottom + 80,
-              ),
-              children: [
-                // 顶部用户信息卡片
-                _buildUserCard(user),
-                const SizedBox(height: 20),
+          // 顶部用户信息卡片
+          _buildUserCard(user),
+          const SizedBox(height: 20),
 
-                // 账号
-                _buildSectionHeader('账号'),
-                _buildCard([
-                  _buildSettingItem(
-                    icon: Icons.phone_iphone_rounded,
-                    title: '更换手机号',
-                    onTap: () => _showComingSoon('更换手机号'),
-                  ),
-                  _buildDivider(),
-                  _buildSettingItem(
-                    icon: Icons.notifications_rounded,
-                    title: '通知设置',
-                    onTap: () => _showComingSoon('通知设置'),
-                  ),
-                  _buildDivider(),
-                  _buildSettingItem(
-                    icon: Icons.lock_outline_rounded,
-                    title: '修改密码',
-                    onTap: () => context.push(AppRoutes.passwordChange),
-                  ),
-                ]),
-
-                const SizedBox(height: 16),
-
-                // 家庭
-                _buildSectionHeader('家庭'),
-                _buildCard([
-                  _buildSettingItem(
-                    icon: Icons.swap_horiz_rounded,
-                    title: '切换家庭',
-                    subtitle: family?.name ?? '我的家庭',
-                    onTap: () => _showComingSoon('切换家庭'),
-                  ),
-                  _buildDivider(),
-                  _buildSettingItem(
-                    icon: Icons.group_add_outlined,
-                    title: '加入新家庭',
-                    onTap: () => _showComingSoon('加入新家庭'),
-                  ),
-                  _buildDivider(),
-                  _buildSettingItem(
-                    icon: Icons.add_home_outlined,
-                    title: '创建新家庭',
-                    onTap: () => _showComingSoon('创建新家庭'),
-                  ),
-                ]),
-
-                const SizedBox(height: 16),
-
-                // 提醒
-                _buildSectionHeader('提醒'),
-                _buildCard([
-                  _buildSettingItem(
-                    icon: Icons.schedule_outlined,
-                    title: '用药提醒提前',
-                    subtitle: '15 分钟',
-                    trailing: const Icon(Icons.chevron_right,
-                        color: AppColors.textTertiary, size: 20),
-                    onTap: () => _showComingSoon('用药提醒提前'),
-                  ),
-                  _buildDivider(),
-                  _buildSettingItem(
-                    icon: Icons.event_outlined,
-                    title: '复诊提醒提前',
-                    subtitle: '48 小时',
-                    trailing: const Icon(Icons.chevron_right,
-                        color: AppColors.textTertiary, size: 20),
-                    onTap: () => _showComingSoon('复诊提醒提前'),
-                  ),
-                  _buildDivider(),
-                  _buildSettingItem(
-                    icon: Icons.volume_up_rounded,
-                    title: '推送声音',
-                    subtitle: '默认',
-                    trailing: const Icon(Icons.chevron_right,
-                        color: AppColors.textTertiary, size: 20),
-                    onTap: () => _showComingSoon('推送声音'),
-                  ),
-                  _buildDivider(),
-                  _buildSettingItem(
-                    icon: Icons.do_not_disturb_on_outlined,
-                    title: '免打扰时段',
-                    subtitle: '22:00 - 07:00',
-                    trailing: const Icon(Icons.chevron_right,
-                        color: AppColors.textTertiary, size: 20),
-                    onTap: () => _showComingSoon('免打扰时段'),
-                  ),
-                ]),
-
-                const SizedBox(height: 16),
-
-                // 微信生态
-                _buildSectionHeader('微信生态'),
-                _buildCard([
-                  _buildSettingItem(
-                    icon: Icons.chat_bubble_outline_rounded,
-                    title: '微信服务通知',
-                    trailing: _buildSwitch(true, (v) {}),
-                    onTap: null,
-                  ),
-                  _buildDivider(),
-                  _buildSettingItem(
-                    icon: Icons.share_outlined,
-                    title: '微信分享',
-                    trailing: _buildSwitch(true, (v) {}),
-                    onTap: null,
-                  ),
-                ]),
-
-                const SizedBox(height: 16),
-
-                // 关于
-                _buildSectionHeader('关于'),
-                _buildCard([
-                  _buildSettingItem(
-                    icon: Icons.info_outline_rounded,
-                    title: '关于我们',
-                    onTap: () => _showComingSoon('关于我们'),
-                  ),
-                  _buildDivider(),
-                  _buildSettingItem(
-                    icon: Icons.description_outlined,
-                    title: '隐私政策',
-                    onTap: () => _showComingSoon('隐私政策'),
-                  ),
-                  _buildDivider(),
-                  _buildSettingItem(
-                    icon: Icons.article_outlined,
-                    title: '用户协议',
-                    onTap: () => _showComingSoon('用户协议'),
-                  ),
-                  _buildDivider(),
-                  _buildSettingItem(
-                    icon: Icons.info_outline_rounded,
-                    title: '版本',
-                    trailing: const Text(
-                      '1.0.0',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: AppColors.textTertiary,
-                      ),
-                    ),
-                    onTap: null,
-                  ),
-                ]),
-
-                const SizedBox(height: 32),
-              ],
+          // 账号
+          _buildSectionHeader('账号'),
+          _buildCard([
+            _buildSettingItem(
+              icon: Icons.phone_iphone_rounded,
+              title: '更换手机号',
+              onTap: () => _showToast('更换手机号'),
             ),
-          ),
-
-          // 退出登录（固定底部）
-          Container(
-            padding: EdgeInsets.fromLTRB(
-                20, 12, 20, MediaQuery.of(context).padding.bottom + 12),
-            decoration: BoxDecoration(
-              color: AppColors.background,
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.shadowSoft,
-                  blurRadius: 8,
-                  offset: const Offset(0, -2),
-                ),
-                BoxShadow(
-                  color: AppColors.shadowSoft2,
-                  blurRadius: 4,
-                  offset: const Offset(0, -1),
-                ),
-              ],
+            _buildDivider(),
+            _buildSettingItem(
+              icon: Icons.notifications_rounded,
+              title: '通知设置',
+              onTap: () => _showToast('通知设置'),
             ),
+            _buildDivider(),
+            _buildSettingItem(
+              icon: Icons.lock_outline_rounded,
+              title: '修改密码',
+              onTap: () => context.push(AppRoutes.passwordChange),
+            ),
+          ]),
+
+          const SizedBox(height: 16),
+
+          // 家庭
+          _buildSectionHeader('家庭'),
+          _buildCard([
+            _buildSettingItem(
+              icon: Icons.swap_horiz_rounded,
+              title: '切换家庭',
+              subtitle: family?.name ?? '我的家庭',
+              onTap: _showSwitchFamilySheet,
+            ),
+            _buildDivider(),
+            _buildSettingItem(
+              icon: Icons.group_add_outlined,
+              title: '加入新家庭',
+              onTap: _showJoinFamilySheet,
+            ),
+            _buildDivider(),
+            _buildSettingItem(
+              icon: Icons.add_home_outlined,
+              title: '创建新家庭',
+              onTap: _showCreateFamilySheet,
+            ),
+          ]),
+
+          const SizedBox(height: 16),
+
+          // 提醒
+          _buildSectionHeader('提醒'),
+          _buildCard([
+            _buildSettingItem(
+              icon: Icons.schedule_outlined,
+              title: '用药提醒提前',
+              subtitle: '15 分钟',
+              trailing: const Icon(Icons.chevron_right, color: AppColors.textTertiary, size: 20),
+              onTap: () => _showToast('用药提醒提前'),
+            ),
+            _buildDivider(),
+            _buildSettingItem(
+              icon: Icons.event_outlined,
+              title: '复诊提醒提前',
+              subtitle: '48 小时',
+              trailing: const Icon(Icons.chevron_right, color: AppColors.textTertiary, size: 20),
+              onTap: () => _showToast('复诊提醒提前'),
+            ),
+            _buildDivider(),
+            _buildSettingItem(
+              icon: Icons.volume_up_rounded,
+              title: '推送声音',
+              subtitle: '默认',
+              trailing: const Icon(Icons.chevron_right, color: AppColors.textTertiary, size: 20),
+              onTap: () => _showToast('推送声音'),
+            ),
+            _buildDivider(),
+            _buildSettingItem(
+              icon: Icons.do_not_disturb_on_outlined,
+              title: '免打扰时段',
+              subtitle: '22:00 - 07:00',
+              trailing: const Icon(Icons.chevron_right, color: AppColors.textTertiary, size: 20),
+              onTap: () => _showToast('免打扰时段'),
+            ),
+          ]),
+
+          const SizedBox(height: 16),
+
+          // 微信生态
+          _buildSectionHeader('微信生态'),
+          _buildCard([
+            _buildSettingItem(
+              icon: Icons.chat_bubble_outline_rounded,
+              title: '微信服务通知',
+              trailing: _buildSwitch(true, (_) {}),
+              onTap: null,
+            ),
+            _buildDivider(),
+            _buildSettingItem(
+              icon: Icons.share_outlined,
+              title: '微信分享',
+              trailing: _buildSwitch(true, (_) {}),
+              onTap: null,
+            ),
+          ]),
+
+          const SizedBox(height: 16),
+
+          // 关于
+          _buildSectionHeader('关于'),
+          _buildCard([
+            _buildSettingItem(
+              icon: Icons.info_outline_rounded,
+              title: '关于我们',
+              onTap: () => _showToast('关于我们'),
+            ),
+            _buildDivider(),
+            _buildSettingItem(
+              icon: Icons.description_outlined,
+              title: '隐私政策',
+              onTap: () => _showToast('隐私政策'),
+            ),
+            _buildDivider(),
+            _buildSettingItem(
+              icon: Icons.article_outlined,
+              title: '用户协议',
+              onTap: () => _showToast('用户协议'),
+            ),
+            _buildDivider(),
+            _buildSettingItem(
+              icon: Icons.info_outline_rounded,
+              title: '版本',
+              trailing: const Text('1.0.0',
+                  style: TextStyle(fontSize: 14, color: AppColors.textTertiary)),
+              onTap: null,
+            ),
+          ]),
+
+          const SizedBox(height: 24),
+
+          // 退出登录（自然流式）
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: SizedBox(
               width: double.infinity,
               height: 48,
@@ -293,15 +340,14 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24),
                   ),
-                  textStyle: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
                 child: const Text('退出登录'),
               ),
             ),
           ),
+
+          const SizedBox(height: 32),
         ],
       ),
     );
@@ -337,7 +383,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           padding: const EdgeInsets.all(20),
           child: Row(
             children: [
-              // 头像
               GestureDetector(
                 onTap: _isUploading ? null : _pickAndUploadAvatar,
                 child: Stack(
@@ -355,8 +400,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                               child: Image.network(
                                 ApiConfig.avatarUrl(user!.avatarUrl) ?? '',
                                 fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) => const Icon(Icons.person,
-                                    color: Colors.white, size: 30),
+                                errorBuilder: (c, e, s) =>
+                                    const Icon(Icons.person, color: Colors.white, size: 30),
                               ),
                             )
                           : const Icon(Icons.person, color: Colors.white, size: 30),
@@ -372,8 +417,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                             child: SizedBox(
                               width: 20,
                               height: 20,
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: Colors.white),
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                             ),
                           ),
                         ),
@@ -388,15 +432,14 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                           shape: BoxShape.circle,
                           border: Border.all(color: AppColors.primary, width: 1.5),
                         ),
-                        child: const Icon(Icons.camera_alt,
-                            size: 12, color: AppColors.primary),
+                        child:
+                            const Icon(Icons.camera_alt, size: 12, color: AppColors.primary),
                       ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 16),
-              // 昵称 + 手机号
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -406,9 +449,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                       child: Row(
                         children: [
                           Text(
-                            user?.name?.isNotEmpty == true
-                                ? user!.name!
-                                : '未设置昵称',
+                            user?.name?.isNotEmpty == true ? user!.name! : '未设置昵称',
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
@@ -416,8 +457,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                             ),
                           ),
                           const SizedBox(width: 6),
-                          const Icon(Icons.edit_outlined,
-                              color: Colors.white70, size: 16),
+                          const Icon(Icons.edit_outlined, color: Colors.white70, size: 16),
                         ],
                       ),
                     ),
@@ -462,16 +502,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           color: AppColors.surfaceContainerLowest,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
-            BoxShadow(
-              color: AppColors.shadowSoft,
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-            BoxShadow(
-              color: AppColors.shadowSoft2,
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
+            BoxShadow(color: AppColors.shadowSoft, blurRadius: 12, offset: const Offset(0, 4)),
+            BoxShadow(color: AppColors.shadowSoft2, blurRadius: 6, offset: const Offset(0, 2)),
           ],
         ),
         child: Column(children: children),
@@ -500,7 +532,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
         child: Row(
           children: [
-            // icon 背景
             Container(
               width: 34,
               height: 34,
@@ -512,26 +543,13 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             ),
             const SizedBox(width: 14),
             Expanded(
-              child: Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 15,
-                  color: AppColors.textPrimary,
-                ),
-              ),
+              child: Text(title, style: const TextStyle(fontSize: 15, color: AppColors.textPrimary)),
             ),
             if (subtitle != null)
-              Text(
-                subtitle,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: AppColors.textTertiary,
-                ),
-              ),
+              Text(subtitle, style: const TextStyle(fontSize: 14, color: AppColors.textTertiary)),
             if (trailing != null) trailing,
             if (onTap != null && trailing == null)
-              const Icon(Icons.chevron_right,
-                  color: AppColors.textTertiary, size: 20),
+              const Icon(Icons.chevron_right, color: AppColors.textTertiary, size: 20),
           ],
         ),
       ),
@@ -548,13 +566,390 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     );
   }
 
-  void _showComingSoon(String feature) {
+  void _showToast(String feature) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('$feature 功能即将上线'),
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+}
+
+// ========== 切换家庭底部弹层 ==========
+
+class _SwitchFamilySheet extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final familiesAsync = ref.watch(myFamiliesProvider);
+    final currentFamily = ref.watch(currentFamilyProvider);
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      padding: EdgeInsets.fromLTRB(
+          20, 16, 20, MediaQuery.of(context).viewInsets.bottom + 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.grey200,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            '切换家庭',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 20),
+          familiesAsync.when(
+            data: (families) {
+              if (families.isEmpty) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Text('暂未加入任何家庭', style: TextStyle(color: AppColors.textTertiary)),
+                );
+              }
+              return Column(
+                children: families.map((f) {
+                  final isSelected = f.id == currentFamily?.id;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: InkWell(
+                      onTap: () {
+                        ref.read(currentFamilyProvider.notifier).state = f;
+                        ref.invalidate(careRecipientsProvider);
+                        ref.invalidate(familyMembersProvider(f.id));
+                        Navigator.pop(context);
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? AppColors.primary.withValues(alpha: 0.1)
+                              : AppColors.surfaceContainerLow,
+                          borderRadius: BorderRadius.circular(12),
+                          border: isSelected
+                              ? Border.all(color: AppColors.primary, width: 1.5)
+                              : null,
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? AppColors.primary.withValues(alpha: 0.2)
+                                    : AppColors.surfaceContainerLow,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Center(
+                                child: Text('👨‍👩‍👧', style: TextStyle(fontSize: 20)),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    f.name,
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                      color: isSelected
+                                          ? AppColors.primary
+                                          : AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  if (f.description != null && f.description!.isNotEmpty)
+                                    Text(
+                                      f.description!,
+                                      style: const TextStyle(
+                                          fontSize: 12, color: AppColors.textTertiary),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                ],
+                              ),
+                            ),
+                            if (isSelected)
+                              const Icon(Icons.check_rounded,
+                                  color: AppColors.primary, size: 20),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              );
+            },
+            loading: () => const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (e, _) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Text('加载失败: $e', style: const TextStyle(color: AppColors.error)),
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('取消', style: TextStyle(color: AppColors.grey500)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ========== 加入新家庭弹层 ==========
+
+class _JoinFamilySheet extends StatefulWidget {
+  @override
+  State<_JoinFamilySheet> createState() => _JoinFamilySheetState();
+}
+
+class _JoinFamilySheetState extends State<_JoinFamilySheet> {
+  final _codeController = TextEditingController();
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _codeController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      padding: EdgeInsets.fromLTRB(
+          20, 16, 20, MediaQuery.of(context).viewInsets.bottom + 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.grey200,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            '加入新家庭',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            '请输入家庭邀请码',
+            style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 20),
+          TextField(
+            controller: _codeController,
+            autofocus: true,
+            textCapitalization: TextCapitalization.characters,
+            maxLength: 8,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 4,
+              color: AppColors.textPrimary,
+            ),
+            textAlign: TextAlign.center,
+            decoration: InputDecoration(
+              hintText: 'XXXXXXXX',
+              hintStyle: const TextStyle(
+                color: AppColors.grey300,
+                letterSpacing: 4,
+                fontWeight: FontWeight.w600,
+              ),
+              filled: true,
+              fillColor: AppColors.surfaceContainerLow,
+              counterText: '',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.primary, width: 2),
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            ),
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            height: 48,
+            child: ElevatedButton(
+              onPressed: _isLoading
+                  ? null
+                  : () {
+                      final code = _codeController.text.trim();
+                      if (code.isEmpty) return;
+                      Navigator.pop(context, code);
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+              child: _isLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Text('加入'),
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('取消', style: TextStyle(color: AppColors.grey500)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ========== 创建新家庭弹层 ==========
+
+class _CreateFamilySheet extends StatefulWidget {
+  @override
+  State<_CreateFamilySheet> createState() => _CreateFamilySheetState();
+}
+
+class _CreateFamilySheetState extends State<_CreateFamilySheet> {
+  final _nameController = TextEditingController();
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      padding: EdgeInsets.fromLTRB(
+          20, 16, 20, MediaQuery.of(context).viewInsets.bottom + 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.grey200,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            '创建新家庭',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            '为你的家庭起个名字',
+            style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 20),
+          TextField(
+            controller: _nameController,
+            autofocus: true,
+            maxLength: 20,
+            style: const TextStyle(fontSize: 16, color: AppColors.textPrimary),
+            decoration: InputDecoration(
+              hintText: '例如：老张家、老王家',
+              hintStyle: const TextStyle(color: AppColors.grey400),
+              filled: true,
+              fillColor: AppColors.surfaceContainerLow,
+              counterText: '',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.primary, width: 2),
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            ),
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            height: 48,
+            child: ElevatedButton(
+              onPressed: _isLoading
+                  ? null
+                  : () {
+                      final name = _nameController.text.trim();
+                      if (name.isEmpty) return;
+                      Navigator.pop(context, name);
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+              child: _isLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Text('创建'),
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('取消', style: TextStyle(color: AppColors.grey500)),
+          ),
+        ],
       ),
     );
   }
@@ -588,12 +983,12 @@ class _NameEditSheetState extends State<_NameEditSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.fromLTRB(
-          20, 16, 20, MediaQuery.of(context).viewInsets.bottom + 24),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
+      padding: EdgeInsets.fromLTRB(
+          20, 16, 20, MediaQuery.of(context).viewInsets.bottom + 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -611,11 +1006,7 @@ class _NameEditSheetState extends State<_NameEditSheet> {
           const SizedBox(height: 20),
           const Text(
             '修改昵称',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 20),
@@ -670,11 +1061,11 @@ class _LogoutConfirmSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

@@ -261,6 +261,27 @@ class TimelineNotifier extends FamilyAsyncNotifier<List<models.TimelineEntry>, T
   }
 }
 
+/// 用户所在的所有家庭列表
+final myFamiliesProvider = FutureProvider<List<models.Family>>((ref) async {
+  final dio = ref.read(dioProvider);
+  try {
+    final response = await dio.get('/users/me/families');
+    final data = response.data as Map<String, dynamic>;
+    final families = (data['families'] as List<dynamic>?) ?? [];
+    return families
+        .map((e) {
+          try {
+            final f = (e as Map<String, dynamic>)['family'];
+            return models.Family.fromJson(f as Map<String, dynamic>);
+          } catch (_) { return null; }
+        })
+        .whereType<models.Family>()
+        .toList();
+  } catch (_) {
+    return [];
+  }
+});
+
 /// 更新家庭信息（头像、名称、描述）
 Future<models.Family> updateFamily({
   required WidgetRef ref,

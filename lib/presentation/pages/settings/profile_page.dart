@@ -160,9 +160,23 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('创建失败: $e'), duration: const Duration(seconds: 3)),
-        );
+        final msg = e.toString();
+        if (msg.contains('请升级会员') || msg.contains('已达上限')) {
+          _showUpgradeSheetForFamily();
+        } else {
+          // 提取后端返回的 message
+          String displayMsg = msg;
+          try {
+            if (msg.contains('response.data')) {
+              final regex = RegExp(r'"message"\s*:\s*"([^"]+)"');
+              final match = regex.firstMatch(msg);
+              if (match != null) displayMsg = match.group(1) ?? msg;
+            }
+          } catch (_) {}
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(displayMsg), duration: const Duration(seconds: 3)),
+          );
+        }
       }
     }
   }
@@ -619,6 +633,66 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     );
   }
 
+  void _showUpgradeSheetForFamily() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(ctx).viewInsets.bottom + 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 36, height: 4,
+              decoration: BoxDecoration(color: AppColors.grey200, borderRadius: BorderRadius.circular(2)),
+            ),
+            const SizedBox(height: 20),
+            Container(
+              width: 64, height: 64,
+              decoration: BoxDecoration(color: AppColors.coral.withValues(alpha: 0.1), shape: BoxShape.circle),
+              child: const Icon(Icons.local_offer_outlined, color: AppColors.coral, size: 30),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              '家庭数量已达上限',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              '基础版最多 1 个家庭\n升级会员可创建更多家庭',
+              style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity, height: 48,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  context.go('/settings');
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.coral, foregroundColor: Colors.white,
+                  elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                ),
+                child: const Text('立即升级'),
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('取消', style: TextStyle(color: AppColors.grey500)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showToast(String feature) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -964,7 +1038,7 @@ class _CreateFamilySheetState extends State<_CreateFamilySheet> {
           TextField(
             controller: _nameController,
             autofocus: true,
-            maxLength: 20,
+            maxLength: 50,
             style: const TextStyle(fontSize: 16, color: AppColors.textPrimary),
             decoration: InputDecoration(
               hintText: '例如：老张家、老王家',
@@ -982,6 +1056,7 @@ class _CreateFamilySheetState extends State<_CreateFamilySheet> {
               ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             ),
+            onChanged: (_) => setState(() {}), // 触发按钮状态更新
           ),
           const SizedBox(height: 20),
           SizedBox(
@@ -991,7 +1066,16 @@ class _CreateFamilySheetState extends State<_CreateFamilySheet> {
                   ? null
                   : () {
                       final name = _nameController.text.trim();
-                      if (name.isEmpty) return;
+                      if (name.length < 2) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('家庭名称至少需要 2 个字'),
+                            duration: Duration(seconds: 2),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                        return;
+                      }
                       Navigator.pop(context, name);
                     },
               style: ElevatedButton.styleFrom(

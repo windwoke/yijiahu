@@ -19,7 +19,26 @@ export class FamilyService {
     return Math.random().toString(36).slice(2, 8).toUpperCase();
   }
 
+  private getMaxFamilies(family: Family): number {
+    switch (family.subscriptionPlan) {
+      case SubscriptionPlan.PREMIUM: return 5;
+      case SubscriptionPlan.ANNUAL: return 10;
+      default: return 1;
+    }
+  }
+
   async create(userId: string, dto: CreateFamilyDto) {
+    // 检查用户是否已在家庭中（基础版限制 1 个家庭）
+    const existingFamilies = await this.memberRepo.find({ where: { userId } });
+    if (existingFamilies.length > 0) {
+      // 查第一个家庭的配额信息
+      const firstFamily = await this.familyRepo.findOne({ where: { id: existingFamilies[0].familyId } });
+      const maxFamilies = firstFamily ? this.getMaxFamilies(firstFamily) : 1;
+      if (existingFamilies.length >= maxFamilies) {
+        throw new BadRequestException('基础版最多 1 个家庭，请升级会员创建更多家庭');
+      }
+    }
+
     // 创建家庭
     const family = this.familyRepo.create({
       name: dto.name,

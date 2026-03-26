@@ -80,7 +80,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
               margin: const EdgeInsets.symmetric(horizontal: 16),
               color: AppColors.border,
             ),
-            _buildUpcomingSection(familyId),
+            _buildUpcomingSection(familyId, eventsAsync),
           ],
         ),
       ),
@@ -229,14 +229,10 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
     );
   }
 
-  Widget _buildUpcomingSection(String familyId) {
-    final query = CalendarQuery(
-      familyId: familyId,
-      year: _focusedDay.year,
-      month: _focusedDay.month,
-    );
-    final eventsAsync = ref.watch(calendarEventsProvider(query));
-
+  Widget _buildUpcomingSection(
+    String familyId,
+    AsyncValue<Map<DateTime, List<CalendarEvent>>> eventsAsync,
+  ) {
     return Column(
       children: [
         // 切换标签

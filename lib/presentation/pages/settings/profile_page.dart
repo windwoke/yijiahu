@@ -1551,53 +1551,46 @@ class _SubscriptionSheet extends ConsumerWidget {
   }
 
   Widget _buildFeatureList(models.SubscriptionFeatures features, bool isPremium) {
-    // 后端实际各档位值：Free / Premium / Annual（Annual 功能同 Premium）
+    // 基础版 vs 会员（会员包含月度/年度，功能相同）
     // maxRecipients, maxMembers, maxLogs, maxStorage(MB), healthReports, recurrenceReminders
     const free = (1, 3, 200, 500, false, false);
-    const premium = (5, 10, -1, 5 * 1024, true, true);
-    const annual = (10, 20, -1, 5 * 1024, true, true); // 功能同 Premium
+    const paid = (10, 20, -1, 5 * 1024, true, true); // 会员功能
 
-    final items = <(IconData, String, String, String, String)>[
+    final items = <(IconData, String, String, String)>[
       (
         Icons.family_restroom_outlined,
         '照护对象',
         '${free.$1} 位',
-        '${premium.$1} 位',
-        '${annual.$1} 位',
+        '${paid.$1} 位',
       ),
       (
         Icons.group_outlined,
         '家庭成员',
         '${free.$2} 人',
-        '${premium.$2} 人',
-        '${annual.$2} 人',
+        '${paid.$2} 人',
       ),
       (
         Icons.edit_note_outlined,
         '每月日志',
         '${free.$3} 条',
-        premium.$3 == -1 ? '不限' : '${premium.$3} 条',
-        annual.$3 == -1 ? '不限' : '${annual.$3} 条',
+        paid.$3 == -1 ? '不限' : '${paid.$3} 条',
       ),
       (
         Icons.cloud_outlined,
         '存储空间',
         _formatStorage(free.$4),
-        _formatStorage(premium.$4),
-        _formatStorage(annual.$4),
+        _formatStorage(paid.$4),
       ),
       (
         Icons.summarize_outlined,
         '健康报告',
         free.$5 ? '✓' : '—',
         '✓',
-        '✓',
       ),
       (
         Icons.repeat_rounded,
         '周期提醒',
         free.$6 ? '✓' : '—',
-        '✓',
         '✓',
       ),
     ];
@@ -1615,34 +1608,21 @@ class _SubscriptionSheet extends ConsumerWidget {
             children: [
               const SizedBox(width: 32),
               const SizedBox(width: 12),
-              const Expanded(flex: 2, child: Text('功能', style: TextStyle(fontSize: 12, color: AppColors.textTertiary))),
+              const Expanded(child: Text('功能', style: TextStyle(fontSize: 12, color: AppColors.textTertiary))),
               Expanded(
-                flex: 2,
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                   child: const Text('基础版', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary), textAlign: TextAlign.center),
                 ),
               ),
               Expanded(
-                flex: 2,
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                   decoration: BoxDecoration(
                     color: AppColors.coral.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: const Text('月度会员', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.coral), textAlign: TextAlign.center),
-                ),
-              ),
-              Expanded(
-                flex: 2,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: const Text('年度会员', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primaryDark), textAlign: TextAlign.center),
+                  child: const Text('会员', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.coral), textAlign: TextAlign.center),
                 ),
               ),
             ],
@@ -1659,7 +1639,6 @@ class _SubscriptionSheet extends ConsumerWidget {
             children: items.asMap().entries.map((entry) {
               final index = entry.key;
               final item = entry.value;
-              final currentPlan = isPremium ? premium : free;
               return Column(
                 children: [
                   Padding(
@@ -1669,23 +1648,13 @@ class _SubscriptionSheet extends ConsumerWidget {
                         Icon(item.$1, color: AppColors.primary, size: 18),
                         const SizedBox(width: 12),
                         Expanded(
-                          flex: 2,
                           child: Text(item.$2, style: const TextStyle(fontSize: 14, color: AppColors.textPrimary)),
                         ),
-                        // 基础版列
                         Expanded(
-                          flex: 2,
-                          child: _buildCell(item.$3, isPremium || currentPlan == premium ? AppColors.success : AppColors.textSecondary, isPremium),
+                          child: _buildCell(item.$3, AppColors.textSecondary, false),
                         ),
-                        // 月度会员列
                         Expanded(
-                          flex: 2,
-                          child: _buildCell(item.$4, currentPlan == premium ? AppColors.success : AppColors.success, currentPlan == premium),
-                        ),
-                        // 年度会员列
-                        Expanded(
-                          flex: 2,
-                          child: _buildCell(item.$5, currentPlan == annual ? AppColors.success : AppColors.success, currentPlan == annual),
+                          child: _buildCell(item.$4, AppColors.success, isPremium),
                         ),
                       ],
                     ),

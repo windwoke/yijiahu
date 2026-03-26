@@ -133,7 +133,7 @@ class _CareRecipientDetailPageState extends ConsumerState<CareRecipientDetailPag
               borderRadius: BorderRadius.circular(24),
               child: (r.avatarUrl != null && r.avatarUrl!.isNotEmpty)
                   ? Image.network(
-                      r.avatarUrl!.startsWith('http') ? r.avatarUrl! : '${ApiConfig.baseUrl}${r.avatarUrl}',
+                      r.avatarUrl!.startsWith('http') ? r.avatarUrl! : '${ApiConfig.staticRoot}/${r.avatarUrl}',
                       fit: BoxFit.cover,
                       width: 72,
                       height: 72,

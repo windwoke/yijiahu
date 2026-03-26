@@ -100,7 +100,7 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
         'file': await MultipartFile.fromFile(image.path),
       });
       final resp = await dio.post('/upload/avatar', data: formData);
-      final url = resp.data['url'] as String?;
+      final url = resp.data['avatarUrl'] as String?;
       if (url != null) {
         setState(() => _avatarUrl = url);
       }
@@ -341,7 +341,7 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
                                     ? const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)))
                                     : (_avatarUrl != null && _avatarUrl!.isNotEmpty)
                                         ? Image.network(
-                                            _avatarUrl!.startsWith('http') ? _avatarUrl! : '${ApiConfig.baseUrl}$_avatarUrl',
+                                            _avatarUrl!.startsWith('http') ? _avatarUrl! : '${ApiConfig.staticRoot}/$_avatarUrl',
                                             fit: BoxFit.cover,
                                             width: 72,
                                             height: 72,

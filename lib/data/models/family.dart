@@ -169,7 +169,7 @@ class SubscriptionStatus extends Equatable {
       case 'annual':
         return '年度会员';
       default:
-        return '免费版';
+        return '基础版';
     }
   }
 
@@ -180,7 +180,7 @@ class SubscriptionStatus extends Equatable {
       case 'expired':
         return '已过期';
       default:
-        return '免费版';
+        return '基础版';
     }
   }
 

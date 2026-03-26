@@ -383,7 +383,7 @@ class HomePage extends ConsumerWidget {
       onTap: () => context.push(AppRoutes.careRecipientDetail, extra: recipient),
       child: Row(
         children: [
-          // emoji 头像
+          // 头像（优先真实照片，fallback emoji）
           Container(
             width: 48,
             height: 48,
@@ -391,11 +391,19 @@ class HomePage extends ConsumerWidget {
               color: AppColors.surfaceContainerLow,
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Center(
-              child: Text(
-                recipient.displayAvatar,
-                style: const TextStyle(fontSize: 24),
-              ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: (recipient.avatarUrl != null && recipient.avatarUrl!.isNotEmpty)
+                  ? Image.network(
+                      ApiConfig.avatarUrl(recipient.avatarUrl!) ?? '',
+                      fit: BoxFit.cover,
+                      width: 48,
+                      height: 48,
+                      errorBuilder: (_, __, ___) => Text(recipient.displayAvatar, style: const TextStyle(fontSize: 24)),
+                    )
+                  : Center(
+                      child: Text(recipient.displayAvatar, style: const TextStyle(fontSize: 24)),
+                    ),
             ),
           ),
           const SizedBox(width: 12),

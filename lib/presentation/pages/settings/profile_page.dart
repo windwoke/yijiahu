@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:dio/dio.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/env/env_config.dart';
 import '../../../core/constants/constants.dart';
@@ -159,24 +160,30 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         );
       }
     } catch (e) {
-      if (mounted) {
-        final msg = e.toString();
-        if (msg.contains('请升级会员') || msg.contains('已达上限')) {
-          _showUpgradeSheetForFamily();
-        } else {
-          // 提取后端返回的 message
-          String displayMsg = msg;
-          try {
-            if (msg.contains('response.data')) {
-              final regex = RegExp(r'"message"\s*:\s*"([^"]+)"');
-              final match = regex.firstMatch(msg);
-              if (match != null) displayMsg = match.group(1) ?? msg;
-            }
-          } catch (_) {}
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(displayMsg), duration: const Duration(seconds: 3)),
-          );
+      if (!mounted) return;
+
+      // 从 DioException 中提取后端错误信息
+      String displayMsg = '操作失败，请稍后重试';
+      bool shouldUpgrade = false;
+
+      if (e is DioException && e.response != null) {
+        final data = e.response!.data;
+        if (data is Map<String, dynamic>) {
+          displayMsg = data['message']?.toString() ?? displayMsg;
         }
+      }
+
+      // 匹配升级关键词
+      if (displayMsg.contains('请升级会员') || displayMsg.contains('已达上限')) {
+        shouldUpgrade = true;
+      }
+
+      if (shouldUpgrade) {
+        _showUpgradeSheetForFamily();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(displayMsg), duration: const Duration(seconds: 3)),
+        );
       }
     }
   }

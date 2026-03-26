@@ -679,9 +679,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               width: double.infinity, height: 48,
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.pop(ctx);
-                  // 等 pop 动画完成后再跳转
-                  Future.microtask(() => context.go(AppRoutes.profile));
+                  final router = GoRouter.of(context);
+                  Navigator.of(context).pop(); // 关闭升级弹层
+                  router.go(AppRoutes.profile); // 跳转
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.coral, foregroundColor: Colors.white,

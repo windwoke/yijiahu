@@ -547,10 +547,11 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
               height: 48,
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.pop(ctx);
-                  // 关闭添加页并跳转到个人中心
-                  context.pop();
-                  Future.microtask(() => context.go(AppRoutes.profile));
+                  // 先关闭升级弹层，再关闭添加页，最后跳转个人中心
+                  final router = GoRouter.of(context);
+                  Navigator.of(context).pop(); // 关闭升级弹层
+                  Navigator.of(context).pop(); // 关闭添加页
+                  router.go(AppRoutes.profile); // 跳转到个人中心
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.coral,

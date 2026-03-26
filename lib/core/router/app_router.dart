@@ -6,7 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../presentation/pages/auth/login_page.dart';
 import '../../presentation/pages/home/home_page.dart';
-import '../../presentation/pages/medication/medication_page.dart';
+import '../../presentation/pages/calendar/calendar_page.dart';
+import '../../presentation/pages/calendar/add_appointment_page.dart';
+import '../../presentation/pages/calendar/add_task_page.dart';
 import '../../presentation/pages/medication/add_medication_page.dart';
 import '../../presentation/pages/medication/medication_detail_page.dart';
 import '../../presentation/pages/family/family_page.dart';
@@ -24,7 +26,9 @@ class AppRoutes {
   static const String splash = '/splash';
   static const String login = '/login';
   static const String home = '/';
-  static const String medication = '/medication';
+  static const String calendar = '/calendar';
+  static const String addAppointment = '/calendar/appointment/add';
+  static const String addTask = '/calendar/task/add';
   static const String addMedication = '/medication/add';
   static const String family = '/family';
   static const String careLog = '/care-log';
@@ -73,8 +77,8 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const HomePage(),
           ),
           GoRoute(
-            path: AppRoutes.medication,
-            builder: (context, state) => const MedicationPage(),
+            path: AppRoutes.calendar,
+            builder: (context, state) => const CalendarPage(),
           ),
           GoRoute(
             path: AppRoutes.careLog,
@@ -91,14 +95,20 @@ final routerProvider = Provider<GoRouter>((ref) {
         ],
       ),
       GoRoute(
+        path: AppRoutes.addAppointment,
+        builder: (context, state) => const AddAppointmentPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.addTask,
+        builder: (context, state) => const AddTaskPage(),
+      ),
+      GoRoute(
         path: AppRoutes.addMedication,
         builder: (context, state) {
           final extra = state.extra;
           if (extra is Medication) {
-            // 编辑模式
             return AddMedicationPage(medication: extra);
           }
-          // 添加模式（recipientId 为字符串）
           return AddMedicationPage(recipientId: extra as String?);
         },
       ),
@@ -162,7 +172,7 @@ class MainBottomNav extends StatelessWidget {
   int _calculateSelectedIndex(BuildContext context) {
     final location = GoRouterState.of(context).uri.path;
     if (location == AppRoutes.home || location == '/') return 0;
-    if (location.startsWith(AppRoutes.medication)) return 1;
+    if (location.startsWith(AppRoutes.calendar)) return 1;
     if (location.startsWith(AppRoutes.careLog)) return 2;
     if (location.startsWith(AppRoutes.family)) return 3;
     if (location.startsWith(AppRoutes.profile)) return 4;
@@ -175,7 +185,7 @@ class MainBottomNav extends StatelessWidget {
         context.go(AppRoutes.home);
         break;
       case 1:
-        context.go(AppRoutes.medication);
+        context.go(AppRoutes.calendar);
         break;
       case 2:
         context.go(AppRoutes.careLog);
@@ -229,9 +239,9 @@ class MainBottomNav extends StatelessWidget {
               ),
               _NavItem(
                 icon: selectedIndex == 1
-                    ? Icons.medication_rounded
-                    : Icons.medication_outlined,
-                label: '用药',
+                    ? Icons.calendar_today_rounded
+                    : Icons.calendar_today_outlined,
+                label: '日历',
                 isSelected: selectedIndex == 1,
                 onTap: () => _onItemTapped(context, 1),
               ),

@@ -12,6 +12,8 @@ import { UploadModule } from './common/upload/upload.module';
 import { HealthRecordModule } from './health-record/health-record.module';
 import { CareLogModule } from './care-log/care-log.module';
 import { SubscriptionModule } from './subscription/subscription.module';
+import { AppointmentModule } from './appointment/appointment.module';
+import { FamilyTaskModule } from './family-task/family-task.module';
 
 @Module({
   imports: [
@@ -49,6 +51,8 @@ import { SubscriptionModule } from './subscription/subscription.module';
     HealthRecordModule,
     CareLogModule,
     SubscriptionModule,
+    AppointmentModule,
+    FamilyTaskModule,
   ],
 })
 export class AppModule {}

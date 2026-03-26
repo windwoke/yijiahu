@@ -1,4 +1,4 @@
-/// 日历页面
+/// 复诊日历页
 library;
 
 import 'package:flutter/material.dart';
@@ -20,34 +20,15 @@ class CalendarPage extends ConsumerStatefulWidget {
   ConsumerState<CalendarPage> createState() => _CalendarPageState();
 }
 
-class _CalendarPageState extends ConsumerState<CalendarPage>
-    with SingleTickerProviderStateMixin {
-  CalendarFormat _calendarFormat = CalendarFormat.month;
+class _CalendarPageState extends ConsumerState<CalendarPage> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
-  late AnimationController _completeAnimController;
-  late Animation<double> _completeScale;
+  bool _showList = false; // 列表视图切换
 
   @override
   void initState() {
     super.initState();
     _selectedDay = _focusedDay;
-    _completeAnimController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
-    _completeScale = Tween<double>(begin: 1.0, end: 1.15).animate(
-      CurvedAnimation(
-        parent: _completeAnimController,
-        curve: Curves.elasticOut,
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    _completeAnimController.dispose();
-    super.dispose();
   }
 
   @override
@@ -56,7 +37,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage>
     if (family == null) {
       return Scaffold(
         backgroundColor: AppColors.background,
-        appBar: AppBar(title: const Text('日历')),
+        appBar: AppBar(title: const Text('复诊日历')),
         body: const EmptyState(
           emoji: '🏠',
           title: '请先加入一个家庭',
@@ -76,11 +57,12 @@ class _CalendarPageState extends ConsumerState<CalendarPage>
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('日历'),
+        title: const Text('复诊日历'),
         actions: [
           IconButton(
             icon: const Icon(Icons.add_rounded),
-            onPressed: () => _showAddSheet(context),
+            tooltip: '添加复诊',
+            onPressed: () => context.go(AppRoutes.addAppointment),
           ),
         ],
       ),
@@ -97,8 +79,9 @@ class _CalendarPageState extends ConsumerState<CalendarPage>
             margin: const EdgeInsets.symmetric(horizontal: 16),
             color: AppColors.border,
           ),
+          // 即将到来的复诊
           Expanded(
-            child: _buildDayEventsList(familyId),
+            child: _buildUpcomingSection(familyId),
           ),
         ],
       ),
@@ -152,7 +135,6 @@ class _CalendarPageState extends ConsumerState<CalendarPage>
       lastDay: DateTime(2030),
       focusedDay: _focusedDay,
       selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-      calendarFormat: _calendarFormat,
       eventLoader: (day) {
         final key = DateTime(day.year, day.month, day.day);
         return events[key] ?? [];
@@ -162,9 +144,6 @@ class _CalendarPageState extends ConsumerState<CalendarPage>
           _selectedDay = selectedDay;
           _focusedDay = focusedDay;
         });
-      },
-      onFormatChanged: (format) {
-        setState(() => _calendarFormat = format);
       },
       calendarStyle: CalendarStyle(
         todayDecoration: BoxDecoration(
@@ -186,60 +165,54 @@ class _CalendarPageState extends ConsumerState<CalendarPage>
         defaultTextStyle: const TextStyle(color: AppColors.textPrimary),
         weekendTextStyle: const TextStyle(color: AppColors.textSecondary),
         outsideTextStyle: const TextStyle(color: AppColors.textTertiary),
-        markerDecoration: const BoxDecoration(
-          color: AppColors.coral,
-          shape: BoxShape.circle,
-        ),
-        markersMaxCount: 3,
-        markerSize: 5,
-        markerMargin: const EdgeInsets.symmetric(horizontal: 1),
       ),
       headerVisible: false,
       calendarBuilders: CalendarBuilders(
-        markerBuilder: (context, date, events) {
-          if (events.isEmpty) return null;
-          final hasAppointment = events.any((e) => e.type == EventType.appointment);
-          final hasTask = events.any((e) => e.type == EventType.task);
+        markerBuilder: (context, date, dayEvents) {
+          if (dayEvents.isEmpty) return null;
+          // 找对应的事件（按护对象）
+          final appointments = dayEvents
+              .where((e) => e.type == EventType.appointment)
+              .toList();
+          if (appointments.isEmpty) return null;
+
+          final apt = appointments.first;
+          final recipient = apt.appointment?.recipient;
+          final emoji = recipient?.avatarEmoji ?? '👤';
+
           return Positioned(
             bottom: 1,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (hasAppointment)
+                // 复诊 dot
+                Container(
+                  width: 5,
+                  height: 5,
+                  decoration: const BoxDecoration(
+                    color: AppColors.coral,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                if (dayEvents.length > 1)
                   Container(
-                    width: 5,
-                    height: 5,
-                    margin: const EdgeInsets.symmetric(horizontal: 0.5),
-                    decoration: const BoxDecoration(
-                      color: AppColors.coral,
-                      shape: BoxShape.circle,
+                    margin: const EdgeInsets.only(left: 1),
+                    child: Text(
+                      emoji,
+                      style: const TextStyle(fontSize: 7),
                     ),
                   ),
-                if (hasTask)
+                if (dayEvents.length > 3)
                   Container(
-                    width: 5,
-                    height: 5,
-                    margin: const EdgeInsets.symmetric(horizontal: 0.5),
-                    decoration: const BoxDecoration(
-                      color: AppColors.blue,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                if (events.length > 3)
-                  Container(
-                    margin: const EdgeInsets.only(left: 2),
-                    padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 0.5),
+                    margin: const EdgeInsets.only(left: 1),
+                    padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 0.5),
                     decoration: BoxDecoration(
                       color: AppColors.textTertiary,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      '+${events.length - 3}',
-                      style: const TextStyle(
-                        fontSize: 7,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      '+${dayEvents.length - 1}',
+                      style: const TextStyle(fontSize: 7, color: Colors.white),
                     ),
                   ),
               ],
@@ -250,9 +223,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage>
     );
   }
 
-  Widget _buildDayEventsList(String familyId) {
-    if (_selectedDay == null) return const SizedBox();
-
+  Widget _buildUpcomingSection(String familyId) {
     final query = CalendarQuery(
       familyId: familyId,
       year: _focusedDay.year,
@@ -260,171 +231,94 @@ class _CalendarPageState extends ConsumerState<CalendarPage>
     );
     final eventsAsync = ref.watch(calendarEventsProvider(query));
 
-    return eventsAsync.when(
-      data: (allEvents) {
-        final dayEvents = allEvents[DateTime(
-          _selectedDay!.year,
-          _selectedDay!.month,
-          _selectedDay!.day,
-        )] ?? [];
-
-        // 日期标签头
-        final weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
-        final dow = _selectedDay!.weekday;
-        final dateLabel =
-            '${_selectedDay!.month}月${_selectedDay!.day}日 · ${weekdays[dow - 1]}';
-
-        if (dayEvents.isEmpty) {
-          return Padding(
-            padding: const EdgeInsets.only(top: 32),
-            child: EmptyState(
-              emoji: '📅',
-              title: '暂无安排',
-              subtitle: '点击右上角"+"添加复诊或任务',
-            ),
-          );
-        }
-
-        final appointments =
-            dayEvents.where((e) => e.type == EventType.appointment).toList();
-        final tasks =
-            dayEvents.where((e) => e.type == EventType.task).toList();
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-              child: Text(
-                dateLabel,
-                style: const TextStyle(
+    return Column(
+      children: [
+        // 切换标签
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
+          child: Row(
+            children: [
+              const Text(
+                '即将到来的复诊',
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textSecondary,
                 ),
               ),
-            ),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                children: [
-                  if (appointments.isNotEmpty) ...[
-                    const _GroupLabel(label: '复诊', color: AppColors.coral),
-                    const SizedBox(height: 8),
-                    ...appointments.map((e) => _AppointmentCard(
-                          appointment: e.appointment!,
-                          familyId: familyId,
-                        )),
-                    const SizedBox(height: 16),
-                  ],
-                  if (tasks.isNotEmpty) ...[
-                    const _GroupLabel(label: '任务', color: AppColors.blue),
-                    const SizedBox(height: 8),
-                    ...tasks.map((e) => _TaskCard(
-                          task: e.task!,
-                          familyId: familyId,
-                          onComplete: () {
-                            _completeAnimController.forward().then((_) {
-                              _completeAnimController.reverse();
-                            });
-                          },
-                        )),
-                  ],
-                ],
+              const Spacer(),
+              // 切换视图
+              _ViewToggle(
+                icon: Icons.view_agenda_rounded,
+                label: '列表',
+                selected: _showList,
+                onTap: () => setState(() => _showList = true),
               ),
-            ),
-          ],
-        );
-      },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('加载失败: $e')),
-    );
-  }
-
-  void _showAddSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.border,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                '添加',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 16),
-              _AddOption(
-                icon: Icons.local_hospital_rounded,
-                iconColor: AppColors.coral,
-                label: '添加复诊',
-                onTap: () {
-                  Navigator.pop(ctx);
-                  context.go(AppRoutes.addAppointment);
-                },
-              ),
-              const SizedBox(height: 10),
-              _AddOption(
-                icon: Icons.task_alt_rounded,
-                iconColor: AppColors.blue,
-                label: '添加任务',
-                onTap: () {
-                  Navigator.pop(ctx);
-                  context.go(AppRoutes.addTask);
-                },
+              const SizedBox(width: 4),
+              _ViewToggle(
+                icon: Icons.calendar_today_rounded,
+                label: '当天',
+                selected: !_showList,
+                onTap: () => setState(() => _showList = false),
               ),
             ],
           ),
         ),
-      ),
-    );
-  }
-}
+        Expanded(
+          child: eventsAsync.when(
+            data: (allEvents) {
+              List<CalendarEvent> displayEvents;
 
-/// 分组标签
-class _GroupLabel extends StatelessWidget {
-  final String label;
-  final Color color;
-  const _GroupLabel({required this.label, required this.color});
+              if (_showList) {
+                // 列表视图：所有未来复诊按时间排序
+                final now = DateTime.now();
+                displayEvents = allEvents.entries
+                    .where((e) => e.key.isAfter(now.subtract(const Duration(days: 1))))
+                    .expand((e) => e.value.where((ev) => ev.type == EventType.appointment))
+                    .toList()
+                  ..sort((a, b) =>
+                      (a.appointment?.appointmentTime ?? DateTime.now())
+                          .compareTo(b.appointment?.appointmentTime ?? DateTime.now()));
+              } else {
+                // 当天视图：选中日期的事件
+                if (_selectedDay == null) {
+                  return const Center(child: Text('请选择日期'));
+                }
+                displayEvents = allEvents[DateTime(
+                      _selectedDay!.year,
+                      _selectedDay!.month,
+                      _selectedDay!.day,
+                    )] ??
+                    [];
+                displayEvents =
+                    displayEvents.where((e) => e.type == EventType.appointment).toList();
+              }
 
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 3,
-          height: 14,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-        const SizedBox(width: 6),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: color,
+              if (displayEvents.isEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.only(top: 32),
+                  child: EmptyState(
+                    emoji: '📅',
+                    title: '暂无复诊安排',
+                    subtitle: '点击右上角"+"添加复诊',
+                  ),
+                );
+              }
+
+              return ListView.builder(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                itemCount: displayEvents.length,
+                itemBuilder: (context, index) {
+                  final apt = displayEvents[index].appointment!;
+                  return _AppointmentCard(
+                    appointment: apt,
+                    familyId: familyId,
+                  );
+                },
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Center(child: Text('加载失败: $e')),
           ),
         ),
       ],
@@ -432,16 +326,16 @@ class _GroupLabel extends StatelessWidget {
   }
 }
 
-/// 添加选项行
-class _AddOption extends StatelessWidget {
+/// 视图切换按钮
+class _ViewToggle extends StatelessWidget {
   final IconData icon;
-  final Color iconColor;
   final String label;
+  final bool selected;
   final VoidCallback onTap;
-  const _AddOption({
+  const _ViewToggle({
     required this.icon,
-    required this.iconColor,
     required this.label,
+    required this.selected,
     required this.onTap,
   });
 
@@ -449,39 +343,311 @@ class _AddOption extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(8),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
-          color: iconColor.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(12),
+          color: selected
+              ? AppColors.primary.withValues(alpha: 0.1)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
           children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, color: iconColor, size: 20),
+            Icon(
+              icon,
+              size: 14,
+              color: selected ? AppColors.primary : AppColors.textTertiary,
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 4),
             Text(
               label,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
+              style: TextStyle(
+                fontSize: 12,
+                color: selected ? AppColors.primary : AppColors.textTertiary,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
               ),
             ),
-            const Spacer(),
-            const Icon(Icons.chevron_right_rounded, color: AppColors.textTertiary),
           ],
         ),
       ),
     );
+  }
+}
+
+/// 复诊卡片（设计稿风格）
+class _AppointmentCard extends StatelessWidget {
+  final Appointment appointment;
+  final String familyId;
+  const _AppointmentCard({required this.appointment, required this.familyId});
+
+  String get _dateLabel {
+    final d = appointment.appointmentTime;
+    final weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+    return '${d.month}月${d.day}日（${weekdays[d.weekday - 1]}）';
+  }
+
+  String get _timeLabel {
+    final d = appointment.appointmentTime;
+    return '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final recipient = appointment.recipient;
+    final recipientEmoji = recipient?.avatarEmoji ?? '👤';
+    final recipientName = recipient?.name ?? '';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(color: AppColors.shadowSoft, blurRadius: 8, offset: Offset(0, 2)),
+          BoxShadow(color: AppColors.shadowSoft2, blurRadius: 4, offset: Offset(0, 1)),
+        ],
+      ),
+      child: Column(
+        children: [
+          // 顶部：日期时间
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: AppColors.borderLight)),
+            ),
+            child: Row(
+              children: [
+                Text(
+                  _dateLabel,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.coral,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.coral.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    _timeLabel,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.coral,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // 内容区
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 照护对象 + 类型
+                Row(
+                  children: [
+                    Text(recipientEmoji, style: const TextStyle(fontSize: 20)),
+                    const SizedBox(width: 6),
+                    Text(
+                      recipientName,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text(
+                        '复诊',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                // 医院 + 科室 + 医生
+                Row(
+                  children: [
+                    const Icon(Icons.local_hospital_rounded,
+                        color: AppColors.textSecondary, size: 16),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        '${appointment.hospital}${appointment.department != null ? ' · ${appointment.department}' : ''}',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (appointment.doctorName != null) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.person_rounded,
+                          color: AppColors.textSecondary, size: 16),
+                      const SizedBox(width: 6),
+                      Text(
+                        appointment.doctorName!,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                if (appointment.address != null) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on_rounded,
+                          color: AppColors.textSecondary, size: 16),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          appointment.address!,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                if (appointment.assignedDriver != null) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.directions_car_rounded,
+                          color: AppColors.textSecondary, size: 16),
+                      const SizedBox(width: 6),
+                      Text(
+                        '接送: ${appointment.assignedDriver!.name}',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                if (appointment.note != null && appointment.note!.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.sticky_note_2_rounded,
+                          color: AppColors.textSecondary, size: 16),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          appointment.note!,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textTertiary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 12),
+                // 操作按钮行
+                Row(
+                  children: [
+                    if (appointment.doctorPhone != null)
+                      _ActionBtn(
+                        icon: Icons.phone_rounded,
+                        label: '联系医生',
+                        color: AppColors.primary,
+                        onTap: () => _callDoctor(appointment.doctorPhone!),
+                      ),
+                    if (appointment.address != null) ...[
+                      const SizedBox(width: 8),
+                      _ActionBtn(
+                        icon: Icons.map_rounded,
+                        label: '导航',
+                        color: AppColors.blue,
+                        onTap: () => _openMap(appointment),
+                      ),
+                    ],
+                    const Spacer(),
+                    // 提醒状态
+                    Row(
+                      children: [
+                        const Icon(Icons.notifications_rounded,
+                            size: 14, color: AppColors.textTertiary),
+                        const SizedBox(width: 4),
+                        Text(
+                          appointment.reminder48h ? '☑ 48h前' : '☐ 48h前',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: appointment.reminder48h
+                                ? AppColors.primary
+                                : AppColors.textTertiary,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          appointment.reminder24h ? '☑ 24h前' : '☐ 24h前',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: appointment.reminder24h
+                                ? AppColors.primary
+                                : AppColors.textTertiary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _callDoctor(String phone) async {
+    final uri = Uri.parse('tel:$phone');
+    if (await canLaunchUrl(uri)) await launchUrl(uri);
+  }
+
+  void _openMap(Appointment apt) async {
+    Uri uri;
+    if (apt.latitude != null && apt.longitude != null) {
+      uri = Uri.parse(
+          'https://maps.apple.com/?ll=${apt.latitude},${apt.longitude}');
+    } else if (apt.address != null) {
+      uri = Uri.parse(
+          'https://maps.apple.com/?q=${Uri.encodeComponent(apt.address!)}');
+    } else {
+      return;
+    }
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 }
 
@@ -504,7 +670,7 @@ class _ActionBtn extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
@@ -512,12 +678,12 @@ class _ActionBtn extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: color, size: 14),
+            Icon(icon, color: color, size: 16),
             const SizedBox(width: 4),
             Text(
               label,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 13,
                 color: color,
                 fontWeight: FontWeight.w500,
               ),
@@ -526,355 +692,5 @@ class _ActionBtn extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-/// 复诊卡片
-class _AppointmentCard extends StatelessWidget {
-  final Appointment appointment;
-  final String familyId;
-  const _AppointmentCard({required this.appointment, required this.familyId});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border(
-          left: BorderSide(color: AppColors.coral, width: 3),
-        ),
-        boxShadow: const [
-          BoxShadow(color: AppColors.shadowSoft, blurRadius: 8, offset: Offset(0, 2)),
-          BoxShadow(color: AppColors.shadowSoft2, blurRadius: 4, offset: Offset(0, 1)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.local_hospital_rounded, color: AppColors.coral, size: 18),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  appointment.hospital,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ),
-              Text(
-                appointment.displayTime,
-                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-              ),
-            ],
-          ),
-          if (appointment.department != null) ...[
-            const SizedBox(height: 5),
-            Text(
-              '${appointment.department} ${appointment.doctorName ?? ''}',
-              style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
-            ),
-          ],
-          if (appointment.assignedDriver != null) ...[
-            const SizedBox(height: 5),
-            Row(
-              children: [
-                const Icon(Icons.person_rounded, color: AppColors.textTertiary, size: 14),
-                const SizedBox(width: 4),
-                Text(
-                  '接送: ${appointment.assignedDriver!.name}',
-                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                ),
-              ],
-            ),
-          ],
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              if (appointment.doctorPhone != null)
-                _ActionBtn(
-                  icon: Icons.phone_rounded,
-                  label: '联系',
-                  color: AppColors.primary,
-                  onTap: () => _callDoctor(appointment.doctorPhone!),
-                ),
-              if (appointment.address != null) ...[
-                const SizedBox(width: 8),
-                _ActionBtn(
-                  icon: Icons.map_rounded,
-                  label: '导航',
-                  color: AppColors.blue,
-                  onTap: () => _openMap(appointment),
-                ),
-              ],
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _callDoctor(String phone) async {
-    final uri = Uri.parse('tel:$phone');
-    if (await canLaunchUrl(uri)) await launchUrl(uri);
-  }
-
-  void _openMap(Appointment apt) async {
-    Uri uri;
-    if (apt.latitude != null && apt.longitude != null) {
-      uri = Uri.parse('https://maps.apple.com/?ll=${apt.latitude},${apt.longitude}');
-    } else if (apt.address != null) {
-      uri = Uri.parse('https://maps.apple.com/?q=${Uri.encodeComponent(apt.address!)}');
-    } else {
-      return;
-    }
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
-  }
-}
-
-/// 任务卡片
-class _TaskCard extends ConsumerStatefulWidget {
-  final FamilyTask task;
-  final String familyId;
-  final VoidCallback? onComplete;
-  const _TaskCard({
-    required this.task,
-    required this.familyId,
-    this.onComplete,
-  });
-
-  @override
-  ConsumerState<_TaskCard> createState() => _TaskCardState();
-}
-
-class _TaskCardState extends ConsumerState<_TaskCard>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animController;
-  late Animation<double> _scaleAnim;
-  bool _isCompleting = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _animController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
-    _scaleAnim = Tween<double>(begin: 1.0, end: 1.2).animate(
-      CurvedAnimation(parent: _animController, curve: Curves.elasticOut),
-    );
-    _animController.addStatusListener((status) {
-      if (status == AnimationStatus.completed) _animController.reverse();
-    });
-  }
-
-  @override
-  void dispose() {
-    _animController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border(
-          left: BorderSide(
-            color: widget.task.isPending ? AppColors.blue : AppColors.success,
-            width: 3,
-          ),
-        ),
-        boxShadow: const [
-          BoxShadow(color: AppColors.shadowSoft, blurRadius: 8, offset: Offset(0, 2)),
-          BoxShadow(color: AppColors.shadowSoft2, blurRadius: 4, offset: Offset(0, 1)),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        widget.task.title,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                          decoration: widget.task.status == 'completed'
-                              ? TextDecoration.lineThrough
-                              : null,
-                        ),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: widget.task.isRecurring
-                            ? AppColors.blue.withValues(alpha: 0.1)
-                            : AppColors.textTertiary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        widget.task.frequencyLabel,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: widget.task.isRecurring
-                              ? AppColors.blue
-                              : AppColors.textTertiary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${widget.task.assignee?.name ?? ''} · ${widget.task.displayDueAt}',
-                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                ),
-              ],
-            ),
-          ),
-          if (widget.task.isPending)
-            ScaleTransition(
-              scale: _scaleAnim,
-              child: IconButton(
-                icon: Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: AppColors.success.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: _isCompleting
-                      ? const Padding(
-                          padding: EdgeInsets.all(8),
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppColors.success,
-                          ),
-                        )
-                      : const Icon(Icons.check_rounded, color: AppColors.success, size: 20),
-                ),
-                onPressed: () => _completeTask(context),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  void _completeTask(BuildContext context) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: AppColors.success.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.check_circle_rounded,
-                        color: AppColors.success, size: 22),
-                  ),
-                  const SizedBox(width: 12),
-                  const Text(
-                    '确认完成',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                '确定完成任务"${widget.task.title}"吗？',
-                style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(ctx, false),
-                    child: const Text('取消'),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.success,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    onPressed: () => Navigator.pop(ctx, true),
-                    child: const Text('确定'),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-
-    if (confirmed != true) return;
-
-    setState(() => _isCompleting = true);
-    _animController.forward();
-
-    try {
-      final dio = ref.read(dioProvider);
-      await dio.post('/family-tasks/${widget.task.id}/complete',
-          queryParameters: {'familyId': widget.familyId});
-      ref.invalidate(upcomingTasksProvider(widget.familyId));
-      ref.invalidate(calendarEventsProvider(CalendarQuery(
-        familyId: widget.familyId,
-        year: DateTime.now().year,
-        month: DateTime.now().month,
-      )));
-      widget.onComplete?.call();
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('任务已完成')),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('完成失败: $e')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isCompleting = false);
-    }
   }
 }

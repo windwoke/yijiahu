@@ -195,6 +195,7 @@ class SubscriptionFeatures extends Equatable {
   final int maxRecipients;
   final int maxMembers;
   final int maxLogsPerMonth;
+  final int maxStorageMB; // MB，-1 表示不限
   final bool healthReports;
   final bool recurrenceReminders;
 
@@ -202,6 +203,7 @@ class SubscriptionFeatures extends Equatable {
     required this.maxRecipients,
     required this.maxMembers,
     required this.maxLogsPerMonth,
+    required this.maxStorageMB,
     required this.healthReports,
     required this.recurrenceReminders,
   });
@@ -210,13 +212,20 @@ class SubscriptionFeatures extends Equatable {
     return SubscriptionFeatures(
       maxRecipients: json['maxRecipients'] as int? ?? 1,
       maxMembers: json['maxMembers'] as int? ?? 3,
-      maxLogsPerMonth: json['maxLogsPerMonth'] as int? ?? 50,
+      maxLogsPerMonth: json['maxLogsPerMonth'] as int? ?? 200,
+      maxStorageMB: json['maxStorageMB'] as int? ?? 500,
       healthReports: json['healthReports'] as bool? ?? false,
       recurrenceReminders: json['recurrenceReminders'] as bool? ?? false,
     );
   }
 
+  String get storageLabel {
+    if (maxStorageMB == -1) return '不限';
+    if (maxStorageMB >= 1024) return '${(maxStorageMB / 1024).toStringAsFixed(0)}GB';
+    return '${maxStorageMB}MB';
+  }
+
   @override
   List<Object?> get props =>
-      [maxRecipients, maxMembers, maxLogsPerMonth, healthReports, recurrenceReminders];
+      [maxRecipients, maxMembers, maxLogsPerMonth, maxStorageMB, healthReports, recurrenceReminders];
 }

@@ -78,6 +78,10 @@ export class SubscriptionFeaturesDto {
   @ApiProperty()
   maxLogsPerMonth: number;
 
+  /** 存储空间上限（MB），-1 表示不限 */
+  @ApiProperty()
+  maxStorageMB: number;
+
   @ApiProperty()
   healthReports: boolean;
 

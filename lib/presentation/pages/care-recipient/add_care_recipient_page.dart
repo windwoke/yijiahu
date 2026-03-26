@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
 import '../../../core/constants/constants.dart';
 import '../../../core/network/api_client.dart';
-import '../../../core/router/app_router.dart';
+import '../../../core/router/app_router.dart' show AppRoutes;
 import '../../../data/models/models.dart' as models;
 import '../../providers/family_provider.dart';
 

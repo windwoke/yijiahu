@@ -1551,12 +1551,12 @@ class _SubscriptionSheet extends ConsumerWidget {
   }
 
   Widget _buildFeatureList(models.SubscriptionFeatures features, bool isPremium) {
-    // 后端实际各档位值
-    const free = (1, 3, 200, false, false);
-    const premium = (5, 10, -1, true, true);
-    const annual = (10, 20, -1, true, true);
+    // 后端实际各档位值：Free / Premium / Annual（Annual 功能同 Premium）
+    // maxRecipients, maxMembers, maxLogs, maxStorage(MB), healthReports, recurrenceReminders
+    const free = (1, 3, 200, 500, false, false);
+    const premium = (5, 10, -1, 5 * 1024, true, true);
+    const annual = (10, 20, -1, 5 * 1024, true, true); // 功能同 Premium
 
-    // 根据当前套餐决定三档显示
     final items = <(IconData, String, String, String, String)>[
       (
         Icons.family_restroom_outlined,
@@ -1580,16 +1580,23 @@ class _SubscriptionSheet extends ConsumerWidget {
         annual.$3 == -1 ? '不限' : '${annual.$3} 条',
       ),
       (
+        Icons.cloud_outlined,
+        '存储空间',
+        _formatStorage(free.$4),
+        _formatStorage(premium.$4),
+        _formatStorage(annual.$4),
+      ),
+      (
         Icons.summarize_outlined,
         '健康报告',
-        free.$4 ? '✓' : '—',
+        free.$5 ? '✓' : '—',
         '✓',
         '✓',
       ),
       (
         Icons.repeat_rounded,
         '周期提醒',
-        free.$5 ? '✓' : '—',
+        free.$6 ? '✓' : '—',
         '✓',
         '✓',
       ),
@@ -1726,6 +1733,12 @@ class _SubscriptionSheet extends ConsumerWidget {
     } catch (_) {
       return iso;
     }
+  }
+
+  String _formatStorage(int mb) {
+    if (mb < 0) return '不限';
+    if (mb >= 1024) return '${(mb / 1024).toStringAsFixed(0)}GB';
+    return '${mb}MB';
   }
 }
 

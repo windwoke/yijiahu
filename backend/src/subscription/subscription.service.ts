@@ -166,14 +166,17 @@ export class SubscriptionService {
         maxRecipients: 1,
         maxMembers: 3,
         maxLogsPerMonth: 200,
+        maxStorageMB: 500,
         healthReports: false,
         recurrenceReminders: false,
       };
     }
+    // Premium 和 Annual 功能相同，区别仅在时长
     return {
       maxRecipients: plan === SubscriptionPlan.PREMIUM ? 5 : 10,
       maxMembers: plan === SubscriptionPlan.PREMIUM ? 10 : 20,
       maxLogsPerMonth: -1,
+      maxStorageMB: 5 * 1024, // 5GB
       healthReports: true,
       recurrenceReminders: true,
     };

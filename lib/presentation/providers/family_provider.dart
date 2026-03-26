@@ -231,6 +231,7 @@ class TimelineNotifier extends FamilyAsyncNotifier<List<models.TimelineEntry>, T
     // 2. 用药打卡
     try {
       final medParams = <String, dynamic>{'days': 45, 'limit': _pageSize};
+      medParams['familyId'] = familyId;
       if (recipientId != null) medParams['recipientId'] = recipientId;
       if (before != null) medParams['before'] = before.toIso8601String();
 

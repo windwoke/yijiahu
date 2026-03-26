@@ -144,6 +144,7 @@ export class MedicationLogService {
     const qb = this.logRepo
       .createQueryBuilder('log')
       .leftJoinAndSelect('log.medication', 'medication')
+      .leftJoin('log.recipient', 'cr')
       .where('log.status IN (:...statuses)', {
         statuses: [MedicationLogStatus.TAKEN, MedicationLogStatus.SKIPPED],
       })
@@ -157,6 +158,10 @@ export class MedicationLogService {
 
     if (recipientId) {
       qb.andWhere('log.recipientId = :recipientId', { recipientId });
+    }
+
+    if (familyId) {
+      qb.andWhere('cr.familyId = :familyId', { familyId });
     }
 
     const logs = await qb.getMany();

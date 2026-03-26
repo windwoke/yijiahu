@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/constants.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/router/app_router.dart';
 import '../../../data/models/models.dart' as models;
 import '../../providers/family_provider.dart';
 
@@ -128,12 +129,28 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
           family = models.Family.fromJson(familyResponse.data as Map<String, dynamic>);
           ref.read(currentFamilyProvider.notifier).state = family;
         }
-        final fid = family!.id;
-        await dio.post(
+        final fid = family.id;
+        final resp = await dio.post(
           '/care-recipients',
           queryParameters: {'familyId': fid},
           data: data,
         );
+        final newRecipient = models.CareRecipient.fromJson(
+            resp.data as Map<String, dynamic>);
+
+        ref.invalidate(careRecipientsProvider);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('添加成功'), duration: const Duration(seconds: 3)),
+          );
+          // 跳转到详情页
+          context.pushReplacement(
+            AppRoutes.careRecipientDetail,
+            extra: newRecipient,
+          );
+        }
+        return;
       }
 
       ref.invalidate(careRecipientsProvider);

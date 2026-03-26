@@ -7,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/scheduler.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/env/env_config.dart';
 import '../../../core/constants/constants.dart';
@@ -180,58 +179,15 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       }
 
       if (shouldUpgrade) {
-        // 弹出升级引导弹层
-        showModalBottomSheet<void>(
-          context: context,
-          backgroundColor: Colors.transparent,
-          builder: (ctx) => Container(
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(ctx).viewInsets.bottom + 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 36, height: 4,
-                  decoration: BoxDecoration(color: AppColors.grey200, borderRadius: BorderRadius.circular(2)),
-                ),
-                const SizedBox(height: 20),
-                Container(
-                  width: 64, height: 64,
-                  decoration: BoxDecoration(color: AppColors.coral.withValues(alpha: 0.1), shape: BoxShape.circle),
-                  child: const Icon(Icons.local_offer_outlined, color: AppColors.coral, size: 30),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  displayMsg,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity, height: 48,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      SchedulerBinding.instance.addPostFrameCallback((_) {
-                        context.go(AppRoutes.profile);
-                      });
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.coral, foregroundColor: Colors.white,
-                      elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                    ),
-                    child: const Text('立即升级'),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('取消', style: TextStyle(color: AppColors.grey500)),
-                ),
-              ],
+        // 用 SnackBar 带 action 按钮提示升级，完全避免 context 问题
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(displayMsg),
+            duration: const Duration(seconds: 5),
+            action: SnackBarAction(
+              label: '立即升级',
+              textColor: AppColors.coral,
+              onPressed: () => context.go(AppRoutes.profile),
             ),
           ),
         );

@@ -1311,6 +1311,13 @@ class _SubscriptionCard extends StatelessWidget {
   }
 
   Widget _buildFreeCard(BuildContext context) {
+    // 根据当前配额显示升级能获得什么
+    final currentRecipients = sub.features.maxRecipients;
+    final currentMembers = sub.features.maxMembers;
+    final benefitText = currentRecipients >= 5
+        ? '享受不限日志、年度报告等专属权益'
+        : '照护对象 ${currentRecipients}→5 个，成员 ${currentMembers}→10 人';
+
     return GestureDetector(
       onTap: onUpgrade,
       child: Container(
@@ -1339,19 +1346,12 @@ class _SubscriptionCard extends StatelessWidget {
                 children: [
                   const Text(
                     '解锁全部功能',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '升级会员，解锁更多照护对象和家庭成员',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary.withValues(alpha: 0.8),
-                    ),
+                    benefitText,
+                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary.withValues(alpha: 0.8)),
                   ),
                 ],
               ),
@@ -1551,41 +1551,47 @@ class _SubscriptionSheet extends ConsumerWidget {
   }
 
   Widget _buildFeatureList(models.SubscriptionFeatures features, bool isPremium) {
-    // 会员版各项上限
-    const premiumRecipients = 5;
-    const premiumMembers = 10;
-    const premiumLogs = -1; // 不限
+    // 后端实际各档位值
+    const free = (1, 3, 200, false, false);
+    const premium = (5, 10, -1, true, true);
+    const annual = (10, 20, -1, true, true);
 
-    final items = <(IconData, String, String, String)>[
+    // 根据当前套餐决定三档显示
+    final items = <(IconData, String, String, String, String)>[
       (
         Icons.family_restroom_outlined,
         '照护对象',
-        features.maxRecipients == -1 ? '不限' : '${features.maxRecipients} 位',
-        isPremium ? '✓' : (premiumRecipients == -1 ? '不限' : '$premiumRecipients 位'),
+        '${free.$1} 位',
+        '${premium.$1} 位',
+        '${annual.$1} 位',
       ),
       (
         Icons.group_outlined,
         '家庭成员',
-        features.maxMembers == -1 ? '不限' : '${features.maxMembers} 人',
-        isPremium ? '✓' : (premiumMembers == -1 ? '不限' : '$premiumMembers 人'),
+        '${free.$2} 人',
+        '${premium.$2} 人',
+        '${annual.$2} 人',
       ),
       (
         Icons.edit_note_outlined,
         '每月日志',
-        features.maxLogsPerMonth == -1 ? '不限' : '${features.maxLogsPerMonth} 条',
-        isPremium ? '✓' : (premiumLogs == -1 ? '不限' : '$premiumLogs 条'),
+        '${free.$3} 条',
+        premium.$3 == -1 ? '不限' : '${premium.$3} 条',
+        annual.$3 == -1 ? '不限' : '${annual.$3} 条',
       ),
       (
         Icons.summarize_outlined,
         '健康报告',
-        features.healthReports ? '支持' : '—',
-        isPremium ? '✓' : '支持',
+        free.$4 ? '✓' : '—',
+        '✓',
+        '✓',
       ),
       (
         Icons.repeat_rounded,
         '周期提醒',
-        features.recurrenceReminders ? '支持' : '—',
-        isPremium ? '✓' : '支持',
+        free.$5 ? '✓' : '—',
+        '✓',
+        '✓',
       ),
     ];
 
@@ -1593,37 +1599,43 @@ class _SubscriptionSheet extends ConsumerWidget {
       children: [
         // 表头
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             color: AppColors.surfaceContainerLow,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
           ),
           child: Row(
             children: [
-              const SizedBox(width: 32), // icon 占位
+              const SizedBox(width: 32),
               const SizedBox(width: 12),
-              const Expanded(flex: 3, child: Text('功能', style: TextStyle(fontSize: 12, color: AppColors.textTertiary))),
+              const Expanded(flex: 2, child: Text('功能', style: TextStyle(fontSize: 12, color: AppColors.textTertiary))),
               Expanded(
                 flex: 2,
-                child: Text(
-                  isPremium ? '当前' : '基础版',
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
-                  textAlign: TextAlign.center,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  child: const Text('基础版', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary), textAlign: TextAlign.center),
                 ),
               ),
               Expanded(
                 flex: 2,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                   decoration: BoxDecoration(
                     color: AppColors.coral.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: Text(
-                    isPremium ? '会员' : '会员版',
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.coral),
-                    textAlign: TextAlign.center,
+                  child: const Text('月度会员', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.coral), textAlign: TextAlign.center),
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(6),
                   ),
+                  child: const Text('年度会员', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primaryDark), textAlign: TextAlign.center),
                 ),
               ),
             ],
@@ -1640,42 +1652,33 @@ class _SubscriptionSheet extends ConsumerWidget {
             children: items.asMap().entries.map((entry) {
               final index = entry.key;
               final item = entry.value;
-              final isCurrentBetter = !isPremium &&
-                  (item.$3 != '—' && (item.$4 == '✓' || item.$4 == '支持'));
+              final currentPlan = isPremium ? premium : free;
               return Column(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
                     child: Row(
                       children: [
                         Icon(item.$1, color: AppColors.primary, size: 18),
                         const SizedBox(width: 12),
                         Expanded(
-                          flex: 3,
-                          child: Text(item.$2,
-                              style: const TextStyle(fontSize: 14, color: AppColors.textPrimary)),
+                          flex: 2,
+                          child: Text(item.$2, style: const TextStyle(fontSize: 14, color: AppColors.textPrimary)),
                         ),
+                        // 基础版列
                         Expanded(
                           flex: 2,
-                          child: Text(
-                            item.$3,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: isCurrentBetter ? AppColors.success : AppColors.textSecondary,
-                              fontWeight: isCurrentBetter ? FontWeight.w600 : FontWeight.normal,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
+                          child: _buildCell(item.$3, isPremium || currentPlan == premium ? AppColors.success : AppColors.textSecondary, isPremium),
                         ),
+                        // 月度会员列
                         Expanded(
                           flex: 2,
-                          child: item.$4 == '✓'
-                              ? const Icon(Icons.check_rounded, color: AppColors.success, size: 18)
-                              : Text(
-                                  item.$4,
-                                  style: const TextStyle(fontSize: 13, color: AppColors.success),
-                                  textAlign: TextAlign.center,
-                                ),
+                          child: _buildCell(item.$4, currentPlan == premium ? AppColors.success : AppColors.success, currentPlan == premium),
+                        ),
+                        // 年度会员列
+                        Expanded(
+                          flex: 2,
+                          child: _buildCell(item.$5, currentPlan == annual ? AppColors.success : AppColors.success, currentPlan == annual),
                         ),
                       ],
                     ),
@@ -1691,6 +1694,28 @@ class _SubscriptionSheet extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildCell(String value, Color color, bool isCurrentPlan) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
+      decoration: isCurrentPlan
+          ? BoxDecoration(
+              color: AppColors.success.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(6),
+            )
+          : null,
+      child: Text(
+        value,
+        style: TextStyle(
+          fontSize: 13,
+          color: isCurrentPlan ? AppColors.success : color,
+          fontWeight: isCurrentPlan ? FontWeight.w600 : FontWeight.normal,
+        ),
+        textAlign: TextAlign.center,
+        overflow: TextOverflow.ellipsis,
+      ),
     );
   }
 

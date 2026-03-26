@@ -165,7 +165,7 @@ export class SubscriptionService {
       return {
         maxRecipients: 1,
         maxMembers: 3,
-        maxLogsPerMonth: 50,
+        maxLogsPerMonth: 200,
         healthReports: false,
         recurrenceReminders: false,
       };

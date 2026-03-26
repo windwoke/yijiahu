@@ -20,15 +20,34 @@ class CalendarPage extends ConsumerStatefulWidget {
   ConsumerState<CalendarPage> createState() => _CalendarPageState();
 }
 
-class _CalendarPageState extends ConsumerState<CalendarPage> {
+class _CalendarPageState extends ConsumerState<CalendarPage>
+    with SingleTickerProviderStateMixin {
   CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
+  late AnimationController _completeAnimController;
+  late Animation<double> _completeScale;
 
   @override
   void initState() {
     super.initState();
     _selectedDay = _focusedDay;
+    _completeAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _completeScale = Tween<double>(begin: 1.0, end: 1.15).animate(
+      CurvedAnimation(
+        parent: _completeAnimController,
+        curve: Curves.elasticOut,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _completeAnimController.dispose();
+    super.dispose();
   }
 
   @override
@@ -52,9 +71,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
       year: _focusedDay.year,
       month: _focusedDay.month,
     );
-
     final eventsAsync = ref.watch(calendarEventsProvider(query));
-    final upcomingAsync = ref.watch(upcomingTasksProvider(familyId));
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -69,18 +86,19 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
       ),
       body: Column(
         children: [
-          // 月份导航
           _buildMonthHeader(),
-          // 日历
           eventsAsync.when(
             data: (events) => _buildCalendar(events),
             loading: () => _buildCalendar({}),
             error: (e, _) => _buildCalendar({}),
           ),
-          const Divider(height: 1),
-          // 即将到来
+          Container(
+            height: 1,
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            color: AppColors.border,
+          ),
           Expanded(
-            child: _buildUpcomingList(familyId, upcomingAsync),
+            child: _buildDayEventsList(familyId),
           ),
         ],
       ),
@@ -89,7 +107,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
 
   Widget _buildMonthHeader() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -102,12 +120,16 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
               });
             },
           ),
-          Text(
-            '${_focusedDay.year}年${_focusedDay.month}月',
-            style: const TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: Text(
+              '${_focusedDay.year}年${_focusedDay.month}月',
+              key: ValueKey('${_focusedDay.year}-${_focusedDay.month}'),
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
             ),
           ),
           IconButton(
@@ -203,6 +225,23 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
                       shape: BoxShape.circle,
                     ),
                   ),
+                if (events.length > 3)
+                  Container(
+                    margin: const EdgeInsets.only(left: 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 0.5),
+                    decoration: BoxDecoration(
+                      color: AppColors.textTertiary,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      '+${events.length - 3}',
+                      style: const TextStyle(
+                        fontSize: 7,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
               ],
             ),
           );
@@ -211,7 +250,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
     );
   }
 
-  Widget _buildUpcomingList(String familyId, AsyncValue<List<FamilyTask>> upcomingAsync) {
+  Widget _buildDayEventsList(String familyId) {
     if (_selectedDay == null) return const SizedBox();
 
     final query = CalendarQuery(
@@ -229,69 +268,71 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
           _selectedDay!.day,
         )] ?? [];
 
+        // 日期标签头
+        final weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+        final dow = _selectedDay!.weekday;
+        final dateLabel =
+            '${_selectedDay!.month}月${_selectedDay!.day}日 · ${weekdays[dow - 1]}';
+
         if (dayEvents.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  '${_selectedDay!.month}月${_selectedDay!.day}日',
-                  style: const TextStyle(
-                    fontSize: 15,
-                    color: AppColors.textTertiary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  '暂无安排',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: AppColors.textTertiary,
-                  ),
-                ),
-              ],
+          return Padding(
+            padding: const EdgeInsets.only(top: 32),
+            child: EmptyState(
+              emoji: '📅',
+              title: '暂无安排',
+              subtitle: '点击右上角"+"添加复诊或任务',
             ),
           );
         }
 
         final appointments =
             dayEvents.where((e) => e.type == EventType.appointment).toList();
-        final tasks = dayEvents.where((e) => e.type == EventType.task).toList();
+        final tasks =
+            dayEvents.where((e) => e.type == EventType.task).toList();
 
-        return ListView(
-          padding: const EdgeInsets.all(16),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (appointments.isNotEmpty) ...[
-              const Text(
-                '复诊',
-                style: TextStyle(
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: Text(
+                dateLabel,
+                style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textSecondary,
                 ),
               ),
-              const SizedBox(height: 8),
-              ...appointments.map((e) => _AppointmentCard(
-                    appointment: e.appointment!,
-                    familyId: familyId,
-                  )),
-              const SizedBox(height: 16),
-            ],
-            if (tasks.isNotEmpty) ...[
-              const Text(
-                '任务',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
-                ),
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                children: [
+                  if (appointments.isNotEmpty) ...[
+                    const _GroupLabel(label: '复诊', color: AppColors.coral),
+                    const SizedBox(height: 8),
+                    ...appointments.map((e) => _AppointmentCard(
+                          appointment: e.appointment!,
+                          familyId: familyId,
+                        )),
+                    const SizedBox(height: 16),
+                  ],
+                  if (tasks.isNotEmpty) ...[
+                    const _GroupLabel(label: '任务', color: AppColors.blue),
+                    const SizedBox(height: 8),
+                    ...tasks.map((e) => _TaskCard(
+                          task: e.task!,
+                          familyId: familyId,
+                          onComplete: () {
+                            _completeAnimController.forward().then((_) {
+                              _completeAnimController.reverse();
+                            });
+                          },
+                        )),
+                  ],
+                ],
               ),
-              const SizedBox(height: 8),
-              ...tasks.map((e) => _TaskCard(
-                    task: e.task!,
-                    familyId: familyId,
-                  )),
-            ],
+            ),
           ],
         );
       },
@@ -309,7 +350,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
         child: SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -331,7 +372,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
                   color: AppColors.textPrimary,
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
               _AddOption(
                 icon: Icons.local_hospital_rounded,
                 iconColor: AppColors.coral,
@@ -341,7 +382,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
                   context.go(AppRoutes.addAppointment);
                 },
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               _AddOption(
                 icon: Icons.task_alt_rounded,
                 iconColor: AppColors.blue,
@@ -359,12 +400,44 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
   }
 }
 
+/// 分组标签
+class _GroupLabel extends StatelessWidget {
+  final String label;
+  final Color color;
+  const _GroupLabel({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 3,
+          height: 14,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: color,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// 添加选项行
 class _AddOption extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
   final String label;
   final VoidCallback onTap;
-
   const _AddOption({
     required this.icon,
     required this.iconColor,
@@ -404,10 +477,7 @@ class _AddOption extends StatelessWidget {
               ),
             ),
             const Spacer(),
-            const Icon(
-              Icons.chevron_right_rounded,
-              color: AppColors.textTertiary,
-            ),
+            const Icon(Icons.chevron_right_rounded, color: AppColors.textTertiary),
           ],
         ),
       ),
@@ -421,7 +491,6 @@ class _ActionBtn extends StatelessWidget {
   final String label;
   final Color color;
   final VoidCallback onTap;
-
   const _ActionBtn({
     required this.icon,
     required this.label,
@@ -464,7 +533,6 @@ class _ActionBtn extends StatelessWidget {
 class _AppointmentCard extends StatelessWidget {
   final Appointment appointment;
   final String familyId;
-
   const _AppointmentCard({required this.appointment, required this.familyId});
 
   @override
@@ -476,10 +544,7 @@ class _AppointmentCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border(
-          left: BorderSide(
-            color: AppColors.coral,
-            width: 3,
-          ),
+          left: BorderSide(color: AppColors.coral, width: 3),
         ),
         boxShadow: const [
           BoxShadow(color: AppColors.shadowSoft, blurRadius: 8, offset: Offset(0, 2)),
@@ -491,8 +556,7 @@ class _AppointmentCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.local_hospital_rounded,
-                  color: AppColors.coral, size: 18),
+              const Icon(Icons.local_hospital_rounded, color: AppColors.coral, size: 18),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -506,41 +570,31 @@ class _AppointmentCard extends StatelessWidget {
               ),
               Text(
                 appointment.displayTime,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
-                ),
+                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
               ),
             ],
           ),
           if (appointment.department != null) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: 5),
             Text(
               '${appointment.department} ${appointment.doctorName ?? ''}',
-              style: const TextStyle(
-                fontSize: 13,
-                color: AppColors.textSecondary,
-              ),
+              style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
             ),
           ],
           if (appointment.assignedDriver != null) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: 5),
             Row(
               children: [
-                const Icon(Icons.person_rounded,
-                    color: AppColors.textTertiary, size: 14),
+                const Icon(Icons.person_rounded, color: AppColors.textTertiary, size: 14),
                 const SizedBox(width: 4),
                 Text(
                   '接送: ${appointment.assignedDriver!.name}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                  ),
+                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                 ),
               ],
             ),
           ],
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Row(
             children: [
               if (appointment.doctorPhone != null)
@@ -568,37 +622,68 @@ class _AppointmentCard extends StatelessWidget {
 
   void _callDoctor(String phone) async {
     final uri = Uri.parse('tel:$phone');
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    }
+    if (await canLaunchUrl(uri)) await launchUrl(uri);
   }
 
   void _openMap(Appointment apt) async {
+    Uri uri;
     if (apt.latitude != null && apt.longitude != null) {
-      final uri = Uri.parse(
-          'https://maps.apple.com/?ll=${apt.latitude},${apt.longitude}');
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
+      uri = Uri.parse('https://maps.apple.com/?ll=${apt.latitude},${apt.longitude}');
     } else if (apt.address != null) {
-      final encoded = Uri.encodeComponent(apt.address!);
-      final uri = Uri.parse('https://maps.apple.com/?q=$encoded');
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
+      uri = Uri.parse('https://maps.apple.com/?q=${Uri.encodeComponent(apt.address!)}');
+    } else {
+      return;
+    }
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
   }
 }
 
 /// 任务卡片
-class _TaskCard extends ConsumerWidget {
+class _TaskCard extends ConsumerStatefulWidget {
   final FamilyTask task;
   final String familyId;
-
-  const _TaskCard({required this.task, required this.familyId});
+  final VoidCallback? onComplete;
+  const _TaskCard({
+    required this.task,
+    required this.familyId,
+    this.onComplete,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_TaskCard> createState() => _TaskCardState();
+}
+
+class _TaskCardState extends ConsumerState<_TaskCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animController;
+  late Animation<double> _scaleAnim;
+  bool _isCompleting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _scaleAnim = Tween<double>(begin: 1.0, end: 1.2).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.elasticOut),
+    );
+    _animController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) _animController.reverse();
+    });
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
@@ -607,7 +692,7 @@ class _TaskCard extends ConsumerWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border(
           left: BorderSide(
-            color: task.isPending ? AppColors.blue : AppColors.success,
+            color: widget.task.isPending ? AppColors.blue : AppColors.success,
             width: 3,
           ),
         ),
@@ -626,31 +711,30 @@ class _TaskCard extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        task.title,
+                        widget.task.title,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textPrimary,
-                          decoration: task.status == 'completed'
+                          decoration: widget.task.status == 'completed'
                               ? TextDecoration.lineThrough
                               : null,
                         ),
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: task.isRecurring
+                        color: widget.task.isRecurring
                             ? AppColors.blue.withValues(alpha: 0.1)
                             : AppColors.textTertiary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        task.frequencyLabel,
+                        widget.task.frequencyLabel,
                         style: TextStyle(
                           fontSize: 11,
-                          color: task.isRecurring
+                          color: widget.task.isRecurring
                               ? AppColors.blue
                               : AppColors.textTertiary,
                         ),
@@ -660,82 +744,137 @@ class _TaskCard extends ConsumerWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${task.assignee?.name ?? ''} · ${task.displayDueAt}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                  ),
+                  '${widget.task.assignee?.name ?? ''} · ${widget.task.displayDueAt}',
+                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                 ),
               ],
             ),
           ),
-          if (task.isPending)
-            IconButton(
-              icon: Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: AppColors.success.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
+          if (widget.task.isPending)
+            ScaleTransition(
+              scale: _scaleAnim,
+              child: IconButton(
+                icon: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: AppColors.success.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: _isCompleting
+                      ? const Padding(
+                          padding: EdgeInsets.all(8),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.success,
+                          ),
+                        )
+                      : const Icon(Icons.check_rounded, color: AppColors.success, size: 20),
                 ),
-                child: const Icon(
-                  Icons.check_rounded,
-                  color: AppColors.success,
-                  size: 16,
-                ),
+                onPressed: () => _completeTask(context),
               ),
-              onPressed: () => _completeTask(context, ref),
             ),
         ],
       ),
     );
   }
 
-  void _completeTask(BuildContext context, WidgetRef ref) {
-    showDialog(
+  void _completeTask(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('确认完成'),
-        content: Text('确定完成任务"${task.title}"吗？'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('取消'),
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: AppColors.success.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.check_circle_rounded,
+                        color: AppColors.success, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    '确认完成',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                '确定完成任务"${widget.task.title}"吗？',
+                style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    child: const Text('取消'),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.success,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    onPressed: () => Navigator.pop(ctx, true),
+                    child: const Text('确定'),
+                  ),
+                ],
+              ),
+            ],
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.success,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () async {
-              Navigator.pop(ctx);
-              try {
-                final dio = ref.read(dioProvider);
-                await dio.post('/family-tasks/${task.id}/complete',
-                    queryParameters: {'familyId': familyId});
-                ref.invalidate(upcomingTasksProvider(familyId));
-                ref.invalidate(calendarEventsProvider(CalendarQuery(
-                  familyId: familyId,
-                  year: DateTime.now().year,
-                  month: DateTime.now().month,
-                )));
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('任务已完成')),
-                  );
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('完成失败: $e')),
-                  );
-                }
-              }
-            },
-            child: const Text('确定'),
-          ),
-        ],
+        ),
       ),
     );
+
+    if (confirmed != true) return;
+
+    setState(() => _isCompleting = true);
+    _animController.forward();
+
+    try {
+      final dio = ref.read(dioProvider);
+      await dio.post('/family-tasks/${widget.task.id}/complete',
+          queryParameters: {'familyId': widget.familyId});
+      ref.invalidate(upcomingTasksProvider(widget.familyId));
+      ref.invalidate(calendarEventsProvider(CalendarQuery(
+        familyId: widget.familyId,
+        year: DateTime.now().year,
+        month: DateTime.now().month,
+      )));
+      widget.onComplete?.call();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('任务已完成')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('完成失败: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isCompleting = false);
+    }
   }
 }

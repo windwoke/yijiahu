@@ -680,7 +680,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               child: ElevatedButton(
                 onPressed: () {
                   Navigator.pop(ctx);
-                  context.go('/settings');
+                  context.go(AppRoutes.profile);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.coral, foregroundColor: Colors.white,

@@ -53,11 +53,13 @@ export class HealthRecordController {
     @Query('recipientId') recipientId?: string,
     @Query('days') days?: string,
     @Query('limit') limit?: string,
+    @Query('familyId') familyId?: string,
   ) {
     return this.service.findRecent(
       recipientId,
       days ? parseInt(days, 10) : 7,
       limit ? parseInt(limit, 10) : 20,
+      familyId,
     );
   }
 }

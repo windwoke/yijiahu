@@ -22,9 +22,10 @@ export class HealthRecordService {
   }
 
   /** 获取最近健康记录用于时间线 */
-  async findRecent(recipientId?: string, days = 7, limit = 20): Promise<any[]> {
+  async findRecent(recipientId?: string, days = 7, limit = 20, familyId?: string): Promise<any[]> {
     const qb = this.repo
       .createQueryBuilder('hr')
+      .leftJoin('hr.recipient', 'cr')
       .where('hr.recordedAt >= :since', {
         since: new Date(Date.now() - days * 24 * 60 * 60 * 1000),
       })
@@ -33,6 +34,10 @@ export class HealthRecordService {
 
     if (recipientId) {
       qb.andWhere('hr.recipientId = :recipientId', { recipientId });
+    }
+
+    if (familyId) {
+      qb.andWhere('cr.familyId = :familyId', { familyId });
     }
 
     const records = await qb.getMany();

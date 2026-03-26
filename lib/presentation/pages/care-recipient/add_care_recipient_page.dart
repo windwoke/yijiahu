@@ -2,6 +2,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/constants.dart';
@@ -547,11 +548,12 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
               height: 48,
               child: ElevatedButton(
                 onPressed: () {
-                  // 先关闭升级弹层，再关闭添加页，最后跳转个人中心
-                  final router = GoRouter.of(context);
-                  Navigator.of(context).pop(); // 关闭升级弹层
-                  Navigator.of(context).pop(); // 关闭添加页
-                  router.go(AppRoutes.profile); // 跳转到个人中心
+                  Navigator.pop(ctx); // 关闭升级弹层
+                  // 关闭添加页并跳转（等当前帧结束后执行，避免 context 被 dispose）
+                  SchedulerBinding.instance.addPostFrameCallback((_) {
+                    context.pop(); // 关闭添加页
+                    GoRouter.of(context).go(AppRoutes.profile); // 跳转
+                  });
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.coral,

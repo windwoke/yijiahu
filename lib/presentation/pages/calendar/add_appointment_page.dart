@@ -561,6 +561,14 @@ class _AddAppointmentPageState extends ConsumerState<AddAppointmentPage> {
         queryParameters: {'familyId': familyId},
       );
 
+      // 刷新日历数据
+      final now = DateTime.now();
+      ref.invalidate(calendarEventsProvider(CalendarQuery(
+        familyId: familyId ?? '',
+        year: now.year,
+        month: now.month,
+      )));
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('复诊已添加')),

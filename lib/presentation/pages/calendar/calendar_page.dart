@@ -69,10 +69,13 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
       body: Column(
         children: [
           _buildMonthHeader(),
-          eventsAsync.when(
-            data: (events) => _buildCalendar(events),
-            loading: () => _buildCalendar({}),
-            error: (e, _) => _buildCalendar({}),
+          SizedBox(
+            height: 280,
+            child: eventsAsync.when(
+              data: (events) => _buildCalendar(events),
+              loading: () => _buildCalendar({}),
+              error: (e, _) => _buildCalendar({}),
+            ),
           ),
           Container(
             height: 1,

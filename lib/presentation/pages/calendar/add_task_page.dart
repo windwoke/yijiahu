@@ -534,6 +534,16 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
             _noteController.text.isNotEmpty ? _noteController.text : null,
       });
 
+      // 刷新日历数据
+      final now = DateTime.now();
+      ref.invalidate(calendarEventsProvider(CalendarQuery(
+        familyId: familyId ?? '',
+        year: now.year,
+        month: now.month,
+      )));
+      ref.invalidate(familyTasksProvider(familyId ?? ''));
+      ref.invalidate(upcomingTasksProvider(familyId ?? ''));
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('任务已添加')),

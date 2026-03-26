@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Family, SubscriptionPlan } from './entities/family.entity';
 import { FamilyMember, FamilyMemberRole } from './entities/family-member.entity';
 import { User } from '../user/entities/user.entity';
+import { SubscriptionService } from '../subscription/subscription.service';
 import { CreateFamilyDto, UpdateFamilyDto, JoinFamilyDto, UpdateMemberDto } from './dto/family.dto';
 
 @Injectable()
@@ -11,6 +12,7 @@ export class FamilyService {
   constructor(
     @InjectRepository(Family) private familyRepo: Repository<Family>,
     @InjectRepository(FamilyMember) private memberRepo: Repository<FamilyMember>,
+    private subscriptionService: SubscriptionService,
   ) {}
 
   private generateInviteCode(): string {
@@ -68,6 +70,9 @@ export class FamilyService {
 
     const existing = await this.memberRepo.findOne({ where: { familyId: family.id, userId } });
     if (existing) throw new BadRequestException('您已在该家庭中');
+
+    // 检查成员配额
+    await this.subscriptionService.checkQuota(family.id, 'member');
 
     const user = await this.memberRepo.manager.getRepository(User).findOne({ where: { id: userId } });
     const member = this.memberRepo.create({

@@ -5,9 +5,10 @@ import { FamilyMember } from './entities/family-member.entity';
 import { User } from '../user/entities/user.entity';
 import { FamilyService } from './family.service';
 import { FamilyController } from './family.controller';
+import { SubscriptionModule } from '../subscription/subscription.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Family, FamilyMember, User])],
+  imports: [TypeOrmModule.forFeature([Family, FamilyMember, User]), SubscriptionModule],
   controllers: [FamilyController],
   providers: [FamilyService],
   exports: [FamilyService, TypeOrmModule],

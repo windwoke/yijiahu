@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { CareRecipientService } from './care-recipient.service';
+import { SubscriptionService } from '../subscription/subscription.service';
 import { FamilyMember } from '../family/entities/family-member.entity';
 import { CreateCareRecipientDto, UpdateCareRecipientDto } from './dto/care-recipient.dto';
 
@@ -15,6 +16,7 @@ import { CreateCareRecipientDto, UpdateCareRecipientDto } from './dto/care-recip
 export class CareRecipientController {
   constructor(
     private readonly service: CareRecipientService,
+    private readonly subscriptionService: SubscriptionService,
     @InjectRepository(FamilyMember) private memberRepo: Repository<FamilyMember>,
   ) {}
 
@@ -29,11 +31,15 @@ export class CareRecipientController {
       // 验证用户是否属于该家庭
       const member = await this.memberRepo.findOne({ where: { userId, familyId } });
       if (!member) throw new BadRequestException('无权操作此家庭');
+      // 检查照护对象配额
+      await this.subscriptionService.checkQuota(familyId, 'recipient');
       return this.service.create(familyId, dto);
     }
     // 兼容未传 familyId：查用户所在第一个家庭
     const member = await this.memberRepo.findOne({ where: { userId } });
     if (!member) throw new BadRequestException('请先加入一个家庭');
+    // 检查照护对象配额
+    await this.subscriptionService.checkQuota(member.familyId, 'recipient');
     return this.service.create(member.familyId, dto);
   }
 

@@ -11,6 +11,7 @@ import { MedicationLogModule } from './medication-log/medication-log.module';
 import { UploadModule } from './common/upload/upload.module';
 import { HealthRecordModule } from './health-record/health-record.module';
 import { CareLogModule } from './care-log/care-log.module';
+import { SubscriptionModule } from './subscription/subscription.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { CareLogModule } from './care-log/care-log.module';
     UploadModule,
     HealthRecordModule,
     CareLogModule,
+    SubscriptionModule,
   ],
 })
 export class AppModule {}

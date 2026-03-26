@@ -117,7 +117,7 @@ class HomePage extends ConsumerWidget {
                               width: 36,
                               height: 36,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => const Center(
+                              errorBuilder: (context, error, stackTrace) => const Center(
                                 child: Text('👨‍👩‍👧', style: TextStyle(fontSize: 18)),
                               ),
                             )
@@ -184,14 +184,24 @@ class HomePage extends ConsumerWidget {
     );
   }
 
+  Future<void> _onRefreshEmpty(WidgetRef ref) async {
+    ref.invalidate(careRecipientsProvider);
+    await ref.read(careRecipientsProvider.future);
+  }
+
   Widget _buildEmptyStateBody(BuildContext context, WidgetRef ref) {
     final topHeight = MediaQuery.of(context).padding.top + 72;
-    return CustomScrollView(
-      slivers: [
-        SliverToBoxAdapter(child: SizedBox(height: topHeight)),
-        SliverToBoxAdapter(child: _buildEmptyStateContent(context)),
-        const SliverFillRemaining(hasScrollBody: false, child: SizedBox(height: 100)),
-      ],
+    return RefreshIndicator(
+      color: AppColors.primary,
+      onRefresh: () => _onRefreshEmpty(ref),
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverToBoxAdapter(child: SizedBox(height: topHeight)),
+          SliverToBoxAdapter(child: _buildEmptyStateContent(context)),
+          const SliverFillRemaining(hasScrollBody: false, child: SizedBox(height: 100)),
+        ],
+      ),
     );
   }
 
@@ -267,28 +277,46 @@ class HomePage extends ConsumerWidget {
     );
   }
 
+  Future<void> _onRefresh(WidgetRef ref, List<CareRecipient> recipients) async {
+    // 刷新照护对象列表
+    ref.invalidate(careRecipientsProvider);
+
+    // 刷新每个照护对象的今日用药数据
+    for (final r in recipients) {
+      ref.invalidate(todayMedicationProvider(r.id));
+    }
+
+    // 等待数据重新加载完成
+    await ref.read(careRecipientsProvider.future);
+  }
+
   Widget _buildContentBody(
     BuildContext context,
     WidgetRef ref,
     List<CareRecipient> recipients,
   ) {
     final topHeight = MediaQuery.of(context).padding.top + 72;
-    return CustomScrollView(
-      slivers: [
-        SliverToBoxAdapter(child: SizedBox(height: topHeight)),
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-          sliver: SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final recipient = recipients[index];
-                return _buildRecipientSection(context, ref, recipient);
-              },
-              childCount: recipients.length,
+    return RefreshIndicator(
+      color: AppColors.primary,
+      onRefresh: () => _onRefresh(ref, recipients),
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverToBoxAdapter(child: SizedBox(height: topHeight)),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final recipient = recipients[index];
+                  return _buildRecipientSection(context, ref, recipient);
+                },
+                childCount: recipients.length,
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

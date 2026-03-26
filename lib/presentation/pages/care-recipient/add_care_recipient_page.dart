@@ -548,9 +548,9 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
               child: ElevatedButton(
                 onPressed: () {
                   Navigator.pop(ctx);
-                  // 跳转到个人中心 → 订阅管理
-                  context.pop(); // 关闭添加页
-                  context.go('/settings');
+                  // 关闭添加页并跳转到个人中心
+                  context.pop();
+                  Future.microtask(() => context.go(AppRoutes.profile));
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.coral,

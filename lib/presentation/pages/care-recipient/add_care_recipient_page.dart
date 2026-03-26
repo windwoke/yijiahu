@@ -1,13 +1,16 @@
 /// 添加/编辑照护对象页
 library;
 
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/constants.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/router/app_router.dart' show AppRoutes;
+import '../../../core/env/env_config.dart' show ApiConfig;
 import '../../../data/models/models.dart' as models;
 import '../../providers/family_provider.dart';
 
@@ -23,6 +26,7 @@ class AddCareRecipientPage extends ConsumerStatefulWidget {
 class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _emergencyContactController = TextEditingController();
   final _emergencyPhoneController = TextEditingController();
   final _hospitalController = TextEditingController();
@@ -38,6 +42,8 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
 
   final List<String> _avatarOptions = ['👴', '👵', '👨', '👩', '🧓', '🧑', '👤'];
   String _selectedAvatar = '👴';
+  String? _avatarUrl; // 上传后的真实头像URL
+  bool _isUploadingAvatar = false;
 
   bool get isEditing => widget.recipient != null;
 
@@ -47,7 +53,9 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
     if (widget.recipient != null) {
       final r = widget.recipient!;
       _nameController.text = r.name;
+      _phoneController.text = r.phone ?? '';
       _selectedAvatar = r.avatarEmoji ?? '👴';
+      _avatarUrl = r.avatarUrl;
       _gender = r.gender ?? '';
       _birthDate = r.birthDate;
       _bloodType = r.bloodType;
@@ -64,6 +72,7 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
   @override
   void dispose() {
     _nameController.dispose();
+    _phoneController.dispose();
     _emergencyContactController.dispose();
     _emergencyPhoneController.dispose();
     _hospitalController.dispose();
@@ -72,6 +81,38 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
     _doctorPhoneController.dispose();
     _medicalHistoryController.dispose();
     super.dispose();
+  }
+
+  Future<void> _uploadAvatar() async {
+    final picker = ImagePicker();
+    final image = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 512,
+      maxHeight: 512,
+      imageQuality: 80,
+    );
+    if (image == null) return;
+
+    setState(() => _isUploadingAvatar = true);
+    try {
+      final dio = ref.read(dioProvider);
+      final formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(image.path),
+      });
+      final resp = await dio.post('/upload/avatar', data: formData);
+      final url = resp.data['url'] as String?;
+      if (url != null) {
+        setState(() => _avatarUrl = url);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('头像上传失败'), duration: Duration(seconds: 3)),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploadingAvatar = false);
+    }
   }
 
   Future<void> _selectBirthDate() async {
@@ -96,6 +137,8 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
       final data = <String, dynamic>{
         'name': _nameController.text.trim(),
         'avatarEmoji': _selectedAvatar,
+        if (_avatarUrl != null) 'avatarUrl': _avatarUrl,
+        if (_phoneController.text.isNotEmpty) 'phone': _phoneController.text.trim(),
         'gender': _gender,
         if (_birthDate != null)
           'birthDate':
@@ -274,22 +317,56 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
                 Center(
                   child: Column(
                     children: [
-                      Container(
-                        width: 72,
-                        height: 72,
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.06),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
+                      GestureDetector(
+                        onTap: _uploadAvatar,
+                        child: Stack(
+                          children: [
+                            Container(
+                              width: 72,
+                              height: 72,
+                              decoration: BoxDecoration(
+                                color: AppColors.surface,
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.06),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(20),
+                                child: _isUploadingAvatar
+                                    ? const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)))
+                                    : (_avatarUrl != null && _avatarUrl!.isNotEmpty)
+                                        ? Image.network(
+                                            _avatarUrl!.startsWith('http') ? _avatarUrl! : '${ApiConfig.baseUrl}$_avatarUrl',
+                                            fit: BoxFit.cover,
+                                            width: 72,
+                                            height: 72,
+                                            errorBuilder: (_, __, ___) => Text(_selectedAvatar, style: const TextStyle(fontSize: 40)),
+                                          )
+                                        : Center(
+                                            child: Text(_selectedAvatar, style: const TextStyle(fontSize: 40)),
+                                          ),
+                              ),
+                            ),
+                            Positioned(
+                              right: 0,
+                              bottom: 0,
+                              child: Container(
+                                width: 24,
+                                height: 24,
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white, width: 2),
+                                ),
+                                child: const Icon(Icons.camera_alt, color: Colors.white, size: 12),
+                              ),
                             ),
                           ],
-                        ),
-                        child: Center(
-                          child: Text(_selectedAvatar, style: const TextStyle(fontSize: 40)),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -331,6 +408,14 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
                     hint: '如：爷爷、奶奶',
                     icon: Icons.person_outline,
                     validator: (v) => v == null || v.isEmpty ? '请输入姓名' : null,
+                  ),
+                  _buildDivider(),
+                  _buildTextField(
+                    controller: _phoneController,
+                    label: '手机号码',
+                    hint: '照护对象本人的手机号',
+                    icon: Icons.phone_outlined,
+                    keyboardType: TextInputType.phone,
                   ),
                   _buildDivider(),
                   _buildGenderSelector(),
@@ -500,8 +585,6 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
           _genderChip('男', 'male'),
           const SizedBox(width: 12),
           _genderChip('女', 'female'),
-          const SizedBox(width: 12),
-          _genderChip('未知', ''),
         ],
       ),
     );

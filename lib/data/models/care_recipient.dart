@@ -9,6 +9,7 @@ class CareRecipient extends Equatable {
   final String name;
   final String? avatarEmoji;
   final String? avatarUrl;
+  final String? phone;
   final DateTime? birthDate;
   final int? age;
   final String? gender;
@@ -33,6 +34,7 @@ class CareRecipient extends Equatable {
     required this.name,
     this.avatarEmoji,
     this.avatarUrl,
+    this.phone,
     this.birthDate,
     this.age,
     this.gender,
@@ -95,6 +97,7 @@ class CareRecipient extends Equatable {
       name: json['name'] as String? ?? '',
       avatarEmoji: json['avatarEmoji'] as String? ?? json['avatar'] as String? ?? json['avatar_emoji'] as String? ?? '👤',
       avatarUrl: json['avatarUrl'] as String? ?? json['avatar_url'] as String?,
+      phone: json['phone'] as String?,
       birthDate: birth,
       age: calcAge(birth),
       gender: json['gender'] as String?,

@@ -17,6 +17,11 @@ export class CreateCareRecipientDto {
   @IsOptional()
   avatarUrl?: string;
 
+  @ApiPropertyOptional({ example: '13800138000' })
+  @IsString()
+  @IsOptional()
+  phone?: string;
+
   @ApiPropertyOptional({ example: 'male' })
   @IsString()
   @IsOptional()
@@ -108,6 +113,11 @@ export class UpdateCareRecipientDto {
   @IsString()
   @IsOptional()
   avatarUrl?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  phone?: string;
 
   @ApiPropertyOptional()
   @IsString()

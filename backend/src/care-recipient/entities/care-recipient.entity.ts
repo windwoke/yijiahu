@@ -28,6 +28,9 @@ export class CareRecipient {
   avatarUrl: string;
 
   @Column({ nullable: true })
+  phone: string; // 照护对象本人的手机号
+
+  @Column({ nullable: true })
   gender: 'male' | 'female';
 
   @Column({ nullable: true })

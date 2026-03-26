@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/constants.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/env/env_config.dart' show ApiConfig;
 import '../../../data/models/models.dart' hide Family;
 import '../../providers/family_provider.dart';
 
@@ -128,8 +129,19 @@ class _CareRecipientDetailPageState extends ConsumerState<CareRecipientDetailPag
               color: AppColors.surfaceContainerLow,
               borderRadius: BorderRadius.circular(24),
             ),
-            child: Center(
-              child: Text(r.displayAvatar, style: const TextStyle(fontSize: 40)),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: (r.avatarUrl != null && r.avatarUrl!.isNotEmpty)
+                  ? Image.network(
+                      r.avatarUrl!.startsWith('http') ? r.avatarUrl! : '${ApiConfig.baseUrl}${r.avatarUrl}',
+                      fit: BoxFit.cover,
+                      width: 72,
+                      height: 72,
+                      errorBuilder: (_, __, ___) => Text(r.displayAvatar, style: const TextStyle(fontSize: 40)),
+                    )
+                  : Center(
+                      child: Text(r.displayAvatar, style: const TextStyle(fontSize: 40)),
+                    ),
             ),
           ),
           const SizedBox(width: 20),
@@ -188,6 +200,7 @@ class _CareRecipientDetailPageState extends ConsumerState<CareRecipientDetailPag
     if (r.birthDate != null) items.add(_InfoItem('出生日期', _formatDate(r.birthDate!)));
     if (r.gender != null && r.gender!.isNotEmpty) items.add(_InfoItem('性别', _genderLabel(r.gender!)));
     if (r.bloodType != null && r.bloodType!.isNotEmpty) items.add(_InfoItem('血型', '${r.bloodType!}型'));
+    if (r.phone != null && r.phone!.isNotEmpty) items.add(_InfoItem('手机', r.phone!));
     if (r.currentAddress != null && r.currentAddress!.isNotEmpty) {
       items.add(_InfoItem('家庭住址', r.currentAddress!));
     }
@@ -993,7 +1006,7 @@ class _CareRecipientDetailPageState extends ConsumerState<CareRecipientDetailPag
     switch (gender) {
       case 'male': return '男';
       case 'female': return '女';
-      default: return '未知';
+      default: return gender;
     }
   }
 

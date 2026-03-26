@@ -128,7 +128,12 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
           family = models.Family.fromJson(familyResponse.data as Map<String, dynamic>);
           ref.read(currentFamilyProvider.notifier).state = family;
         }
-        await dio.post('/care-recipients', data: data);
+        final fid = family!.id;
+        await dio.post(
+          '/care-recipients',
+          queryParameters: {'familyId': fid},
+          data: data,
+        );
       }
 
       ref.invalidate(careRecipientsProvider);

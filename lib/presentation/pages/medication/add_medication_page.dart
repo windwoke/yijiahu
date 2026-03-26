@@ -164,7 +164,6 @@ class _AddMedicationPageState extends ConsumerState<AddMedicationPage> {
       }).toList();
 
       final data = <String, dynamic>{
-        'recipientId': recipientId,
         'name': _nameController.text.trim(),
         'dosage': _dosageController.text.trim(),
         'frequency': _frequencyValue(_frequency),
@@ -187,6 +186,7 @@ class _AddMedicationPageState extends ConsumerState<AddMedicationPage> {
         ref.invalidate(medicationsProvider(widget.medication!.recipientId));
         ref.invalidate(medicationDetailProvider(widget.medication!.id));
       } else {
+        data['recipientId'] = recipientId;
         await dio.post('/medications', data: data);
         ref.invalidate(medicationsProvider(recipientId));
         ref.invalidate(todayMedicationProvider(recipientId));

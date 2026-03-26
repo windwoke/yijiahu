@@ -316,6 +316,7 @@ class _EventListView extends StatelessWidget {
     }
 
     return ListView.builder(
+      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       itemCount: grouped.length,
       itemBuilder: (context, i) {
@@ -359,6 +360,7 @@ class _DayEventsView extends StatelessWidget {
       return const EmptyState(emoji: '📅', title: '当天暂无安排', subtitle: '点击右上角"+"添加');
     }
     return ListView(
+      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
       children: [
         if (dayEvents.any((e) => e.type == EventType.appointment)) ...[

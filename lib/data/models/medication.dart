@@ -158,6 +158,8 @@ class MedicationLog extends Equatable {
   final String? time;
   /// 时间线接口返回的打卡人姓名
   final String? authorName;
+  /// 时间线接口返回的打卡人头像
+  final String? authorAvatar;
 
   const MedicationLog({
     required this.id,
@@ -171,6 +173,7 @@ class MedicationLog extends Equatable {
     this.skipReason,
     this.time,
     this.authorName,
+    this.authorAvatar,
   });
 
   factory MedicationLog.fromJson(Map<String, dynamic> json) {
@@ -188,6 +191,7 @@ class MedicationLog extends Equatable {
       skipReason: json['note'] as String? ?? json['skip_reason'] as String?,
       time: json['time'] as String?,
       authorName: json['authorName'] as String?,
+      authorAvatar: json['authorAvatar'] as String?,
     );
   }
 

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/constants.dart';
+import '../../../core/env/env_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/router/app_router.dart';
 import '../../../data/models/models.dart';
@@ -359,14 +360,17 @@ class MedicationDetailPage extends ConsumerWidget {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.15),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
+                if (log.authorAvatar != null && log.authorAvatar!.isNotEmpty)
+                  CircleAvatar(
+                    radius: 12,
+                    backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+                    backgroundImage: NetworkImage(ApiConfig.avatarUrl(log.authorAvatar!)!),
+                    child: null,
+                  )
+                else
+                  CircleAvatar(
+                    radius: 12,
+                    backgroundColor: AppColors.primary.withValues(alpha: 0.15),
                     child: Text(
                       log.authorName!.substring(0, 1),
                       style: const TextStyle(
@@ -376,7 +380,6 @@ class MedicationDetailPage extends ConsumerWidget {
                       ),
                     ),
                   ),
-                ),
                 const SizedBox(width: 6),
                 Text(
                   log.authorName!,

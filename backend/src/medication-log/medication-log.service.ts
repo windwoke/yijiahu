@@ -170,18 +170,19 @@ export class MedicationLogService {
 
     const logs = await qb.getMany();
 
-    // takenBy 存的是 userId，通过 User 表查姓名
+    // takenBy 存的是 userId，通过 User 表查姓名和头像
     const userIds = logs.map(l => l.takenBy).filter(Boolean);
     const users = userIds.length > 0
       ? await this.userRepo.findBy(userIds.map(id => ({ id } as any)))
       : [];
-    const userMap = new Map(users.map(u => [u.id, u.name || u.phone]));
+    const userMap = new Map(users.map(u => [u.id, { name: u.name || u.phone, avatar: u.avatar || null }]));
 
     return logs.map((log) => ({
       id: log.id,
       type: 'medication',
       content: `${log.medication?.name || ''} 已${log.status === MedicationLogStatus.TAKEN ? '服用' : '跳过'}${log.medication?.dosage ? ' · ' + log.medication.dosage : ''}`,
-      authorName: userMap.get(log.takenBy!) || '家庭成员',
+      authorName: userMap.get(log.takenBy!)?.name || '家庭成员',
+      authorAvatar: userMap.get(log.takenBy!)?.avatar || null,
       authorId: log.takenBy,
       recipientId: log.recipientId,
       // 直接返回格式化好的本地时间字符串，避免时区问题

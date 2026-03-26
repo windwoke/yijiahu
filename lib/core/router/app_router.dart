@@ -93,8 +93,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.addMedication,
         builder: (context, state) {
-          final recipientId = state.extra as String?;
-          return AddMedicationPage(recipientId: recipientId);
+          final extra = state.extra;
+          if (extra is Medication) {
+            // 编辑模式
+            return AddMedicationPage(medication: extra);
+          }
+          // 添加模式（recipientId 为字符串）
+          return AddMedicationPage(recipientId: extra as String?);
         },
       ),
       GoRoute(

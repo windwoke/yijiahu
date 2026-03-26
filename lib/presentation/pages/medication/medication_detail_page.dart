@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/constants.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/router/app_router.dart';
 import '../../../data/models/models.dart';
 import '../../providers/family_provider.dart';
 
@@ -30,6 +31,14 @@ class MedicationDetailPage extends ConsumerWidget {
         ),
         title: const Text('药品详情'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.edit_rounded, color: AppColors.textPrimary),
+            onPressed: () {
+              final med = medAsync.valueOrNull;
+              if (med == null) return;
+              context.push(AppRoutes.addMedication, extra: med);
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.delete_outline, color: AppColors.error),
             onPressed: () => medAsync.whenOrNull(
@@ -221,6 +230,8 @@ class MedicationDetailPage extends ConsumerWidget {
   }
 
   Widget _buildHistoryCard(BuildContext context, WidgetRef ref, Medication med) {
+    final historyAsync = ref.watch(medicationHistoryProvider(med.id));
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -234,20 +245,115 @@ class MedicationDetailPage extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '用药记录',
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+          Row(
+            children: [
+              const Text(
+                '用药记录',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '近7天',
+                style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
+              ),
+            ],
           ),
-          const SizedBox(height: 24),
-          Center(
-            child: Column(
-              children: [
-                Icon(Icons.history, size: 40, color: AppColors.textTertiary),
-                const SizedBox(height: 8),
-                Text('暂无用药记录', style: TextStyle(color: AppColors.textTertiary)),
-              ],
+          const SizedBox(height: 16),
+          historyAsync.when(
+            data: (logs) {
+              if (logs.isEmpty) {
+                return Center(
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 8),
+                      Icon(Icons.history, size: 40, color: AppColors.textTertiary),
+                      const SizedBox(height: 8),
+                      Text('暂无用药记录', style: TextStyle(color: AppColors.textTertiary)),
+                      const SizedBox(height: 8),
+                    ],
+                  ),
+                );
+              }
+              return Column(
+                children: logs.map((log) => _buildHistoryItem(log)).toList(),
+              );
+            },
+            loading: () => const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            ),
+            error: (e, s) => Center(
+              child: Text(
+                '加载失败',
+                style: TextStyle(color: AppColors.textTertiary),
+              ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHistoryItem(MedicationLog log) {
+    final isTaken = log.status == MedicationLogStatus.taken;
+    final statusColor = isTaken ? AppColors.success : AppColors.textTertiary;
+    final statusText = isTaken ? '已服用' : '已跳过';
+
+    String timeStr = '';
+    if (log.actualTime != null) {
+      timeStr =
+          '${log.actualTime!.month}/${log.actualTime!.day} ${log.actualTime!.hour.toString().padLeft(2, '0')}:${log.actualTime!.minute.toString().padLeft(2, '0')}';
+    } else if (log.scheduledTime.isNotEmpty) {
+      timeStr = log.scheduledTime;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          // 状态指示
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: statusColor,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 12),
+          // 时间
+          SizedBox(
+            width: 80,
+            child: Text(
+              timeStr,
+              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+            ),
+          ),
+          // 状态文字
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: statusColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              statusText,
+              style: TextStyle(fontSize: 12, color: statusColor, fontWeight: FontWeight.w500),
+            ),
+          ),
+          const Spacer(),
+          // 打人
+          if (log.takenBy != null)
+            Text(
+              log.takenBy!.name,
+              style: TextStyle(fontSize: 13, color: AppColors.textTertiary),
+            ),
         ],
       ),
     );

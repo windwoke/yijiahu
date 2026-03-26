@@ -99,6 +99,37 @@ final medicationsProvider =
   }
 });
 
+/// 药品历史打卡记录（用于药品详情页）
+final medicationHistoryProvider =
+    FutureProvider.family<List<models.MedicationLog>, String>((ref, medicationId) async {
+  try {
+    final dio = ref.read(dioProvider);
+    final response = await dio.get('/medication-logs/timeline', queryParameters: {
+      'medicationId': medicationId,
+      'days': 7,
+      'limit': 20,
+    });
+    final List<dynamic> data;
+    if (response.data is List<dynamic>) {
+      data = response.data as List<dynamic>;
+    } else if (response.data is Map && (response.data as Map)['data'] is List) {
+      data = (response.data as Map)['data'] as List<dynamic>;
+    } else {
+      return [];
+    }
+    return data
+        .map((e) {
+          try {
+            return models.MedicationLog.fromJson(e as Map<String, dynamic>);
+          } catch (_) { return null; }
+        })
+        .whereType<models.MedicationLog>()
+        .toList();
+  } catch (_) {
+    return [];
+  }
+});
+
 /// 健康趋势（血压+血糖）
 final healthTrendsProvider =
     FutureProvider.family<Map<String, List<models.HealthRecord>>, String>(

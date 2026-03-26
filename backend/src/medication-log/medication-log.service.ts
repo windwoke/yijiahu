@@ -140,7 +140,7 @@ export class MedicationLogService {
   }
 
   /** 时间线用药记录（taken/skipped） */
-  async getTimeline(recipientId?: string, familyId?: string, days = 7, before?: Date): Promise<any[]> {
+  async getTimeline(recipientId?: string, familyId?: string, medicationId?: string, days = 7, before?: Date): Promise<any[]> {
     const qb = this.logRepo
       .createQueryBuilder('log')
       .leftJoinAndSelect('log.medication', 'medication')
@@ -162,6 +162,10 @@ export class MedicationLogService {
 
     if (familyId) {
       qb.andWhere('cr.familyId = :familyId', { familyId });
+    }
+
+    if (medicationId) {
+      qb.andWhere('log.medicationId = :medicationId', { medicationId });
     }
 
     const logs = await qb.getMany();

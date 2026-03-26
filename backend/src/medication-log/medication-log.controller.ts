@@ -39,12 +39,14 @@ export class MedicationLogController {
   getTimeline(
     @Query('recipientId') recipientId?: string,
     @Query('familyId') familyId?: string,
+    @Query('medicationId') medicationId?: string,
     @Query('days') days?: string,
-    @Query('before') before?: string,  // ISO 时间戳，用于分页游标
+    @Query('before') before?: string,
   ) {
     return this.service.getTimeline(
       recipientId,
       familyId,
+      medicationId,
       days ? parseInt(days) : 7,
       before ? new Date(before) : undefined,
     );

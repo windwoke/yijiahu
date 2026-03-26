@@ -1,4 +1,4 @@
-/// 添加药品页
+/// 添加/编辑药品页
 library;
 
 import 'package:flutter/material.dart';
@@ -11,26 +11,49 @@ import '../../providers/providers.dart';
 
 class AddMedicationPage extends ConsumerStatefulWidget {
   final String? recipientId;
+  final Medication? medication; // 传入则进入编辑模式
 
-  const AddMedicationPage({super.key, this.recipientId});
+  const AddMedicationPage({super.key, this.recipientId, this.medication});
 
   @override
   ConsumerState<AddMedicationPage> createState() => _AddMedicationPageState();
 }
 
 class _AddMedicationPageState extends ConsumerState<AddMedicationPage> {
-  final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _dosageController = TextEditingController();
-  final _instructionsController = TextEditingController();
-  final _prescribedByController = TextEditingController();
+  bool get isEditing => widget.medication != null;
 
-  MedicationFrequency _frequency = MedicationFrequency.daily;
-  final List<TimeOfDay> _times = [const TimeOfDay(hour: 8, minute: 0)];
-  DateTime _startDate = DateTime.now();
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _nameController;
+  late final TextEditingController _dosageController;
+  late final TextEditingController _instructionsController;
+  late final TextEditingController _prescribedByController;
+
+  late MedicationFrequency _frequency;
+  late List<TimeOfDay> _times;
+  late DateTime _startDate;
   DateTime? _endDate;
   bool _isLoading = false;
   String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    final med = widget.medication;
+    _nameController = TextEditingController(text: med?.name ?? '');
+    _dosageController = TextEditingController(text: med?.dosage ?? '');
+    _instructionsController = TextEditingController(text: med?.instructions ?? '');
+    _prescribedByController = TextEditingController(text: med?.prescribedBy ?? '');
+
+    _frequency = med?.frequency ?? MedicationFrequency.daily;
+    _times = med?.times.map(_parseTime).toList() ?? [const TimeOfDay(hour: 8, minute: 0)];
+    _startDate = med?.startDate ?? DateTime.now();
+    _endDate = med?.endDate;
+  }
+
+  TimeOfDay _parseTime(String t) {
+    final parts = t.split(':');
+    return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+  }
 
   @override
   void dispose() {
@@ -159,11 +182,15 @@ class _AddMedicationPageState extends ConsumerState<AddMedicationPage> {
         data['endDate'] = _endDate!.toIso8601String().split('T').first;
       }
 
-      await dio.post('/medications', data: data);
-
-      // 刷新药品列表和今日用药汇总
-      ref.invalidate(medicationsProvider(recipientId));
-      ref.invalidate(todayMedicationProvider(recipientId));
+      if (isEditing) {
+        await dio.patch('/medications/${widget.medication!.id}', data: data);
+        ref.invalidate(medicationsProvider(widget.medication!.recipientId));
+        ref.invalidate(medicationDetailProvider(widget.medication!.id));
+      } else {
+        await dio.post('/medications', data: data);
+        ref.invalidate(medicationsProvider(recipientId));
+        ref.invalidate(todayMedicationProvider(recipientId));
+      }
 
       if (mounted) {
         context.pop();
@@ -192,7 +219,7 @@ class _AddMedicationPageState extends ConsumerState<AddMedicationPage> {
         backgroundColor: AppColors.background,
         elevation: 0,
         scrolledUnderElevation: 0,
-        title: const Text(AppTexts.addMedication),
+        title: Text(isEditing ? '编辑药品' : AppTexts.addMedication),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => context.pop(),

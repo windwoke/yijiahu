@@ -154,6 +154,10 @@ class MedicationLog extends Equatable {
   final MedicationLogTaker? takenBy;
   final String? photoUrl;
   final String? skipReason;
+  /// 时间线接口返回的格式化时间字符串（如 "2026-03-25 14:30:00"）
+  final String? time;
+  /// 时间线接口返回的打卡人姓名
+  final String? authorName;
 
   const MedicationLog({
     required this.id,
@@ -165,13 +169,15 @@ class MedicationLog extends Equatable {
     this.takenBy,
     this.photoUrl,
     this.skipReason,
+    this.time,
+    this.authorName,
   });
 
   factory MedicationLog.fromJson(Map<String, dynamic> json) {
     return MedicationLog(
       id: json['id'] as String? ?? '',
       medicationId: json['medicationId'] as String? ?? json['medication_id'] as String? ?? '',
-      medicationName: json['medicationName'] as String? ?? json['medication_name'] as String? ?? '',
+      medicationName: json['medicationName'] as String? ?? json['medication_name'] as String? ?? json['content'] as String? ?? '',
       scheduledTime: json['scheduledTime'] as String? ?? json['scheduled_time'] as String? ?? '',
       actualTime: json['actualTime'] != null
           ? DateTime.tryParse(json['actualTime'] as String? ?? '')
@@ -180,6 +186,8 @@ class MedicationLog extends Equatable {
       takenBy: null,
       photoUrl: json['photoUrl'] as String? ?? json['photo_url'] as String?,
       skipReason: json['note'] as String? ?? json['skip_reason'] as String?,
+      time: json['time'] as String?,
+      authorName: json['authorName'] as String?,
     );
   }
 

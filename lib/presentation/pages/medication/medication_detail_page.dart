@@ -305,12 +305,18 @@ class MedicationDetailPage extends ConsumerWidget {
     final statusColor = isTaken ? AppColors.success : AppColors.textTertiary;
     final statusText = isTaken ? '已服用' : '已跳过';
 
-    String timeStr = '';
-    if (log.actualTime != null) {
+    // 优先用后端返回的格式化时间字符串
+    String timeStr = log.time ?? '';
+    if (timeStr.isEmpty && log.actualTime != null) {
       timeStr =
           '${log.actualTime!.month}/${log.actualTime!.day} ${log.actualTime!.hour.toString().padLeft(2, '0')}:${log.actualTime!.minute.toString().padLeft(2, '0')}';
-    } else if (log.scheduledTime.isNotEmpty) {
+    } else if (timeStr.isEmpty) {
       timeStr = log.scheduledTime;
+    }
+
+    // 只显示日期+时间部分（去掉秒）
+    if (timeStr.length > 16) {
+      timeStr = timeStr.substring(5, 16); // "03-26 11:30"
     }
 
     return Padding(
@@ -329,7 +335,7 @@ class MedicationDetailPage extends ConsumerWidget {
           const SizedBox(width: 12),
           // 时间
           SizedBox(
-            width: 80,
+            width: 70,
             child: Text(
               timeStr,
               style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
@@ -348,10 +354,10 @@ class MedicationDetailPage extends ConsumerWidget {
             ),
           ),
           const Spacer(),
-          // 打人
-          if (log.takenBy != null)
+          // 操作人
+          if (log.authorName != null && log.authorName!.isNotEmpty)
             Text(
-              log.takenBy!.name,
+              log.authorName!,
               style: TextStyle(fontSize: 13, color: AppColors.textTertiary),
             ),
         ],

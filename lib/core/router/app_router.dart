@@ -9,6 +9,7 @@ import '../../presentation/pages/home/home_page.dart';
 import '../../presentation/pages/calendar/calendar_page.dart';
 import '../../presentation/pages/calendar/add_appointment_page.dart';
 import '../../presentation/pages/calendar/add_task_page.dart';
+import '../../presentation/pages/calendar/family_tasks_page.dart';
 import '../../presentation/pages/medication/add_medication_page.dart';
 import '../../presentation/pages/medication/medication_detail_page.dart';
 import '../../presentation/pages/family/family_page.dart';
@@ -29,6 +30,7 @@ class AppRoutes {
   static const String calendar = '/calendar';
   static const String addAppointment = '/calendar/appointment/add';
   static const String addTask = '/calendar/task/add';
+  static const String familyTasks = '/calendar/tasks';
   static const String addMedication = '/medication/add';
   static const String family = '/family';
   static const String careLog = '/care-log';
@@ -79,6 +81,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: AppRoutes.calendar,
             builder: (context, state) => const CalendarPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.familyTasks,
+            builder: (context, state) => const FamilyTasksPage(),
           ),
           GoRoute(
             path: AppRoutes.careLog,

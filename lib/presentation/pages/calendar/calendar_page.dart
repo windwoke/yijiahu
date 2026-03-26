@@ -61,8 +61,8 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.add_rounded),
-            tooltip: '添加复诊',
-            onPressed: () => context.go(AppRoutes.addAppointment),
+            tooltip: '添加',
+            onPressed: () => _showAddSheet(context),
           ),
         ],
       ),
@@ -84,6 +84,27 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
             child: _buildUpcomingSection(familyId),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showAddSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _AddBottomSheet(
+        onAddAppointment: () {
+          Navigator.pop(context);
+          context.push(AppRoutes.addAppointment);
+        },
+        onAddTask: () {
+          Navigator.pop(context);
+          context.push(AppRoutes.addTask);
+        },
+        onViewTasks: () {
+          Navigator.pop(context);
+          context.push(AppRoutes.familyTasks);
+        },
       ),
     );
   }
@@ -145,6 +166,20 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
           _focusedDay = focusedDay;
         });
       },
+      locale: 'zh_CN',
+      daysOfWeekHeight: 36,
+      daysOfWeekStyle: const DaysOfWeekStyle(
+        weekdayStyle: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textSecondary,
+        ),
+        weekendStyle: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textSecondary,
+        ),
+      ),
       calendarStyle: CalendarStyle(
         todayDecoration: BoxDecoration(
           color: AppColors.primary.withValues(alpha: 0.2),
@@ -165,58 +200,29 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
         defaultTextStyle: const TextStyle(color: AppColors.textPrimary),
         weekendTextStyle: const TextStyle(color: AppColors.textSecondary),
         outsideTextStyle: const TextStyle(color: AppColors.textTertiary),
+        cellMargin: const EdgeInsets.all(4),
       ),
       headerVisible: false,
       calendarBuilders: CalendarBuilders(
-        markerBuilder: (context, date, dayEvents) {
-          if (dayEvents.isEmpty) return null;
-          // 找对应的事件（按护对象）
-          final appointments = dayEvents
-              .where((e) => e.type == EventType.appointment)
-              .toList();
-          if (appointments.isEmpty) return null;
-
-          final apt = appointments.first;
-          final recipient = apt.appointment?.recipient;
-          final emoji = recipient?.avatarEmoji ?? '👤';
-
-          return Positioned(
-            bottom: 1,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // 复诊 dot
-                Container(
-                  width: 5,
-                  height: 5,
-                  decoration: const BoxDecoration(
-                    color: AppColors.coral,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                if (dayEvents.length > 1)
-                  Container(
-                    margin: const EdgeInsets.only(left: 1),
-                    child: Text(
-                      emoji,
-                      style: const TextStyle(fontSize: 7),
-                    ),
-                  ),
-                if (dayEvents.length > 3)
-                  Container(
-                    margin: const EdgeInsets.only(left: 1),
-                    padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 0.5),
-                    decoration: BoxDecoration(
-                      color: AppColors.textTertiary,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      '+${dayEvents.length - 1}',
-                      style: const TextStyle(fontSize: 7, color: Colors.white),
-                    ),
-                  ),
-              ],
-            ),
+        defaultBuilder: (context, day, focusedDay) {
+          return _CalendarDayCell(
+            day: day,
+            isSelected: isSameDay(_selectedDay, day),
+            events: events[DateTime(day.year, day.month, day.day)] ?? [],
+          );
+        },
+        todayBuilder: (context, day, focusedDay) {
+          return _CalendarDayCell(
+            day: day,
+            isToday: true,
+            events: events[DateTime(day.year, day.month, day.day)] ?? [],
+          );
+        },
+        selectedBuilder: (context, day, focusedDay) {
+          return _CalendarDayCell(
+            day: day,
+            isSelected: true,
+            events: events[DateTime(day.year, day.month, day.day)] ?? [],
           );
         },
       ),
@@ -239,7 +245,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
           child: Row(
             children: [
               const Text(
-                '即将到来的复诊',
+                '本月日程',
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -247,7 +253,6 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
                 ),
               ),
               const Spacer(),
-              // 切换视图
               _ViewToggle(
                 icon: Icons.view_agenda_rounded,
                 label: '列表',
@@ -267,60 +272,143 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
         Expanded(
           child: eventsAsync.when(
             data: (allEvents) {
-              List<CalendarEvent> displayEvents;
-
               if (_showList) {
-                // 列表视图：所有未来复诊按时间排序
-                final now = DateTime.now();
-                displayEvents = allEvents.entries
-                    .where((e) => e.key.isAfter(now.subtract(const Duration(days: 1))))
-                    .expand((e) => e.value.where((ev) => ev.type == EventType.appointment))
-                    .toList()
-                  ..sort((a, b) =>
-                      (a.appointment?.appointmentTime ?? DateTime.now())
-                          .compareTo(b.appointment?.appointmentTime ?? DateTime.now()));
+                return _buildListView(allEvents, familyId);
               } else {
-                // 当天视图：选中日期的事件
-                if (_selectedDay == null) {
-                  return const Center(child: Text('请选择日期'));
-                }
-                displayEvents = allEvents[DateTime(
-                      _selectedDay!.year,
-                      _selectedDay!.month,
-                      _selectedDay!.day,
-                    )] ??
-                    [];
-                displayEvents =
-                    displayEvents.where((e) => e.type == EventType.appointment).toList();
+                return _buildDayView(allEvents, familyId);
               }
-
-              if (displayEvents.isEmpty) {
-                return Padding(
-                  padding: const EdgeInsets.only(top: 32),
-                  child: EmptyState(
-                    emoji: '📅',
-                    title: '暂无复诊安排',
-                    subtitle: '点击右上角"+"添加复诊',
-                  ),
-                );
-              }
-
-              return ListView.builder(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                itemCount: displayEvents.length,
-                itemBuilder: (context, index) {
-                  final apt = displayEvents[index].appointment!;
-                  return _AppointmentCard(
-                    appointment: apt,
-                    familyId: familyId,
-                  );
-                },
-              );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(child: Text('加载失败: $e')),
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildListView(Map<DateTime, List<CalendarEvent>> allEvents, String familyId) {
+    final now = DateTime.now();
+    // 收集所有事件（复诊+任务），按时间排序
+    final allEventsList = <_MergedEvent>[];
+    for (final entry in allEvents.entries) {
+      for (final ev in entry.value) {
+        final time = ev.type == EventType.appointment
+            ? ev.appointment!.appointmentTime
+            : ev.task!.nextDueAt ?? DateTime.now();
+        allEventsList.add(_MergedEvent(time: time, event: ev));
+      }
+    }
+    allEventsList.sort((a, b) => a.time.compareTo(b.time));
+    // 过滤过去的事件
+    final futureEvents = allEventsList
+        .where((e) => e.time.isAfter(now.subtract(const Duration(days: 1))))
+        .toList();
+
+    if (futureEvents.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 32),
+        child: EmptyState(
+          emoji: '📅',
+          title: '本月暂无日程安排',
+          subtitle: '点击右上角"+"添加复诊或任务',
+        ),
+      );
+    }
+
+    // 按日期分组
+    final Map<String, List<_MergedEvent>> grouped = {};
+    for (final e in futureEvents) {
+      final key = '${e.time.year}-${e.time.month}-${e.time.day}';
+      grouped.putIfAbsent(key, () => []).add(e);
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      itemCount: grouped.length,
+      itemBuilder: (context, index) {
+        final dateKey = grouped.keys.elementAt(index);
+        final events = grouped[dateKey]!;
+        final date = events.first.time;
+        final weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 8, bottom: 6),
+              child: Text(
+                '${date.month}月${date.day}日 · ${weekdays[date.weekday - 1]}',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textTertiary,
+                ),
+              ),
+            ),
+            ...events.map((me) {
+              if (me.event.type == EventType.appointment) {
+                return _AppointmentCard(
+                  appointment: me.event.appointment!,
+                  familyId: familyId,
+                );
+              } else {
+                return _TaskCardCompact(
+                  task: me.event.task!,
+                  familyId: familyId,
+                );
+              }
+            }),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildDayView(Map<DateTime, List<CalendarEvent>> allEvents, String familyId) {
+    if (_selectedDay == null) {
+      return const Center(child: Text('请选择日期'));
+    }
+    final dayEvents = allEvents[DateTime(
+          _selectedDay!.year,
+          _selectedDay!.month,
+          _selectedDay!.day,
+        )] ??
+        [];
+
+    if (dayEvents.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 32),
+        child: EmptyState(
+          emoji: '📅',
+          title: '当天暂无安排',
+          subtitle: '点击右上角"+"添加',
+        ),
+      );
+    }
+
+    final appointments = dayEvents.where((e) => e.type == EventType.appointment).toList();
+    final tasks = dayEvents.where((e) => e.type == EventType.task).toList();
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      children: [
+        if (appointments.isNotEmpty) ...[
+          const _SectionTag(label: '复诊', color: AppColors.coral),
+          const SizedBox(height: 8),
+          ...appointments.map((e) => _AppointmentCard(
+                appointment: e.appointment!,
+                familyId: familyId,
+              )),
+          const SizedBox(height: 12),
+        ],
+        if (tasks.isNotEmpty) ...[
+          const _SectionTag(label: '任务', color: AppColors.blue),
+          const SizedBox(height: 8),
+          ...tasks.map((e) => _TaskCardCompact(
+                task: e.task!,
+                familyId: familyId,
+              )),
+        ],
       ],
     );
   }
@@ -651,6 +739,342 @@ class _AppointmentCard extends StatelessWidget {
   }
 }
 
+/// 合并事件（复诊+任务统一排序）
+class _MergedEvent {
+  final DateTime time;
+  final CalendarEvent event;
+  _MergedEvent({required this.time, required this.event});
+}
+
+/// 分组标题标签
+class _SectionTag extends StatelessWidget {
+  final String label;
+  final Color color;
+  const _SectionTag({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 3,
+          height: 14,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: color,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// 日历单元格（自定义，支持 emoji dot）
+class _CalendarDayCell extends StatelessWidget {
+  final DateTime day;
+  final bool isSelected;
+  final bool isToday;
+  final List<CalendarEvent> events;
+
+  const _CalendarDayCell({
+    required this.day,
+    this.isSelected = false,
+    this.isToday = false,
+    required this.events,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hasAppointment = events.any((e) => e.type == EventType.appointment);
+    final hasTask = events.any((e) => e.type == EventType.task);
+    final appointmentEmoji = events
+        .where((e) => e.type == EventType.appointment)
+        .firstOrNull
+        ?.appointment
+        ?.recipient
+        ?.avatarEmoji;
+    final isWeekend = day.weekday == 6 || day.weekday == 7;
+
+    Color bgColor = Colors.transparent;
+    Color textColor = isWeekend ? AppColors.textSecondary : AppColors.textPrimary;
+
+    if (isSelected) {
+      bgColor = AppColors.primary;
+      textColor = Colors.white;
+    } else if (isToday) {
+      bgColor = AppColors.primary.withValues(alpha: 0.15);
+      textColor = AppColors.primaryDark;
+    }
+
+    return Container(
+      margin: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: bgColor,
+        shape: BoxShape.circle,
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            '${day.day}',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: isSelected || isToday ? FontWeight.w700 : FontWeight.w500,
+              color: textColor,
+            ),
+          ),
+          if (events.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (hasAppointment && appointmentEmoji != null)
+                  Text(appointmentEmoji, style: const TextStyle(fontSize: 7)),
+                if (hasAppointment && appointmentEmoji == null)
+                  Container(
+                    width: 5, height: 5,
+                    decoration: const BoxDecoration(
+                      color: AppColors.coral, shape: BoxShape.circle,
+                    ),
+                  ),
+                if (hasTask)
+                  Container(
+                    width: 5, height: 5,
+                    margin: const EdgeInsets.only(left: 1),
+                    decoration: const BoxDecoration(
+                      color: AppColors.blue, shape: BoxShape.circle,
+                    ),
+                  ),
+                if (events.length > 1)
+                  Container(
+                    margin: const EdgeInsets.only(left: 1),
+                    padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 0.5),
+                    decoration: BoxDecoration(
+                      color: AppColors.textTertiary,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      '+${events.length - 1}',
+                      style: const TextStyle(fontSize: 6, color: Colors.white),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// 任务紧凑卡片
+class _TaskCardCompact extends ConsumerWidget {
+  final FamilyTask task;
+  final String familyId;
+
+  const _TaskCardCompact({required this.task, required this.familyId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final recipient = task.recipient;
+    final recipientEmoji = recipient?.avatarEmoji ?? '';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(color: AppColors.shadowSoft, blurRadius: 8, offset: Offset(0, 2)),
+          BoxShadow(color: AppColors.shadowSoft2, blurRadius: 4, offset: Offset(0, 1)),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            // 左侧：复诊色块标识
+            Container(
+              width: 4,
+              height: 48,
+              decoration: BoxDecoration(
+                color: AppColors.blue,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(width: 12),
+            // 中间内容
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      if (recipientEmoji.isNotEmpty) ...[
+                        Text(recipientEmoji, style: const TextStyle(fontSize: 16)),
+                        const SizedBox(width: 4),
+                      ],
+                      Expanded(
+                        child: Text(
+                          task.title,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      // 频率标签
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: AppColors.blue.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          task.frequencyLabel,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppColors.blue,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      if (task.scheduledTime != null) ...[
+                        const SizedBox(width: 6),
+                        Text(
+                          task.scheduledTime!,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                      if (task.assignee != null) ...[
+                        const SizedBox(width: 8),
+                        const Icon(Icons.person_outline_rounded,
+                            size: 12, color: AppColors.textTertiary),
+                        const SizedBox(width: 2),
+                        Text(
+                          task.assignee!.name,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  if (task.note != null && task.note!.isNotEmpty) ...[
+                    const SizedBox(height: 3),
+                    Text(
+                      task.note!,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textTertiary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            // 右侧：完成按钮
+            if (task.isPending)
+              _CompleteBtn(task: task, familyId: familyId),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 任务完成按钮
+class _CompleteBtn extends ConsumerWidget {
+  final FamilyTask task;
+  final String familyId;
+
+  const _CompleteBtn({required this.task, required this.familyId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return InkWell(
+      onTap: () => _showCompleteDialog(context, ref),
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: AppColors.success.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: const Icon(
+          Icons.check_rounded,
+          color: AppColors.success,
+          size: 20,
+        ),
+      ),
+    );
+  }
+
+  void _showCompleteDialog(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('确认完成'),
+        content: Text('确定已完成任务"${task.title}"吗？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('取消'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+            ),
+            onPressed: () async {
+              Navigator.pop(context);
+              try {
+                final dio = ref.read(dioProvider);
+                await dio.post('/family-tasks/${task.id}/complete',
+                    queryParameters: {'familyId': familyId});
+                ref.invalidate(familyTasksProvider(familyId));
+                ref.invalidate(upcomingTasksProvider(familyId));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('任务已完成')),
+                );
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('操作失败: $e')),
+                  );
+                }
+              }
+            },
+            child: const Text('确认', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// 操作按钮
 class _ActionBtn extends StatelessWidget {
   final IconData icon;
@@ -694,3 +1118,139 @@ class _ActionBtn extends StatelessWidget {
     );
   }
 }
+
+/// 添加选项底部弹层
+class _AddBottomSheet extends StatelessWidget {
+  final VoidCallback onAddAppointment;
+  final VoidCallback onAddTask;
+  final VoidCallback onViewTasks;
+
+  const _AddBottomSheet({
+    required this.onAddAppointment,
+    required this.onAddTask,
+    required this.onViewTasks,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                '添加',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _AddSheetItem(
+                      emoji: '🏥',
+                      label: '添加复诊',
+                      color: AppColors.coral,
+                      onTap: onAddAppointment,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _AddSheetItem(
+                      emoji: '📝',
+                      label: '添加任务',
+                      color: AppColors.blue,
+                      onTap: onAddTask,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: _AddSheetItem(
+                  emoji: '📋',
+                  label: '查看所有任务',
+                  color: AppColors.primary,
+                  onTap: onViewTasks,
+                  wide: true,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AddSheetItem extends StatelessWidget {
+  final String emoji;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+  final bool wide;
+
+  const _AddSheetItem({
+    required this.emoji,
+    required this.label,
+    required this.color,
+    required this.onTap,
+    this.wide = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: color.withValues(alpha: 0.2),
+          ),
+        ),
+        child: Column(
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 28)),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+

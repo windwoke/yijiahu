@@ -13,6 +13,7 @@ import '../../../core/network/api_client.dart';
 import '../../providers/providers.dart';
 import '../../widgets/sos_button.dart';
 import '../../widgets/medication_check_in_card.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -308,15 +309,124 @@ class HomePage extends ConsumerWidget {
             sliver: SliverList(
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
-                  final recipient = recipients[index];
-                  return _buildRecipientSection(context, ref, recipient);
+                  // 前两个区块：日历摘要
+                  if (index == 0) {
+                    return _buildCalendarSummarySection(context, ref);
+                  }
+                  // 照护对象列表
+                  final recipientIndex = index - 1;
+                  if (recipientIndex < recipients.length) {
+                    return _buildRecipientSection(context, ref, recipients[recipientIndex]);
+                  }
+                  return const SizedBox.shrink();
                 },
-                childCount: recipients.length,
+                childCount: recipients.length + 1,
               ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildCalendarSummarySection(BuildContext context, WidgetRef ref) {
+    final family = ref.watch(currentFamilyProvider);
+    if (family == null) return const SizedBox.shrink();
+
+    final now = DateTime.now();
+    final query = CalendarQuery(
+      familyId: family.id,
+      year: now.year,
+      month: now.month,
+    );
+    final appointmentsAsync = ref.watch(calendarAppointmentsProvider(query));
+    final tasksAsync = ref.watch(upcomingTasksProvider(family.id));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 复诊提醒
+        appointmentsAsync.when(
+          data: (appointments) {
+            final upcoming = appointments.where((a) =>
+                a.status == 'upcoming' &&
+                a.appointmentTime.isAfter(now) &&
+                a.appointmentTime.isBefore(now.add(const Duration(days: 7))));
+            if (upcoming.isEmpty) return const SizedBox.shrink();
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSectionHeader('📅', '复诊提醒', AppColors.coral, () {
+                  context.go(AppRoutes.calendar);
+                }),
+                const SizedBox(height: 8),
+                ...upcoming.take(2).map((a) => _AppointmentHomeCard(appointment: a)),
+                const SizedBox(height: 20),
+              ],
+            );
+          },
+          loading: () => const SizedBox.shrink(),
+          error: (_, __) => const SizedBox.shrink(),
+        ),
+        // 今日任务
+        tasksAsync.when(
+          data: (tasks) {
+            final pending = tasks.where((t) => t.status == 'pending').toList();
+            if (pending.isEmpty) return const SizedBox.shrink();
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSectionHeader('📝', '今日任务', AppColors.blue, () {
+                  context.push(AppRoutes.familyTasks);
+                }),
+                const SizedBox(height: 8),
+                ...pending.take(3).map((t) => _TaskHomeCard(task: t, familyId: family.id)),
+                const SizedBox(height: 20),
+              ],
+            );
+          },
+          loading: () => const SizedBox.shrink(),
+          error: (_, __) => const SizedBox.shrink(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSectionHeader(String emoji, String title, Color color, VoidCallback onSeeAll) {
+    return Row(
+      children: [
+        Text(emoji, style: const TextStyle(fontSize: 16)),
+        const SizedBox(width: 6),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const Spacer(),
+        InkWell(
+          onTap: onSeeAll,
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Row(
+              children: [
+                Text(
+                  '查看全部',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: color,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Icon(Icons.chevron_right_rounded, size: 16, color: color),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -480,6 +590,282 @@ class HomePage extends ConsumerWidget {
               ),
             ),
           ) ?? const SizedBox(width: 48),
+        ],
+      ),
+    );
+  }
+}
+
+/// 首页复诊卡片（紧凑）
+class _AppointmentHomeCard extends StatelessWidget {
+  final Appointment appointment;
+
+  const _AppointmentHomeCard({required this.appointment});
+
+  @override
+  Widget build(BuildContext context) {
+    final recipient = appointment.recipient;
+    final d = appointment.appointmentTime;
+    final weekdays = ['一', '二', '三', '四', '五', '六', '日'];
+    final dateStr = '${d.month}月${d.day}日（${weekdays[d.weekday - 1]}）';
+    final timeStr = '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(color: AppColors.shadowSoft, blurRadius: 8, offset: Offset(0, 2)),
+        ],
+        border: Border.all(color: AppColors.coral.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        children: [
+          // 左侧色块
+          Container(
+            width: 4,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppColors.coral,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(width: 12),
+          // 内容
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    if (recipient != null) ...[
+                      Text(recipient.avatarEmoji ?? '👤', style: const TextStyle(fontSize: 16)),
+                      const SizedBox(width: 4),
+                      Text(
+                        recipient.name,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Icon(Icons.local_hospital_rounded,
+                        size: 13, color: AppColors.textSecondary),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        appointment.hospital,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          // 右侧日期时间
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                dateStr,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.coral,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.coral.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  timeStr,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.coral,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          // 联系医生
+          if (appointment.doctorPhone != null) ...[
+            const SizedBox(width: 8),
+            InkWell(
+              onTap: () async {
+                final uri = Uri.parse('tel:${appointment.doctorPhone}');
+                if (await canLaunchUrl(uri)) await launchUrl(uri);
+              },
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.coral.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.phone_rounded,
+                    size: 16, color: AppColors.coral),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// 首页任务卡片（紧凑）
+class _TaskHomeCard extends ConsumerWidget {
+  final FamilyTask task;
+  final String familyId;
+
+  const _TaskHomeCard({required this.task, required this.familyId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(color: AppColors.shadowSoft, blurRadius: 8, offset: Offset(0, 2)),
+        ],
+        border: Border.all(color: AppColors.blue.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        children: [
+          // 左侧色块
+          Container(
+            width: 4,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppColors.blue,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(width: 12),
+          // 内容
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    if (task.recipient != null) ...[
+                      Text(task.recipient!.avatarEmoji ?? '👤',
+                          style: const TextStyle(fontSize: 16)),
+                      const SizedBox(width: 4),
+                    ],
+                    Expanded(
+                      child: Text(
+                        task.title,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: AppColors.blue.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        task.frequencyLabel,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.blue,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    if (task.scheduledTime != null) ...[
+                      const SizedBox(width: 6),
+                      Text(
+                        task.scheduledTime!,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                    if (task.assignee != null) ...[
+                      const SizedBox(width: 8),
+                      const Icon(Icons.person_outline_rounded,
+                          size: 12, color: AppColors.textTertiary),
+                      const SizedBox(width: 2),
+                      Text(
+                        task.assignee!.name,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+          // 完成按钮
+          InkWell(
+            onTap: () async {
+              try {
+                final dio = ref.read(dioProvider);
+                await dio.post('/family-tasks/${task.id}/complete',
+                    queryParameters: {'familyId': familyId});
+                ref.invalidate(upcomingTasksProvider(familyId));
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('任务已完成')),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('操作失败: $e')),
+                  );
+                }
+              }
+            },
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.success.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.check_rounded,
+                  size: 18, color: AppColors.success),
+            ),
+          ),
         ],
       ),
     );

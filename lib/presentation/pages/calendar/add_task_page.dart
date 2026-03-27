@@ -383,29 +383,35 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
       children: [
         const _SectionTitle('选择日期（每月）'),
         SizedBox(
-          height: 100,
-          child: SingleChildScrollView(
-            child: Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: List.generate(31, (i) {
-                final day = i + 1;
-                final selected = _scheduledDays.contains(day);
-                return _DayChip(
-                  day: day,
-                  selected: selected,
-                  onTap: () {
-                    setState(() {
-                      if (selected) {
-                        _scheduledDays.remove(day);
-                      } else {
-                        _scheduledDays.add(day);
-                      }
-                    });
-                  },
-                );
-              }),
+          height: 76,
+          child: GridView.builder(
+            scrollDirection: Axis.vertical,
+            physics: const BouncingScrollPhysics(),
+            padding: EdgeInsets.zero,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 7,
+              mainAxisSpacing: 6,
+              crossAxisSpacing: 6,
+              childAspectRatio: 1.1,
             ),
+            itemCount: 31,
+            itemBuilder: (context, i) {
+              final day = i + 1;
+              final selected = _scheduledDays.contains(day);
+              return _DayChip(
+                day: day,
+                selected: selected,
+                onTap: () {
+                  setState(() {
+                    if (selected) {
+                      _scheduledDays.remove(day);
+                    } else {
+                      _scheduledDays.add(day);
+                    }
+                  });
+                },
+              );
+            },
           ),
         ),
       ],

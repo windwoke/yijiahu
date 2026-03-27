@@ -23,7 +23,40 @@ class CalendarPage extends ConsumerStatefulWidget {
 class _CalendarPageState extends ConsumerState<CalendarPage> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
-  bool _showList = true;
+  bool _showList = false;
+
+  // === 详情弹层方法 ===
+
+  void _showAppointmentDetail(BuildContext ctx, Appointment appt) {
+    showModalBottomSheet(
+      context: ctx,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (c) => _AppointmentDetailSheet(appointment: appt),
+    );
+  }
+
+  void _showTaskDetail(BuildContext ctx, FamilyTask task) {
+    showModalBottomSheet(
+      context: ctx,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (c) => _TaskDetailSheet(task: task, familyId: familyId, onComplete: () {
+        Navigator.pop(c);
+        _refresh();
+      }),
+    );
+  }
+
+  void _refresh() {
+    final now = DateTime.now();
+    final q = CalendarQuery(familyId: familyId, year: now.year, month: now.month);
+    ref.invalidate(calendarEventsProvider(q));
+    ref.invalidate(familyTasksProvider(familyId));
+    ref.invalidate(upcomingTasksProvider(familyId));
+  }
+
+  String get familyId => ref.read(currentFamilyProvider)?.id ?? '';
 
   @override
   void initState() {
@@ -72,7 +105,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
           eventsAsync.when(
             data: (events) => _buildCalendar(events),
             loading: () => _buildCalendar({}),
-            error: (_, __) => _buildCalendar({}),
+            error: (e, st) => _buildCalendar({}),
           ),
           const Divider(height: 1, color: AppColors.border),
           Flexible(child: _buildEventsSection(familyId, eventsAsync)),
@@ -128,6 +161,12 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
         setState(() {
           _selectedDay = selectedDay;
           _focusedDay = focusedDay;
+        });
+      },
+      onPageChanged: (focusedDay) {
+        setState(() {
+          _focusedDay = focusedDay;
+          _selectedDay = focusedDay;
         });
       },
       locale: 'zh_CN',
@@ -195,12 +234,19 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
           child: eventsAsync.when(
             data: (allEvents) {
               if (_showList) {
-                return _EventListView(allEvents: allEvents, familyId: familyId);
+                return _EventListView(
+                  allEvents: allEvents,
+                  familyId: familyId,
+                  showAppointmentDetail: (a) => _showAppointmentDetail(context, a),
+                  showTaskDetail: (t) => _showTaskDetail(context, t),
+                );
               } else {
                 return _DayEventsView(
                   allEvents: allEvents,
                   familyId: familyId,
                   selectedDay: _selectedDay,
+                  showAppointmentDetail: (a) => _showAppointmentDetail(context, a),
+                  showTaskDetail: (t) => _showTaskDetail(context, t),
                 );
               }
             },
@@ -286,7 +332,9 @@ class _ToggleBtn extends StatelessWidget {
 class _EventListView extends StatelessWidget {
   final Map<DateTime, List<CalendarEvent>> allEvents;
   final String familyId;
-  const _EventListView({required this.allEvents, required this.familyId});
+  final void Function(Appointment) showAppointmentDetail;
+  final void Function(FamilyTask) showTaskDetail;
+  const _EventListView({required this.allEvents, required this.familyId, required this.showAppointmentDetail, required this.showTaskDetail});
 
   @override
   Widget build(BuildContext context) {
@@ -333,9 +381,17 @@ class _EventListView extends StatelessWidget {
             ),
             ...items.map((item) {
               if (item.ev.type == EventType.appointment) {
-                return _AppointmentCard(appointment: item.ev.appointment!, familyId: familyId);
+                return _AppointmentCard(
+                  appointment: item.ev.appointment!,
+                  familyId: familyId,
+                  onTap: () => showAppointmentDetail(item.ev.appointment!),
+                );
               } else {
-                return _TaskCard(task: item.ev.task!, familyId: familyId);
+                return _TaskCard(
+                  task: item.ev.task!,
+                  familyId: familyId,
+                  onTap: () => showTaskDetail(item.ev.task!),
+                );
               }
             }),
           ],
@@ -350,7 +406,9 @@ class _DayEventsView extends StatelessWidget {
   final Map<DateTime, List<CalendarEvent>> allEvents;
   final String familyId;
   final DateTime? selectedDay;
-  const _DayEventsView({required this.allEvents, required this.familyId, this.selectedDay});
+  final void Function(Appointment) showAppointmentDetail;
+  final void Function(FamilyTask) showTaskDetail;
+  const _DayEventsView({required this.allEvents, required this.familyId, this.selectedDay, required this.showAppointmentDetail, required this.showTaskDetail});
 
   @override
   Widget build(BuildContext context) {
@@ -367,14 +425,22 @@ class _DayEventsView extends StatelessWidget {
           const _SectionTag(label: '复诊', color: AppColors.coral),
           const SizedBox(height: 8),
           ...dayEvents.where((e) => e.type == EventType.appointment)
-              .map((e) => _AppointmentCard(appointment: e.appointment!, familyId: familyId)),
+              .map((e) => _AppointmentCard(
+                appointment: e.appointment!,
+                familyId: familyId,
+                onTap: () => showAppointmentDetail(e.appointment!),
+              )),
           const SizedBox(height: 12),
         ],
         if (dayEvents.any((e) => e.type == EventType.task)) ...[
           const _SectionTag(label: '任务', color: AppColors.blue),
           const SizedBox(height: 8),
           ...dayEvents.where((e) => e.type == EventType.task)
-              .map((e) => _TaskCard(task: e.task!, familyId: familyId)),
+              .map((e) => _TaskCard(
+                task: e.task!,
+                familyId: familyId,
+                onTap: () => showTaskDetail(e.task!),
+              )),
         ],
       ],
     );
@@ -408,14 +474,15 @@ class _SectionTag extends StatelessWidget {
 class _AppointmentCard extends StatelessWidget {
   final Appointment appointment;
   final String familyId;
-  const _AppointmentCard({required this.appointment, required this.familyId});
+  final VoidCallback? onTap;
+  const _AppointmentCard({required this.appointment, required this.familyId, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final r = appointment.recipient;
     final d = appointment.appointmentTime;
     const wd = ['一', '二', '三', '四', '五', '六', '日'];
-    return Container(
+    final content = Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -480,6 +547,10 @@ class _AppointmentCard extends StatelessWidget {
         ],
       ),
     );
+    if (onTap != null) {
+      return InkWell(onTap: onTap, borderRadius: BorderRadius.circular(12), child: content);
+    }
+    return content;
   }
 }
 
@@ -487,11 +558,12 @@ class _AppointmentCard extends StatelessWidget {
 class _TaskCard extends ConsumerWidget {
   final FamilyTask task;
   final String familyId;
-  const _TaskCard({required this.task, required this.familyId});
+  final VoidCallback? onTap;
+  const _TaskCard({required this.task, required this.familyId, this.onTap});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Container(
+    final content = Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -510,7 +582,7 @@ class _TaskCard extends ConsumerWidget {
               children: [
                 Row(
                   children: [
-                    Text(task.recipient?.avatarEmoji ?? '', style: const TextStyle(fontSize: 16)),
+                    Text(task.recipient?.avatarEmoji ?? '👤', style: const TextStyle(fontSize: 16)),
                     if (task.recipient != null) const SizedBox(width: 4),
                     Expanded(child: Text(task.title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary), maxLines: 1, overflow: TextOverflow.ellipsis)),
                   ],
@@ -540,6 +612,10 @@ class _TaskCard extends ConsumerWidget {
         ],
       ),
     );
+    if (onTap != null) {
+      return InkWell(onTap: onTap, borderRadius: BorderRadius.circular(12), child: content);
+    }
+    return content;
   }
 
   void _complete(BuildContext context, WidgetRef ref) async {
@@ -599,6 +675,294 @@ class _AddBtn extends StatelessWidget {
           border: Border.all(color: color.withValues(alpha: 0.2)),
         ),
         child: Column(children: [Text(emoji, style: const TextStyle(fontSize: 28)), const SizedBox(height: 6), Text(label, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: color))]),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 详情弹层
+// ═══════════════════════════════════════════════════════════════
+
+/// 复诊详情弹层
+class _AppointmentDetailSheet extends StatelessWidget {
+  final Appointment appointment;
+  const _AppointmentDetailSheet({required this.appointment});
+
+  @override
+  Widget build(BuildContext context) {
+    final r = appointment.recipient;
+    final d = appointment.appointmentTime;
+    const wd = ['一', '二', '三', '四', '五', '六', '日'];
+
+    return Container(
+      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // 拖动条
+          Container(margin: const EdgeInsets.only(top: 12), width: 36, height: 4, decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2))),
+
+          Flexible(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              shrinkWrap: true,
+              physics: const BouncingScrollPhysics(),
+              children: [
+                // 标题行
+                Row(
+                  children: [
+                    Text(r?.avatarEmoji ?? '👤', style: const TextStyle(fontSize: 24)),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(r?.name ?? '', style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                          const SizedBox(height: 2),
+                          Row(
+                            children: [
+                              Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), decoration: BoxDecoration(color: AppColors.coral.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
+                                  child: const Text('复诊', style: TextStyle(fontSize: 12, color: AppColors.coral, fontWeight: FontWeight.w600))),
+                              const SizedBox(width: 6),
+                              Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
+                                  child: Text(appointment.statusLabel, style: const TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w600))),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+                const Divider(color: AppColors.borderLight, height: 1),
+
+                // 复诊时间
+                _DetailRow(icon: Icons.schedule_rounded, label: '复诊时间',
+                    value: '${d.year}年${d.month}月${d.day}日（${wd[d.weekday - 1]}） ${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}'),
+
+                // 医院
+                _DetailRow(icon: Icons.local_hospital_rounded, label: '就诊医院', value: appointment.hospital),
+
+                // 科室
+                if (appointment.department != null) _DetailRow(icon: Icons.medical_services_rounded, label: '科室', value: appointment.department!),
+
+                // 医生
+                if (appointment.doctorName != null) _DetailRow(icon: Icons.person_rounded, label: '主治医生', value: appointment.doctorName!),
+
+                // 挂号序号
+                if (appointment.appointmentNo != null) _DetailRow(icon: Icons.tag_rounded, label: '挂号序号', value: appointment.appointmentNo!),
+
+                // 费用
+                if (appointment.fee != null) _DetailRow(icon: Icons.payments_rounded, label: '挂号费用', value: '¥${appointment.fee!.toStringAsFixed(2)}'),
+
+                // 地址
+                if (appointment.address != null) _DetailRow(icon: Icons.location_on_rounded, label: '就诊地址', value: appointment.address!),
+
+                // 就诊目的
+                if (appointment.purpose != null) _DetailRow(icon: Icons.assignment_rounded, label: '就诊目的', value: appointment.purpose!),
+
+                // 接送人
+                if (appointment.assignedDriver != null) _DetailRow(icon: Icons.directions_car_rounded, label: '接送人', value: appointment.assignedDriver!.name),
+
+                // 提醒设置
+                _DetailRow(icon: Icons.notifications_rounded, label: '提醒设置',
+                    value: [if (appointment.reminder48h) '48小时前', if (appointment.reminder24h) '24小时前'].join(' · ')),
+
+                // 备注
+                if (appointment.note != null) _DetailRow(icon: Icons.note_rounded, label: '备注', value: appointment.note!),
+
+                const SizedBox(height: 20),
+
+                // 底部操作按钮
+                Row(
+                  children: [
+                    if (appointment.doctorPhone != null) Expanded(child: _SheetActBtn(icon: Icons.phone_rounded, label: '联系医生', color: AppColors.primary,
+                        onTap: () async { final u = Uri.parse('tel:${appointment.doctorPhone}'); if (await canLaunchUrl(u)) await launchUrl(u); })),
+                    if (appointment.doctorPhone != null && appointment.address != null) const SizedBox(width: 10),
+                    if (appointment.address != null) Expanded(child: _SheetActBtn(icon: Icons.map_rounded, label: '导航', color: AppColors.blue,
+                        onTap: () async { final addr = Uri.parse('https://maps.apple.com/?q=${Uri.encodeComponent(appointment.address!)}'); if (await canLaunchUrl(addr)) await launchUrl(addr, mode: LaunchMode.externalApplication); })),
+                    const SizedBox(width: 10),
+                    Expanded(child: _SheetActBtn(icon: Icons.close_rounded, label: '关闭', color: AppColors.textTertiary, onTap: () => Navigator.pop(context))),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 任务详情弹层
+class _TaskDetailSheet extends ConsumerWidget {
+  final FamilyTask task;
+  final String familyId;
+  final VoidCallback onComplete;
+  const _TaskDetailSheet({required this.task, required this.familyId, required this.onComplete});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    const weekdays = ['一', '二', '三', '四', '五', '六', '日'];
+
+    String dayLabel() {
+      if (task.scheduledDay == null || task.scheduledDay!.isEmpty) return '';
+      if (task.frequency == 'weekly') {
+        return task.scheduledDay!.map((d) => '周${weekdays[d - 1]}').join('、');
+      }
+      return task.scheduledDay!.map((d) => '$d日').join('、');
+    }
+
+    return Container(
+      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(margin: const EdgeInsets.only(top: 12), width: 36, height: 4, decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2))),
+
+          Flexible(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              shrinkWrap: true,
+              physics: const BouncingScrollPhysics(),
+              children: [
+                // 标题行
+                Row(
+                  children: [
+                    Text(task.recipient?.avatarEmoji ?? '👤', style: const TextStyle(fontSize: 24)),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(task.title, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.textPrimary), maxLines: 2, overflow: TextOverflow.ellipsis),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), decoration: BoxDecoration(color: AppColors.blue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
+                                  child: Text(task.frequencyLabel, style: const TextStyle(fontSize: 12, color: AppColors.blue, fontWeight: FontWeight.w600))),
+                              const SizedBox(width: 6),
+                              Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
+                                  child: Text(task.statusLabel, style: const TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w600))),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+                const Divider(color: AppColors.borderLight, height: 1),
+
+                // 照护对象
+                if (task.recipient != null) _DetailRow(icon: Icons.people_rounded, label: '照护对象', value: task.recipient!.name),
+
+                // 执行时间
+                _DetailRow(icon: Icons.schedule_rounded, label: '执行时间',
+                    value: '${dayLabel()} ${task.scheduledTime ?? ''}'.trim()),
+
+                // 下次到期
+                if (task.nextDueAt != null) _DetailRow(icon: Icons.event_rounded, label: '下次到期', value: task.displayDueAt),
+
+                // 负责人
+                if (task.assignee != null) _DetailRow(icon: Icons.person_rounded, label: '负责人', value: task.assignee!.name),
+
+                // 描述
+                if (task.description != null) _DetailRow(icon: Icons.description_rounded, label: '任务描述', value: task.description!),
+
+                // 备注
+                if (task.note != null) _DetailRow(icon: Icons.note_rounded, label: '备注', value: task.note!),
+
+                const SizedBox(height: 20),
+
+                // 底部操作
+                Row(
+                  children: [
+                    if (task.isPending) Expanded(child: _SheetActBtn(icon: Icons.check_circle_rounded, label: '标记完成', color: AppColors.success,
+                        onTap: () => _complete(context, ref))),
+                    if (task.isPending) const SizedBox(width: 10),
+                    Expanded(child: _SheetActBtn(icon: Icons.close_rounded, label: '关闭', color: AppColors.textTertiary, onTap: () => Navigator.pop(context))),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _complete(BuildContext ctx, WidgetRef ref) async {
+    try {
+      final dio = ref.read(dioProvider);
+      await dio.post('/family-tasks/${task.id}/complete', queryParameters: {'familyId': familyId});
+      if (!ctx.mounted) return;
+      onComplete();
+      ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('任务已完成')));
+    } catch (e) {
+      if (!ctx.mounted) return;
+      ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('操作失败: $e')));
+    }
+  }
+}
+
+/// 详情行
+class _DetailRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  const _DetailRow({required this.icon, required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 18, color: AppColors.textTertiary),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 68,
+            child: Text(label, style: const TextStyle(fontSize: 13, color: AppColors.textTertiary)),
+          ),
+          Expanded(
+            child: Text(value, style: const TextStyle(fontSize: 14, color: AppColors.textPrimary)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 弹层操作按钮
+class _SheetActBtn extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+  const _SheetActBtn({required this.icon, required this.label, required this.color, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(icon, color: color, size: 18), const SizedBox(width: 6), Text(label, style: TextStyle(fontSize: 14, color: color, fontWeight: FontWeight.w600))]),
       ),
     );
   }

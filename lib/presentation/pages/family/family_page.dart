@@ -697,7 +697,9 @@ class FamilyPage extends ConsumerWidget {
     final displayPhone = isCurrentUser
         ? currentUser?.phone
         : section.member?.phone;
-    final isOwner = section.member?.role == 'owner';
+    final memberRole = models.FamilyMemberRole.fromString(section.member?.role);
+    final roleLabel = section.isRecipient ? '照护对象' : memberRole.label;
+    final isElevated = !section.isRecipient && (section.member?.role == 'owner' || section.member?.role == 'coordinator');
 
     return GestureDetector(
       onTap: section.isRecipient
@@ -817,19 +819,13 @@ class FamilyPage extends ConsumerWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            if (section.isRecipient)
-                              const SizedBox.shrink()
-                            else if (isOwner)
+                            if (!section.isRecipient && isElevated)
                               const Icon(Icons.star,
                                   size: 12, color: AppColors.primary),
-                            if (!section.isRecipient && isOwner)
+                            if (!section.isRecipient && isElevated)
                               const SizedBox(width: 3),
                             Text(
-                              section.isRecipient
-                                  ? '照护对象'
-                                  : isOwner
-                                      ? '管理员'
-                                      : '成员',
+                              roleLabel,
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
@@ -954,21 +950,24 @@ class FamilyPage extends ConsumerWidget {
     if (section.isRecipient) {
       text = '照护对象';
       bgColor = AppColors.coral.withValues(alpha: 0.08);
-      textColor = AppColors.primary;
+      textColor = AppColors.coral;
     } else {
-      switch (section.member?.role) {
-        case 'owner':
-          text = '主要负责日常给药、照护日志';
+      final role = models.FamilyMemberRole.fromString(section.member?.role);
+      switch (role) {
+        case models.FamilyMemberRole.owner:
+          text = '家庭管理员，管理所有设置和成员';
           bgColor = AppColors.primary.withValues(alpha: 0.08);
           textColor = AppColors.primary;
-          break;
-        case 'admin':
-          text = '协助管理用药、记录照护日志';
+        case models.FamilyMemberRole.coordinator:
+          text = '协调管理，添加任务/复诊/成员';
           bgColor = AppColors.primary.withValues(alpha: 0.08);
           textColor = AppColors.primary;
-          break;
-        default:
-          text = '参与照护记录';
+        case models.FamilyMemberRole.caregiver:
+          text = '照护记录，完成分配给自己的任务';
+          bgColor = AppColors.success.withValues(alpha: 0.08);
+          textColor = AppColors.success;
+        case models.FamilyMemberRole.guest:
+          text = '查看记录，添加照护日志';
           bgColor = AppColors.surfaceContainerLow;
           textColor = AppColors.textSecondary;
       }

@@ -368,11 +368,19 @@ class HomePage extends ConsumerWidget {
           loading: () => const SizedBox.shrink(),
           error: (_, __) => const SizedBox.shrink(),
         ),
-        // 今日任务
+        // 今日任务：按 nextDueAt 是否到期过滤（不用 status，周期任务 status 永远是 pending）
         tasksAsync.when(
           data: (tasks) {
-            final pending = tasks.where((t) => t.status == 'pending').toList();
-            if (pending.isEmpty) return const SizedBox.shrink();
+            final todayStart = DateTime(now.year, now.month, now.day);
+            final todayEnd = todayStart.add(const Duration(days: 1));
+            final todayTasks = tasks.where((t) {
+              if (t.nextDueAt == null) return false;
+              if (t.status == 'completed') return false; // 一次性任务已完成
+              // 今天内到期的任务
+              return t.nextDueAt!.isAfter(todayStart.subtract(const Duration(seconds: 1))) &&
+                  t.nextDueAt!.isBefore(todayEnd);
+            }).toList();
+            if (todayTasks.isEmpty) return const SizedBox.shrink();
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -380,7 +388,7 @@ class HomePage extends ConsumerWidget {
                   context.push(AppRoutes.familyTasks);
                 }),
                 const SizedBox(height: 8),
-                ...pending.take(3).map((t) => _TaskHomeCard(task: t, familyId: family.id)),
+                ...todayTasks.take(3).map((t) => _TaskHomeCard(task: t, familyId: family.id)),
                 const SizedBox(height: 20),
               ],
             );

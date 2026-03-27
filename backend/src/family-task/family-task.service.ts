@@ -21,12 +21,13 @@ export class FamilyTaskService {
     });
   }
 
-  /** 即将到期的任务（未来7天） */
+  /** 即将到期的任务（未来7天，排除今天已完成的周期任务实例） */
   async findUpcoming(familyId: string) {
     const now = new Date();
     const future = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-    return this.taskRepo.find({
+    // 查询所有 pending 且未来7天到期的任务
+    const tasks = await this.taskRepo.find({
       where: {
         familyId,
         status: TaskStatus.PENDING,
@@ -35,6 +36,34 @@ export class FamilyTaskService {
       relations: ['assignee', 'recipient', 'createdBy'],
       order: { nextDueAt: 'ASC' },
     });
+
+    if (tasks.length === 0) return [];
+
+    // 获取今天的北京时区日期（YYYY-MM-DD）
+    const todayStr = this.toLocalDateStr(now);
+
+    // 查询这些任务中今天已完成的记录
+    const taskIds = tasks.map(t => t.id);
+    const todayCompletions = await this.completionRepo
+      .createQueryBuilder('tc')
+      .select('tc.taskId', 'taskId')
+      .where('tc.taskId IN (:...taskIds)', { taskIds })
+      .andWhere('tc.scheduledDate = :today', { today: todayStr })
+      .getRawMany();
+
+    const completedTodaySet = new Set(todayCompletions.map(c => c.taskId));
+
+    // 周期任务如果今天已完成，nextDueAt 已在 complete() 时更新为下一个到期，
+    // 直接返回即可（不用再调用 calculateNextDue，避免重复推进）
+    return tasks.filter(task => !completedTodaySet.has(task.id));
+  }
+
+  /** 将 Date 转换为北京时区 YYYY-MM-DD 字符串 */
+  private toLocalDateStr(date: Date): string {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
   }
 
   /** 按月查询 */
@@ -75,6 +104,7 @@ export class FamilyTaskService {
         completionMap.get(c.taskId)!.add(c.scheduledDate);
       }
     }
+
 
     // 展开 recurring 任务
     const result: any[] = [];
@@ -129,12 +159,12 @@ export class FamilyTaskService {
         if (completedDates.has(dateKey)) {
           instance.status = TaskStatus.COMPLETED;
         }
-        // 设置为当天的具体时间
+        // 设置 nextDueAt：使用 UTC 12:00 避免时区跨越导致日期偏移
         if (task.scheduledTime) {
           const [h, m] = task.scheduledTime.split(':');
-          instance.nextDueAt = new Date(year, month - 1, day, parseInt(h), parseInt(m));
+          instance.nextDueAt = new Date(Date.UTC(year, month - 1, day, parseInt(h), parseInt(m)));
         } else {
-          instance.nextDueAt = date;
+          instance.nextDueAt = new Date(Date.UTC(year, month - 1, day, 12, 0));
         }
         results.push(instance);
       }
@@ -145,12 +175,14 @@ export class FamilyTaskService {
 
   /** 创建任务 */
   async create(dto: CreateFamilyTaskDto, userId: string) {
-    // 计算 nextDueAt
+    // 计算 nextDueAt：无 scheduledTime 时用 UTC 12:00 避免时区跨越
     let nextDueAt = new Date();
     if (dto.scheduledTime) {
       const [h, m] = dto.scheduledTime.split(':');
       nextDueAt = new Date();
       nextDueAt.setHours(parseInt(h), parseInt(m), 0, 0);
+    } else {
+      nextDueAt.setHours(12, 0, 0, 0);
     }
 
     const task = this.taskRepo.create({
@@ -203,7 +235,7 @@ export class FamilyTaskService {
     return task;
   }
 
-  /** 计算下次到期时间 */
+  /** 计算下次到期时间（无 scheduledTime 时用 UTC 12:00 避免时区日期偏移） */
   private calculateNextDue(task: FamilyTask): Date {
     const now = new Date();
     const next = new Date(now);
@@ -231,6 +263,9 @@ export class FamilyTaskService {
     if (task.scheduledTime) {
       const [h, m] = task.scheduledTime.split(':');
       next.setHours(parseInt(h), parseInt(m), 0, 0);
+    } else {
+      // 无具体时间 → 用 UTC 12:00，跨时区日期不变
+      next.setHours(12, 0, 0, 0);
     }
 
     return next;

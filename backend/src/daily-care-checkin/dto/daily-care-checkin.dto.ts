@@ -3,6 +3,11 @@ import { IsNotEmpty, IsOptional, IsString, IsUUID, IsInt, Min } from 'class-vali
 import { CheckinStatus } from '../entities/daily-care-checkin.entity';
 
 export class CreateDailyCareCheckinDto {
+  @ApiProperty({ description: '家庭ID（必填，用于多家庭隔离）' })
+  @IsNotEmpty()
+  @IsUUID()
+  familyId: string;
+
   @ApiProperty({ description: '照护对象ID' })
   @IsNotEmpty()
   @IsUUID()

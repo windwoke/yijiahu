@@ -1,16 +1,28 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between } from 'typeorm';
 import { DailyCareCheckin } from './entities/daily-care-checkin.entity';
 import { CreateDailyCareCheckinDto } from './dto/daily-care-checkin.dto';
 import { MedicationLog } from '../medication-log/entities/medication-log.entity';
+import { CareRecipient } from '../care-recipient/entities/care-recipient.entity';
 
 @Injectable()
 export class DailyCareCheckinService {
   constructor(
     @InjectRepository(DailyCareCheckin) private repo: Repository<DailyCareCheckin>,
     @InjectRepository(MedicationLog) private medLogRepo: Repository<MedicationLog>,
+    @InjectRepository(CareRecipient) private recipientRepo: Repository<CareRecipient>,
   ) {}
+
+  /** 验证照护对象属于指定家庭 */
+  private async validateRecipientInFamily(recipientId: string, familyId: string): Promise<CareRecipient> {
+    const recipient = await this.recipientRepo.findOne({ where: { id: recipientId } });
+    if (!recipient) throw new NotFoundException('照护对象不存在');
+    if (recipient.familyId !== familyId) {
+      throw new ForbiddenException('该照护对象不属于您的家庭');
+    }
+    return recipient;
+  }
 
   /** 获取指定日期的打卡记录 */
   async findByDate(careRecipientId: string, checkinDate: string) {
@@ -37,6 +49,8 @@ export class DailyCareCheckinService {
 
   /** 创建或更新打卡（upsert）*/
   async upsert(dto: CreateDailyCareCheckinDto, userId: string) {
+    // 验证照护对象归属
+    await this.validateRecipientInFamily(dto.careRecipientId, dto.familyId);
     const existing = await this.repo
       .createQueryBuilder('c')
       .where('c.careRecipientId = :careRecipientId', { careRecipientId: dto.careRecipientId })

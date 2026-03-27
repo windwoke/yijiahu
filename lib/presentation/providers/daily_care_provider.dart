@@ -4,6 +4,7 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/models.dart' as models;
 import '../../core/network/api_client.dart';
+import 'family_provider.dart';
 
 /// 今日打卡状态（首页横幅用，按照护对象 ID 索引）
 final todayCheckinsProvider =
@@ -79,10 +80,12 @@ Future<models.DailyCareCheckin> submitCheckin({
   String? specialNote,
 }) async {
   final dio = ref.read(dioProvider);
+  final familyId = ref.read(currentFamilyProvider)?.id;
   final today = DateTime.now();
   final todayStr =
       '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
   final response = await dio.post('/daily-care-checkins', data: {
+    'familyId': familyId,
     'careRecipientId': careRecipientId,
     'checkinDate': todayStr,
     'status': status.name,

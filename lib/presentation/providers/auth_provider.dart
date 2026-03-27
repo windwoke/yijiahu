@@ -209,6 +209,10 @@ class AuthNotifier extends Notifier<AuthState> {
     _countdownTimer?.cancel();
     await _prefs?.remove(_tokenKey);
     ref.read(currentFamilyProvider.notifier).state = null;
+    // 清除所有数据缓存，确保切换账号后拉取新数据
+    ref.invalidate(myFamiliesProvider);
+    ref.invalidate(careRecipientsProvider);
+    ref.invalidate(familyMembersProvider);
     state = const AuthState();
     debugPrint('[Auth] logout 完成');
   }

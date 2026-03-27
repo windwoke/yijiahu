@@ -180,7 +180,9 @@ final healthTrendsProvider =
 final careRecipientDetailProvider =
     FutureProvider.family<models.CareRecipient, String>((ref, recipientId) async {
   final dio = ref.read(dioProvider);
-  final response = await dio.get('/care-recipients/$recipientId');
+  final familyId = ref.watch(currentFamilyProvider)?.id;
+  final response = await dio.get('/care-recipients/$recipientId',
+      queryParameters: {'familyId': familyId});
   return models.CareRecipient.fromJson(response.data as Map<String, dynamic>);
 });
 

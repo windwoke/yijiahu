@@ -768,22 +768,7 @@ class _SwitchFamilySheet extends ConsumerWidget {
                     padding: const EdgeInsets.only(bottom: 8),
                     child: InkWell(
                       onTap: () {
-                        final oldFamilyId = currentFamily?.id;
                         ref.read(currentFamilyProvider.notifier).state = f;
-
-                        // 清除旧家庭所有缓存
-                        if (oldFamilyId != null) {
-                          ref.invalidate(timelineProvider(
-                            TimelineQuery(familyId: oldFamilyId),
-                          ));
-                          ref.invalidate(familyMembersProvider(oldFamilyId));
-                        }
-
-                        // 刷新新家庭数据 + 家庭列表
-                        ref.invalidate(myFamiliesProvider);
-                        ref.invalidate(careRecipientsProvider);
-                        ref.invalidate(familyMembersProvider(f.id));
-
                         Navigator.pop(context);
                       },
                       borderRadius: BorderRadius.circular(12),

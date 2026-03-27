@@ -24,10 +24,11 @@ export class DailyCareCheckinController {
   @Get('by-recipient')
   @ApiOperation({ summary: '获取照护对象打卡历史（用于时间线）' })
   findByRecipient(
-    @Query('careRecipientId') careRecipientId: string,
+    @Query('careRecipientId') careRecipientId?: string,
+    @Query('familyId') familyId?: string,
     @Query('limit') limit?: number,
   ) {
-    return this.service.findByRecipient(careRecipientId, limit);
+    return this.service.findByRecipient(careRecipientId, familyId, limit);
   }
 
   @Post()

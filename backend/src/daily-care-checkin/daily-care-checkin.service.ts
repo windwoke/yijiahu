@@ -77,13 +77,25 @@ export class DailyCareCheckinService {
     }
   }
 
-  /** 获取照护对象的打卡历史（用于时间线） */
-  async findByRecipient(careRecipientId: string, limit = 30) {
-    return this.repo.find({
-      where: { careRecipientId },
-      relations: ['checkedInBy', 'careRecipient'],
-      order: { checkinDate: 'DESC' },
-      take: limit,
-    });
+  /** 获取照护对象的打卡历史（用于时间线）
+   * @param careRecipientId - 可选，指定照护对象ID
+   * @param familyId - 可选，按家庭筛选（返回该家庭所有照护对象的打卡记录）
+   * @param limit - 返回条数上限
+   */
+  async findByRecipient(careRecipientId?: string, familyId?: string, limit = 30) {
+    const qb = this.repo
+      .createQueryBuilder('c')
+      .leftJoinAndSelect('c.checkedInBy', 'checkedInBy')
+      .leftJoinAndSelect('c.careRecipient', 'careRecipient')
+      .orderBy('c.checkinDate', 'DESC')
+      .take(limit);
+
+    if (careRecipientId) {
+      qb.where('c.careRecipientId = :careRecipientId', { careRecipientId });
+    } else if (familyId) {
+      qb.where('careRecipient.familyId = :familyId', { familyId });
+    }
+
+    return qb.getMany();
   }
 }

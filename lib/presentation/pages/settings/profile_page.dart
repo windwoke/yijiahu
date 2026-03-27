@@ -121,7 +121,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       await ref.read(myFamiliesProvider.future);
       final families = ref.read(myFamiliesProvider).valueOrNull ?? [];
       if (families.isNotEmpty) {
-        ref.read(currentFamilyProvider.notifier).state = families.last;
+        final newFamily = families.last;
+        ref.read(currentFamilyProvider.notifier).state = newFamily;
+        // 刷新新家庭成员列表，确保当前用户出现在列表中
+        ref.invalidate(familyMembersProvider(newFamily.id));
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

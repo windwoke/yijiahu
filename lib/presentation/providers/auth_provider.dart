@@ -86,6 +86,8 @@ class AuthNotifier extends Notifier<AuthState> {
       debugPrint('[Auth] _loadCurrentFamily 响应: $res');
       final data = res.data;
       debugPrint('[Auth] _loadCurrentFamily data: $data');
+      // 登录/切换账号时强制刷新家庭列表缓存，避免显示旧账号的数据
+      ref.invalidate(myFamiliesProvider);
       if (data is Map && data['family'] != null) {
         ref.read(currentFamilyProvider.notifier).state =
             models.Family.fromJson(data['family'] as Map<String, dynamic>);

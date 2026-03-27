@@ -1,4 +1,4 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CareLogAttachmentService } from './care-log-attachment.service';
@@ -12,7 +12,10 @@ export class CareLogAttachmentController {
 
   @Get('care-log/:careLogId')
   @ApiOperation({ summary: '获取日志的所有附件' })
-  findByCareLog(@Param('careLogId') careLogId: string) {
-    return this.service.findByCareLogId(careLogId);
+  findByCareLog(
+    @Param('careLogId') careLogId: string,
+    @Query('familyId') familyId?: string,
+  ) {
+    return this.service.findByCareLogId(careLogId, familyId);
   }
 }

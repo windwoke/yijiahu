@@ -148,48 +148,52 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
   }
 
   Widget _buildCalendar(Map<DateTime, List<CalendarEvent>> events) {
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxHeight: 280),
-      child: TableCalendar<CalendarEvent>(
-        firstDay: DateTime(2020),
-        lastDay: DateTime(2030),
-        focusedDay: _focusedDay,
-        selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-        eventLoader: (day) {
-          final key = DateTime(day.year, day.month, day.day);
-          return events[key] ?? [];
-        },
-        onDaySelected: (selectedDay, focusedDay) {
-          setState(() {
-            _selectedDay = selectedDay;
-            _focusedDay = focusedDay;
-          });
-        },
-        onPageChanged: (focusedDay) {
-          setState(() {
-            _focusedDay = focusedDay;
-            _selectedDay = focusedDay;
-          });
-        },
-        locale: 'zh_CN',
-        daysOfWeekHeight: 24,
-        daysOfWeekStyle: const DaysOfWeekStyle(
-          weekdayStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
-          weekendStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+    // 固定高度 280px，日历超出可内部滚动，6行月份刚好不溢出
+    return SizedBox(
+      height: 280,
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: TableCalendar<CalendarEvent>(
+          firstDay: DateTime(2020),
+          lastDay: DateTime(2030),
+          focusedDay: _focusedDay,
+          selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+          eventLoader: (day) {
+            final key = DateTime(day.year, day.month, day.day);
+            return events[key] ?? [];
+          },
+          onDaySelected: (selectedDay, focusedDay) {
+            setState(() {
+              _selectedDay = selectedDay;
+              _focusedDay = focusedDay;
+            });
+          },
+          onPageChanged: (focusedDay) {
+            setState(() {
+              _focusedDay = focusedDay;
+              _selectedDay = focusedDay;
+            });
+          },
+          locale: 'zh_CN',
+          daysOfWeekHeight: 24,
+          daysOfWeekStyle: const DaysOfWeekStyle(
+            weekdayStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+            weekendStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+          ),
+          calendarStyle: CalendarStyle(
+            todayDecoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.2), shape: BoxShape.circle),
+            todayTextStyle: const TextStyle(color: AppColors.primaryDark, fontWeight: FontWeight.w600),
+            selectedDecoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+            selectedTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+            defaultTextStyle: const TextStyle(color: AppColors.textPrimary),
+            weekendTextStyle: const TextStyle(color: AppColors.textSecondary),
+            outsideTextStyle: const TextStyle(color: AppColors.textTertiary),
+            cellMargin: const EdgeInsets.all(1),
+            cellPadding: EdgeInsets.zero,
+          ),
+          headerVisible: false,
+          availableGestures: AvailableGestures.horizontalSwipe,
         ),
-        calendarStyle: CalendarStyle(
-          todayDecoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.2), shape: BoxShape.circle),
-          todayTextStyle: const TextStyle(color: AppColors.primaryDark, fontWeight: FontWeight.w600),
-          selectedDecoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
-          selectedTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-          defaultTextStyle: const TextStyle(color: AppColors.textPrimary),
-          weekendTextStyle: const TextStyle(color: AppColors.textSecondary),
-          outsideTextStyle: const TextStyle(color: AppColors.textTertiary),
-          cellMargin: const EdgeInsets.all(1),
-          cellPadding: EdgeInsets.zero,
-        ),
-        headerVisible: false,
-        availableGestures: AvailableGestures.horizontalSwipe,
       ),
     );
   }

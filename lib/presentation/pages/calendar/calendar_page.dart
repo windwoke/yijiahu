@@ -46,13 +46,9 @@ class _CalendarPageState extends ConsumerState<CalendarPage>
   }
 
   void _refresh() {
-    final now = DateTime.now();
     final fid = ref.read(currentFamilyProvider)?.id ?? '';
-    ref.invalidate(calendarEventsProvider(CalendarQuery(
-      familyId: fid,
-      year: _focusedDay.year,
-      month: _focusedDay.month,
-    )));
+    // 递增刷新计数器，触发 calendarEventsProvider 重新拉取
+    ref.read(calendarRefreshProvider.notifier).update((s) => s + 1);
     ref.invalidate(familyTasksProvider(fid));
     ref.invalidate(upcomingTasksProvider(fid));
   }

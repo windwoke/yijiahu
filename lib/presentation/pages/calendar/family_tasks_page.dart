@@ -245,6 +245,8 @@ class _FamilyTasksPageState extends ConsumerState<FamilyTasksPage> {
           queryParameters: {'familyId': familyId});
       ref.invalidate(familyTasksProvider(familyId));
       ref.invalidate(upcomingTasksProvider(familyId));
+      // 递增刷新计数器，CalendarPage 自动重新拉取
+      ref.read(calendarRefreshProvider.notifier).update((s) => s + 1);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('任务已完成')),
@@ -266,10 +268,8 @@ class _FamilyTasksPageState extends ConsumerState<FamilyTasksPage> {
           data: {'status': 'cancelled', 'familyId': familyId},
           queryParameters: {'familyId': familyId});
       ref.invalidate(familyTasksProvider(familyId));
-      // 刷新日历视图（当前月 + 今天所在的月）
-      final now = DateTime.now();
-      final currentQ = CalendarQuery(familyId: familyId, year: now.year, month: now.month);
-      ref.invalidate(calendarEventsProvider(currentQ));
+      // 递增刷新计数器，CalendarPage 自动重新拉取
+      ref.read(calendarRefreshProvider.notifier).update((s) => s + 1);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('任务已取消')),
@@ -310,6 +310,8 @@ class _FamilyTasksPageState extends ConsumerState<FamilyTasksPage> {
       await dio.delete('/family-tasks/${task.id}',
           queryParameters: {'familyId': familyId});
       ref.invalidate(familyTasksProvider(familyId));
+      // 递增刷新计数器，CalendarPage 自动重新拉取
+      ref.read(calendarRefreshProvider.notifier).update((s) => s + 1);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('任务已删除')),

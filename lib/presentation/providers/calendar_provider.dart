@@ -10,6 +10,9 @@ import '../../core/network/api_client.dart';
 /// 导致 ref.invalidate 后 UI 不刷新
 final completedInstancesProvider = StateProvider<Set<String>>((ref) => {});
 
+/// 日历页刷新计数器 — AddTaskPage 完成后递增，CalendarPage watch 此值触发刷新
+final calendarRefreshProvider = StateProvider<int>((ref) => 0);
+
 /// 复诊列表
 final appointmentsProvider =
     FutureProvider.family<List<models.Appointment>, String>((
@@ -127,6 +130,8 @@ final calendarEventsProvider =
   ref,
   query,
 ) async {
+  // watch 刷新计数器：AddTaskPage 完成后递增，强制重新拉取
+  ref.watch(calendarRefreshProvider);
   // ref.watch(AsyncValue) 建立响应依赖，invalidate 子 provider 时外层自动重跑
   final appointmentsAsync = ref.watch(calendarAppointmentsProvider(query));
   final tasksAsync = ref.watch(calendarTasksProvider(query));

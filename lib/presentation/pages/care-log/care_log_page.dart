@@ -517,7 +517,9 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
                         Row(
                           children: [
                             Text(
-                              _formatTime(entry.time),
+                              isDailyCheckin
+                                  ? _formatDateShort(entry.time)
+                                  : _formatTime(entry.time),
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: AppColors.textSecondary,
@@ -539,6 +541,23 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
                                     color: baseColor,
+                                  ),
+                                ),
+                              ),
+                            ] else if (isDailyCheckin) ...[
+                              // 护理打卡标签
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: (entry.checkinStatus?.color ?? baseColor).withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  '护理打卡 · ${entry.checkinStatus?.label ?? ''}',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: entry.checkinStatus?.color ?? baseColor,
                                   ),
                                 ),
                               ),
@@ -596,17 +615,79 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
                         ),
                         const SizedBox(height: 12),
                         // 内容：超范围时放大字体醒目
-                        Text(
-                          entry.content,
-                          style: TextStyle(
-                            fontSize: isOutOfRange || isLowRange ? 17 : 15,
-                            fontWeight: isOutOfRange || isLowRange ? FontWeight.w700 : FontWeight.w500,
-                            color: isOutOfRange
-                                ? AppColors.coral
-                                : (isLowRange ? AppColors.warning : AppColors.textPrimary),
-                            height: 1.6,
+                        if (isDailyCheckin) ...[
+                          // 护理打卡：状态大字 + 用药进度 + 备注分行显示
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: (entry.checkinStatus?.color ?? baseColor).withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: (entry.checkinStatus?.color ?? baseColor).withValues(alpha: 0.3),
+                                  ),
+                                ),
+                                child: Text(
+                                  entry.checkinStatus?.emoji ?? '',
+                                  style: const TextStyle(fontSize: 22),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      entry.checkinStatus?.label ?? '护理打卡',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w700,
+                                        color: entry.checkinStatus?.color ?? baseColor,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    if (entry.medicationTotal != null && entry.medicationTotal! > 0)
+                                      Text(
+                                        '用药：${entry.medicationCompleted ?? 0}/${entry.medicationTotal} 项已完成',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                    if (entry.specialNote != null && entry.specialNote!.isNotEmpty) ...[
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        '备注：${entry.specialNote}',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                        maxLines: 3,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
+                        ] else ...[
+                          Text(
+                            entry.content,
+                            style: TextStyle(
+                              fontSize: isOutOfRange || isLowRange ? 17 : 15,
+                              fontWeight: isOutOfRange || isLowRange ? FontWeight.w700 : FontWeight.w500,
+                              color: isOutOfRange
+                                  ? AppColors.coral
+                                  : (isLowRange ? AppColors.warning : AppColors.textPrimary),
+                              height: 1.6,
+                            ),
+                            maxLines: 5,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                         // 超范围时显示正常范围提示
                         if (isOutOfRange || isLowRange) ...[
                           const SizedBox(height: 6),
@@ -1604,6 +1685,15 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
     } else {
       return '下午 ${(hour - 12).toString().padLeft(2, '0')}:$minute';
     }
+  }
+
+  String _formatDateShort(DateTime t) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final date = DateTime(t.year, t.month, t.day);
+    if (date == today) return '今天';
+    if (date == today.subtract(const Duration(days: 1))) return '昨天';
+    return '${t.month}/${t.day} ${_weekdayLabel(t.weekday)}';
   }
 
   String _weekdayLabel(int w) {

@@ -1,7 +1,6 @@
 /// 日历模块 Provider
 library;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/models.dart' as models;
 import '../../core/network/api_client.dart';
@@ -73,12 +72,10 @@ final upcomingTasksProvider =
   familyId,
 ) async {
   final dio = ref.read(dioProvider);
-  debugPrint('[CalendarProvider] upcomingTasks familyId=$familyId');
   final response = await dio.get('/family-tasks/upcoming', queryParameters: {
     'familyId': familyId,
   });
   final data = response.data as List<dynamic>;
-  debugPrint('[CalendarProvider] upcomingTasks count=${data.length}');
   return data
       .map((e) => models.FamilyTask.fromJson(e as Map<String, dynamic>))
       .toList();

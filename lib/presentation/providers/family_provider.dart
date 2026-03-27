@@ -1,7 +1,6 @@
 /// 家庭数据 Provider
 library;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/models.dart' as models;
 import '../../data/models/care_log.dart';
@@ -250,7 +249,6 @@ class TimelineNotifier extends FamilyAsyncNotifier<List<models.TimelineEntry>, T
     final dio = ref.read(dioProvider);
     final familyId = arg.familyId;
     final recipientId = arg.recipientId;
-    debugPrint('[TimelineNotifier] _fetchPage familyId=$familyId recipientId=$recipientId before=$before');
 
     final List<models.TimelineEntry> all = [];
 
@@ -267,12 +265,9 @@ class TimelineNotifier extends FamilyAsyncNotifier<List<models.TimelineEntry>, T
       final careLogsData = careLogsResp.data is List
           ? careLogsResp.data as List
           : (careLogsResp.data['data'] as List?) ?? [];
-      debugPrint('[TimelineNotifier] careLogs count=${careLogsData.length}');
       all.addAll(careLogsData
           .map((e) => models.TimelineEntry.fromCareLog(Map<String, dynamic>.from(e))));
-    } catch (e) {
-      debugPrint('[TimelineNotifier] careLogs error: $e');
-    }
+    } catch (_) {}
 
     // 2. 用药打卡
     try {
@@ -285,12 +280,9 @@ class TimelineNotifier extends FamilyAsyncNotifier<List<models.TimelineEntry>, T
       final medData = medResp.data is List
           ? medResp.data as List
           : (medResp.data['data'] as List?) ?? [];
-      debugPrint('[TimelineNotifier] medLogs count=${medData.length}');
       all.addAll(medData
           .map((e) => models.TimelineEntry.fromMedicationLog(Map<String, dynamic>.from(e))));
-    } catch (e) {
-      debugPrint('[TimelineNotifier] medLogs error: $e');
-    }
+    } catch (_) {}
 
     // 3. 健康记录
     try {
@@ -303,12 +295,9 @@ class TimelineNotifier extends FamilyAsyncNotifier<List<models.TimelineEntry>, T
       final hrData = hrResp.data is List
           ? hrResp.data as List
           : (hrResp.data['data'] as List?) ?? [];
-      debugPrint('[TimelineNotifier] healthRecords count=${hrData.length}');
       all.addAll(hrData
           .map((e) => models.TimelineEntry.fromHealthRecord(Map<String, dynamic>.from(e))));
-    } catch (e) {
-      debugPrint('[TimelineNotifier] healthRecords error: $e');
-    }
+    } catch (_) {}
 
     // 4. 每日护理打卡（按 familyId 隔离）
     try {
@@ -326,15 +315,11 @@ class TimelineNotifier extends FamilyAsyncNotifier<List<models.TimelineEntry>, T
       final checkinData = checkinResp.data is List
           ? checkinResp.data as List
           : (checkinResp.data['data'] as List?) ?? [];
-      debugPrint('[TimelineNotifier] checkins count=${checkinData.length}');
       all.addAll(checkinData
           .map((e) => models.TimelineEntry.fromDailyCareCheckin(Map<String, dynamic>.from(e))));
-    } catch (e) {
-      debugPrint('[TimelineNotifier] checkins error: $e');
-    }
+    } catch (_) {}
 
     all.sort((a, b) => b.time.compareTo(a.time));
-    debugPrint('[TimelineNotifier] _fetchPage returning ${all.length} entries');
     return all;
   }
 }

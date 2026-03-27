@@ -299,27 +299,9 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
   Widget _buildTimeline(String familyId, String? recipientId, CareLogType? filterType) {
     final query = TimelineQuery(familyId: familyId, recipientId: recipientId);
     final timelineAsync = ref.watch(timelineProvider(query));
-
-    // DEBUG
-    debugPrint('[Timeline] familyId=$familyId recipientId=$recipientId state=$timelineAsync');
-    // 临时debug: 直接在UI上显示状态
-    return Column(
-      children: [
-        Container(
-          color: Colors.red.withValues(alpha: 0.3),
-          padding: const EdgeInsets.all(8),
-          child: Text('DEBUG: fid=$familyId rid=$recipientId ${timelineAsync}',
-              style: const TextStyle(fontSize: 12)),
-        ),
-        Expanded(child: _buildTimelineContent(timelineAsync, filterType)),
-      ],
-    );
-  }
-
-  Widget _buildTimelineContent(AsyncValue<List<TimelineEntry>> timelineAsync, CareLogType? filterType) {
     return timelineAsync.when(
       data: (entries) {
-        debugPrint('[Timeline] entries.length=${entries.length} filterType=$filterType');
+        // 应用类型筛选
         // 应用类型筛选
         final filtered = filterType != null
             ? entries.where((e) => e.type == filterType).toList()

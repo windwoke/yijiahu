@@ -148,20 +148,23 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
   }
 
   Widget _buildCalendar(Map<DateTime, List<CalendarEvent>> events) {
-    return TableCalendar<CalendarEvent>(
-      firstDay: DateTime(2020),
-      lastDay: DateTime(2030),
-      focusedDay: _focusedDay,
-      selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-      eventLoader: (day) {
-        final key = DateTime(day.year, day.month, day.day);
-        return events[key] ?? [];
-      },
-      onDaySelected: (selectedDay, focusedDay) {
-        setState(() {
-          _selectedDay = selectedDay;
-          _focusedDay = focusedDay;
-        });
+    // 固定高度约束，防止6行月份撑爆布局
+    return SizedBox(
+      height: 320,
+      child: TableCalendar<CalendarEvent>(
+        firstDay: DateTime(2020),
+        lastDay: DateTime(2030),
+        focusedDay: _focusedDay,
+        selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+        eventLoader: (day) {
+          final key = DateTime(day.year, day.month, day.day);
+          return events[key] ?? [];
+        },
+        onDaySelected: (selectedDay, focusedDay) {
+          setState(() {
+            _selectedDay = selectedDay;
+            _focusedDay = focusedDay;
+          });
       },
       onPageChanged: (focusedDay) {
         setState(() {
@@ -189,6 +192,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
       headerVisible: false,
       // 日历只占所需高度，不滚动
       availableGestures: AvailableGestures.horizontalSwipe,
+      ),
     );
   }
 
@@ -563,6 +567,11 @@ class _TaskCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isPending = task.isPending;
+    final isCancelled = task.status == 'cancelled';
+    final statusColor = isPending ? AppColors.blue : (isCancelled ? AppColors.error : AppColors.textTertiary);
+    final titleColor = isPending ? AppColors.textPrimary : AppColors.textTertiary;
+
     final content = Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
@@ -570,11 +579,11 @@ class _TaskCard extends ConsumerWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: const [BoxShadow(color: AppColors.shadowSoft, blurRadius: 8, offset: Offset(0, 2))],
-        border: Border.all(color: AppColors.blue.withValues(alpha: 0.15)),
+        border: Border.all(color: statusColor.withValues(alpha: 0.15)),
       ),
       child: Row(
         children: [
-          Container(width: 4, height: 44, decoration: BoxDecoration(color: AppColors.blue, borderRadius: BorderRadius.circular(2))),
+          Container(width: 4, height: 52, decoration: BoxDecoration(color: statusColor, borderRadius: BorderRadius.circular(2))),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -584,15 +593,24 @@ class _TaskCard extends ConsumerWidget {
                   children: [
                     Text(task.recipient?.avatarEmoji ?? '👤', style: const TextStyle(fontSize: 16)),
                     if (task.recipient != null) const SizedBox(width: 4),
-                    Expanded(child: Text(task.title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                    Expanded(child: Text(task.title,
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: titleColor, decoration: isPending ? null : TextDecoration.lineThrough),
+                      maxLines: 1, overflow: TextOverflow.ellipsis)),
+                    const SizedBox(width: 6),
+                    // 状态标签
+                    Container(padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                      decoration: BoxDecoration(color: statusColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
+                      child: Text(task.statusLabel, style: TextStyle(fontSize: 11, color: statusColor, fontWeight: FontWeight.w600))),
                   ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 5),
                 Row(
                   children: [
                     Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1), decoration: BoxDecoration(color: AppColors.blue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
                         child: Text(task.frequencyLabel, style: const TextStyle(fontSize: 11, color: AppColors.blue, fontWeight: FontWeight.w500))),
                     if (task.scheduledTime != null) ...[const SizedBox(width: 6), Text(task.scheduledTime!, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary))],
+                    if (task.nextDueAt != null) ...[const SizedBox(width: 8), const Icon(Icons.event_rounded, size: 12, color: AppColors.textTertiary), const SizedBox(width: 2),
+                      Text(task.displayDueAt, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary))],
                     if (task.assignee != null) ...[const SizedBox(width: 8), const Icon(Icons.person_outline_rounded, size: 12, color: AppColors.textTertiary), const SizedBox(width: 2), Text(task.assignee!.name, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary))],
                   ],
                 ),

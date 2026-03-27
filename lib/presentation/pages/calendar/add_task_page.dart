@@ -111,8 +111,8 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
                     if (_frequency == 'monthly') ...[
                       _buildDaySelector(),
                     ],
-                    // 未选日期警告
-                    if (_scheduledDays.isEmpty)
+                    // 未选日期警告（仅 weekly/monthly 需要选日期）
+                    if (_frequency != 'once' && _scheduledDays.isEmpty && _frequency != 'daily')
                       Container(
                         margin: const EdgeInsets.only(top: 8),
                         padding: const EdgeInsets.symmetric(
@@ -144,7 +144,7 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
                   membersAsync.when(
                     data: (members) => _buildAssigneeSelector(members),
                     loading: () => const LinearProgressIndicator(),
-                    error: (_, __) => const Text('无法加载家庭成员'),
+                    error: (e, st) => const Text('无法加载家庭成员'),
                   ),
                   const SizedBox(height: 20),
 
@@ -508,7 +508,7 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
       );
       return;
     }
-    if (_frequency != 'once' && _scheduledDays.isEmpty) {
+    if (_frequency != 'once' && _frequency != 'daily' && _scheduledDays.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(_frequency == 'weekly' ? '请选择要执行的星期' : '请选择要执行的日期')),
       );

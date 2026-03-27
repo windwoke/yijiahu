@@ -1267,104 +1267,35 @@ class FamilyPage extends ConsumerWidget {
     FamilyMemberSection section,
     bool canManageMembers,
   ) {
+    final currentUser = ref.read(authStateProvider).user;
+    final isOwnCard = section.member?.userId == currentUser?.id;
+    // 自己 或 有管理权限 才能编辑
+    final canEdit = isOwnCard || canManageMembers;
+
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.fromLTRB(
-          24,
-          24,
-          24,
-          MediaQuery.of(ctx).viewInsets.bottom + 24,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              '编辑成员',
-              style: const TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              section.displayName,
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 24),
-            if (!section.isRecipient)
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.blue,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    // TODO: 修改成员分工
-                  },
-                  child: const Text('修改分工'),
-                ),
-              ),
-            if (!section.isRecipient) const SizedBox(height: 12),
-            if (canManageMembers && !section.isRecipient)
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.warning,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    // TODO: 设为管理员
-                  },
-                  child: const Text('设为管理员'),
-                ),
-              ),
-            if (canManageMembers && !section.isRecipient)
-              const SizedBox(height: 12),
-            if (canManageMembers)
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.error.withValues(alpha: 0.1),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    _confirmRemoveMember(context, ref, family, section);
-                  },
-                  child: Text(
-                    '移除${section.isRecipient ? "照护对象" : "成员"}',
-                    style: const TextStyle(color: AppColors.error),
-                  ),
-                ),
-              )
-            else
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text(AppTexts.cancel),
-              ),
-          ],
-        ),
+      builder: (ctx) => _EditMemberSheet(
+        family: family,
+        section: section,
+        canManageMembers: canManageMembers,
+        canEdit: canEdit,
+        isOwnCard: isOwnCard,
+        onUpdate: (data) async {
+          final dio = ref.read(dioProvider);
+          await dio.patch(
+            '/families/${family.id}/members/${section.member?.id}',
+            data: data,
+          );
+          ref.invalidate(familyMembersProvider(family.id));
+        },
+        onRemove: () {
+          Navigator.pop(ctx);
+          _confirmRemoveMember(context, ref, family, section);
+        },
       ),
     );
   }
@@ -1454,6 +1385,323 @@ class FamilyPage extends ConsumerWidget {
               onPressed: () => Navigator.pop(ctx),
               child: const Text(AppTexts.cancel),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 成员编辑弹层
+class _EditMemberSheet extends ConsumerStatefulWidget {
+  final models.Family family;
+  final FamilyMemberSection section;
+  final bool canManageMembers;
+  final bool canEdit;
+  final bool isOwnCard;
+  final Future<void> Function(Map<String, dynamic> data) onUpdate;
+  final VoidCallback onRemove;
+
+  const _EditMemberSheet({
+    required this.family,
+    required this.section,
+    required this.canManageMembers,
+    required this.canEdit,
+    required this.isOwnCard,
+    required this.onUpdate,
+    required this.onRemove,
+  });
+
+  @override
+  ConsumerState<_EditMemberSheet> createState() => _EditMemberSheetState();
+}
+
+class _EditMemberSheetState extends ConsumerState<_EditMemberSheet> {
+  late TextEditingController _nicknameController;
+  models.FamilyMemberRole? _selectedRole;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nicknameController = TextEditingController(text: widget.section.member?.nickname ?? '');
+    _selectedRole = models.FamilyMemberRole.fromString(widget.section.member?.role);
+  }
+
+  @override
+  void dispose() {
+    _nicknameController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final data = <String, dynamic>{};
+    if (_nicknameController.text.trim().isNotEmpty &&
+        _nicknameController.text.trim() != widget.section.member?.nickname) {
+      data['nickname'] = _nicknameController.text.trim();
+    }
+    if (widget.canManageMembers && _selectedRole != null &&
+        _selectedRole!.name != widget.section.member?.role) {
+      data['role'] = _selectedRole!.name;
+    }
+
+    if (data.isEmpty) {
+      Navigator.pop(context);
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      await widget.onUpdate(data);
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('保存失败: $e')),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final currentRole = models.FamilyMemberRole.fromString(widget.section.member?.role);
+    // 不能把 owner 改成其他角色
+    final canChangeRole = widget.canManageMembers && currentRole != models.FamilyMemberRole.owner;
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(24, 24, 24, bottomInset + 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 标题栏
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  widget.isOwnCard ? '编辑我的信息' : '编辑成员',
+                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close_rounded, size: 20),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // 成员信息展示
+          Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Center(
+                  child: Text(widget.section.displayAvatar,
+                    style: const TextStyle(fontSize: 20)),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(widget.section.displayName,
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 2),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        currentRole.label,
+                        style: const TextStyle(fontSize: 11, color: AppColors.primary),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // 昵称修改（自己可改，或管理员可改）
+          if (widget.canEdit) ...[
+            const Text('家庭昵称',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textSecondary)),
+            const SizedBox(height: 6),
+            TextField(
+              controller: _nicknameController,
+              decoration: InputDecoration(
+                hintText: '如"爸爸""大嫂"',
+                hintStyle: const TextStyle(color: AppColors.textTertiary, fontSize: 14),
+                filled: true,
+                fillColor: AppColors.surfaceContainerLow,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              ),
+              style: const TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+          ],
+
+          // 角色变更（仅管理员可操作，不能改 owner）
+          if (canChangeRole) ...[
+            const Text('成员角色',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textSecondary)),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final role in models.FamilyMemberRole.values)
+                  if (role != models.FamilyMemberRole.owner)
+                    _RoleChip(
+                      role: role,
+                      selected: _selectedRole == role,
+                      onTap: () => setState(() => _selectedRole = role),
+                    ),
+              ],
+            ),
+            const SizedBox(height: 20),
+          ],
+
+          // 角色说明
+          if (canChangeRole && _selectedRole != null) ...[
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline_rounded, size: 14, color: AppColors.textSecondary),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(_roleDescription(_selectedRole!),
+                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+
+          // 操作按钮
+          if (widget.canEdit) ...[
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                onPressed: _isLoading ? null : _save,
+                child: _isLoading
+                    ? const SizedBox(width: 20, height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : const Text('保存修改', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
+
+          // 移除成员（管理员可操作，不能删 owner）
+          if (canChangeRole) ...[
+            SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.error,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                onPressed: widget.onRemove,
+                child: Text('移除该成员'),
+              ),
+            ),
+          ],
+
+          if (!widget.canEdit) ...[
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(AppTexts.cancel),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _roleDescription(models.FamilyMemberRole role) {
+    switch (role) {
+      case models.FamilyMemberRole.owner:
+        return '创建者，拥有最高权限';
+      case models.FamilyMemberRole.coordinator:
+        return '协调管理员：可添加任务/复诊、管理成员和照护对象';
+      case models.FamilyMemberRole.caregiver:
+        return '照护人：记录日志、完成分配的任务，不能新建任务';
+      case models.FamilyMemberRole.guest:
+        return '访客：仅查看和记录日志';
+    }
+  }
+}
+
+/// 角色选项胶囊
+class _RoleChip extends StatelessWidget {
+  final models.FamilyMemberRole role;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _RoleChip({required this.role, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.primary : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected ? AppColors.primary : AppColors.border,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (role == models.FamilyMemberRole.coordinator)
+              Icon(Icons.admin_panel_settings_rounded,
+                  size: 14, color: selected ? Colors.white : AppColors.primary),
+            if (role == models.FamilyMemberRole.caregiver)
+              Icon(Icons.favorite_rounded,
+                  size: 14, color: selected ? Colors.white : AppColors.coral),
+            if (role == models.FamilyMemberRole.guest)
+              Icon(Icons.visibility_rounded,
+                  size: 14, color: selected ? Colors.white : AppColors.textSecondary),
+            if (role != models.FamilyMemberRole.owner) const SizedBox(width: 4),
+            Text(role.label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: selected ? Colors.white : AppColors.textPrimary,
+              )),
           ],
         ),
       ),

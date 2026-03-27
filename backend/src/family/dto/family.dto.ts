@@ -43,4 +43,10 @@ export class UpdateMemberDto {
   @IsString()
   @IsOptional()
   avatarUrl?: string;
+
+  /** 角色变更（owner/coordinator 可改，仅能改非 owner 的成员）*/
+  @ApiPropertyOptional({ enum: ['owner', 'coordinator', 'caregiver', 'guest'] })
+  @IsString()
+  @IsOptional()
+  role?: string;
 }

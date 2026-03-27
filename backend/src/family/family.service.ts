@@ -135,12 +135,29 @@ export class FamilyService {
   }
 
   async updateMember(familyId: string, memberId: string, userId: string, dto: UpdateMemberDto) {
-    // 只有 owner 可以更新成员信息（昵称、头像）
-    await this.requireRole(familyId, userId, [FamilyMemberRole.OWNER]);
-    const member = await this.memberRepo.findOne({ where: { id: memberId, familyId } });
-    if (!member) throw new NotFoundException('成员不存在');
-    Object.assign(member, dto);
-    return this.memberRepo.save(member);
+    const target = await this.memberRepo.findOne({ where: { id: memberId, familyId } });
+    if (!target) throw new NotFoundException('成员不存在');
+
+    // 判断操作者身份
+    const myMember = await this.memberRepo.findOne({ where: { familyId, userId } });
+    const myRole = myMember?.role as FamilyMemberRole | undefined;
+    const isSelfEdit = target.userId === userId;
+
+    if (isSelfEdit) {
+      // 自己只能修改昵称和头像，不能改角色
+      if (dto.nickname !== undefined) target.nickname = dto.nickname;
+      if (dto.avatarUrl !== undefined) target.avatarUrl = dto.avatarUrl;
+    } else {
+      // 其他人：需要 owner 或 coordinator 权限
+      await this.requireRole(familyId, userId, [FamilyMemberRole.OWNER, FamilyMemberRole.COORDINATOR]);
+      Object.assign(target, dto);
+      // 不能把自己的 owner 角色降级
+      if (target.role === FamilyMemberRole.OWNER && dto.role && dto.role !== FamilyMemberRole.OWNER) {
+        throw new BadRequestException('不能修改管理员的身份');
+      }
+    }
+
+    return this.memberRepo.save(target);
   }
 
   private async requireRole(

@@ -51,7 +51,7 @@ class CaregiverRecordCard extends ConsumerWidget {
                     Icon(Icons.person_pin_rounded, size: 18, color: AppColors.primary),
                     const SizedBox(width: 6),
                     const Text(
-                      '当前主要负责人',
+                      '当前主要照护人',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -133,7 +133,7 @@ class CaregiverRecordCard extends ConsumerWidget {
                       const SizedBox(width: 10),
                       const Expanded(
                         child: Text(
-                          '暂未指定主要负责人',
+                          '暂未指定主要照护人',
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w500,
@@ -402,7 +402,7 @@ class _CaregiverRecordSheetState extends ConsumerState<_CaregiverRecordSheet> {
       builder: (dialogContext) => StatefulBuilder(
         builder: (dialogContext, setDialogState) {
           return AlertDialog(
-            title: const Text('添加主要负责人'),
+            title: const Text('添加主要照护人'),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,

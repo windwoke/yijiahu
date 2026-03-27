@@ -583,7 +583,7 @@ class HomePage extends ConsumerWidget {
                     data: (caregiver) {
                       if (caregiver?.caregiver == null) {
                         return Text(
-                          '暂无主要负责人',
+                          '暂无主要照护人',
                           style: TextStyle(
                             fontSize: 12,
                             color: AppColors.textTertiary,
@@ -599,7 +599,7 @@ class HomePage extends ConsumerWidget {
                           ),
                           const SizedBox(width: 3),
                           Text(
-                            '主要负责人：${caregiver!.caregiver!.name}',
+                            '主要照护人：${caregiver!.caregiver!.name}',
                             style: TextStyle(
                               fontSize: 12,
                               color: AppColors.primary,
@@ -971,42 +971,21 @@ class _DailyCareBanner extends ConsumerWidget {
     WidgetRef ref,
     AsyncValue<Map<String, DailyCareCheckin>> checkinsAsync,
   ) {
-    // 根据最紧急状态确定横幅底色
-    final worstStatus = checkinsAsync.whenOrNull(
-      data: (checkins) {
-        CheckinStatus? worst;
-        for (final c in checkins.values) {
-          if (c.status == CheckinStatus.critical) { worst = CheckinStatus.critical; break; }
-          if (c.status == CheckinStatus.poor && worst != CheckinStatus.critical) worst = CheckinStatus.poor;
-          if (c.status == CheckinStatus.concerning && worst == null) worst = CheckinStatus.concerning;
-        }
-        return worst;
-      },
-    );
-
-    Color bannerColor;
-    if (worstStatus == CheckinStatus.critical) {
-      bannerColor = const Color(0xFFE53935); // 红色
-    } else if (worstStatus == CheckinStatus.poor) {
-      bannerColor = const Color(0xFFFF5722); // 深橙
-    } else if (worstStatus == CheckinStatus.concerning) {
-      bannerColor = const Color(0xFFFF9800); // 橙黄
-    } else {
-      bannerColor = AppColors.primary; // 鼠尾草绿
-    }
+    // 横幅底色始终为鼠尾草绿，单行高亮已足够表达警示
+    const bannerColor = AppColors.primary;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [bannerColor, bannerColor.withValues(alpha: 0.85)],
+        gradient: const LinearGradient(
+          colors: [bannerColor, Color(0xFF6B8C72)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: bannerColor.withValues(alpha: 0.35), blurRadius: 12, offset: const Offset(0, 4)),
+          BoxShadow(color: bannerColor.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4)),
         ],
       ),
       child: Column(
@@ -1014,21 +993,11 @@ class _DailyCareBanner extends ConsumerWidget {
         children: [
           Row(
             children: [
-              if (worstStatus == CheckinStatus.critical)
-                const Text('🚨', style: TextStyle(fontSize: 20))
-              else if (worstStatus == CheckinStatus.poor)
-                const Text('⚠️', style: TextStyle(fontSize: 20))
-              else if (worstStatus == CheckinStatus.concerning)
-                const Text('⚡', style: TextStyle(fontSize: 20))
-              else
-                const Text('📋', style: TextStyle(fontSize: 20)),
+              const Text('📋', style: TextStyle(fontSize: 20)),
               const SizedBox(width: 8),
-              Text(
-                worstStatus == null ? '今日护理打卡'
-                    : worstStatus == CheckinStatus.critical ? '⚠️ 危急提醒'
-                    : worstStatus == CheckinStatus.poor ? '⚠️ 状态预警'
-                    : '⚡ 需要关注',
-                style: const TextStyle(
+              const Text(
+                '今日护理打卡',
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: Colors.white,

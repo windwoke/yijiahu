@@ -98,7 +98,7 @@ export class FamilyService {
       familyId: family.id,
       userId,
       nickname: user?.name || '家庭成员',
-      role: FamilyMemberRole.COORDINATOR,
+      role: FamilyMemberRole.CAREGIVER,
     });
     await this.memberRepo.save(member);
 

@@ -1319,7 +1319,19 @@ class FamilyPage extends ConsumerWidget {
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              // TODO: 调用后端 API 移除成员
+              try {
+                final dio = ref.read(dioProvider);
+                await dio.delete(
+                  '/families/${family.id}/members/${section.member?.id}',
+                );
+                ref.invalidate(familyMembersProvider(family.id));
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('移除失败: $e')),
+                  );
+                }
+              }
             },
             child: const Text(
               '移除',

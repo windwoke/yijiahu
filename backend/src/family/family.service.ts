@@ -111,8 +111,53 @@ export class FamilyService {
     if (member.role === FamilyMemberRole.OWNER) {
       throw new BadRequestException('创建者不能退出家庭，请先转让管理员权限');
     }
+    // coordinator 退出保护：不能移除最后一个 owner/coordinator
+    if (member.role === FamilyMemberRole.COORDINATOR) {
+      const others = await this.memberRepo.find({
+        where: { familyId },
+      });
+      const elevated = others.filter(
+        (m) => m.id !== member.id && (m.role === FamilyMemberRole.OWNER || m.role === FamilyMemberRole.COORDINATOR),
+      );
+      if (elevated.length === 0) {
+        throw new BadRequestException('您是当前唯一管理员，无法退出。请先指定其他成员为管理员');
+      }
+    }
     await this.memberRepo.delete(member.id);
     return { message: '已退出家庭' };
+  }
+
+  async removeMember(familyId: string, memberId: string, userId: string) {
+    const target = await this.memberRepo.findOne({ where: { id: memberId, familyId } });
+    if (!target) throw new NotFoundException('成员不存在');
+
+    // 只有 owner 或 coordinator 可以移除他人
+    await this.requireRole(familyId, userId, [FamilyMemberRole.OWNER, FamilyMemberRole.COORDINATOR]);
+
+    // 不能移除 owner
+    if (target.role === FamilyMemberRole.OWNER) {
+      throw new BadRequestException('不能移除管理员');
+    }
+
+    // 不能移除自己（移除自己用 leave 接口）
+    if (target.userId === userId) {
+      throw new BadRequestException('移除自己请使用"退出家庭"');
+    }
+
+    // coordinator 移除保护：不能移除最后一个 owner/coordinator
+    const myMember = await this.memberRepo.findOne({ where: { familyId, userId } });
+    if (myMember?.role === FamilyMemberRole.COORDINATOR && target.role === FamilyMemberRole.COORDINATOR) {
+      const others = await this.memberRepo.find({ where: { familyId } });
+      const elevated = others.filter(
+        (m) => m.id !== target.id && (m.role === FamilyMemberRole.OWNER || m.role === FamilyMemberRole.COORDINATOR),
+      );
+      if (elevated.length === 0) {
+        throw new BadRequestException('移除后家庭将没有管理员，请先指定其他成员为管理员');
+      }
+    }
+
+    await this.memberRepo.delete(target.id);
+    return { message: '已移除成员' };
   }
 
   async findMembers(familyId: string, userId: string) {

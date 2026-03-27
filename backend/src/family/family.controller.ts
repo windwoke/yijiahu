@@ -46,6 +46,16 @@ export class FamilyController {
     return this.familyService.leave(id, userId);
   }
 
+  @Delete(':familyId/members/:memberId')
+  @ApiOperation({ summary: '移除家庭成员' })
+  removeMember(
+    @Param('familyId') familyId: string,
+    @Param('memberId') memberId: string,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.familyService.removeMember(familyId, memberId, userId);
+  }
+
   @Get(':id/members')
   @ApiOperation({ summary: '获取家庭成员列表' })
   findMembers(@Param('id') id: string, @CurrentUser('id') userId: string) {

@@ -1,8 +1,13 @@
-import { IsString, IsEnum, IsOptional } from 'class-validator';
+import { IsString, IsEnum, IsOptional, IsUUID, IsNotEmpty } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { MedicationLogStatus } from '../entities/medication-log.entity';
 
 export class CheckInDto {
+  @ApiProperty({ description: '家庭ID（必填，用于多家庭隔离）' })
+  @IsNotEmpty()
+  @IsUUID()
+  familyId: string;
+
   @ApiProperty({ example: 'taken', enum: MedicationLogStatus })
   @IsEnum(MedicationLogStatus)
   status: MedicationLogStatus;

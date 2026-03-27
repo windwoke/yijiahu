@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between } from 'typeorm';
 import { MedicationLog, MedicationLogStatus } from './entities/medication-log.entity';
@@ -113,8 +113,15 @@ export class MedicationLogService {
 
   /** 打卡 */
   async checkIn(logId: string, dto: CheckInDto, userId: string) {
-    const log = await this.logRepo.findOne({ where: { id: logId } });
+    const log = await this.logRepo.findOne({
+      where: { id: logId },
+      relations: ['medication'],
+    });
     if (!log) throw new NotFoundException('用药记录不存在');
+    // 验证该药品属于请求者的家庭
+    if (!log.medication || log.medication.familyId !== dto.familyId) {
+      throw new ForbiddenException('该用药记录不属于您的家庭');
+    }
 
     log.status = dto.status;
     log.takenAt = new Date();

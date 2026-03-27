@@ -466,8 +466,9 @@ class HomePage extends ConsumerWidget {
               onCheckIn: (item) async {
                 if (item.id == null) return;
                 final dio = ref.read(dioProvider);
+                final familyId = ref.read(currentFamilyProvider)?.id;
                 await dio.post('/medication-logs/${item.id}/check-in',
-                    data: {'status': 'taken'});
+                    data: {'familyId': familyId, 'status': 'taken'});
                 ref.invalidate(todayMedicationProvider(recipient.id));
               },
             ),

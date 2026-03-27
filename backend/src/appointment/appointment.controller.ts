@@ -21,7 +21,7 @@ export class AppointmentController {
     @Query('status') status?: AppointmentStatus,
   ) {
     if (recipientId) {
-      return this.service.findByRecipient(recipientId, status);
+      return this.service.findByRecipient(recipientId, familyId, status);
     }
     return [];
   }

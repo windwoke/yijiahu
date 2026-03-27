@@ -15,7 +15,12 @@ export class AppointmentService {
   ) {}
 
   /** 按照护对象查询列表 */
-  async findByRecipient(recipientId: string, status?: AppointmentStatus) {
+  async findByRecipient(recipientId: string, familyId: string, status?: AppointmentStatus) {
+    const recipient = await this.recipientRepo.findOne({ where: { id: recipientId } });
+    if (!recipient) throw new NotFoundException('照护对象不存在');
+    if (recipient.familyId !== familyId) {
+      throw new ForbiddenException('该照护对象不属于您的家庭');
+    }
     const where: any = { recipientId };
     if (status) where.status = status;
 

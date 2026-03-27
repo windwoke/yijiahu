@@ -656,7 +656,13 @@ class _TaskCardState extends ConsumerState<_TaskCard> {
     setState(() => _completedLocally = true);
     try {
       final dio = ref.read(dioProvider);
-      await dio.post('/family-tasks/${widget.task.id}/complete', queryParameters: {'familyId': widget.familyId});
+      final dueDate = widget.task.nextDueAt;
+      final scheduledDate = dueDate != null
+          ? '${dueDate.year}-${dueDate.month.toString().padLeft(2, '0')}-${dueDate.day.toString().padLeft(2, '0')}'
+          : null;
+      await dio.post('/family-tasks/${widget.task.id}/complete',
+          queryParameters: {'familyId': widget.familyId},
+          data: scheduledDate != null ? {'scheduledDate': scheduledDate} : null);
       final now = DateTime.now();
       ref.invalidate(calendarEventsProvider(CalendarQuery(familyId: widget.familyId, year: now.year, month: now.month)));
       ref.invalidate(familyTasksProvider(widget.familyId));
@@ -941,7 +947,13 @@ class _TaskDetailSheetState extends ConsumerState<_TaskDetailSheet> {
     setState(() => _completedLocally = true);
     try {
       final dio = ref.read(dioProvider);
-      await dio.post('/family-tasks/${widget.task.id}/complete', queryParameters: {'familyId': widget.familyId});
+      final dueDate = widget.task.nextDueAt;
+      final scheduledDate = dueDate != null
+          ? '${dueDate.year}-${dueDate.month.toString().padLeft(2, '0')}-${dueDate.day.toString().padLeft(2, '0')}'
+          : null;
+      await dio.post('/family-tasks/${widget.task.id}/complete',
+          queryParameters: {'familyId': widget.familyId},
+          data: scheduledDate != null ? {'scheduledDate': scheduledDate} : null);
       if (!mounted) return;
       widget.onComplete();
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('任务已完成')));

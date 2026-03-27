@@ -54,6 +54,11 @@ export class CreateFamilyTaskDto {
 export class UpdateFamilyTaskDto extends PartialType(CreateFamilyTaskDto) {}
 
 export class CompleteTaskDto {
+  @ApiPropertyOptional({ description: '完成的日期实例 YYYY-MM-DD' })
+  @IsOptional()
+  @IsString()
+  scheduledDate?: string;
+
   @ApiPropertyOptional({ description: '完成备注' })
   @IsOptional()
   @IsString()

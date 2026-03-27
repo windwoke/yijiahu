@@ -31,6 +31,10 @@ export class TaskCompletion {
   @CreateDateColumn()
   completedAt: Date;
 
+  @Column({ type: 'date', nullable: true })
+  scheduledDate: string | null; // 'YYYY-MM-DD'，标记完成的是哪天的任务实例
+
   @Column({ nullable: true })
   note: string;
 }
+

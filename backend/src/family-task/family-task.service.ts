@@ -53,23 +53,27 @@ export class FamilyTaskService {
 
     if (tasks.length === 0) return [];
 
-    // 预加载所有任务的完成记录
+    // 预加载当月所有任务的完成记录（按scheduledDate精确匹配）
     const taskIds = tasks.map(t => t.id);
+    const monthStart = `${year}-${String(month).padStart(2, '0')}-01`;
+    const monthEnd = `${year}-${String(month).padStart(2, '0')}-31`;
+
     const completions = await this.completionRepo
       .createQueryBuilder('tc')
       .where('tc.taskId IN (:...taskIds)', { taskIds })
-      .andWhere('tc.completedAt >= :start AND tc.completedAt <= :end', {
-        start: startDate,
-        end: endDate,
+      .andWhere('tc.scheduledDate >= :start AND tc.scheduledDate <= :end', {
+        start: monthStart,
+        end: monthEnd,
       })
       .getMany();
 
-    // 建立 taskId -> [completedAt dates] 映射
+    // 建立 taskId -> [scheduledDates] 映射（直接用字符串，精确无歧义）
     const completionMap = new Map<string, Set<string>>();
     for (const c of completions) {
-      const dateKey = new Date(c.completedAt).toLocaleDateString('en-CA');
-      if (!completionMap.has(c.taskId)) completionMap.set(c.taskId, new Set());
-      completionMap.get(c.taskId)!.add(dateKey);
+      if (c.scheduledDate) {
+        if (!completionMap.has(c.taskId)) completionMap.set(c.taskId, new Set());
+        completionMap.get(c.taskId)!.add(c.scheduledDate);
+      }
     }
 
     // 展开 recurring 任务
@@ -121,7 +125,7 @@ export class FamilyTaskService {
       if (matches && date >= startDate && date <= endDate) {
         const instance = { ...task } as FamilyTask;
         // 检查当天是否已完成
-        const dateKey = date.toLocaleDateString('en-CA');
+        const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         if (completedDates.has(dateKey)) {
           instance.status = TaskStatus.COMPLETED;
         }
@@ -175,10 +179,14 @@ export class FamilyTaskService {
     if (!task) throw new NotFoundException('任务不存在');
     if (task.familyId !== familyId) throw new ForbiddenException('无权操作此任务');
 
-    // 记录完成
+    // scheduledDate: 前端传来的完成日期实例（YYYY-MM-DD）
+    const scheduledDate = dto.scheduledDate ?? null;
+
+    // 记录完成（明确标记完成的哪天实例）
     const completion = this.completionRepo.create({
       taskId: id,
       completedById: userId,
+      scheduledDate,
       note: dto.note,
     });
     await this.completionRepo.save(completion);

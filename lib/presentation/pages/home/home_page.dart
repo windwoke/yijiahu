@@ -839,8 +839,13 @@ class _TaskHomeCard extends ConsumerWidget {
             onTap: () async {
               try {
                 final dio = ref.read(dioProvider);
+                final dueDate = task.nextDueAt;
+                final scheduledDate = dueDate != null
+                    ? '${dueDate.year}-${dueDate.month.toString().padLeft(2, '0')}-${dueDate.day.toString().padLeft(2, '0')}'
+                    : null;
                 await dio.post('/family-tasks/${task.id}/complete',
-                    queryParameters: {'familyId': familyId});
+                    queryParameters: {'familyId': familyId},
+                    data: scheduledDate != null ? {'scheduledDate': scheduledDate} : null);
                 final now = DateTime.now();
                 ref.invalidate(upcomingTasksProvider(familyId));
                 ref.invalidate(calendarEventsProvider(CalendarQuery(

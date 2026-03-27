@@ -16,9 +16,10 @@ export class DailyCareCheckinController {
   findToday(
     @Query('recipientIds') recipientIds: string,
     @Query('todayDate') todayDate: string,
+    @Query('familyId') familyId: string,
   ) {
     const ids = recipientIds ? recipientIds.split(',') : [];
-    return this.service.findTodayByRecipients(ids, todayDate);
+    return this.service.findTodayByRecipients(ids, todayDate, familyId);
   }
 
   @Get('by-recipient')

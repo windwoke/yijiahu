@@ -35,8 +35,17 @@ export class DailyCareCheckinService {
   }
 
   /** 批量获取今日打卡（用于首页横幅）—— 传入家庭所有照护对象ID */
-  async findTodayByRecipients(recipientIds: string[], todayDate: string) {
+  async findTodayByRecipients(recipientIds: string[], todayDate: string, familyId: string) {
     if (recipientIds.length === 0) return [];
+    // 验证所有recipientId都属于该家庭
+    const recipients = await this.recipientRepo.findBy(
+      recipientIds.map(id => ({ id } as any)),
+    );
+    for (const r of recipients) {
+      if (r.familyId !== familyId) {
+        throw new ForbiddenException('该照护对象不属于您的家庭');
+      }
+    }
     // 使用日期字符串直接比较（避免 new Date() 的 UTC 解释导致时区偏移一天）
     return this.repo
       .createQueryBuilder('c')

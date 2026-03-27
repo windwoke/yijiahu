@@ -12,6 +12,7 @@ final todayCheckinsProvider =
   (ref, recipientIds) async {
     if (recipientIds.isEmpty) return {};
     final dio = ref.read(dioProvider);
+    final familyId = ref.read(currentFamilyProvider)?.id;
     final today = DateTime.now();
     final todayStr =
         '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
@@ -19,6 +20,7 @@ final todayCheckinsProvider =
       final response = await dio.get('/daily-care-checkins/today', queryParameters: {
         'recipientIds': recipientIds.join(','),
         'todayDate': todayStr,
+        'familyId': familyId,
       });
       final List<dynamic> data;
       if (response.data is List<dynamic>) {

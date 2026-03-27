@@ -49,9 +49,11 @@ class _DailyCarePageState extends ConsumerState<DailyCarePage> {
       final todayStr =
           '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
       final dio = ref.read(dioProvider);
+      final familyId = ref.read(currentFamilyProvider)?.id;
       final resp = await dio.get('/daily-care-checkins/today', queryParameters: {
         'recipientIds': widget.recipientId,
         'todayDate': todayStr,
+        'familyId': familyId,
       });
 
       if (!mounted) return;

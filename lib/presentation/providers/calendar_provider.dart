@@ -115,13 +115,18 @@ class CalendarQuery {
 }
 
 /// 日历数据（复诊+任务按日期聚合）
+/// 使用 ref.watch 而非 .future，确保 invalidate 能触发重渲染
 final calendarEventsProvider =
     FutureProvider.family<Map<DateTime, List<CalendarEvent>>, CalendarQuery>((
   ref,
   query,
 ) async {
-  final appointments = await ref.watch(calendarAppointmentsProvider(query).future);
-  final tasks = await ref.watch(calendarTasksProvider(query).future);
+  // ref.watch(AsyncValue) 建立响应依赖，invalidate 子 provider 时外层自动重跑
+  final appointmentsAsync = ref.watch(calendarAppointmentsProvider(query));
+  final tasksAsync = ref.watch(calendarTasksProvider(query));
+
+  final appointments = appointmentsAsync.valueOrNull ?? [];
+  final tasks = tasksAsync.valueOrNull ?? [];
 
   final Map<DateTime, List<CalendarEvent>> result = {};
 

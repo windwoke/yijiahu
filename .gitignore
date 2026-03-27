@@ -13,6 +13,7 @@ backend/dist/
 backend/build/
 backend/.env
 backend/logs/
+backend/uploads/
 
 # iOS
 ios/Pods/

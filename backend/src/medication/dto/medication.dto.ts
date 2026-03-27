@@ -2,6 +2,10 @@ import { IsString, IsArray, IsOptional, MaxLength, ArrayMaxSize, IsDateString, I
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateMedicationDto {
+  @ApiProperty({ description: '家庭ID（必填，用于多家庭隔离）' })
+  @IsUUID()
+  familyId: string;
+
   @ApiProperty({ example: '550e8400-e29b-41d4-a716-446655440020' })
   @IsUUID()
   recipientId: string;

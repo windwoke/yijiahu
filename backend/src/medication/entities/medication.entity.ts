@@ -9,6 +9,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { CareRecipient } from '../../care-recipient/entities/care-recipient.entity';
+import { Family } from '../../family/entities/family.entity';
 
 @Entity('medications')
 export class Medication {
@@ -17,6 +18,9 @@ export class Medication {
 
   @Column()
   recipientId: string;
+
+  @Column()
+  familyId: string;
 
   @Column()
   name: string;
@@ -63,4 +67,8 @@ export class Medication {
   @ManyToOne(() => CareRecipient)
   @JoinColumn({ name: 'recipientId' })
   recipient: CareRecipient;
+
+  @ManyToOne(() => Family)
+  @JoinColumn({ name: 'familyId' })
+  family: Family;
 }

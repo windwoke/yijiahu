@@ -17,13 +17,16 @@ export class CaregiverRecordController {
     @Query('careRecipientId') careRecipientId: string,
     @Query('familyId') familyId: string,
   ) {
-    return this.service.findByRecipient(careRecipientId);
+    return this.service.findByRecipient(careRecipientId, familyId);
   }
 
   @Get('current')
   @ApiOperation({ summary: '获取当前照护人' })
-  findCurrent(@Query('careRecipientId') careRecipientId: string) {
-    return this.service.findCurrent(careRecipientId);
+  findCurrent(
+    @Query('careRecipientId') careRecipientId: string,
+    @Query('familyId') familyId: string,
+  ) {
+    return this.service.findCurrent(careRecipientId, familyId);
   }
 
   @Post()

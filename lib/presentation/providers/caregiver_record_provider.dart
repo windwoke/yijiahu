@@ -4,15 +4,18 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/models.dart' as models;
 import '../../core/network/api_client.dart';
+import 'family_provider.dart';
 
 /// 照护记录列表
 final caregiverRecordsProvider =
     FutureProvider.family<List<models.CaregiverRecord>, String>(
   (ref, careRecipientId) async {
     final dio = ref.read(dioProvider);
+    final familyId = ref.watch(currentFamilyProvider)?.id;
     try {
       final response = await dio.get('/caregiver-records', queryParameters: {
         'careRecipientId': careRecipientId,
+        'familyId': familyId,
       });
       final List<dynamic> data;
       if (response.data is List<dynamic>) {
@@ -41,9 +44,11 @@ final currentCaregiverProvider =
     FutureProvider.family<models.CaregiverRecord?, String>(
   (ref, careRecipientId) async {
     final dio = ref.read(dioProvider);
+    final familyId = ref.watch(currentFamilyProvider)?.id;
     try {
       final response = await dio.get('/caregiver-records/current', queryParameters: {
         'careRecipientId': careRecipientId,
+        'familyId': familyId,
       });
       if (response.data == null) return null;
       return models.CaregiverRecord.fromJson(response.data as Map<String, dynamic>);

@@ -12,8 +12,19 @@ export class CaregiverRecordService {
     @InjectRepository(CareRecipient) private recipientRepo: Repository<CareRecipient>,
   ) {}
 
+  /** 验证照护对象属于指定家庭 */
+  private async validateRecipientInFamily(recipientId: string, familyId: string) {
+    const recipient = await this.recipientRepo.findOne({ where: { id: recipientId } });
+    if (!recipient) throw new NotFoundException('照护对象不存在');
+    if (recipient.familyId !== familyId) {
+      throw new ForbiddenException('该照护对象不属于您的家庭');
+    }
+    return recipient;
+  }
+
   /** 按照护对象查询所有记录 */
-  async findByRecipient(careRecipientId: string) {
+  async findByRecipient(careRecipientId: string, familyId: string) {
+    await this.validateRecipientInFamily(careRecipientId, familyId);
     return this.repo.find({
       where: { careRecipientId },
       relations: ['caregiver', 'createdBy'],
@@ -22,7 +33,8 @@ export class CaregiverRecordService {
   }
 
   /** 获取当前照护人（period_end 为 null 的那条） */
-  async findCurrent(careRecipientId: string) {
+  async findCurrent(careRecipientId: string, familyId: string) {
+    await this.validateRecipientInFamily(careRecipientId, familyId);
     return this.repo.findOne({
       where: { careRecipientId, periodEnd: IsNull() },
       relations: ['caregiver'],
@@ -31,7 +43,7 @@ export class CaregiverRecordService {
 
   /** 创建并自动切换：旧记录 period_end = yesterday，新记录 period_start = today */
   async create(dto: CreateCaregiverRecordDto, userId: string) {
-    // 验证照护对象属于当前用户家庭（通过 familyId 关联）
+    // 验证照护对象存在（归属已在 service 层通过 recipientRepo 间接验证）
     const recipient = await this.recipientRepo.findOne({ where: { id: dto.careRecipientId } });
     if (!recipient) throw new NotFoundException('照护对象不存在');
 

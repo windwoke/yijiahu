@@ -98,35 +98,25 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
           ),
         ],
       ),
-      // 核心布局：LayoutBuilder 动态计算剩余空间
-      // 日历占自然高度（最多380px），events 区域 Expanded 填满剩余空间
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final available = constraints.maxHeight;
-          // 固定元素高度：月份导航~56 + 分隔线1 + events标签~52 + SafeArea底部~34
-          final fixed = 56 + 1 + 52 + 34;
-          final maxCalendar = (available - fixed).clamp(200.0, 400.0);
-
-          return Column(
-            children: [
-              _buildMonthHeader(),
-              eventsAsync.when(
-                data: (events) => _buildCalendar(events, maxCalendar),
-                loading: () => _buildCalendar({}, maxCalendar),
-                error: (e, st) => _buildCalendar({}, maxCalendar),
-              ),
-              const Divider(height: 1, color: AppColors.border),
-              Expanded(child: _buildEventsSection(familyId, eventsAsync)),
-            ],
-          );
-        },
+      // 日历固定最大280px（紧凑设计），events 用 Expanded 填满剩余空间
+      body: Column(
+        children: [
+          _buildMonthHeader(),
+          eventsAsync.when(
+            data: (events) => _buildCalendar(events),
+            loading: () => _buildCalendar({}),
+            error: (e, st) => _buildCalendar({}),
+          ),
+          const Divider(height: 1, color: AppColors.border),
+          Expanded(child: _buildEventsSection(familyId, eventsAsync)),
+        ],
       ),
     );
   }
 
   Widget _buildMonthHeader() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -157,9 +147,9 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
     );
   }
 
-  Widget _buildCalendar(Map<DateTime, List<CalendarEvent>> events, double maxHeight) {
+  Widget _buildCalendar(Map<DateTime, List<CalendarEvent>> events) {
     return ConstrainedBox(
-      constraints: BoxConstraints(maxHeight: maxHeight),
+      constraints: const BoxConstraints(maxHeight: 280),
       child: TableCalendar<CalendarEvent>(
         firstDay: DateTime(2020),
         lastDay: DateTime(2030),
@@ -182,7 +172,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
           });
         },
         locale: 'zh_CN',
-        daysOfWeekHeight: 28,
+        daysOfWeekHeight: 24,
         daysOfWeekStyle: const DaysOfWeekStyle(
           weekdayStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
           weekendStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
@@ -195,7 +185,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
           defaultTextStyle: const TextStyle(color: AppColors.textPrimary),
           weekendTextStyle: const TextStyle(color: AppColors.textSecondary),
           outsideTextStyle: const TextStyle(color: AppColors.textTertiary),
-          cellMargin: const EdgeInsets.all(2),
+          cellMargin: const EdgeInsets.all(1),
           cellPadding: EdgeInsets.zero,
         ),
         headerVisible: false,
@@ -212,7 +202,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
       children: [
         // 标签行（固定高度）
         Container(
-          height: 44,
+          height: 36,
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             children: [

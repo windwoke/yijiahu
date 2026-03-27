@@ -449,6 +449,7 @@ class HomePage extends ConsumerWidget {
     CareRecipient recipient,
   ) {
     final todayAsync = ref.watch(todayMedicationProvider(recipient.id));
+    final caregiverAsync = ref.watch(currentCaregiverProvider(recipient.id));
 
     return Container(
       margin: const EdgeInsets.only(bottom: 24),
@@ -456,7 +457,7 @@ class HomePage extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 照护对象头部：emoji + 姓名 + 年龄 + 进度条
-          _buildRecipientHeader(context, todayAsync, recipient),
+          _buildRecipientHeader(context, todayAsync, caregiverAsync, recipient),
           const SizedBox(height: 12),
           // 今日用药 2 列 Grid
           todayAsync.when(
@@ -495,6 +496,7 @@ class HomePage extends ConsumerWidget {
   Widget _buildRecipientHeader(
     BuildContext context,
     AsyncValue<TodayMedicationSummary> todayAsync,
+    AsyncValue<CaregiverRecord?> caregiverAsync,
     CareRecipient recipient,
   ) {
     final progress = todayAsync.whenOrNull(
@@ -504,106 +506,152 @@ class HomePage extends ConsumerWidget {
 
     return GestureDetector(
       onTap: () => context.push(AppRoutes.careRecipientDetail, extra: recipient),
-      child: Row(
-        children: [
-          // 头像（优先真实照片，fallback emoji）
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppColors.surfaceContainerLow,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: (recipient.avatarUrl != null && recipient.avatarUrl!.isNotEmpty)
-                  ? Image.network(
-                      ApiConfig.avatarUrl(recipient.avatarUrl!) ?? '',
-                      fit: BoxFit.cover,
-                      width: 48,
-                      height: 48,
-                      errorBuilder: (_, __, ___) => Text(recipient.displayAvatar, style: const TextStyle(fontSize: 24)),
-                    )
-                  : Center(
-                      child: Text(recipient.displayAvatar, style: const TextStyle(fontSize: 24)),
-                    ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          // 姓名 + 年龄
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      recipient.name,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(color: AppColors.shadowSoft, blurRadius: 8, offset: const Offset(0, 2)),
+            BoxShadow(color: AppColors.shadowSoft2, blurRadius: 4, offset: const Offset(0, 1)),
+          ],
+        ),
+        child: Row(
+          children: [
+            // 头像（优先真实照片，fallback emoji）
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: AppColors.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: (recipient.avatarUrl != null && recipient.avatarUrl!.isNotEmpty)
+                    ? Image.network(
+                        ApiConfig.avatarUrl(recipient.avatarUrl!) ?? '',
+                        fit: BoxFit.cover,
+                        width: 48,
+                        height: 48,
+                        errorBuilder: (_, __, ___) => Text(recipient.displayAvatar, style: const TextStyle(fontSize: 24)),
+                      )
+                    : Center(
+                        child: Text(recipient.displayAvatar, style: const TextStyle(fontSize: 24)),
                       ),
-                    ),
-                    if (recipient.age != null) ...[
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceContainerLow,
-                          borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            const SizedBox(width: 12),
+            // 姓名 + 年龄 + 主要负责人
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        recipient.name,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
                         ),
-                        child: Text(
-                          '${recipient.age}岁',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textSecondary,
+                      ),
+                      if (recipient.age != null) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceContainerLow,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            '${recipient.age}岁',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ],
-                  ],
+                  ),
+                  const SizedBox(height: 4),
+                  // 主要负责人
+                  caregiverAsync.when(
+                    data: (caregiver) {
+                      if (caregiver?.caregiver == null) {
+                        return Text(
+                          '暂无主要负责人',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textTertiary,
+                          ),
+                        );
+                      }
+                      return Row(
+                        children: [
+                          Icon(
+                            Icons.person_pin_rounded,
+                            size: 13,
+                            color: AppColors.primary,
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            '主要负责人：${caregiver!.caregiver!.name}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                    loading: () => const SizedBox.shrink(),
+                    error: (_, __) => const SizedBox.shrink(),
+                  ),
+                  const SizedBox(height: 6),
+                  // 进度条
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: progress ?? 0,
+                      backgroundColor: AppColors.grey200,
+                      valueColor:
+                          const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                      minHeight: 6,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            // 完成数 badge
+            todayAsync.whenOrNull(
+              data: (today) => Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: today.completed == today.total && today.total > 0
+                      ? AppColors.medicationDone.withValues(alpha: 0.12)
+                      : AppColors.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                const SizedBox(height: 6),
-                // 进度条
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: progress ?? 0,
-                    backgroundColor: AppColors.grey200,
-                    valueColor:
-                        const AlwaysStoppedAnimation<Color>(AppColors.primary),
-                    minHeight: 6,
+                child: Text(
+                  '${today.completed}/${today.total}',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: today.completed == today.total && today.total > 0
+                        ? AppColors.medicationDone
+                        : AppColors.textSecondary,
                   ),
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          // 完成数 badge
-          todayAsync.whenOrNull(
-            data: (today) => Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: today.completed == today.total && today.total > 0
-                    ? AppColors.medicationDone.withValues(alpha: 0.12)
-                    : AppColors.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(12),
               ),
-              child: Text(
-                '${today.completed}/${today.total}',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: today.completed == today.total && today.total > 0
-                      ? AppColors.medicationDone
-                      : AppColors.textSecondary,
-                ),
-              ),
-            ),
-          ) ?? const SizedBox(width: 48),
-        ],
+            ) ?? const SizedBox(width: 48),
+          ],
+        ),
       ),
     );
   }
@@ -923,18 +971,42 @@ class _DailyCareBanner extends ConsumerWidget {
     WidgetRef ref,
     AsyncValue<Map<String, DailyCareCheckin>> checkinsAsync,
   ) {
+    // 根据最紧急状态确定横幅底色
+    final worstStatus = checkinsAsync.whenOrNull(
+      data: (checkins) {
+        CheckinStatus? worst;
+        for (final c in checkins.values) {
+          if (c.status == CheckinStatus.critical) { worst = CheckinStatus.critical; break; }
+          if (c.status == CheckinStatus.poor && worst != CheckinStatus.critical) worst = CheckinStatus.poor;
+          if (c.status == CheckinStatus.concerning && worst == null) worst = CheckinStatus.concerning;
+        }
+        return worst;
+      },
+    );
+
+    Color bannerColor;
+    if (worstStatus == CheckinStatus.critical) {
+      bannerColor = const Color(0xFFE53935); // 红色
+    } else if (worstStatus == CheckinStatus.poor) {
+      bannerColor = const Color(0xFFFF5722); // 深橙
+    } else if (worstStatus == CheckinStatus.concerning) {
+      bannerColor = const Color(0xFFFF9800); // 橙黄
+    } else {
+      bannerColor = AppColors.primary; // 鼠尾草绿
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.8)],
+          colors: [bannerColor, bannerColor.withValues(alpha: 0.85)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4)),
+          BoxShadow(color: bannerColor.withValues(alpha: 0.35), blurRadius: 12, offset: const Offset(0, 4)),
         ],
       ),
       child: Column(
@@ -942,11 +1014,21 @@ class _DailyCareBanner extends ConsumerWidget {
         children: [
           Row(
             children: [
-              const Text('📋', style: TextStyle(fontSize: 20)),
+              if (worstStatus == CheckinStatus.critical)
+                const Text('🚨', style: TextStyle(fontSize: 20))
+              else if (worstStatus == CheckinStatus.poor)
+                const Text('⚠️', style: TextStyle(fontSize: 20))
+              else if (worstStatus == CheckinStatus.concerning)
+                const Text('⚡', style: TextStyle(fontSize: 20))
+              else
+                const Text('📋', style: TextStyle(fontSize: 20)),
               const SizedBox(width: 8),
-              const Text(
-                '今日护理打卡',
-                style: TextStyle(
+              Text(
+                worstStatus == null ? '今日护理打卡'
+                    : worstStatus == CheckinStatus.critical ? '⚠️ 危急提醒'
+                    : worstStatus == CheckinStatus.poor ? '⚠️ 状态预警'
+                    : '⚡ 需要关注',
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: Colors.white,
@@ -985,90 +1067,159 @@ class _DailyCareBanner extends ConsumerWidget {
   Widget _buildRow(BuildContext context, WidgetRef ref, CareRecipient recipient, DailyCareCheckin? checkin) {
     final isCheckedIn = checkin != null;
     final status = checkin?.status;
+    final isAlert = isCheckedIn && status != null && status != CheckinStatus.normal;
+
+    // 非 normal 状态用卡片背景，图标放大
+    final iconSize = isAlert ? 24.0 : 18.0;
+    final statusColor = status?.color ?? Colors.white;
 
     return Padding(
       padding: const EdgeInsets.only(top: 8),
-      child: Row(
-        children: [
+      child: isAlert
+          ? // 警示状态：卡片背景
           Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Center(
-              child: Text(
-                isCheckedIn ? (status?.emoji ?? '✓') : '⏳',
-                style: const TextStyle(fontSize: 18),
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  recipient.name,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-                Text(
-                  isCheckedIn
-                      ? '${status?.label ?? '已打卡'} · ${checkin!.medicationLabel}'
-                      : '今日尚未打卡',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isCheckedIn ? Colors.white70 : Colors.white54,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (isCheckedIn)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.25),
-                borderRadius: BorderRadius.circular(12),
+                color: Colors.white.withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
               ),
-              child: const Text(
-                '已打卡',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
+              child: Row(
+                children: [
+                  Text(status?.emoji ?? '⚠️', style: TextStyle(fontSize: iconSize)),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          recipient.name,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                        Text(
+                          '${status?.label ?? ''} · ${checkin!.medicationLabel}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.white.withValues(alpha: 0.9),
+                          ),
+                        ),
+                        if (checkin.specialNote != null && checkin.specialNote!.isNotEmpty)
+                          Text(
+                            checkin.specialNote!,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.white.withValues(alpha: 0.75),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      '去打卡',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             )
-          else
-            GestureDetector(
-              onTap: () => context.push(AppRoutes.dailyCare, extra: {
-                'recipientId': recipient.id,
-                'recipient': recipient,
-              }),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Text(
-                  '去打卡',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
+          : // 正常/未打卡：保持原有紧凑行
+          Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Center(
+                    child: Text(
+                      isCheckedIn ? (status?.emoji ?? '✓') : '⏳',
+                      style: const TextStyle(fontSize: 18),
+                    ),
                   ),
                 ),
-              ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        recipient.name,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                      Text(
+                        isCheckedIn
+                            ? '${status?.label ?? '已打卡'} · ${checkin!.medicationLabel}'
+                            : '今日尚未打卡',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isCheckedIn ? Colors.white70 : Colors.white54,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (isCheckedIn)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.25),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      '已打卡',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  )
+                else
+                  GestureDetector(
+                    onTap: () => context.push(AppRoutes.dailyCare, extra: {
+                      'recipientId': recipient.id,
+                      'recipient': recipient,
+                    }),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Text(
+                        '去打卡',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
-        ],
-      ),
     );
   }
 }

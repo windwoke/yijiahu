@@ -20,9 +20,42 @@ class CalendarPage extends ConsumerStatefulWidget {
   ConsumerState<CalendarPage> createState() => _CalendarPageState();
 }
 
-class _CalendarPageState extends ConsumerState<CalendarPage> {
+class _CalendarPageState extends ConsumerState<CalendarPage>
+    with WidgetsBindingObserver {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDay = _focusedDay;
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _refresh();
+    }
+  }
+
+  void _refresh() {
+    final now = DateTime.now();
+    final fid = ref.read(currentFamilyProvider)?.id ?? '';
+    ref.invalidate(calendarEventsProvider(CalendarQuery(
+      familyId: fid,
+      year: _focusedDay.year,
+      month: _focusedDay.month,
+    )));
+    ref.invalidate(familyTasksProvider(fid));
+    ref.invalidate(upcomingTasksProvider(fid));
+  }
   bool _showList = false;
 
   // === 详情弹层方法 ===
@@ -48,23 +81,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
     );
   }
 
-  void _refresh() {
-    final now = DateTime.now();
-    // 刷新当月（用户正在看的月份）和当前实际月份
-    final currentQ = CalendarQuery(familyId: familyId, year: now.year, month: now.month);
-    ref.invalidate(calendarEventsProvider(currentQ));
-    // 同时强制重新读取 familyId（防止切换家庭后 ID 不一致）
-    ref.invalidate(familyTasksProvider(familyId));
-    ref.invalidate(upcomingTasksProvider(familyId));
-  }
-
   String get familyId => ref.read(currentFamilyProvider)?.id ?? '';
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedDay = _focusedDay;
-  }
 
   @override
   Widget build(BuildContext context) {

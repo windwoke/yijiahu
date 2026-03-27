@@ -644,22 +644,23 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
         await dio.post(endpoint, data: payload);
       }
 
-      // 刷新日历数据
       final now = DateTime.now();
-      ref.invalidate(calendarEventsProvider(CalendarQuery(
-        familyId: familyId ?? '',
-        year: now.year,
-        month: now.month,
-      )));
-      ref.invalidate(familyTasksProvider(familyId ?? ''));
-      ref.invalidate(upcomingTasksProvider(familyId ?? ''));
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(_editingTaskId != null ? '任务已更新' : '任务已添加')),
         );
         await Future.delayed(const Duration(milliseconds: 600));
-        if (mounted) context.pop();
+        if (mounted) {
+          // pop 完成后刷新日历数据，确保返回时 UI 已是最新的
+          context.pop();
+          ref.invalidate(calendarEventsProvider(CalendarQuery(
+            familyId: familyId ?? '',
+            year: now.year,
+            month: now.month,
+          )));
+          ref.invalidate(familyTasksProvider(familyId ?? ''));
+          ref.invalidate(upcomingTasksProvider(familyId ?? ''));
+        }
       }
     } catch (e) {
       if (mounted) {

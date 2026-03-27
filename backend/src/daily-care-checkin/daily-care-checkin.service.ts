@@ -1,0 +1,87 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, Between } from 'typeorm';
+import { DailyCareCheckin } from './entities/daily-care-checkin.entity';
+import { CreateDailyCareCheckinDto } from './dto/daily-care-checkin.dto';
+import { MedicationLog } from '../medication-log/entities/medication-log.entity';
+
+@Injectable()
+export class DailyCareCheckinService {
+  constructor(
+    @InjectRepository(DailyCareCheckin) private repo: Repository<DailyCareCheckin>,
+    @InjectRepository(MedicationLog) private medLogRepo: Repository<MedicationLog>,
+  ) {}
+
+  /** 获取指定日期的打卡记录 */
+  async findByDate(careRecipientId: string, checkinDate: string) {
+    return this.repo
+      .createQueryBuilder('c')
+      .leftJoinAndSelect('c.checkedInBy', 'checkedInBy')
+      .where('c.careRecipientId = :careRecipientId', { careRecipientId })
+      .andWhere('c.checkinDate = :checkinDate', { checkinDate })
+      .getOne();
+  }
+
+  /** 批量获取今日打卡（用于首页横幅）—— 传入家庭所有照护对象ID */
+  async findTodayByRecipients(recipientIds: string[], todayDate: string) {
+    if (recipientIds.length === 0) return [];
+    return this.repo
+      .createQueryBuilder('c')
+      .leftJoinAndSelect('c.checkedInBy', 'checkedInBy')
+      .leftJoinAndSelect('c.careRecipient', 'recipient')
+      .where('c.careRecipientId IN (:...ids)', { ids: recipientIds })
+      .andWhere('c.checkinDate = :date', { date: todayDate })
+      .getMany();
+  }
+
+  /** 创建或更新打卡（upsert）*/
+  async upsert(dto: CreateDailyCareCheckinDto, userId: string) {
+    const existing = await this.repo
+      .createQueryBuilder('c')
+      .where('c.careRecipientId = :careRecipientId', { careRecipientId: dto.careRecipientId })
+      .andWhere('c.checkinDate = :checkinDate', { checkinDate: dto.checkinDate })
+      .getOne();
+
+    // 自动计算今日用药完成情况
+    const todayStr = dto.checkinDate;
+    const todayStart = new Date(`${todayStr}T00:00:00.000Z`);
+    const todayEnd = new Date(`${todayStr}T23:59:59.999Z`);
+    const medLogs = await this.medLogRepo.find({
+      where: {
+        recipientId: dto.careRecipientId,
+        takenAt: Between(todayStart, todayEnd),
+      },
+    });
+    const completedCount = medLogs.filter((m) => m.status === 'taken').length;
+
+    if (existing) {
+      existing.status = dto.status;
+      existing.medicationCompleted = dto.medicationCompleted ?? completedCount;
+      existing.medicationTotal = dto.medicationTotal ?? 0;
+      existing.specialNote = dto.specialNote ?? null;
+      existing.checkedInById = userId;
+      return this.repo.save(existing);
+    } else {
+      const checkin = this.repo.create({
+        careRecipientId: dto.careRecipientId,
+        checkinDate: new Date(dto.checkinDate),
+        status: dto.status,
+        medicationCompleted: dto.medicationCompleted ?? completedCount,
+        medicationTotal: dto.medicationTotal ?? 0,
+        specialNote: dto.specialNote ?? null,
+        checkedInById: userId,
+      });
+      return this.repo.save(checkin);
+    }
+  }
+
+  /** 获取照护对象的打卡历史（用于时间线） */
+  async findByRecipient(careRecipientId: string, limit = 30) {
+    return this.repo.find({
+      where: { careRecipientId },
+      relations: ['checkedInBy', 'careRecipient'],
+      order: { checkinDate: 'DESC' },
+      take: limit,
+    });
+  }
+}

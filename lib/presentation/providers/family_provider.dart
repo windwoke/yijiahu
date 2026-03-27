@@ -289,6 +289,22 @@ class TimelineNotifier extends FamilyAsyncNotifier<List<models.TimelineEntry>, T
           .map((e) => models.TimelineEntry.fromHealthRecord(Map<String, dynamic>.from(e))));
     } catch (_) {}
 
+    // 4. 每日护理打卡
+    try {
+      final checkinParams = <String, dynamic>{'limit': 30};
+      if (recipientId != null) checkinParams['careRecipientId'] = recipientId;
+
+      final checkinResp = await dio.get(
+        '/daily-care-checkins/by-recipient',
+        queryParameters: checkinParams,
+      );
+      final checkinData = checkinResp.data is List
+          ? checkinResp.data as List
+          : (checkinResp.data['data'] as List?) ?? [];
+      all.addAll(checkinData
+          .map((e) => models.TimelineEntry.fromDailyCareCheckin(Map<String, dynamic>.from(e))));
+    } catch (_) {}
+
     all.sort((a, b) => b.time.compareTo(a.time));
     return all;
   }

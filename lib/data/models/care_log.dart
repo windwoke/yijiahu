@@ -3,6 +3,7 @@ library;
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
+import 'daily_care_checkin.dart';
 
 enum CareLogType {
   medication,
@@ -66,12 +67,17 @@ class TimelineEntry extends Equatable {
   final String author;
   final String? authorId;
   final String recipientId;
-  final String? source; // 'care_log' | 'medication_log' | 'health_record'
+  final String? source; // 'care_log' | 'medication_log' | 'health_record' | 'daily_care_checkin'
   /// 健康记录专用字段
   final Map<String, dynamic>? healthValue;
   final HealthMetricType? healthMetricType;
   /// 附件列表
   final List<CareLogAttachment> attachments;
+  /// 每日护理打卡专用字段
+  final CheckinStatus? checkinStatus;
+  final int? medicationCompleted;
+  final int? medicationTotal;
+  final String? specialNote;
 
   const TimelineEntry({
     required this.id,
@@ -85,6 +91,10 @@ class TimelineEntry extends Equatable {
     this.healthValue,
     this.healthMetricType,
     this.attachments = const [],
+    this.checkinStatus,
+    this.medicationCompleted,
+    this.medicationTotal,
+    this.specialNote,
   });
 
   factory TimelineEntry.fromCareLog(Map<String, dynamic> json) {
@@ -138,6 +148,43 @@ class TimelineEntry extends Equatable {
     );
   }
 
+  factory TimelineEntry.fromDailyCareCheckin(Map<String, dynamic> json) {
+    final status = CheckinStatus.fromString(json['status'] as String?);
+    final medCompleted = json['medicationCompleted'] as int? ?? 0;
+    final medTotal = json['medicationTotal'] as int? ?? 0;
+    final note = json['specialNote'] as String?;
+
+    String content;
+    if (medTotal > 0) {
+      content = '用药完成 $medCompleted/$medTotal 项';
+    } else {
+      content = '护理打卡';
+    }
+    if (note != null && note.isNotEmpty) {
+      content += ' · $note';
+    }
+
+    return TimelineEntry(
+      id: json['id'] as String? ?? '',
+      time: DateTime.tryParse(json['createdAt'] as String? ?? '') ?? DateTime.now(),
+      type: CareLogType.other,
+      content: content,
+      author: (json['checkedInBy'] != null
+              ? (json['checkedInBy'] as Map<String, dynamic>)['name'] as String?
+              : null) ??
+          '家庭成员',
+      authorId: (json['checkedInBy'] != null
+          ? (json['checkedInBy'] as Map<String, dynamic>)['id'] as String?
+          : null),
+      recipientId: json['careRecipientId'] as String? ?? json['care_recipient_id'] as String? ?? '',
+      source: 'daily_care_checkin',
+      checkinStatus: status,
+      medicationCompleted: medCompleted,
+      medicationTotal: medTotal,
+      specialNote: note,
+    );
+  }
+
   static HealthMetricType? _parseHealthMetricType(String recordType) {
     switch (recordType) {
       case 'blood_pressure': return HealthMetricType.bloodPressure;
@@ -148,7 +195,7 @@ class TimelineEntry extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, time, type, content, author, recipientId, source, healthValue, attachments];
+  List<Object?> get props => [id, time, type, content, author, recipientId, source, healthValue, attachments, checkinStatus];
 }
 
 // ─── 健康数据类型 ───────────────────────────────────────────────

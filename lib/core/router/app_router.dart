@@ -20,6 +20,7 @@ import '../../presentation/pages/settings/profile_page.dart';
 import '../../presentation/pages/settings/password_change_page.dart';
 import '../../presentation/pages/care-recipient/add_care_recipient_page.dart';
 import '../../presentation/pages/care-recipient/care_recipient_detail_page.dart';
+import '../../presentation/pages/daily-care/daily_care_page.dart';
 import '../../presentation/providers/auth_provider.dart';
 
 /// 路由名称
@@ -39,6 +40,7 @@ class AppRoutes {
   static const String passwordChange = '/profile/password-change';
   static const String addCareRecipient = '/care-recipient/add';
   static const String careRecipientDetail = '/care-recipient/detail';
+  static const String dailyCare = '/daily-care';
 }
 
 /// 路由配置
@@ -149,6 +151,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.passwordChange,
         builder: (context, state) => const PasswordChangePage(),
+      ),
+      GoRoute(
+        path: AppRoutes.dailyCare,
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>;
+          return DailyCarePage(
+            recipientId: extra['recipientId'] as String,
+            recipient: extra['recipient'] as CareRecipient,
+          );
+        },
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

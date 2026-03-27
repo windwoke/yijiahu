@@ -2,6 +2,7 @@ export 'user.dart';
 export 'family.dart';
 export 'care_recipient.dart';
 export 'caregiver_record.dart';
+export 'daily_care_checkin.dart';
 export 'medication.dart';
 export 'care_log.dart';
 export 'appointment.dart';

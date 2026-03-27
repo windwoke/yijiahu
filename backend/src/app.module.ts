@@ -15,6 +15,7 @@ import { SubscriptionModule } from './subscription/subscription.module';
 import { AppointmentModule } from './appointment/appointment.module';
 import { FamilyTaskModule } from './family-task/family-task.module';
 import { CaregiverRecordModule } from './caregiver-record/caregiver-record.module';
+import { DailyCareCheckinModule } from './daily-care-checkin/daily-care-checkin.module';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { CaregiverRecordModule } from './caregiver-record/caregiver-record.modul
     AppointmentModule,
     FamilyTaskModule,
     CaregiverRecordModule,
+    DailyCareCheckinModule,
   ],
 })
 export class AppModule {}

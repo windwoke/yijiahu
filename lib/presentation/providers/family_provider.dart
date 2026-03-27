@@ -138,8 +138,10 @@ final healthTrendsProvider =
   (ref, recipientId) async {
   try {
     final dio = ref.read(dioProvider);
+    final familyId = ref.watch(currentFamilyProvider)?.id;
     final response = await dio.get('/health-records/trends', queryParameters: {
       'recipientId': recipientId,
+      'familyId': familyId,
       'days': 7,
     });
     final data = response.data as Map<String, dynamic>;

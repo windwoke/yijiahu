@@ -161,6 +161,7 @@ class TodayMedicationStatus extends Equatable {
 class HealthRecord extends Equatable {
   final String id;
   final String recipientId;
+  final String? familyId;
   final String recordType;
   final Map<String, dynamic> value;
   final DateTime recordedAt;
@@ -170,6 +171,7 @@ class HealthRecord extends Equatable {
   const HealthRecord({
     required this.id,
     required this.recipientId,
+    this.familyId,
     required this.recordType,
     required this.value,
     required this.recordedAt,
@@ -181,6 +183,7 @@ class HealthRecord extends Equatable {
     return HealthRecord(
       id: json['id'] as String? ?? '',
       recipientId: json['recipientId'] as String? ?? json['recipient_id'] as String? ?? '',
+      familyId: json['familyId'] as String?,
       recordType: json['recordType'] as String? ?? json['record_type'] as String? ?? '',
       value: (json['value'] as Map<String, dynamic>?) ?? {},
       recordedAt: DateTime.tryParse(json['recordedAt'] as String? ?? json['recorded_at'] as String? ?? '') ?? DateTime.now(),

@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { HealthRecord } from './entities/health-record.entity';
 import { User } from '../user/entities/user.entity';
+import { CareRecipient } from '../care-recipient/entities/care-recipient.entity';
 import { CreateHealthRecordDto } from './dto/health-record.dto';
 
 @Injectable()
@@ -10,9 +11,21 @@ export class HealthRecordService {
   constructor(
     @InjectRepository(HealthRecord) private repo: Repository<HealthRecord>,
     @InjectRepository(User) private userRepo: Repository<User>,
+    @InjectRepository(CareRecipient) private recipientRepo: Repository<CareRecipient>,
   ) {}
 
+  /** 验证照护对象属于指定家庭 */
+  private async validateRecipientInFamily(recipientId: string, familyId: string) {
+    const recipient = await this.recipientRepo.findOne({ where: { id: recipientId } });
+    if (!recipient) throw new NotFoundException('照护对象不存在');
+    if (recipient.familyId !== familyId) {
+      throw new ForbiddenException('该照护对象不属于您的家庭');
+    }
+    return recipient;
+  }
+
   async create(dto: CreateHealthRecordDto, recordedById?: string) {
+    await this.validateRecipientInFamily(dto.recipientId, dto.familyId);
     const record = this.repo.create({
       ...dto,
       recordedById,
@@ -61,14 +74,17 @@ export class HealthRecordService {
     }));
   }
 
-  async findByRecipient(recipientId: string, recordType?: string, days = 7) {
+  async findByRecipient(recipientId: string, familyId: string, recordType?: string, days = 7) {
+    // 验证归属
+    await this.validateRecipientInFamily(recipientId, familyId);
+
     const qb = this.repo
-        .createQueryBuilder('hr')
-        .where('hr.recipientId = :recipientId', { recipientId })
-        .andWhere('hr.recordedAt >= :since', {
-          since: new Date(Date.now() - days * 24 * 60 * 60 * 1000),
-        })
-        .orderBy('hr.recordedAt', 'DESC');
+      .createQueryBuilder('hr')
+      .where('hr.recipientId = :recipientId', { recipientId })
+      .andWhere('hr.recordedAt >= :since', {
+        since: new Date(Date.now() - days * 24 * 60 * 60 * 1000),
+      })
+      .orderBy('hr.recordedAt', 'DESC');
 
     if (recordType) {
       qb.andWhere('hr.recordType = :recordType', { recordType });
@@ -77,21 +93,22 @@ export class HealthRecordService {
     return qb.getMany();
   }
 
-  async getTrends(recipientId: string, days = 7) {
-    // 获取血压和血糖的最近数据用于趋势展示
-    const records = await this.repo
-        .createQueryBuilder('hr')
-        .where('hr.recipientId = :recipientId', { recipientId })
-        .andWhere('hr.recordedAt >= :since', {
-          since: new Date(Date.now() - days * 24 * 60 * 60 * 1000),
-        })
-        .andWhere('hr.recordType IN (:...types)', {
-          types: ['blood_pressure', 'blood_glucose'],
-        })
-        .orderBy('hr.recordedAt', 'DESC')
-        .getMany();
+  async getTrends(recipientId: string, familyId: string, days = 7) {
+    // 验证归属
+    await this.validateRecipientInFamily(recipientId, familyId);
 
-    // 按类型分组
+    const records = await this.repo
+      .createQueryBuilder('hr')
+      .where('hr.recipientId = :recipientId', { recipientId })
+      .andWhere('hr.recordedAt >= :since', {
+        since: new Date(Date.now() - days * 24 * 60 * 60 * 1000),
+      })
+      .andWhere('hr.recordType IN (:...types)', {
+        types: ['blood_pressure', 'blood_glucose'],
+      })
+      .orderBy('hr.recordedAt', 'DESC')
+      .getMany();
+
     const bp = records.filter(r => r.recordType === 'blood_pressure');
     const glucose = records.filter(r => r.recordType === 'blood_glucose');
 

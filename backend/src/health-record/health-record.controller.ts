@@ -25,11 +25,13 @@ export class HealthRecordController {
   @ApiOperation({ summary: '获取健康记录列表' })
   findByRecipient(
     @Query('recipientId') recipientId: string,
+    @Query('familyId') familyId: string,
     @Query('recordType') recordType?: string,
     @Query('days') days?: string,
   ) {
     return this.service.findByRecipient(
       recipientId,
+      familyId,
       recordType,
       days ? parseInt(days, 10) : 7,
     );
@@ -39,10 +41,12 @@ export class HealthRecordController {
   @ApiOperation({ summary: '获取健康趋势（血压+血糖）' })
   getTrends(
     @Query('recipientId') recipientId: string,
+    @Query('familyId') familyId: string,
     @Query('days') days?: string,
   ) {
     return this.service.getTrends(
       recipientId,
+      familyId,
       days ? parseInt(days, 10) : 7,
     );
   }

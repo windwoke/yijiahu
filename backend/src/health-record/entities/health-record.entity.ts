@@ -7,11 +7,19 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { CareRecipient } from '../../care-recipient/entities/care-recipient.entity';
+import { Family } from '../../family/entities/family.entity';
 
 @Entity('health_records')
 export class HealthRecord {
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
+  @Column()
+  familyId: string;
+
+  @ManyToOne(() => Family)
+  @JoinColumn({ name: 'familyId' })
+  family: Family;
 
   @Column()
   recipientId: string;

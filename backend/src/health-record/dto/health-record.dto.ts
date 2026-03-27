@@ -1,7 +1,12 @@
-import { IsString, IsOptional, IsNumber, IsDateString, IsObject, MaxLength } from 'class-validator';
+import { IsString, IsOptional, IsNumber, IsDateString, IsObject, MaxLength, IsUUID, IsNotEmpty } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateHealthRecordDto {
+  @ApiProperty({ description: '家庭ID（必填）' })
+  @IsNotEmpty()
+  @IsUUID()
+  familyId: string;
+
   @ApiProperty({ example: 'recipient-uuid' })
   @IsString()
   recipientId: string;

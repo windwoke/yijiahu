@@ -1134,6 +1134,7 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
                               value['unit'] = weightUnit;
                             }
                             await dio.post('/health-records', data: {
+                              'familyId': familyId,
                               'recipientId': recipientId,
                               'recordType': selectedMetric!.recordType,
                               'value': value,

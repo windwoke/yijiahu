@@ -1280,7 +1280,9 @@ class _CareRecipientDetailPageState extends ConsumerState<CareRecipientDetailPag
                             value['unit'] = weightUnit;
                           }
 
+                          final familyId = ref.read(currentFamilyProvider)?.id;
                           await dio.post('/health-records', data: {
+                            'familyId': familyId,
                             'recipientId': widget.recipient.id,
                             'recordType': selectedMetric!.recordType,
                             'value': value,
@@ -1289,7 +1291,6 @@ class _CareRecipientDetailPageState extends ConsumerState<CareRecipientDetailPag
                           await Future.delayed(Duration.zero);
                           ref.invalidate(healthTrendsProvider(widget.recipient.id));
                           // 同时刷新时间线
-                          final familyId = ref.read(currentFamilyProvider)?.id;
                           if (familyId != null) {
                             ref.read(timelineProvider(
                               TimelineQuery(familyId: familyId, recipientId: widget.recipient.id),

@@ -376,6 +376,10 @@ class HomePage extends ConsumerWidget {
         // 今日任务：按 nextDueAt 是否到期过滤（不用 status，周期任务 status 永远是 pending）
         tasksAsync.when(
           data: (tasks) {
+            debugPrint('[HomePage] upcomingTasks count=${tasks.length} familyId=${family.id}');
+            for (final t in tasks) {
+              debugPrint('[HomePage] task: ${t.title} nextDueAt=${t.nextDueAt} status=${t.status}');
+            }
             final todayStart = DateTime(now.year, now.month, now.day);
             final todayEnd = todayStart.add(const Duration(days: 1));
             final todayTasks = tasks.where((t) {

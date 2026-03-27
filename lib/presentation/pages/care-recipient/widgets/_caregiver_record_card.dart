@@ -4,6 +4,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/constants.dart';
+import '../../../../core/env/env_config.dart' show ApiConfig;
 import '../../../../data/models/models.dart';
 import '../../../providers/providers.dart';
 
@@ -87,7 +88,9 @@ class CaregiverRecordCard extends ConsumerWidget {
                         CircleAvatar(
                           radius: 20,
                           backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                          backgroundImage: NetworkImage(current.caregiver!.avatarUrl!),
+                          backgroundImage: NetworkImage(
+                            ApiConfig.avatarUrl(current.caregiver!.avatarUrl) ?? '',
+                          ),
                         )
                       else
                         CircleAvatar(
@@ -422,7 +425,22 @@ class _CaregiverRecordSheetState extends ConsumerState<_CaregiverRecordSheet> {
                               items: members.map((m) {
                                 return DropdownMenuItem(
                                   value: m,
-                                  child: Text(m.nickname),
+                                  child: Row(
+                                    children: [
+                                      CircleAvatar(
+                                        radius: 12,
+                                        backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                                        backgroundImage: m.avatarUrl != null
+                                            ? NetworkImage(ApiConfig.avatarUrl(m.avatarUrl) ?? '')
+                                            : null,
+                                        child: m.avatarUrl == null
+                                            ? Icon(Icons.person_rounded, size: 14, color: AppColors.primary)
+                                            : null,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(m.nickname),
+                                    ],
+                                  ),
                                 );
                               }).toList(),
                               onChanged: (v) {

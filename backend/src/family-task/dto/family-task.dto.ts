@@ -56,7 +56,12 @@ export class CreateFamilyTaskDto {
   note?: string;
 }
 
-export class UpdateFamilyTaskDto extends PartialType(CreateFamilyTaskDto) {}
+export class UpdateFamilyTaskDto extends PartialType(CreateFamilyTaskDto) {
+  @ApiPropertyOptional({ description: '任务状态', enum: ['pending', 'completed', 'cancelled'] })
+  @IsOptional()
+  @IsString()
+  status?: string;
+}
 
 export class CompleteTaskDto {
   @ApiPropertyOptional({ description: '完成的日期实例 YYYY-MM-DD' })

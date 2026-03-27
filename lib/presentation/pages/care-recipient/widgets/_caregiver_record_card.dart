@@ -83,16 +83,18 @@ class CaregiverRecordCard extends ConsumerWidget {
                 if (current?.caregiver != null) ...[
                   Row(
                     children: [
-                      CircleAvatar(
-                        radius: 20,
-                        backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                        backgroundImage: current!.caregiver!.avatarUrl != null
-                            ? NetworkImage(current.caregiver!.avatarUrl!)
-                            : null,
-                        child: current.caregiver!.avatarUrl != null
-                            ? null
-                            : Icon(Icons.person_rounded, color: AppColors.primary, size: 22),
-                      ),
+                      if (current!.caregiver!.avatarUrl != null && current.caregiver!.avatarUrl!.isNotEmpty)
+                        CircleAvatar(
+                          radius: 20,
+                          backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                          backgroundImage: NetworkImage(current.caregiver!.avatarUrl!),
+                        )
+                      else
+                        CircleAvatar(
+                          radius: 20,
+                          backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                          child: Icon(Icons.person_rounded, color: AppColors.primary, size: 22),
+                        ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Column(

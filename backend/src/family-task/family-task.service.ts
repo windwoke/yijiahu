@@ -51,6 +51,27 @@ export class FamilyTaskService {
       order: { nextDueAt: 'ASC' },
     });
 
+    if (tasks.length === 0) return [];
+
+    // 预加载所有任务的完成记录
+    const taskIds = tasks.map(t => t.id);
+    const completions = await this.completionRepo
+      .createQueryBuilder('tc')
+      .where('tc.taskId IN (:...taskIds)', { taskIds })
+      .andWhere('tc.completedAt >= :start AND tc.completedAt <= :end', {
+        start: startDate,
+        end: endDate,
+      })
+      .getMany();
+
+    // 建立 taskId -> [completedAt dates] 映射
+    const completionMap = new Map<string, Set<string>>();
+    for (const c of completions) {
+      const dateKey = new Date(c.completedAt).toLocaleDateString('en-CA');
+      if (!completionMap.has(c.taskId)) completionMap.set(c.taskId, new Set());
+      completionMap.get(c.taskId)!.add(dateKey);
+    }
+
     // 展开 recurring 任务
     const result: any[] = [];
 
@@ -60,8 +81,10 @@ export class FamilyTaskService {
           result.push(task);
         }
       } else {
-        // 展开周期任务到当月
-        const expanded = this.expandRecurringTask(task, year, month, startDate, endDate);
+        const expanded = this.expandRecurringTask(
+          task, year, month, startDate, endDate,
+          completionMap.get(task.id) ?? new Set(),
+        );
         result.push(...expanded);
       }
     }
@@ -69,13 +92,14 @@ export class FamilyTaskService {
     return result;
   }
 
-  /** 展开周期任务到月视图 */
+  /** 展开周期任务到月视图（标记已完成的实例） */
   private expandRecurringTask(
     task: FamilyTask,
     year: number,
     month: number,
     startDate: Date,
     endDate: Date,
+    completedDates: Set<string>,
   ): FamilyTask[] {
     const results: FamilyTask[] = [];
     const daysInMonth = new Date(year, month, 0).getDate();
@@ -96,6 +120,11 @@ export class FamilyTaskService {
 
       if (matches && date >= startDate && date <= endDate) {
         const instance = { ...task } as FamilyTask;
+        // 检查当天是否已完成
+        const dateKey = date.toLocaleDateString('en-CA');
+        if (completedDates.has(dateKey)) {
+          instance.status = TaskStatus.COMPLETED;
+        }
         // 设置为当天的具体时间
         if (task.scheduledTime) {
           const [h, m] = task.scheduledTime.split(':');

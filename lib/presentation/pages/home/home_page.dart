@@ -1100,7 +1100,7 @@ class _DailyCareBanner extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Text(
-                        '去打卡',
+                        '更新打卡',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,

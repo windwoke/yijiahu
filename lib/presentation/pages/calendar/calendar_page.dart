@@ -560,20 +560,32 @@ class _AppointmentCard extends StatelessWidget {
   }
 }
 
-/// 任务卡片
-class _TaskCard extends ConsumerWidget {
+/// 任务卡片（本地状态标记完成，立即响应）
+class _TaskCard extends ConsumerStatefulWidget {
   final FamilyTask task;
   final String familyId;
   final VoidCallback? onTap;
   const _TaskCard({required this.task, required this.familyId, this.onTap});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isPending = task.isPending;
-    final isCancelled = task.status == 'cancelled';
-    final statusColor = isPending ? AppColors.blue : (isCancelled ? AppColors.error : AppColors.textTertiary);
-    final titleColor = isPending ? AppColors.textPrimary : AppColors.textTertiary;
+  ConsumerState<_TaskCard> createState() => _TaskCardState();
+}
 
+class _TaskCardState extends ConsumerState<_TaskCard> {
+  // 本地标记完成，无需等待网络刷新即可立即响应
+  bool _completedLocally = false;
+
+  bool get _isPending => !_completedLocally && widget.task.isPending;
+  bool get _isCancelled => widget.task.status == 'cancelled';
+  Color get _statusColor {
+    if (_isPending) return AppColors.blue;
+    if (_isCancelled) return AppColors.error;
+    return AppColors.textTertiary;
+  }
+  Color get _titleColor => _isPending ? AppColors.textPrimary : AppColors.textTertiary;
+
+  @override
+  Widget build(BuildContext context) {
     final content = Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
@@ -581,11 +593,11 @@ class _TaskCard extends ConsumerWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: const [BoxShadow(color: AppColors.shadowSoft, blurRadius: 8, offset: Offset(0, 2))],
-        border: Border.all(color: statusColor.withValues(alpha: 0.15)),
+        border: Border.all(color: _statusColor.withValues(alpha: 0.15)),
       ),
       child: Row(
         children: [
-          Container(width: 4, height: 52, decoration: BoxDecoration(color: statusColor, borderRadius: BorderRadius.circular(2))),
+          Container(width: 4, height: 52, decoration: BoxDecoration(color: _statusColor, borderRadius: BorderRadius.circular(2))),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -593,35 +605,35 @@ class _TaskCard extends ConsumerWidget {
               children: [
                 Row(
                   children: [
-                    Text(task.recipient?.avatarEmoji ?? '👤', style: const TextStyle(fontSize: 16)),
-                    if (task.recipient != null) const SizedBox(width: 4),
-                    Expanded(child: Text(task.title,
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: titleColor, decoration: isPending ? null : TextDecoration.lineThrough),
+                    Text(widget.task.recipient?.avatarEmoji ?? '👤', style: const TextStyle(fontSize: 16)),
+                    if (widget.task.recipient != null) const SizedBox(width: 4),
+                    Expanded(child: Text(widget.task.title,
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _titleColor, decoration: _isPending ? null : TextDecoration.lineThrough),
                       maxLines: 1, overflow: TextOverflow.ellipsis)),
                     const SizedBox(width: 6),
-                    // 状态标签
                     Container(padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                      decoration: BoxDecoration(color: statusColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-                      child: Text(task.statusLabel, style: TextStyle(fontSize: 11, color: statusColor, fontWeight: FontWeight.w600))),
+                      decoration: BoxDecoration(color: _statusColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
+                      child: Text(_completedLocally ? '已完成' : widget.task.statusLabel,
+                        style: TextStyle(fontSize: 11, color: _statusColor, fontWeight: FontWeight.w600))),
                   ],
                 ),
                 const SizedBox(height: 5),
                 Row(
                   children: [
                     Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1), decoration: BoxDecoration(color: AppColors.blue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
-                        child: Text(task.frequencyLabel, style: const TextStyle(fontSize: 11, color: AppColors.blue, fontWeight: FontWeight.w500))),
-                    if (task.scheduledTime != null) ...[const SizedBox(width: 6), Text(task.scheduledTime!, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary))],
-                    if (task.nextDueAt != null) ...[const SizedBox(width: 8), const Icon(Icons.event_rounded, size: 12, color: AppColors.textTertiary), const SizedBox(width: 2),
-                      Text(task.displayDueAt, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary))],
-                    if (task.assignee != null) ...[const SizedBox(width: 8), const Icon(Icons.person_outline_rounded, size: 12, color: AppColors.textTertiary), const SizedBox(width: 2), Text(task.assignee!.name, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary))],
+                        child: Text(widget.task.frequencyLabel, style: const TextStyle(fontSize: 11, color: AppColors.blue, fontWeight: FontWeight.w500))),
+                    if (widget.task.scheduledTime != null) ...[const SizedBox(width: 6), Text(widget.task.scheduledTime!, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary))],
+                    if (widget.task.nextDueAt != null) ...[const SizedBox(width: 8), const Icon(Icons.event_rounded, size: 12, color: AppColors.textTertiary), const SizedBox(width: 2),
+                      Text(widget.task.displayDueAt, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary))],
+                    if (widget.task.assignee != null) ...[const SizedBox(width: 8), const Icon(Icons.person_outline_rounded, size: 12, color: AppColors.textTertiary), const SizedBox(width: 2), Text(widget.task.assignee!.name, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary))],
                   ],
                 ),
               ],
             ),
           ),
-          if (task.isPending)
+          if (_isPending)
             InkWell(
-              onTap: () => _complete(context, ref),
+              onTap: _complete,
               borderRadius: BorderRadius.circular(8),
               child: Container(
                 padding: const EdgeInsets.all(8),
@@ -632,26 +644,30 @@ class _TaskCard extends ConsumerWidget {
         ],
       ),
     );
-    if (onTap != null) {
-      return InkWell(onTap: onTap, borderRadius: BorderRadius.circular(12), child: content);
+
+    if (widget.onTap != null) {
+      return InkWell(onTap: widget.onTap, borderRadius: BorderRadius.circular(12), child: content);
     }
     return content;
   }
 
-  void _complete(BuildContext context, WidgetRef ref) async {
+  void _complete() async {
+    if (_completedLocally) return;
+    setState(() => _completedLocally = true);
     try {
       final dio = ref.read(dioProvider);
-      await dio.post('/family-tasks/${task.id}/complete', queryParameters: {'familyId': familyId});
+      await dio.post('/family-tasks/${widget.task.id}/complete', queryParameters: {'familyId': widget.familyId});
       final now = DateTime.now();
-      ref.invalidate(calendarEventsProvider(CalendarQuery(familyId: familyId, year: now.year, month: now.month)));
-      ref.invalidate(familyTasksProvider(familyId));
-      ref.invalidate(upcomingTasksProvider(familyId));
-      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('任务已完成')));
+      ref.invalidate(calendarEventsProvider(CalendarQuery(familyId: widget.familyId, year: now.year, month: now.month)));
+      ref.invalidate(familyTasksProvider(widget.familyId));
+      ref.invalidate(upcomingTasksProvider(widget.familyId));
     } catch (e) {
-      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('操作失败: $e')));
+      setState(() => _completedLocally = false);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('操作失败: $e')));
     }
   }
 }
+
 
 /// 操作按钮
 class _ActBtn extends StatelessWidget {
@@ -820,23 +836,33 @@ class _AppointmentDetailSheet extends StatelessWidget {
   }
 }
 
-/// 任务详情弹层
-class _TaskDetailSheet extends ConsumerWidget {
+/// 任务详情弹层（本地状态立即响应完成操作）
+class _TaskDetailSheet extends ConsumerStatefulWidget {
   final FamilyTask task;
   final String familyId;
   final VoidCallback onComplete;
   const _TaskDetailSheet({required this.task, required this.familyId, required this.onComplete});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    const weekdays = ['一', '二', '三', '四', '五', '六', '日'];
+  ConsumerState<_TaskDetailSheet> createState() => _TaskDetailSheetState();
+}
+
+class _TaskDetailSheetState extends ConsumerState<_TaskDetailSheet> {
+  bool _completedLocally = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final isPending = !_completedLocally && widget.task.isPending;
+    final statusColor = isPending ? AppColors.primary : AppColors.textTertiary;
+    final statusLabel = _completedLocally ? '已完成' : widget.task.statusLabel;
+    final weekdays = ['一', '二', '三', '四', '五', '六', '日'];
 
     String dayLabel() {
-      if (task.scheduledDay == null || task.scheduledDay!.isEmpty) return '';
-      if (task.frequency == 'weekly') {
-        return task.scheduledDay!.map((d) => '周${weekdays[d - 1]}').join('、');
+      if (widget.task.scheduledDay == null || widget.task.scheduledDay!.isEmpty) return '';
+      if (widget.task.frequency == 'weekly') {
+        return widget.task.scheduledDay!.map((d) => '周${weekdays[d - 1]}').join('、');
       }
-      return task.scheduledDay!.map((d) => '$d日').join('、');
+      return widget.task.scheduledDay!.map((d) => '$d日').join('、');
     }
 
     return Container(
@@ -859,21 +885,21 @@ class _TaskDetailSheet extends ConsumerWidget {
                 // 标题行
                 Row(
                   children: [
-                    Text(task.recipient?.avatarEmoji ?? '👤', style: const TextStyle(fontSize: 24)),
+                    Text(widget.task.recipient?.avatarEmoji ?? '👤', style: const TextStyle(fontSize: 24)),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(task.title, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.textPrimary), maxLines: 2, overflow: TextOverflow.ellipsis),
+                          Text(widget.task.title, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.textPrimary), maxLines: 2, overflow: TextOverflow.ellipsis),
                           const SizedBox(height: 4),
                           Row(
                             children: [
                               Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), decoration: BoxDecoration(color: AppColors.blue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-                                  child: Text(task.frequencyLabel, style: const TextStyle(fontSize: 12, color: AppColors.blue, fontWeight: FontWeight.w600))),
+                                  child: Text(widget.task.frequencyLabel, style: const TextStyle(fontSize: 12, color: AppColors.blue, fontWeight: FontWeight.w600))),
                               const SizedBox(width: 6),
-                              Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-                                  child: Text(task.statusLabel, style: const TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w600))),
+                              Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), decoration: BoxDecoration(color: statusColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
+                                  child: Text(statusLabel, style: TextStyle(fontSize: 12, color: statusColor, fontWeight: FontWeight.w600))),
                             ],
                           ),
                         ],
@@ -885,33 +911,20 @@ class _TaskDetailSheet extends ConsumerWidget {
                 const SizedBox(height: 16),
                 const Divider(color: AppColors.borderLight, height: 1),
 
-                // 照护对象
-                if (task.recipient != null) _DetailRow(icon: Icons.people_rounded, label: '照护对象', value: task.recipient!.name),
-
-                // 执行时间
-                _DetailRow(icon: Icons.schedule_rounded, label: '执行时间',
-                    value: '${dayLabel()} ${task.scheduledTime ?? ''}'.trim()),
-
-                // 下次到期
-                if (task.nextDueAt != null) _DetailRow(icon: Icons.event_rounded, label: '下次到期', value: task.displayDueAt),
-
-                // 负责人
-                if (task.assignee != null) _DetailRow(icon: Icons.person_rounded, label: '负责人', value: task.assignee!.name),
-
-                // 描述
-                if (task.description != null) _DetailRow(icon: Icons.description_rounded, label: '任务描述', value: task.description!),
-
-                // 备注
-                if (task.note != null) _DetailRow(icon: Icons.note_rounded, label: '备注', value: task.note!),
+                if (widget.task.recipient != null) _DetailRow(icon: Icons.people_rounded, label: '照护对象', value: widget.task.recipient!.name),
+                _DetailRow(icon: Icons.schedule_rounded, label: '执行时间', value: '${dayLabel()} ${widget.task.scheduledTime ?? ''}'.trim()),
+                if (widget.task.nextDueAt != null) _DetailRow(icon: Icons.event_rounded, label: '下次到期', value: widget.task.displayDueAt),
+                if (widget.task.assignee != null) _DetailRow(icon: Icons.person_rounded, label: '负责人', value: widget.task.assignee!.name),
+                if (widget.task.description != null) _DetailRow(icon: Icons.description_rounded, label: '任务描述', value: widget.task.description!),
+                if (widget.task.note != null) _DetailRow(icon: Icons.note_rounded, label: '备注', value: widget.task.note!),
 
                 const SizedBox(height: 20),
 
                 // 底部操作
                 Row(
                   children: [
-                    if (task.isPending) Expanded(child: _SheetActBtn(icon: Icons.check_circle_rounded, label: '标记完成', color: AppColors.success,
-                        onTap: () => _complete(context, ref))),
-                    if (task.isPending) const SizedBox(width: 10),
+                    if (isPending) Expanded(child: _SheetActBtn(icon: Icons.check_circle_rounded, label: '标记完成', color: AppColors.success, onTap: _complete)),
+                    if (isPending) const SizedBox(width: 10),
                     Expanded(child: _SheetActBtn(icon: Icons.close_rounded, label: '关闭', color: AppColors.textTertiary, onTap: () => Navigator.pop(context))),
                   ],
                 ),
@@ -923,19 +936,23 @@ class _TaskDetailSheet extends ConsumerWidget {
     );
   }
 
-  void _complete(BuildContext ctx, WidgetRef ref) async {
+  void _complete() async {
+    if (_completedLocally) return;
+    setState(() => _completedLocally = true);
     try {
       final dio = ref.read(dioProvider);
-      await dio.post('/family-tasks/${task.id}/complete', queryParameters: {'familyId': familyId});
-      if (!ctx.mounted) return;
-      onComplete();
-      ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('任务已完成')));
+      await dio.post('/family-tasks/${widget.task.id}/complete', queryParameters: {'familyId': widget.familyId});
+      if (!mounted) return;
+      widget.onComplete();
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('任务已完成')));
     } catch (e) {
-      if (!ctx.mounted) return;
-      ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('操作失败: $e')));
+      if (!mounted) return;
+      setState(() => _completedLocally = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('操作失败: $e')));
     }
   }
 }
+
 
 /// 详情行
 class _DetailRow extends StatelessWidget {

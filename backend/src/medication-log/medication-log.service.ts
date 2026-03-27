@@ -5,6 +5,7 @@ import { MedicationLog, MedicationLogStatus } from './entities/medication-log.en
 import { Medication } from '../medication/entities/medication.entity';
 import { FamilyMember } from '../family/entities/family-member.entity';
 import { User } from '../user/entities/user.entity';
+import { CareRecipient } from '../care-recipient/entities/care-recipient.entity';
 import { CheckInDto } from './dto/medication-log.dto';
 
 @Injectable()
@@ -14,7 +15,18 @@ export class MedicationLogService {
     @InjectRepository(Medication) private medRepo: Repository<Medication>,
     @InjectRepository(FamilyMember) private memberRepo: Repository<FamilyMember>,
     @InjectRepository(User) private userRepo: Repository<User>,
+    @InjectRepository(CareRecipient) private recipientRepo: Repository<CareRecipient>,
   ) {}
+
+  /** 验证照护对象属于指定家庭 */
+  private async validateRecipientInFamily(recipientId: string, familyId: string) {
+    const recipient = await this.recipientRepo.findOne({ where: { id: recipientId } });
+    if (!recipient) throw new NotFoundException('照护对象不存在');
+    if (recipient.familyId !== familyId) {
+      throw new ForbiddenException('该照护对象不属于您的家庭');
+    }
+    return recipient;
+  }
 
   /** 生成某一天的所有用药日志 */
   async generateDailyLogs(recipientId: string, date: Date) {
@@ -58,7 +70,8 @@ export class MedicationLogService {
   }
 
   /** 获取今日用药汇总 */
-  async getTodaySummary(recipientId: string) {
+  async getTodaySummary(recipientId: string, familyId: string) {
+    await this.validateRecipientInFamily(recipientId, familyId);
     const today = new Date();
     const dateStr = today.toISOString().split('T')[0];
 
@@ -132,7 +145,8 @@ export class MedicationLogService {
   }
 
   /** 历史记录 */
-  async getHistory(recipientId: string, date: string) {
+  async getHistory(recipientId: string, familyId: string, date: string) {
+    await this.validateRecipientInFamily(recipientId, familyId);
     return this.logRepo.find({
       where: {
         recipientId,

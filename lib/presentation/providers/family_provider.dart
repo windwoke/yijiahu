@@ -60,8 +60,10 @@ final todayMedicationProvider =
     FutureProvider.family<models.TodayMedicationSummary, String>(
   (ref, recipientId) async {
     final dio = ref.read(dioProvider);
+    final familyId = ref.watch(currentFamilyProvider)?.id;
     final response = await dio.get('/medication-logs/today', queryParameters: {
       'recipientId': recipientId,
+      'familyId': familyId,
     });
     return models.TodayMedicationSummary.fromJson(
         response.data as Map<String, dynamic>);

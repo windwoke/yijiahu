@@ -380,8 +380,15 @@ class _CaregiverRecordSheetState extends ConsumerState<_CaregiverRecordSheet> {
     }
   }
 
-  void _showAddRecordDialog(BuildContext dialogCtx) {
-    FamilyMember? selectedMember;
+  void _showAddRecordDialog(BuildContext dialogCtx) async {
+    // 预读取家庭成员，避免 showDialog 内部 ref.watch 问题
+    final familyId = ref.read(currentFamilyProvider)?.id ?? '';
+    List<FamilyMember> members = [];
+    if (familyId.isNotEmpty) {
+      members = await ref.read(familyMembersProvider(familyId).future);
+    }
+
+    FamilyMember? selectedMember = members.isNotEmpty ? members.first : null;
     DateTime periodStart = DateTime.now();
     final noteController = TextEditingController();
 
@@ -389,10 +396,6 @@ class _CaregiverRecordSheetState extends ConsumerState<_CaregiverRecordSheet> {
       context: dialogCtx,
       builder: (dialogContext) => StatefulBuilder(
         builder: (dialogContext, setDialogState) {
-          final membersAsync = ref.watch(
-            familyMembersProvider(ref.watch(currentFamilyProvider)?.id ?? ''),
-          );
-
           return AlertDialog(
             title: const Text('添加主要负责人'),
             content: SingleChildScrollView(
@@ -402,38 +405,30 @@ class _CaregiverRecordSheetState extends ConsumerState<_CaregiverRecordSheet> {
                 children: [
                   const Text('照护人', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 8),
-                  membersAsync.when(
-                    data: (members) {
-                      if (members.isEmpty) {
-                        return const Text('家庭中暂无成员');
-                      }
-                      selectedMember ??= members.first;
-                      return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: AppColors.border),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<FamilyMember>(
-                            value: selectedMember,
-                            isExpanded: true,
-                            items: members.map((m) {
-                              return DropdownMenuItem(
-                                value: m,
-                                child: Text(m.nickname),
-                              );
-                            }).toList(),
-                            onChanged: (v) {
-                              setDialogState(() => selectedMember = v);
-                            },
+                  members.isEmpty
+                      ? const Text('家庭中暂无成员', style: TextStyle(color: AppColors.textSecondary))
+                      : Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: AppColors.border),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<FamilyMember>(
+                              value: selectedMember,
+                              isExpanded: true,
+                              items: members.map((m) {
+                                return DropdownMenuItem(
+                                  value: m,
+                                  child: Text(m.nickname),
+                                );
+                              }).toList(),
+                              onChanged: (v) {
+                                setDialogState(() => selectedMember = v);
+                              },
+                            ),
                           ),
                         ),
-                      );
-                    },
-                    loading: () => const CircularProgressIndicator(),
-                    error: (_, __) => const Text('加载失败'),
-                  ),
                   const SizedBox(height: 16),
                   const Text('开始日期', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 8),

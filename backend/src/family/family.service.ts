@@ -117,11 +117,16 @@ export class FamilyService {
 
   async findMembers(familyId: string, userId: string) {
     await this.checkPermission(familyId, userId);
-    return this.memberRepo.find({
+    const members = await this.memberRepo.find({
       where: { familyId },
       relations: ['user'],
       order: { joinedAt: 'ASC' },
     });
+    // 统一 avatarUrl：优先用 FamilyMember.avatarUrl，否则 fallback 到 User.avatar
+    return members.map((m) => ({
+      ...m,
+      avatarUrl: m.avatarUrl || m.user?.avatar || null,
+    }));
   }
 
   async updateMember(familyId: string, memberId: string, userId: string, dto: UpdateMemberDto) {

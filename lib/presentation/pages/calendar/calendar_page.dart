@@ -98,18 +98,28 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
           ),
         ],
       ),
-      // 核心布局：Column + Flexible，无嵌套滚动
-      body: Column(
-        children: [
-          _buildMonthHeader(),
-          eventsAsync.when(
-            data: (events) => _buildCalendar(events),
-            loading: () => _buildCalendar({}),
-            error: (e, st) => _buildCalendar({}),
-          ),
-          const Divider(height: 1, color: AppColors.border),
-          Flexible(child: _buildEventsSection(familyId, eventsAsync)),
-        ],
+      // 核心布局：LayoutBuilder 动态计算剩余空间
+      // 日历占自然高度（最多380px），events 区域 Expanded 填满剩余空间
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final available = constraints.maxHeight;
+          // 固定元素高度：月份导航~56 + 分隔线1 + events标签~52 + SafeArea底部~34
+          final fixed = 56 + 1 + 52 + 34;
+          final maxCalendar = (available - fixed).clamp(200.0, 400.0);
+
+          return Column(
+            children: [
+              _buildMonthHeader(),
+              eventsAsync.when(
+                data: (events) => _buildCalendar(events, maxCalendar),
+                loading: () => _buildCalendar({}, maxCalendar),
+                error: (e, st) => _buildCalendar({}, maxCalendar),
+              ),
+              const Divider(height: 1, color: AppColors.border),
+              Expanded(child: _buildEventsSection(familyId, eventsAsync)),
+            ],
+          );
+        },
       ),
     );
   }
@@ -147,10 +157,9 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
     );
   }
 
-  Widget _buildCalendar(Map<DateTime, List<CalendarEvent>> events) {
-    // 固定高度约束，防止6行月份撑爆布局
-    return SizedBox(
-      height: 320,
+  Widget _buildCalendar(Map<DateTime, List<CalendarEvent>> events, double maxHeight) {
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxHeight),
       child: TableCalendar<CalendarEvent>(
         firstDay: DateTime(2020),
         lastDay: DateTime(2030),
@@ -165,33 +174,32 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
             _selectedDay = selectedDay;
             _focusedDay = focusedDay;
           });
-      },
-      onPageChanged: (focusedDay) {
-        setState(() {
-          _focusedDay = focusedDay;
-          _selectedDay = focusedDay;
-        });
-      },
-      locale: 'zh_CN',
-      daysOfWeekHeight: 28,
-      daysOfWeekStyle: const DaysOfWeekStyle(
-        weekdayStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
-        weekendStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
-      ),
-      calendarStyle: CalendarStyle(
-        todayDecoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.2), shape: BoxShape.circle),
-        todayTextStyle: const TextStyle(color: AppColors.primaryDark, fontWeight: FontWeight.w600),
-        selectedDecoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
-        selectedTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-        defaultTextStyle: const TextStyle(color: AppColors.textPrimary),
-        weekendTextStyle: const TextStyle(color: AppColors.textSecondary),
-        outsideTextStyle: const TextStyle(color: AppColors.textTertiary),
-        cellMargin: const EdgeInsets.all(2),
-        cellPadding: EdgeInsets.zero,
-      ),
-      headerVisible: false,
-      // 日历只占所需高度，不滚动
-      availableGestures: AvailableGestures.horizontalSwipe,
+        },
+        onPageChanged: (focusedDay) {
+          setState(() {
+            _focusedDay = focusedDay;
+            _selectedDay = focusedDay;
+          });
+        },
+        locale: 'zh_CN',
+        daysOfWeekHeight: 28,
+        daysOfWeekStyle: const DaysOfWeekStyle(
+          weekdayStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+          weekendStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+        ),
+        calendarStyle: CalendarStyle(
+          todayDecoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.2), shape: BoxShape.circle),
+          todayTextStyle: const TextStyle(color: AppColors.primaryDark, fontWeight: FontWeight.w600),
+          selectedDecoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+          selectedTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+          defaultTextStyle: const TextStyle(color: AppColors.textPrimary),
+          weekendTextStyle: const TextStyle(color: AppColors.textSecondary),
+          outsideTextStyle: const TextStyle(color: AppColors.textTertiary),
+          cellMargin: const EdgeInsets.all(2),
+          cellPadding: EdgeInsets.zero,
+        ),
+        headerVisible: false,
+        availableGestures: AvailableGestures.horizontalSwipe,
       ),
     );
   }

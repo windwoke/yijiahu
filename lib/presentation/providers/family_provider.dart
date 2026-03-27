@@ -73,7 +73,9 @@ final medicationsProvider =
     FutureProvider.family<List<models.Medication>, String>((ref, recipientId) async {
   try {
     final dio = ref.read(dioProvider);
+    final familyId = ref.watch(currentFamilyProvider)?.id;
     final response = await dio.get('/medications', queryParameters: {
+      if (familyId != null) 'familyId': familyId,
       'recipientId': recipientId,
     });
     final List<dynamic> data;
@@ -181,7 +183,9 @@ final careRecipientDetailProvider =
 final medicationDetailProvider =
     FutureProvider.family<models.Medication, String>((ref, medicationId) async {
   final dio = ref.read(dioProvider);
-  final response = await dio.get('/medications/$medicationId');
+  final familyId = ref.watch(currentFamilyProvider)?.id;
+  final response = await dio.get('/medications/$medicationId',
+      queryParameters: {'familyId': familyId});
   return models.Medication.fromJson(response.data as Map<String, dynamic>);
 });
 

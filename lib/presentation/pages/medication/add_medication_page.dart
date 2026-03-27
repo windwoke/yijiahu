@@ -181,12 +181,20 @@ class _AddMedicationPageState extends ConsumerState<AddMedicationPage> {
         data['endDate'] = _endDate!.toIso8601String().split('T').first;
       }
 
+      final familyId = ref.read(currentFamilyProvider)?.id;
+      if (familyId == null) {
+        setState(() => _errorMessage = '请先选择家庭');
+        return;
+      }
+
       if (isEditing) {
-        await dio.patch('/medications/${widget.medication!.id}', data: data);
+        await dio.patch('/medications/${widget.medication!.id}',
+            queryParameters: {'familyId': familyId}, data: data);
         ref.invalidate(medicationsProvider(widget.medication!.recipientId));
         ref.invalidate(medicationDetailProvider(widget.medication!.id));
       } else {
         data['recipientId'] = recipientId;
+        data['familyId'] = familyId;
         await dio.post('/medications', data: data);
         ref.invalidate(medicationsProvider(recipientId));
         ref.invalidate(todayMedicationProvider(recipientId));

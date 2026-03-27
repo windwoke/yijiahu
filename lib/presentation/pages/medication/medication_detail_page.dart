@@ -422,7 +422,9 @@ class MedicationDetailPage extends ConsumerWidget {
             onPressed: () async {
               Navigator.pop(ctx);
               final dio = ref.read(dioProvider);
-              await dio.delete('/medications/${med.id}');
+              final familyId = ref.read(currentFamilyProvider)?.id;
+              await dio.delete('/medications/${med.id}',
+                  queryParameters: {'familyId': familyId});
               ref.invalidate(medicationsProvider(med.recipientId));
               if (context.mounted) context.pop();
             },

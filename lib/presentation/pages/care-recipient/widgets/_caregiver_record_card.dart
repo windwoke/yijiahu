@@ -41,76 +41,105 @@ class CaregiverRecordCard extends ConsumerWidget {
           onTap: () => _showRecordSheet(context, ref),
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 头像
-                CircleAvatar(
-                  radius: 24,
-                  backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                  backgroundImage: current?.caregiver?.avatarUrl != null
-                      ? NetworkImage(current!.caregiver!.avatarUrl!)
-                      : null,
-                  child: current?.caregiver != null
-                      ? null
-                      : Icon(Icons.person_rounded, color: AppColors.primary, size: 28),
-                ),
-                const SizedBox(width: 12),
-                // 信息
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+                // 标题行
+                Row(
+                  children: [
+                    Icon(Icons.person_pin_rounded, size: 18, color: AppColors.primary),
+                    const SizedBox(width: 6),
+                    const Text(
+                      '当前主要负责人',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
+                          Icon(Icons.swap_horiz_rounded, size: 12, color: AppColors.primary),
+                          const SizedBox(width: 4),
                           Text(
-                            current?.caregiver?.name ?? '未设置照护人',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
-                            ),
+                            '切换照护人',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.primary),
                           ),
-                          if (current != null) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: AppColors.success.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Text(
-                                '当前',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.success,
-                                ),
-                              ),
-                            ),
-                          ],
                         ],
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        current?.periodLabel ?? '点击添加照护记录',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: AppColors.textSecondary,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                // 照护人信息
+                if (current?.caregiver != null) ...[
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                        backgroundImage: current!.caregiver!.avatarUrl != null
+                            ? NetworkImage(current.caregiver!.avatarUrl!)
+                            : null,
+                        child: current.caregiver!.avatarUrl != null
+                            ? null
+                            : Icon(Icons.person_rounded, color: AppColors.primary, size: 22),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              current.caregiver!.name ?? '家庭成员',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '照护时间：${current.periodLabel}',
+                              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                            ),
+                          ],
                         ),
                       ),
+                      Icon(Icons.chevron_right_rounded, color: AppColors.textTertiary),
                     ],
                   ),
-                ),
-                // 切换按钮
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
+                ] else ...[
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: AppColors.grey100,
+                        child: Icon(Icons.person_outline_rounded, color: AppColors.textTertiary, size: 22),
+                      ),
+                      const SizedBox(width: 10),
+                      const Expanded(
+                        child: Text(
+                          '暂未指定主要负责人',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.textTertiary,
+                          ),
+                        ),
+                      ),
+                      Icon(Icons.chevron_right_rounded, color: AppColors.textTertiary),
+                    ],
                   ),
-                  child: const Icon(Icons.swap_horiz_rounded, color: AppColors.primary, size: 18),
-                ),
+                ],
               ],
             ),
           ),
@@ -173,7 +202,7 @@ class _CaregiverRecordSheetState extends ConsumerState<_CaregiverRecordSheet> {
             child: Row(
               children: [
                 const Text(
-                  '照护记录',
+                  '照护人记录',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
@@ -365,7 +394,7 @@ class _CaregiverRecordSheetState extends ConsumerState<_CaregiverRecordSheet> {
           );
 
           return AlertDialog(
-            title: const Text('添加照护记录'),
+            title: const Text('添加主要负责人'),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,

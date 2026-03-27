@@ -1040,71 +1040,76 @@ class _DailyCareBanner extends ConsumerWidget {
 
     // 非 normal 状态用卡片背景，图标放大
     final iconSize = isAlert ? 24.0 : 18.0;
-    final statusColor = status?.color ?? Colors.white;
 
     return Padding(
       padding: const EdgeInsets.only(top: 8),
       child: isAlert
-          ? // 警示状态：卡片背景
-          Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.18),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
-              ),
-              child: Row(
-                children: [
-                  Text(status?.emoji ?? '⚠️', style: TextStyle(fontSize: iconSize)),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          recipient.name,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                        Text(
-                          '${status?.label ?? ''} · ${checkin!.medicationLabel}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.white.withValues(alpha: 0.9),
-                          ),
-                        ),
-                        if (checkin.specialNote != null && checkin.specialNote!.isNotEmpty)
+          ? // 警示状态：整行可点击，跳转到打卡页
+          GestureDetector(
+              onTap: () => context.push(AppRoutes.dailyCare, extra: {
+                'recipientId': recipient.id,
+                'recipient': recipient,
+              }),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  children: [
+                    Text(status.emoji, style: TextStyle(fontSize: iconSize)),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                           Text(
-                            checkin.specialNote!,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.white.withValues(alpha: 0.75),
+                            recipient.name,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Text(
-                      '去打卡',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
+                          Text(
+                            '${status.label} · ${checkin.medicationLabel}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.white.withValues(alpha: 0.9),
+                            ),
+                          ),
+                          if (checkin.specialNote != null && checkin.specialNote!.isNotEmpty)
+                            Text(
+                              checkin.specialNote!,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.white.withValues(alpha: 0.75),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                        ],
                       ),
                     ),
-                  ),
-                ],
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Text(
+                        '去打卡',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             )
           : // 正常/未打卡：保持原有紧凑行
@@ -1139,7 +1144,7 @@ class _DailyCareBanner extends ConsumerWidget {
                       ),
                       Text(
                         isCheckedIn
-                            ? '${status?.label ?? '已打卡'} · ${checkin!.medicationLabel}'
+                            ? '${status?.label ?? '已打卡'} · ${checkin.medicationLabel}'
                             : '今日尚未打卡',
                         style: TextStyle(
                           fontSize: 12,

@@ -18,19 +18,20 @@ export class DailyCareCheckinService {
       .createQueryBuilder('c')
       .leftJoinAndSelect('c.checkedInBy', 'checkedInBy')
       .where('c.careRecipientId = :careRecipientId', { careRecipientId })
-      .andWhere('c.checkinDate = :checkinDate', { checkinDate })
+      .andWhere('TO_CHAR(c.checkinDate, \'YYYY-MM-DD\') = :checkinDate', { checkinDate })
       .getOne();
   }
 
   /** 批量获取今日打卡（用于首页横幅）—— 传入家庭所有照护对象ID */
   async findTodayByRecipients(recipientIds: string[], todayDate: string) {
     if (recipientIds.length === 0) return [];
+    // 使用日期字符串直接比较（避免 new Date() 的 UTC 解释导致时区偏移一天）
     return this.repo
       .createQueryBuilder('c')
       .leftJoinAndSelect('c.checkedInBy', 'checkedInBy')
       .leftJoinAndSelect('c.careRecipient', 'recipient')
       .where('c.careRecipientId IN (:...ids)', { ids: recipientIds })
-      .andWhere('c.checkinDate = :date', { date: todayDate })
+      .andWhere('TO_CHAR(c.checkinDate, \'YYYY-MM-DD\') = :date', { date: todayDate })
       .getMany();
   }
 
@@ -39,13 +40,13 @@ export class DailyCareCheckinService {
     const existing = await this.repo
       .createQueryBuilder('c')
       .where('c.careRecipientId = :careRecipientId', { careRecipientId: dto.careRecipientId })
-      .andWhere('c.checkinDate = :checkinDate', { checkinDate: dto.checkinDate })
+      .andWhere('TO_CHAR(c.checkinDate, \'YYYY-MM-DD\') = :checkinDate', { checkinDate: dto.checkinDate })
       .getOne();
 
-    // 自动计算今日用药完成情况
+    // 自动计算今日用药完成情况（使用本地时区的日期范围）
     const todayStr = dto.checkinDate;
-    const todayStart = new Date(`${todayStr}T00:00:00.000Z`);
-    const todayEnd = new Date(`${todayStr}T23:59:59.999Z`);
+    const todayStart = new Date(`${todayStr}T00:00:00`);
+    const todayEnd = new Date(`${todayStr}T23:59:59.999`);
     const medLogs = await this.medLogRepo.find({
       where: {
         recipientId: dto.careRecipientId,
@@ -62,9 +63,10 @@ export class DailyCareCheckinService {
       existing.checkedInById = userId;
       return this.repo.save(existing);
     } else {
+      // 直接用字符串创建 date，避免 new Date() 的 UTC 解释导致时区偏移
       const checkin = this.repo.create({
         careRecipientId: dto.careRecipientId,
-        checkinDate: new Date(dto.checkinDate),
+        checkinDate: todayStr, // TypeORM 自动转换为 PostgreSQL date
         status: dto.status,
         medicationCompleted: dto.medicationCompleted ?? completedCount,
         medicationTotal: dto.medicationTotal ?? 0,

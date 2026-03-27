@@ -72,9 +72,10 @@ class FamilyMemberSection {
     return member!.roleLabel;
   }
 
-  bool get isAdmin {
+  /// 成员是否为 owner/coordinator（用于样式标识）
+  bool get isElevatedRole {
     if (isRecipient) return false;
-    return member!.role == 'owner' || member!.role == 'admin';
+    return member!.role == 'owner' || member!.role == 'coordinator';
   }
 }
 
@@ -96,10 +97,9 @@ class FamilyPage extends ConsumerWidget {
     // 并行加载成员和照护对象
     final membersAsync = ref.watch(familyMembersProvider(family.id));
     final recipientsAsync = ref.watch(careRecipientsProvider);
-    final currentUser = ref.watch(authStateProvider).user;
-    // 从 membersAsync 中找到当前用户的成员记录，判断是否为管理员
-    final myMember = membersAsync.valueOrNull?.where((m) => m.userId == currentUser?.id).firstOrNull;
-    final isAdmin = myMember?.role == 'owner' || myMember?.role == 'admin';
+    final myRole = family.myRole;
+    final canManageFamily = myRole.canManageFamily;   // 家庭设置（仅 owner）
+    final canManageMembers = myRole.canManageMembers; // 成员管理（owner + coordinator）
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -117,7 +117,7 @@ class FamilyPage extends ConsumerWidget {
         ),
         centerTitle: true,
         actions: [
-          if (isAdmin)
+          if (canManageFamily)
             IconButton(
               icon: const Icon(Icons.edit_rounded, color: AppColors.textPrimary),
               onPressed: () => _showEditFamilySheet(context, ref, family),
@@ -129,12 +129,12 @@ class FamilyPage extends ConsumerWidget {
           data: (recipients) {
             final totalCount = members.length + recipients.length;
             final sections = _buildSections(members, recipients);
-            return _buildBody(context, ref, family, totalCount, sections, isAdmin);
+            return _buildBody(context, ref, family, totalCount, sections, canManageMembers);
           },
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) {
             final totalCount = members.length;
-            return _buildBody(context, ref, family, totalCount, _buildSections(members, []), isAdmin);
+            return _buildBody(context, ref, family, totalCount, _buildSections(members, []), canManageMembers);
           },
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -173,7 +173,7 @@ class FamilyPage extends ConsumerWidget {
     models.Family family,
     int memberCount,
     List<FamilyMemberSection> sections,
-    bool isAdmin,
+    bool canManageMembers,
   ) {
     return CustomScrollView(
       slivers: [
@@ -188,7 +188,7 @@ class FamilyPage extends ConsumerWidget {
             delegate: SliverChildBuilderDelegate(
               (context, index) {
                 final section = sections[index];
-                return _buildMemberCard(context, ref, family, section, isAdmin);
+                return _buildMemberCard(context, ref, family, section, canManageMembers);
               },
               childCount: sections.length,
             ),
@@ -199,7 +199,7 @@ class FamilyPage extends ConsumerWidget {
           child: _buildContributionStats(context, ref, family),
         ),
         // 底部间距 + 添加按钮
-        if (isAdmin)
+        if (canManageMembers)
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
@@ -689,7 +689,7 @@ class FamilyPage extends ConsumerWidget {
     WidgetRef ref,
     models.Family family,
     FamilyMemberSection section,
-    bool isAdmin,
+    bool canManageMembers,
   ) {
     final currentUser = ref.watch(authStateProvider).user;
     final isCurrentUser = section.member?.userId == currentUser?.id;
@@ -809,7 +809,7 @@ class FamilyPage extends ConsumerWidget {
                         decoration: BoxDecoration(
                           color: section.isRecipient
                               ? AppColors.coral.withValues(alpha: 0.1)
-                              : (section.isAdmin
+                              : (section.isElevatedRole
                                   ? AppColors.primary.withValues(alpha: 0.1)
                                   : AppColors.surfaceContainerLow),
                           borderRadius: BorderRadius.circular(8),
@@ -833,7 +833,7 @@ class FamilyPage extends ConsumerWidget {
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
-                                color: section.isRecipient || section.isAdmin
+                                color: section.isRecipient || section.isElevatedRole
                                         ? AppColors.primary
                                         : AppColors.textSecondary,
                               ),
@@ -876,9 +876,9 @@ class FamilyPage extends ConsumerWidget {
             // 照护对象显示箭头，家庭成员显示编辑按钮
             if (section.isRecipient)
               const Icon(Icons.chevron_right, color: AppColors.textSecondary)
-            else if (isAdmin)
+            else if (canManageMembers)
               GestureDetector(
-                onTap: () => _showEditMemberSheet(context, ref, family, section, isAdmin),
+                onTap: () => _showEditMemberSheet(context, ref, family, section, canManageMembers),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
@@ -1266,7 +1266,7 @@ class FamilyPage extends ConsumerWidget {
     WidgetRef ref,
     models.Family family,
     FamilyMemberSection section,
-    bool isAdmin,
+    bool canManageMembers,
   ) {
     showModalBottomSheet(
       context: context,
@@ -1318,7 +1318,7 @@ class FamilyPage extends ConsumerWidget {
                 ),
               ),
             if (!section.isRecipient) const SizedBox(height: 12),
-            if (isAdmin && !section.isRecipient)
+            if (canManageMembers && !section.isRecipient)
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -1336,9 +1336,9 @@ class FamilyPage extends ConsumerWidget {
                   child: const Text('设为管理员'),
                 ),
               ),
-            if (isAdmin && !section.isRecipient)
+            if (canManageMembers && !section.isRecipient)
               const SizedBox(height: 12),
-            if (isAdmin)
+            if (canManageMembers)
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(

@@ -4,20 +4,31 @@ import { HealthRecordService } from './health-record.service';
 import { CreateHealthRecordDto } from './dto/health-record.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { PermissionService } from '../common/services/permission.service';
+import { FamilyMemberRole } from '../family/entities/family-member.entity';
 
 @ApiTags('健康记录')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('health-records')
 export class HealthRecordController {
-  constructor(private readonly service: HealthRecordService) {}
+  constructor(
+    private readonly service: HealthRecordService,
+    private readonly permission: PermissionService,
+  ) {}
 
   @Post()
   @ApiOperation({ summary: '添加健康记录' })
-  create(
+  async create(
     @CurrentUser('id') userId: string,
     @Body() dto: CreateHealthRecordDto,
   ) {
+    // guest 不能添加健康记录
+    await this.permission.requireRole(userId, dto.familyId, [
+      FamilyMemberRole.OWNER,
+      FamilyMemberRole.COORDINATOR,
+      FamilyMemberRole.CAREGIVER,
+    ]);
     return this.service.create(dto, userId);
   }
 

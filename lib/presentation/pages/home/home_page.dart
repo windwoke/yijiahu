@@ -199,14 +199,14 @@ class HomePage extends ConsumerWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
           SliverToBoxAdapter(child: SizedBox(height: topHeight)),
-          SliverToBoxAdapter(child: _buildEmptyStateContent(context)),
+          SliverToBoxAdapter(child: _buildEmptyStateContent(context, ref)),
           const SliverFillRemaining(hasScrollBody: false, child: SizedBox(height: 100)),
         ],
       ),
     );
   }
 
-  Widget _buildEmptyStateContent(BuildContext context) {
+  Widget _buildEmptyStateContent(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 100),
       child: Container(
@@ -251,27 +251,28 @@ class HomePage extends ConsumerWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
-            SizedBox(
-              height: 48,
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => context.push(AppRoutes.addCareRecipient),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
+            if (ref.watch(currentFamilyProvider)?.myRole.canManageRecipients ?? false)
+              SizedBox(
+                height: 48,
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => context.push(AppRoutes.addCareRecipient),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
                   ),
-                ),
-                child: const Text(
-                  AppTexts.addCareRecipientBtn,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                  child: const Text(
+                    AppTexts.addCareRecipientBtn,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
-            ),
           ],
         ),
       ),

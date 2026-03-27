@@ -2,16 +2,21 @@ import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } f
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { PermissionService } from '../common/services/permission.service';
 import { AppointmentService } from './appointment.service';
 import { CreateAppointmentDto, UpdateAppointmentDto } from './dto/appointment.dto';
 import { AppointmentStatus } from './entities/appointment.entity';
+import { FamilyMemberRole } from '../family/entities/family-member.entity';
 
 @ApiTags('复诊管理')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('appointments')
 export class AppointmentController {
-  constructor(private readonly service: AppointmentService) {}
+  constructor(
+    private readonly service: AppointmentService,
+    private readonly permission: PermissionService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: '复诊列表' })
@@ -38,27 +43,44 @@ export class AppointmentController {
 
   @Post()
   @ApiOperation({ summary: '创建复诊' })
-  create(
+  async create(
     @Body() dto: CreateAppointmentDto,
     @CurrentUser('id') userId: string,
     @Query('familyId') familyId: string,
   ) {
+    await this.permission.requireRole(userId, familyId, [
+      FamilyMemberRole.OWNER,
+      FamilyMemberRole.COORDINATOR,
+    ]);
     return this.service.create(familyId, dto, userId);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: '更新复诊' })
-  update(
+  async update(
     @Param('id') id: string,
     @Body() dto: UpdateAppointmentDto,
+    @CurrentUser('id') userId: string,
     @Query('familyId') familyId: string,
   ) {
+    await this.permission.requireRole(userId, familyId, [
+      FamilyMemberRole.OWNER,
+      FamilyMemberRole.COORDINATOR,
+    ]);
     return this.service.update(id, familyId, dto);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: '删除复诊' })
-  delete(@Param('id') id: string, @Query('familyId') familyId: string) {
+  async delete(
+    @Param('id') id: string,
+    @CurrentUser('id') userId: string,
+    @Query('familyId') familyId: string,
+  ) {
+    await this.permission.requireRole(userId, familyId, [
+      FamilyMemberRole.OWNER,
+      FamilyMemberRole.COORDINATOR,
+    ]);
     return this.service.delete(id, familyId);
   }
 }

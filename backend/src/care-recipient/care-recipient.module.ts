@@ -5,9 +5,14 @@ import { FamilyMember } from '../family/entities/family-member.entity';
 import { CareRecipientService } from './care-recipient.service';
 import { CareRecipientController } from './care-recipient.controller';
 import { SubscriptionModule } from '../subscription/subscription.module';
+import { CommonModule } from '../common/services/common.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([CareRecipient, FamilyMember]), SubscriptionModule],
+  imports: [
+    TypeOrmModule.forFeature([CareRecipient, FamilyMember]),
+    SubscriptionModule,
+    CommonModule,
+  ],
   controllers: [CareRecipientController],
   providers: [CareRecipientService],
   exports: [CareRecipientService],

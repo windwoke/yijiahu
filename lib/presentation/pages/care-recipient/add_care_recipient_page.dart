@@ -294,6 +294,13 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
 
   @override
   Widget build(BuildContext context) {
+    // 权限守卫：只有 owner/coordinator 可以添加照护对象
+    if (!(ref.watch(currentFamilyProvider)?.myRole.canManageRecipients ?? false)) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('添加照护对象')),
+        body: const Center(child: Text('您没有权限添加照护对象')),
+      );
+    }
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(

@@ -178,6 +178,12 @@ export class FamilyTaskService {
     return results;
   }
 
+  /** 获取任务的 assigneeId（用于权限校验） */
+  async getAssigneeId(taskId: string): Promise<string | null> {
+    const task = await this.taskRepo.findOne({ where: { id: taskId } });
+    return task?.assigneeId ?? null;
+  }
+
   /** 创建任务 */
   async create(dto: CreateFamilyTaskDto, userId: string) {
     // 计算 nextDueAt

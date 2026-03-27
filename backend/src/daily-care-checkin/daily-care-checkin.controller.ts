@@ -1,15 +1,21 @@
 import { Controller, Get, Post, Body, Query, UseGuards, Request } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { PermissionService } from '../common/services/permission.service';
 import { DailyCareCheckinService } from './daily-care-checkin.service';
 import { CreateDailyCareCheckinDto } from './dto/daily-care-checkin.dto';
+import { FamilyMemberRole } from '../family/entities/family-member.entity';
 
 @ApiTags('每日护理打卡')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('daily-care-checkins')
 export class DailyCareCheckinController {
-  constructor(private readonly service: DailyCareCheckinService) {}
+  constructor(
+    private readonly service: DailyCareCheckinService,
+    private readonly permission: PermissionService,
+  ) {}
 
   @Get('today')
   @ApiOperation({ summary: '获取今日所有打卡（用于首页横幅）' })
@@ -34,7 +40,16 @@ export class DailyCareCheckinController {
 
   @Post()
   @ApiOperation({ summary: '创建或更新打卡（upsert）' })
-  upsert(@Body() dto: CreateDailyCareCheckinDto, @Request() req: any) {
-    return this.service.upsert(dto, req.user.id);
+  async upsert(
+    @Body() dto: CreateDailyCareCheckinDto,
+    @CurrentUser('id') userId: string,
+  ) {
+    // guest 不能操作每日护理打卡
+    await this.permission.requireRole(userId, dto.familyId, [
+      FamilyMemberRole.OWNER,
+      FamilyMemberRole.COORDINATOR,
+      FamilyMemberRole.CAREGIVER,
+    ]);
+    return this.service.upsert(dto, userId);
   }
 }

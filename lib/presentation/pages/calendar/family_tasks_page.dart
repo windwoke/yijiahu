@@ -38,6 +38,9 @@ class _FamilyTasksPageState extends ConsumerState<FamilyTasksPage> {
 
     final familyId = family.id;
     final tasksAsync = ref.watch(familyTasksProvider(familyId));
+    final role = family.myRole;
+    final canManage = role.canManageTask;
+    final canComplete = role.canCompleteTask;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -48,11 +51,12 @@ class _FamilyTasksPageState extends ConsumerState<FamilyTasksPage> {
           onPressed: () => context.pop(),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add_rounded),
-            tooltip: '添加任务',
-            onPressed: () => context.push(AppRoutes.addTask),
-          ),
+          if (canManage)
+            IconButton(
+              icon: const Icon(Icons.add_rounded),
+              tooltip: '添加任务',
+              onPressed: () => context.push(AppRoutes.addTask),
+            ),
         ],
       ),
       body: Column(
@@ -146,7 +150,7 @@ class _FamilyTasksPageState extends ConsumerState<FamilyTasksPage> {
                   ? '暂无已完成任务'
                   : '暂无任务',
           subtitle: _filterStatus == 'all'
-              ? '点击右上角"+"添加任务'
+              ? (canManage ? '点击右上角"+"添加任务' : null)
               : null,
         ),
       );
@@ -165,10 +169,12 @@ class _FamilyTasksPageState extends ConsumerState<FamilyTasksPage> {
           ...pending.map((t) => _TaskListCard(
                 task: t,
                 familyId: familyId,
-                onComplete: () => _completeTask(t, familyId),
-                onCancel: () => _cancelTask(t, familyId),
-                onEdit: () => context.push(AppRoutes.addTask, extra: t),
-                onDelete: () => _deleteTask(t, familyId),
+                canManage: canManage,
+                canComplete: canComplete,
+                onComplete: canComplete ? () => _completeTask(t, familyId) : null,
+                onCancel: canManage ? () => _cancelTask(t, familyId) : null,
+                onEdit: canManage ? () => context.push(AppRoutes.addTask, extra: t) : null,
+                onDelete: canManage ? () => _deleteTask(t, familyId) : null,
               )),
           const SizedBox(height: 16),
         ],
@@ -178,10 +184,12 @@ class _FamilyTasksPageState extends ConsumerState<FamilyTasksPage> {
           ...completed.map((t) => _TaskListCard(
                 task: t,
                 familyId: familyId,
+                canManage: canManage,
+                canComplete: false,
                 onComplete: null,
                 onCancel: null,
                 onEdit: null,
-                onDelete: () => _deleteTask(t, familyId),
+                onDelete: canManage ? () => _deleteTask(t, familyId) : null,
               )),
         ],
       ],
@@ -331,6 +339,8 @@ class _FamilyTasksPageState extends ConsumerState<FamilyTasksPage> {
 class _TaskListCard extends StatelessWidget {
   final FamilyTask task;
   final String familyId;
+  final bool canManage;
+  final bool canComplete;
   final VoidCallback? onComplete;
   final VoidCallback? onCancel;
   final VoidCallback? onEdit;
@@ -339,6 +349,8 @@ class _TaskListCard extends StatelessWidget {
   const _TaskListCard({
     required this.task,
     required this.familyId,
+    required this.canManage,
+    required this.canComplete,
     this.onComplete,
     this.onCancel,
     this.onEdit,
@@ -485,14 +497,14 @@ class _TaskListCard extends StatelessWidget {
                           onTap: onCancel!,
                         ),
                       const Spacer(),
-                      if (onEdit != null)
+                      if (canManage && onEdit != null)
                         _ActionChip(
                           icon: Icons.edit_rounded,
                           label: '编辑',
                           color: AppColors.primary,
                           onTap: onEdit!,
                         ),
-                      if (onDelete != null) ...[
+                      if (canManage && onDelete != null) ...[
                         const SizedBox(width: 4),
                         InkWell(
                           onTap: onDelete,

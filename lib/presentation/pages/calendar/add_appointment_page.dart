@@ -68,6 +68,13 @@ class _AddAppointmentPageState extends ConsumerState<AddAppointmentPage> {
 
   @override
   Widget build(BuildContext context) {
+    // 权限守卫：只有 owner/coordinator 可以添加复诊
+    if (!(ref.watch(currentFamilyProvider)?.myRole.canCreateAppointment ?? false)) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('添加复诊')),
+        body: const Center(child: Text('您没有权限添加复诊')),
+      );
+    }
     final recipientsAsync = ref.watch(careRecipientsProvider);
     final membersAsync = ref.watch(
       familyMembersProvider(ref.watch(currentFamilyProvider)?.id ?? ''),

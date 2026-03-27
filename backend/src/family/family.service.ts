@@ -78,7 +78,7 @@ export class FamilyService {
   }
 
   async update(familyId: string, userId: string, dto: UpdateFamilyDto) {
-    await this.checkPermission(familyId, userId, [FamilyMemberRole.OWNER, FamilyMemberRole.ADMIN]);
+    await this.requireRole(familyId, userId, [FamilyMemberRole.OWNER]);
     await this.familyRepo.update(familyId, dto);
     return this.findById(familyId, userId);
   }
@@ -98,7 +98,7 @@ export class FamilyService {
       familyId: family.id,
       userId,
       nickname: user?.name || '家庭成员',
-      role: FamilyMemberRole.MEMBER,
+      role: FamilyMemberRole.COORDINATOR,
     });
     await this.memberRepo.save(member);
 
@@ -116,7 +116,12 @@ export class FamilyService {
   }
 
   async findMembers(familyId: string, userId: string) {
-    await this.checkPermission(familyId, userId);
+    await this.requireRole(familyId, userId, [
+      FamilyMemberRole.OWNER,
+      FamilyMemberRole.COORDINATOR,
+      FamilyMemberRole.CAREGIVER,
+      FamilyMemberRole.GUEST,
+    ]);
     const members = await this.memberRepo.find({
       where: { familyId },
       relations: ['user'],
@@ -130,17 +135,18 @@ export class FamilyService {
   }
 
   async updateMember(familyId: string, memberId: string, userId: string, dto: UpdateMemberDto) {
-    await this.checkPermission(familyId, userId, [FamilyMemberRole.OWNER, FamilyMemberRole.ADMIN]);
+    // 只有 owner 可以更新成员信息（昵称、头像）
+    await this.requireRole(familyId, userId, [FamilyMemberRole.OWNER]);
     const member = await this.memberRepo.findOne({ where: { id: memberId, familyId } });
     if (!member) throw new NotFoundException('成员不存在');
     Object.assign(member, dto);
     return this.memberRepo.save(member);
   }
 
-  private async checkPermission(
+  private async requireRole(
     familyId: string,
     userId: string,
-    roles: FamilyMemberRole[] = [FamilyMemberRole.OWNER, FamilyMemberRole.ADMIN, FamilyMemberRole.MEMBER],
+    roles: FamilyMemberRole[] = [FamilyMemberRole.OWNER, FamilyMemberRole.COORDINATOR],
   ) {
     const member = await this.memberRepo.findOne({ where: { familyId, userId } });
     if (!member) throw new NotFoundException('您不是该家庭成员');

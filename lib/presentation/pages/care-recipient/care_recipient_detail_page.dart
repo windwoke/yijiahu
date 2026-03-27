@@ -31,6 +31,8 @@ class _CareRecipientDetailPageState extends ConsumerState<CareRecipientDetailPag
     final recipientAsync = ref.watch(careRecipientDetailProvider(widget.recipient.id));
     final medicationsAsync = ref.watch(medicationsProvider(widget.recipient.id));
     final healthTrendsAsync = ref.watch(healthTrendsProvider(widget.recipient.id));
+    final family = ref.watch(currentFamilyProvider);
+    final canManage = family?.myRole.canManageRecipients ?? false;
 
     // 拿最新数据用于展示，过渡期用 widget.recipient兜底
     final recipient = recipientAsync.valueOrNull ?? widget.recipient;
@@ -47,18 +49,20 @@ class _CareRecipientDetailPageState extends ConsumerState<CareRecipientDetailPag
         ),
         title: Text(recipient.name),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.edit_rounded, color: AppColors.primary),
-            onPressed: () async {
-              await context.push(AppRoutes.addCareRecipient, extra: recipient);
-              // 编辑返回后刷新数据
-              ref.invalidate(careRecipientDetailProvider(widget.recipient.id));
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete_outline, color: AppColors.error),
-            onPressed: () => _confirmDelete(context, ref),
-          ),
+          if (canManage) ...[
+            IconButton(
+              icon: const Icon(Icons.edit_rounded, color: AppColors.primary),
+              onPressed: () async {
+                await context.push(AppRoutes.addCareRecipient, extra: recipient);
+                // 编辑返回后刷新数据
+                ref.invalidate(careRecipientDetailProvider(widget.recipient.id));
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: AppColors.error),
+              onPressed: () => _confirmDelete(context, ref),
+            ),
+          ],
         ],
       ),
       body: recipientAsync.when(
@@ -66,17 +70,19 @@ class _CareRecipientDetailPageState extends ConsumerState<CareRecipientDetailPag
         data: (_) => _buildBody(recipient, medicationsAsync, healthTrendsAsync),
         error: (_, __) => _buildBody(recipient, medicationsAsync, healthTrendsAsync),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          await context.push('/medication/add', extra: widget.recipient.id);
-          ref.invalidate(medicationsProvider(widget.recipient.id));
-        },
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        elevation: 4,
-        icon: const Icon(Icons.add, size: 20),
-        label: const Text('添加药品', style: TextStyle(fontWeight: FontWeight.w600)),
-      ),
+      floatingActionButton: canManage
+          ? FloatingActionButton.extended(
+              onPressed: () async {
+                await context.push('/medication/add', extra: widget.recipient.id);
+                ref.invalidate(medicationsProvider(widget.recipient.id));
+              },
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              elevation: 4,
+              icon: const Icon(Icons.add, size: 20),
+              label: const Text('添加药品'),
+            )
+          : null,
     );
   }
 

@@ -5,7 +5,88 @@ import 'package:equatable/equatable.dart';
 
 enum SubscriptionPlan { free, premium, annual }
 
-enum FamilyMemberRole { owner, admin, member, viewer }
+/// 家庭成员角色枚举
+/// - owner: 家庭管理员（最高权限，不能降级自己）
+/// - coordinator: 协调管理员（日常管理）
+/// - caregiver: 照护人（记录日志+完成任务）
+/// - guest: 访客（只读+记录日志）
+enum FamilyMemberRole {
+  owner,
+  coordinator,
+  caregiver,
+  guest;
+
+  String get label {
+    switch (this) {
+      case FamilyMemberRole.owner:
+        return '管理员';
+      case FamilyMemberRole.coordinator:
+        return '协调管理员';
+      case FamilyMemberRole.caregiver:
+        return '照护人';
+      case FamilyMemberRole.guest:
+        return '访客';
+    }
+  }
+
+  /// 是否能管理家庭设置（仅 owner）
+  bool get canManageFamily => this == FamilyMemberRole.owner;
+
+  /// 是否能管理成员（owner + coordinator）
+  bool get canManageMembers =>
+      this == FamilyMemberRole.owner || this == FamilyMemberRole.coordinator;
+
+  /// 是否能管理照护对象（owner + coordinator）
+  bool get canManageRecipients =>
+      this == FamilyMemberRole.owner || this == FamilyMemberRole.coordinator;
+
+  /// 是否能创建复诊（owner + coordinator）
+  bool get canCreateAppointment =>
+      this == FamilyMemberRole.owner || this == FamilyMemberRole.coordinator;
+
+  /// 是否能创建/编辑任务（owner + coordinator）
+  bool get canManageTask =>
+      this == FamilyMemberRole.owner || this == FamilyMemberRole.coordinator;
+
+  /// 是否能完成任务（包括自己的任务）
+  /// - owner/coordinator: 任何任务
+  /// - caregiver: 分配给自己的任务
+  /// - guest: 不能完成任务
+  bool get canCompleteTask =>
+      this == FamilyMemberRole.owner ||
+      this == FamilyMemberRole.coordinator ||
+      this == FamilyMemberRole.caregiver;
+
+  /// 是否能记录照护日志（所有角色）
+  bool get canRecordCareLog => true;
+
+  /// 是否能添加健康记录（owner + coordinator + caregiver，不含 guest）
+  bool get canAddHealthRecord =>
+      this == FamilyMemberRole.owner ||
+      this == FamilyMemberRole.coordinator ||
+      this == FamilyMemberRole.caregiver;
+
+  /// 是否能做每日护理打卡（owner + coordinator + caregiver，不含 guest）
+  bool get canCheckin =>
+      this == FamilyMemberRole.owner ||
+      this == FamilyMemberRole.coordinator ||
+      this == FamilyMemberRole.caregiver;
+
+  static FamilyMemberRole fromString(String? s) {
+    switch (s) {
+      case 'owner':
+        return FamilyMemberRole.owner;
+      case 'coordinator':
+        return FamilyMemberRole.coordinator;
+      case 'caregiver':
+        return FamilyMemberRole.caregiver;
+      case 'guest':
+        return FamilyMemberRole.guest;
+      default:
+        return FamilyMemberRole.guest;
+    }
+  }
+}
 
 /// 家庭
 class Family extends Equatable {
@@ -42,7 +123,7 @@ class Family extends Equatable {
       avatarUrl: json['avatarUrl'] as String? ?? json['avatar_url'] as String?,
       description: json['description'] as String?,
       inviteCode: json['inviteCode'] as String? ?? json['invite_code'] as String? ?? '',
-      role: json['myRole'] as String? ?? json['role'] as String? ?? 'member',
+      role: json['myRole'] as String? ?? json['role'] as String? ?? 'coordinator',
       subscriptionPlan: _parsePlan(json['subscriptionPlan'] as String? ?? json['subscription_plan'] as String?),
       subscriptionExpiresAt: json['subscriptionExpiresAt'] != null
           ? DateTime.parse(json['subscriptionExpiresAt'] as String)
@@ -69,6 +150,9 @@ class Family extends Equatable {
   bool get isPremium =>
       subscriptionPlan != SubscriptionPlan.free &&
       (subscriptionExpiresAt?.isAfter(DateTime.now()) ?? false);
+
+  /// 当前用户在此家庭中的角色
+  FamilyMemberRole get myRole => FamilyMemberRole.fromString(role);
 
   @override
   List<Object?> get props => [
@@ -110,7 +194,7 @@ class FamilyMember extends Equatable {
       id: json['id'] as String? ?? '',
       userId: json['userId'] as String? ?? json['user_id'] as String?,
       nickname: json['nickname'] as String? ?? '',
-      role: json['role'] as String? ?? 'member',
+      role: json['role'] as String? ?? 'coordinator',
       avatarUrl: json['avatarUrl'] as String? ?? json['avatar_url'] as String?,
       phone: json['phone'] as String?,
       isOnline: json['isOnline'] as bool? ?? json['is_online'] as bool? ?? false,
@@ -119,18 +203,7 @@ class FamilyMember extends Equatable {
   }
 
   String get roleLabel {
-    switch (role) {
-      case 'owner':
-        return '管理员';
-      case 'admin':
-        return '协管员';
-      case 'member':
-        return '成员';
-      case 'viewer':
-        return '查看者';
-      default:
-        return role;
-    }
+    return FamilyMemberRole.fromString(role).label;
   }
 
   @override

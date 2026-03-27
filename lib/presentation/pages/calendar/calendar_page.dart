@@ -324,6 +324,8 @@ class _CalendarPageState extends ConsumerState<CalendarPage>
   }
 
   void _showAddSheet(BuildContext context) {
+    final family = ref.read(currentFamilyProvider);
+    final role = family?.myRole ?? FamilyMemberRole.guest;
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -343,9 +345,9 @@ class _CalendarPageState extends ConsumerState<CalendarPage>
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    Expanded(child: _AddBtn(emoji: '🏥', label: '添加复诊', color: AppColors.coral, onTap: () { Navigator.pop(ctx); context.push(AppRoutes.addAppointment); })),
+                    Expanded(child: role.canCreateAppointment ? _AddBtn(emoji: '🏥', label: '添加复诊', color: AppColors.coral, onTap: () { Navigator.pop(ctx); context.push(AppRoutes.addAppointment); }) : const SizedBox.shrink()),
                     const SizedBox(width: 12),
-                    Expanded(child: _AddBtn(emoji: '📝', label: '添加任务', color: AppColors.blue, onTap: () { Navigator.pop(ctx); context.push(AppRoutes.addTask); })),
+                    Expanded(child: role.canManageTask ? _AddBtn(emoji: '📝', label: '添加任务', color: AppColors.blue, onTap: () { Navigator.pop(ctx); context.push(AppRoutes.addTask); }) : const SizedBox.shrink()),
                   ],
                 ),
                 const SizedBox(height: 10),
@@ -636,6 +638,10 @@ class _TaskCardState extends ConsumerState<_TaskCard> {
 
   bool get _isPending => !_completedLocally && widget.task.isPending;
   bool get _isCancelled => widget.task.status == 'cancelled';
+  bool get _canComplete {
+    final role = ref.watch(currentFamilyProvider)?.myRole ?? FamilyMemberRole.guest;
+    return role.canCompleteTask;
+  }
   Color get _statusColor {
     if (_isPending) return AppColors.blue;
     if (_isCancelled) return AppColors.error;
@@ -690,7 +696,7 @@ class _TaskCardState extends ConsumerState<_TaskCard> {
               ],
             ),
           ),
-          if (_isPending)
+          if (_isPending && _canComplete)
             InkWell(
               onTap: _complete,
               borderRadius: BorderRadius.circular(8),
@@ -921,6 +927,10 @@ class _TaskDetailSheet extends ConsumerStatefulWidget {
 
 class _TaskDetailSheetState extends ConsumerState<_TaskDetailSheet> {
   bool _completedLocally = false;
+  bool get _canComplete {
+    final role = ref.watch(currentFamilyProvider)?.myRole ?? FamilyMemberRole.guest;
+    return role.canCompleteTask;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -995,7 +1005,7 @@ class _TaskDetailSheetState extends ConsumerState<_TaskDetailSheet> {
                 // 底部操作
                 Row(
                   children: [
-                    if (isPending) Expanded(child: _SheetActBtn(icon: Icons.check_circle_rounded, label: '标记完成', color: AppColors.success, onTap: _complete)),
+                    if (isPending && _canComplete) Expanded(child: _SheetActBtn(icon: Icons.check_circle_rounded, label: '标记完成', color: AppColors.success, onTap: _complete)),
                     if (isPending) const SizedBox(width: 10),
                     Expanded(child: _SheetActBtn(icon: Icons.close_rounded, label: '关闭', color: AppColors.textTertiary, onTap: () => Navigator.pop(context))),
                   ],

@@ -11,9 +11,9 @@ import { Family } from './family.entity';
 
 export enum FamilyMemberRole {
   OWNER = 'owner',
-  ADMIN = 'admin',
-  MEMBER = 'member',
-  VIEWER = 'viewer',
+  COORDINATOR = 'coordinator',
+  CAREGIVER = 'caregiver',
+  GUEST = 'guest',
 }
 
 @Entity('family_members')
@@ -33,7 +33,7 @@ export class FamilyMember {
   @Column({
     type: 'enum',
     enum: FamilyMemberRole,
-    default: FamilyMemberRole.MEMBER,
+    default: FamilyMemberRole.COORDINATOR,
   })
   role: FamilyMemberRole;
 

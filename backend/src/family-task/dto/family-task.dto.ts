@@ -73,4 +73,9 @@ export class CompleteTaskDto {
   @IsOptional()
   @IsString()
   note?: string;
+
+  @ApiPropertyOptional({ description: '被分配人ID（用于权限校验）' })
+  @IsOptional()
+  @IsString()
+  assigneeId?: string;
 }

@@ -4,9 +4,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { PermissionService } from '../common/services/permission.service';
 import { CareRecipientService } from './care-recipient.service';
 import { SubscriptionService } from '../subscription/subscription.service';
-import { FamilyMember } from '../family/entities/family-member.entity';
+import { FamilyMember, FamilyMemberRole } from '../family/entities/family-member.entity';
 import { CreateCareRecipientDto, UpdateCareRecipientDto } from './dto/care-recipient.dto';
 
 @ApiTags('照护对象')
@@ -17,6 +18,7 @@ export class CareRecipientController {
   constructor(
     private readonly service: CareRecipientService,
     private readonly subscriptionService: SubscriptionService,
+    private readonly permission: PermissionService,
     @InjectRepository(FamilyMember) private memberRepo: Repository<FamilyMember>,
   ) {}
 
@@ -27,20 +29,25 @@ export class CareRecipientController {
     @Body() dto: CreateCareRecipientDto,
     @Query('familyId') familyId?: string,
   ) {
+    let resolvedFamilyId: string;
     if (familyId) {
-      // 验证用户是否属于该家庭
-      const member = await this.memberRepo.findOne({ where: { userId, familyId } });
-      if (!member) throw new BadRequestException('无权操作此家庭');
-      // 检查照护对象配额
-      await this.subscriptionService.checkQuota(familyId, 'recipient');
-      return this.service.create(familyId, dto);
+      await this.permission.requireRole(userId, familyId, [
+        FamilyMemberRole.OWNER,
+        FamilyMemberRole.COORDINATOR,
+      ]);
+      resolvedFamilyId = familyId;
+    } else {
+      // 兼容未传 familyId：查用户所在第一个家庭
+      const member = await this.memberRepo.findOne({ where: { userId } });
+      if (!member) throw new BadRequestException('请先加入一个家庭');
+      await this.permission.requireRole(userId, member.familyId, [
+        FamilyMemberRole.OWNER,
+        FamilyMemberRole.COORDINATOR,
+      ]);
+      resolvedFamilyId = member.familyId;
     }
-    // 兼容未传 familyId：查用户所在第一个家庭
-    const member = await this.memberRepo.findOne({ where: { userId } });
-    if (!member) throw new BadRequestException('请先加入一个家庭');
-    // 检查照护对象配额
-    await this.subscriptionService.checkQuota(member.familyId, 'recipient');
-    return this.service.create(member.familyId, dto);
+    await this.subscriptionService.checkQuota(resolvedFamilyId, 'recipient');
+    return this.service.create(resolvedFamilyId, dto);
   }
 
   @Get()
@@ -57,17 +64,30 @@ export class CareRecipientController {
 
   @Patch(':id')
   @ApiOperation({ summary: '更新照护对象' })
-  update(
+  async update(
     @Param('id') id: string,
     @Query('familyId') familyId: string,
+    @CurrentUser('id') userId: string,
     @Body() dto: UpdateCareRecipientDto,
   ) {
+    await this.permission.requireRole(userId, familyId, [
+      FamilyMemberRole.OWNER,
+      FamilyMemberRole.COORDINATOR,
+    ]);
     return this.service.update(id, familyId, dto);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: '删除照护对象' })
-  delete(@Param('id') id: string, @Query('familyId') familyId: string) {
+  async delete(
+    @Param('id') id: string,
+    @Query('familyId') familyId: string,
+    @CurrentUser('id') userId: string,
+  ) {
+    await this.permission.requireRole(userId, familyId, [
+      FamilyMemberRole.OWNER,
+      FamilyMemberRole.COORDINATOR,
+    ]);
     return this.service.delete(id, familyId);
   }
 }

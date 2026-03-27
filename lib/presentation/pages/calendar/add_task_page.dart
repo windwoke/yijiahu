@@ -104,6 +104,13 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
 
   @override
   Widget build(BuildContext context) {
+    // 权限守卫：只有 owner/coordinator 可以添加任务
+    if (!(ref.watch(currentFamilyProvider)?.myRole.canManageTask ?? false)) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('添加任务')),
+        body: const Center(child: Text('您没有权限添加任务')),
+      );
+    }
     final recipientsAsync = ref.watch(careRecipientsProvider);
     final membersAsync = ref.watch(
       familyMembersProvider(ref.watch(currentFamilyProvider)?.id ?? ''),

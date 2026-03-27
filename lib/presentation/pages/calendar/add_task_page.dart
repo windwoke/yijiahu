@@ -34,6 +34,8 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
   bool _isLoading = false;
   /// 编辑模式时已有任务的 ID
   String? _editingTaskId;
+  /// 当前照护人的 ID（用于默认填充负责人）
+  String? _currentCaregiverId;
 
   @override
   void initState() {
@@ -59,6 +61,22 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
       }
       _scheduledDays = List.from(task.scheduledDay ?? []);
     }
+    // 非编辑模式下，异步加载当前照护人
+    if (task == null) {
+      _loadCurrentCaregiver();
+    }
+  }
+
+  Future<void> _loadCurrentCaregiver() async {
+    try {
+      final recipients = await ref.read(careRecipientsProvider.future);
+      if (recipients.isNotEmpty) {
+        final current = await ref.read(currentCaregiverProvider(recipients.first.id).future);
+        if (current != null) {
+          if (mounted) setState(() => _currentCaregiverId = current.caregiverId);
+        }
+      }
+    } catch (_) {}
   }
 
   @override
@@ -515,7 +533,15 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
     if (members.isEmpty) {
       return const Text('家庭中暂无其他成员');
     }
-    _selectedAssignee ??= members.first;
+    if (_selectedAssignee == null) {
+      // 优先使用当前照护人，否则用第一个成员
+      if (_currentCaregiverId != null) {
+        final caregiver = members.where((m) => m.userId == _currentCaregiverId).toList();
+        _selectedAssignee = caregiver.isNotEmpty ? caregiver.first : members.first;
+      } else {
+        _selectedAssignee = members.first;
+      }
+    }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(

@@ -11,6 +11,7 @@ import '../../../core/router/app_router.dart';
 import '../../../core/env/env_config.dart' show ApiConfig;
 import '../../../data/models/models.dart' hide Family;
 import '../../providers/family_provider.dart';
+import 'widgets/_caregiver_record_card.dart';
 
 class CareRecipientDetailPage extends ConsumerStatefulWidget {
   final CareRecipient recipient;
@@ -88,6 +89,8 @@ class _CareRecipientDetailPageState extends ConsumerState<CareRecipientDetailPag
       padding: const EdgeInsets.all(16),
       children: [
         _buildHeaderCard(recipient),
+        const SizedBox(height: 16),
+        CaregiverRecordCard(recipient: recipient),
         const SizedBox(height: 16),
         _buildBasicInfoCard(recipient),
         const SizedBox(height: 16),

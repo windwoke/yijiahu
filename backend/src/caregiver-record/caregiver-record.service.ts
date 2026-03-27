@@ -48,7 +48,7 @@ export class CaregiverRecordService {
     if (!recipient) throw new NotFoundException('照护对象不存在');
 
     // 1. 关闭当前记录
-    const current = await this.findCurrent(dto.careRecipientId);
+    const current = await this.findCurrent(dto.careRecipientId, recipient.familyId);
     if (current) {
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);

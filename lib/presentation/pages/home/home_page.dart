@@ -854,6 +854,11 @@ class _TaskHomeCard extends ConsumerWidget {
                 await dio.post('/family-tasks/${task.id}/complete',
                     queryParameters: {'familyId': familyId},
                     data: scheduledDate != null ? {'scheduledDate': scheduledDate} : null);
+                // 即时更新本地缓存
+                if (dueDate != null) {
+                  ref.read(completedInstancesProvider.notifier).update(
+                      (s) => {...s, '${task.id}_$scheduledDate'});
+                }
                 final now = DateTime.now();
                 ref.invalidate(upcomingTasksProvider(familyId));
                 ref.invalidate(calendarEventsProvider(CalendarQuery(

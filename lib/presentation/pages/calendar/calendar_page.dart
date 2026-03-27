@@ -50,8 +50,10 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
 
   void _refresh() {
     final now = DateTime.now();
-    final q = CalendarQuery(familyId: familyId, year: now.year, month: now.month);
-    ref.invalidate(calendarEventsProvider(q));
+    // 刷新当月（用户正在看的月份）和当前实际月份
+    final currentQ = CalendarQuery(familyId: familyId, year: now.year, month: now.month);
+    ref.invalidate(calendarEventsProvider(currentQ));
+    // 同时强制重新读取 familyId（防止切换家庭后 ID 不一致）
     ref.invalidate(familyTasksProvider(familyId));
     ref.invalidate(upcomingTasksProvider(familyId));
   }
@@ -181,6 +183,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
             weekendStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
           ),
           calendarStyle: CalendarStyle(
+            markersMaxCount: 2,
             todayDecoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.2), shape: BoxShape.circle),
             todayTextStyle: const TextStyle(color: AppColors.primaryDark, fontWeight: FontWeight.w600),
             selectedDecoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
@@ -190,6 +193,34 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
             outsideTextStyle: const TextStyle(color: AppColors.textTertiary),
             cellMargin: const EdgeInsets.all(1),
             cellPadding: EdgeInsets.zero,
+          ),
+          calendarBuilders: CalendarBuilders(
+            markerBuilder: (context, day, events) {
+              if (events.isEmpty) return null;
+              final hasAppointment = events.any((e) => e.type == EventType.appointment);
+              final hasTask = events.any((e) => e.type == EventType.task);
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (hasAppointment) Container(
+                    width: 6, height: 6,
+                    margin: const EdgeInsets.symmetric(horizontal: 1),
+                    decoration: const BoxDecoration(
+                      color: AppColors.coral,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  if (hasTask) Container(
+                    width: 6, height: 6,
+                    margin: const EdgeInsets.symmetric(horizontal: 1),
+                    decoration: const BoxDecoration(
+                      color: AppColors.blue,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
           headerVisible: false,
           availableGestures: AvailableGestures.horizontalSwipe,
@@ -218,6 +249,21 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
                   color: AppColors.textSecondary,
                 ),
               ),
+              const SizedBox(width: 12),
+              // 图例：复诊=暖杏，任务=静谧蓝
+              Container(
+                width: 6, height: 6,
+                decoration: const BoxDecoration(color: AppColors.coral, shape: BoxShape.circle),
+              ),
+              const SizedBox(width: 3),
+              const Text('复诊', style: TextStyle(fontSize: 11, color: AppColors.textTertiary)),
+              const SizedBox(width: 8),
+              Container(
+                width: 6, height: 6,
+                decoration: const BoxDecoration(color: AppColors.blue, shape: BoxShape.circle),
+              ),
+              const SizedBox(width: 3),
+              const Text('任务', style: TextStyle(fontSize: 11, color: AppColors.textTertiary)),
               const Spacer(),
               _ToggleBtn(
                 icon: Icons.view_agenda_rounded,
@@ -656,13 +702,20 @@ class _TaskCardState extends ConsumerState<_TaskCard> {
     setState(() => _completedLocally = true);
     try {
       final dio = ref.read(dioProvider);
+      // scheduledDate 来自日历实例的 nextDueAt（expandRecurringTask 展开后的日期）
       final dueDate = widget.task.nextDueAt;
       final scheduledDate = dueDate != null
           ? '${dueDate.year}-${dueDate.month.toString().padLeft(2, '0')}-${dueDate.day.toString().padLeft(2, '0')}'
           : null;
       await dio.post('/family-tasks/${widget.task.id}/complete',
           queryParameters: {'familyId': widget.familyId},
-          data: scheduledDate != null ? {'scheduledDate': scheduledDate} : null);
+          data: scheduledDate != null ? {'scheduledDate': scheduledDate} : {});
+      // 即时更新本地缓存，calendarEventsProvider 会立即重新渲染（不受 FutureProvider watch 链限制）
+      if (dueDate != null) {
+        final instanceKey = '${widget.task.id}_$scheduledDate';
+        ref.read(completedInstancesProvider.notifier).update((s) => {...s, instanceKey});
+      }
+      // 刷新当月
       final now = DateTime.now();
       ref.invalidate(calendarEventsProvider(CalendarQuery(familyId: widget.familyId, year: now.year, month: now.month)));
       ref.invalidate(familyTasksProvider(widget.familyId));
@@ -947,13 +1000,19 @@ class _TaskDetailSheetState extends ConsumerState<_TaskDetailSheet> {
     setState(() => _completedLocally = true);
     try {
       final dio = ref.read(dioProvider);
+      // scheduledDate 来自日历实例的 nextDueAt（expandRecurringTask 展开后的日期）
       final dueDate = widget.task.nextDueAt;
       final scheduledDate = dueDate != null
           ? '${dueDate.year}-${dueDate.month.toString().padLeft(2, '0')}-${dueDate.day.toString().padLeft(2, '0')}'
           : null;
       await dio.post('/family-tasks/${widget.task.id}/complete',
           queryParameters: {'familyId': widget.familyId},
-          data: scheduledDate != null ? {'scheduledDate': scheduledDate} : null);
+          data: scheduledDate != null ? {'scheduledDate': scheduledDate} : {});
+      // 即时更新本地缓存
+      if (dueDate != null) {
+        final instanceKey = '${widget.task.id}_$scheduledDate';
+        ref.read(completedInstancesProvider.notifier).update((s) => {...s, instanceKey});
+      }
       if (!mounted) return;
       widget.onComplete();
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('任务已完成')));

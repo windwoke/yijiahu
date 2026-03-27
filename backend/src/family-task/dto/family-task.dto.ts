@@ -34,6 +34,11 @@ export class CreateFamilyTaskDto {
   @IsString()
   scheduledTime?: string;
 
+  @ApiPropertyOptional({ description: '到期日期 YYYY-MM-DD（单次任务必填）' })
+  @IsOptional()
+  @IsString()
+  scheduledDate?: string;
+
   @ApiPropertyOptional({ description: '周期日（周几1-7 或 日期1-31）' })
   @IsOptional()
   @IsArray()

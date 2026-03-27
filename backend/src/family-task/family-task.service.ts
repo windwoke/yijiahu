@@ -66,26 +66,25 @@ export class FamilyTaskService {
     return `${y}-${m}-${d}`;
   }
 
-  /** 按月查询 */
+  /** 按月查询（按原始周期频率展开，不依赖 nextDueAt 过滤，因为 nextDueAt 会随完成而推进） */
   async findByMonth(familyId: string, year: number, month: number) {
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59);
 
+    // 查询所有非取消状态的任务（取消后不显示在日历中）
     const tasks = await this.taskRepo.find({
-      where: {
-        familyId,
-        nextDueAt: LessThanOrEqual(endDate),
-      },
+      where: { familyId },
       relations: ['assignee', 'recipient', 'createdBy'],
       order: { nextDueAt: 'ASC' },
-    });
+    }).then(ts => ts.filter(t => t.status !== TaskStatus.CANCELLED));
 
     if (tasks.length === 0) return [];
 
     // 预加载当月所有任务的完成记录（按scheduledDate精确匹配）
     const taskIds = tasks.map(t => t.id);
     const monthStart = `${year}-${String(month).padStart(2, '0')}-01`;
-    const monthEnd = `${year}-${String(month).padStart(2, '0')}-31`;
+    const lastDay = new Date(year, month, 0).getDate();
+    const monthEnd = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
 
     const completions = await this.completionRepo
       .createQueryBuilder('tc')
@@ -105,14 +104,20 @@ export class FamilyTaskService {
       }
     }
 
-
     // 展开 recurring 任务
     const result: any[] = [];
 
     for (const task of tasks) {
       if (task.frequency === TaskFrequency.ONCE) {
-        if (task.nextDueAt >= startDate) {
-          result.push(task);
+        // 单次任务：nextDueAt 在当月内则显示
+        if (task.nextDueAt >= startDate && task.nextDueAt <= endDate) {
+          const instance = { ...task } as FamilyTask;
+          // 用 completionMap 标记完成状态（完成后 status 变了但我们仍然显示）
+          const dateKey = this.toLocalDateStr(task.nextDueAt);
+          if (completionMap.get(task.id)?.has(dateKey)) {
+            instance.status = TaskStatus.COMPLETED;
+          }
+          result.push(instance);
         }
       } else {
         const expanded = this.expandRecurringTask(
@@ -175,14 +180,29 @@ export class FamilyTaskService {
 
   /** 创建任务 */
   async create(dto: CreateFamilyTaskDto, userId: string) {
-    // 计算 nextDueAt：无 scheduledTime 时用 UTC 12:00 避免时区跨越
-    let nextDueAt = new Date();
-    if (dto.scheduledTime) {
-      const [h, m] = dto.scheduledTime.split(':');
-      nextDueAt = new Date();
-      nextDueAt.setHours(parseInt(h), parseInt(m), 0, 0);
+    // 计算 nextDueAt
+    let nextDueAt: Date;
+    if (dto.scheduledDate) {
+      // 单次任务：用户输入的时间是北京时间，转为 UTC 存储
+      const [y, m, d] = dto.scheduledDate.split('-').map(Number);
+      if (dto.scheduledTime) {
+        const [h, min] = dto.scheduledTime.split(':').map(Number);
+        // 北京时间 10:00 = UTC 02:00（UTC+8）
+        const utcH = (h - 8 + 24) % 24;
+        nextDueAt = new Date(Date.UTC(y, m - 1, d, utcH, min));
+      } else {
+        // 无时间则用 UTC 12:00（北京时间 20:00）
+        nextDueAt = new Date(Date.UTC(y, m - 1, d, 12, 0));
+      }
     } else {
-      nextDueAt.setHours(12, 0, 0, 0);
+      // 周期任务
+      nextDueAt = new Date();
+      if (dto.scheduledTime) {
+        const [h, min] = dto.scheduledTime.split(':').map(Number);
+        nextDueAt.setHours(h, min, 0, 0);
+      } else {
+        nextDueAt.setHours(12, 0, 0, 0);
+      }
     }
 
     const task = this.taskRepo.create({
@@ -211,8 +231,8 @@ export class FamilyTaskService {
     if (!task) throw new NotFoundException('任务不存在');
     if (task.familyId !== familyId) throw new ForbiddenException('无权操作此任务');
 
-    // scheduledDate: 前端传来的完成日期实例（YYYY-MM-DD）
-    const scheduledDate = dto.scheduledDate ?? null;
+    // scheduledDate: 优先用前端传递的日期（来自日历实例的 nextDueAt），否则从任务 nextDueAt 推导
+    const scheduledDate = dto.scheduledDate ?? this.toLocalDateStr(task.nextDueAt!);
 
     // 记录完成（明确标记完成的哪天实例）
     const completion = this.completionRepo.create({

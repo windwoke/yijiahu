@@ -5,6 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/models.dart' as models;
 import '../../core/network/api_client.dart';
 
+/// 已完成的日历实例缓存（taskId_scheduledDate），用于即时 UI 响应
+/// 解决问题：FutureProvider 的 ref.watch 在异步函数内无法建立正确依赖，
+/// 导致 ref.invalidate 后 UI 不刷新
+final completedInstancesProvider = StateProvider<Set<String>>((ref) => {});
+
 /// 复诊列表
 final appointmentsProvider =
     FutureProvider.family<List<models.Appointment>, String>((
@@ -86,9 +91,10 @@ final calendarTasksProvider =
     'month': query.month,
   });
   final data = response.data as List<dynamic>;
-  return data
+  final tasks = data
       .map((e) => models.FamilyTask.fromJson(e as Map<String, dynamic>))
       .toList();
+  return tasks;
 });
 
 /// 日历查询参数
@@ -152,11 +158,24 @@ final calendarEventsProvider =
       task.nextDueAt!.day,
     );
     result.putIfAbsent(date, () => []);
-    result[date]!.add(CalendarEvent(
-      type: EventType.task,
-      date: date,
-      task: task,
-    ));
+    // 检查本地缓存：即时显示已完成状态（解决 FutureProvider ref.watch 依赖链断裂的问题）
+    final completedKey = '${task.id}_${date.year}-${date.month.toString().padLeft(2,'0')}-${date.day.toString().padLeft(2,'0')}';
+    final localCompleted = ref.watch(completedInstancesProvider).contains(completedKey);
+    if (localCompleted && task.status != 'completed') {
+      // 克隆任务对象，修改 status
+      final completedTask = _cloneTaskWithStatus(task, 'completed');
+      result[date]!.add(CalendarEvent(
+        type: EventType.task,
+        date: date,
+        task: completedTask,
+      ));
+    } else {
+      result[date]!.add(CalendarEvent(
+        type: EventType.task,
+        date: date,
+        task: task,
+      ));
+    }
   }
 
   return result;
@@ -177,6 +196,27 @@ class CalendarEvent {
     this.appointment,
     this.task,
   });
+}
+
+/// 克隆 FamilyTask 并修改 status（用于本地缓存覆盖 API 状态）
+models.FamilyTask _cloneTaskWithStatus(models.FamilyTask task, String status) {
+  return models.FamilyTask(
+    id: task.id,
+    familyId: task.familyId,
+    recipientId: task.recipientId,
+    recipient: task.recipient,
+    title: task.title,
+    description: task.description,
+    frequency: task.frequency,
+    scheduledTime: task.scheduledTime,
+    scheduledDay: task.scheduledDay,
+    assigneeId: task.assigneeId,
+    assignee: task.assignee,
+    status: status,
+    nextDueAt: task.nextDueAt,
+    note: task.note,
+    createdAt: task.createdAt,
+  );
 }
 
 /// 完成任务

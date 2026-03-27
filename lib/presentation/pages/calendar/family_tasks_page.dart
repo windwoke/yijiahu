@@ -231,7 +231,17 @@ class _FamilyTasksPageState extends ConsumerState<FamilyTasksPage> {
   Future<void> _completeTask(FamilyTask task, String familyId) async {
     try {
       final dio = ref.read(dioProvider);
+      // 周期任务：scheduledDate 传今天日期
+      // 单次任务：scheduledDate 传 nextDueAt 对应日期
+      String? scheduledDate;
+      if (task.frequency != 'once') {
+        final now = DateTime.now();
+        scheduledDate = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+      } else if (task.nextDueAt != null) {
+        scheduledDate = '${task.nextDueAt!.year}-${task.nextDueAt!.month.toString().padLeft(2, '0')}-${task.nextDueAt!.day.toString().padLeft(2, '0')}';
+      }
       await dio.post('/family-tasks/${task.id}/complete',
+          data: scheduledDate != null ? {'scheduledDate': scheduledDate} : {},
           queryParameters: {'familyId': familyId});
       ref.invalidate(familyTasksProvider(familyId));
       ref.invalidate(upcomingTasksProvider(familyId));
@@ -256,6 +266,10 @@ class _FamilyTasksPageState extends ConsumerState<FamilyTasksPage> {
           data: {'status': 'cancelled', 'familyId': familyId},
           queryParameters: {'familyId': familyId});
       ref.invalidate(familyTasksProvider(familyId));
+      // 刷新日历视图（当前月 + 今天所在的月）
+      final now = DateTime.now();
+      final currentQ = CalendarQuery(familyId: familyId, year: now.year, month: now.month);
+      ref.invalidate(calendarEventsProvider(currentQ));
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('任务已取消')),

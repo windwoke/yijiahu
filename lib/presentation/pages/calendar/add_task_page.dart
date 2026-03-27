@@ -10,7 +10,10 @@ import '../../../data/models/models.dart';
 import '../../providers/providers.dart';
 
 class AddTaskPage extends ConsumerStatefulWidget {
-  const AddTaskPage({super.key});
+  /// 编辑模式时传入已有任务
+  final FamilyTask? task;
+
+  const AddTaskPage({super.key, this.task});
 
   @override
   ConsumerState<AddTaskPage> createState() => _AddTaskPageState();
@@ -25,9 +28,38 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
   CareRecipient? _selectedRecipient;
   String _frequency = 'once';
   TimeOfDay _scheduledTime = const TimeOfDay(hour: 9, minute: 0);
+  DateTime _scheduledDate = DateTime.now();
   List<int> _scheduledDays = [];
   FamilyMember? _selectedAssignee;
   bool _isLoading = false;
+  /// 编辑模式时已有任务的 ID
+  String? _editingTaskId;
+
+  @override
+  void initState() {
+    super.initState();
+    final task = widget.task;
+    if (task != null) {
+      _editingTaskId = task.id;
+      _titleController.text = task.title;
+      _descriptionController.text = task.description ?? '';
+      _noteController.text = task.note ?? '';
+      _frequency = task.frequency;
+      if (task.nextDueAt != null) {
+        _scheduledDate = DateTime(task.nextDueAt!.year, task.nextDueAt!.month, task.nextDueAt!.day);
+      }
+      if (task.scheduledTime != null) {
+        final parts = task.scheduledTime!.split(':');
+        if (parts.length == 2) {
+          _scheduledTime = TimeOfDay(
+            hour: int.tryParse(parts[0]) ?? 9,
+            minute: int.tryParse(parts[1]) ?? 0,
+          );
+        }
+      }
+      _scheduledDays = List.from(task.scheduledDay ?? []);
+    }
+  }
 
   @override
   void dispose() {
@@ -64,7 +96,7 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
-          title: const Text('添加任务'),
+          title: Text(widget.task != null ? '编辑任务' : '添加任务'),
           leading: IconButton(
             icon: const Icon(Icons.close_rounded),
             onPressed: () => context.pop(),
@@ -99,6 +131,16 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
                   _SectionTitle('重复频率'),
                   _buildFrequencySelector(),
                   const SizedBox(height: 16),
+
+                  // === 单次任务日期 ===
+                  if (_frequency == 'once') ...[
+                    _SectionTitle('到期日期'),
+                    _buildDatePicker(),
+                    const SizedBox(height: 16),
+                    _SectionTitle('到期时间'),
+                    _buildTimePicker(),
+                    const SizedBox(height: 20),
+                  ],
 
                   // === 时间 & 周期日（周期任务）===
                   if (_frequency != 'once') ...[
@@ -156,7 +198,7 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
                     height: 50,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.blue,
+                        backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -294,6 +336,57 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
           ),
         );
       }).toList(),
+    );
+  }
+
+  Widget _buildDatePicker() {
+    return InkWell(
+      onTap: () async {
+        final date = await showDatePicker(
+          context: context,
+          initialDate: _scheduledDate,
+          firstDate: DateTime.now().subtract(const Duration(days: 30)),
+          lastDate: DateTime.now().add(const Duration(days: 365)),
+        );
+        if (date != null && mounted) {
+          setState(() => _scheduledDate = date);
+        }
+      },
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: AppColors.blue.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.calendar_today_rounded,
+                  color: AppColors.blue, size: 18),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              '${_scheduledDate.year}年${_scheduledDate.month}月${_scheduledDate.day}日',
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const Spacer(),
+            const Icon(Icons.chevron_right_rounded,
+                color: AppColors.textTertiary, size: 20),
+          ],
+        ),
+      ),
     );
   }
 
@@ -524,7 +617,9 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
       final h = _scheduledTime.hour.toString().padLeft(2, '0');
       final m = _scheduledTime.minute.toString().padLeft(2, '0');
 
-      await dio.post('/family-tasks', data: {
+      final bool isEditing = _editingTaskId != null;
+      final String endpoint = isEditing ? '/family-tasks/$_editingTaskId' : '/family-tasks';
+      final Map<String, dynamic> payload = {
         'familyId': familyId,
         'recipientId': _selectedRecipient?.id,
         'title': _titleController.text,
@@ -532,13 +627,22 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
             ? _descriptionController.text
             : null,
         'frequency': _frequency,
-        'scheduledTime': _frequency != 'once' ? '$h:$m' : null,
+        'scheduledTime': _frequency != 'once' ? '$h:$m' : '$h:$m',
         'scheduledDay':
             _scheduledDays.isNotEmpty ? _scheduledDays : null,
+        'scheduledDate': _frequency == 'once'
+            ? '${_scheduledDate.year}-${_scheduledDate.month.toString().padLeft(2, '0')}-${_scheduledDate.day.toString().padLeft(2, '0')}'
+            : null,
         'assigneeId': _selectedAssignee!.userId,
         'note':
             _noteController.text.isNotEmpty ? _noteController.text : null,
-      });
+      };
+
+      if (isEditing) {
+        await dio.patch(endpoint, data: payload);
+      } else {
+        await dio.post(endpoint, data: payload);
+      }
 
       // 刷新日历数据
       final now = DateTime.now();
@@ -552,7 +656,7 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('任务已添加')),
+          SnackBar(content: Text(_editingTaskId != null ? '任务已更新' : '任务已添加')),
         );
         await Future.delayed(const Duration(milliseconds: 600));
         if (mounted) context.pop();

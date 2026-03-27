@@ -106,7 +106,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.addTask,
-        builder: (context, state) => const AddTaskPage(),
+        builder: (context, state) {
+          final task = state.extra as FamilyTask?;
+          return AddTaskPage(task: task);
+        },
       ),
       GoRoute(
         path: AppRoutes.addMedication,

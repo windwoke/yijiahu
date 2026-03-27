@@ -1327,8 +1327,15 @@ class FamilyPage extends ConsumerWidget {
                 ref.invalidate(familyMembersProvider(family.id));
               } catch (e) {
                 if (context.mounted) {
+                  String msg = '移除失败';
+                  if (e is DioException && e.response?.data != null) {
+                    final data = e.response!.data;
+                    if (data is Map<String, dynamic>) {
+                      msg = data['message'] ?? msg;
+                    }
+                  }
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('移除失败: $e')),
+                    SnackBar(content: Text(msg)),
                   );
                 }
               }
@@ -1480,8 +1487,10 @@ class _EditMemberSheetState extends ConsumerState<_EditMemberSheet> {
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     final currentRole = models.FamilyMemberRole.fromString(widget.section.member?.role);
-    // 不能把 owner 改成其他角色
-    final canChangeRole = widget.canManageMembers && currentRole != models.FamilyMemberRole.owner;
+    // 不能把 owner 改成其他角色；不能编辑自己（改角色/移除自己）
+    final canChangeRole = widget.canManageMembers
+        && !widget.isOwnCard
+        && currentRole != models.FamilyMemberRole.owner;
 
     return Padding(
       padding: EdgeInsets.fromLTRB(24, 24, 24, bottomInset + 24),
@@ -1648,6 +1657,22 @@ class _EditMemberSheetState extends ConsumerState<_EditMemberSheet> {
             ),
           ],
 
+          // 自己的卡片：显示退出家庭按钮（非 owner 才能退出）
+          if (widget.isOwnCard && currentRole != models.FamilyMemberRole.owner) ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.error,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                onPressed: () => _showLeaveFamilyDialog(),
+                child: const Text('退出家庭'),
+              ),
+            ),
+          ],
+
           if (!widget.canEdit) ...[
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -1669,6 +1694,52 @@ class _EditMemberSheetState extends ConsumerState<_EditMemberSheet> {
         return '照护人：记录日志、完成分配的任务，不能新建任务';
       case models.FamilyMemberRole.guest:
         return '访客：仅查看和记录日志';
+    }
+  }
+
+  Future<void> _showLeaveFamilyDialog() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('退出家庭'),
+        content: const Text('确定要退出该家庭吗？退出后将不再接收该家庭的通知。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('退出'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    try {
+      final dio = ref.read(dioProvider);
+      await dio.delete('/families/${widget.family.id}/leave');
+      if (mounted) {
+        Navigator.pop(context); // 关闭编辑弹层
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('已退出家庭')),
+        );
+      }
+      ref.invalidate(familyMembersProvider(widget.family.id));
+      ref.invalidate(currentFamilyProvider);
+    } catch (e) {
+      if (mounted) {
+        String msg = '退出失败';
+        if (e is DioException && e.response?.data != null) {
+          final data = e.response!.data;
+          if (data is Map<String, dynamic>) msg = data['message'] ?? msg;
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(msg)),
+        );
+      }
     }
   }
 }

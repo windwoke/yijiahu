@@ -412,6 +412,7 @@ class _TaskTabState extends ConsumerState<_TaskTab> {
               canManage: widget.canManage,
               canComplete: widget.canComplete,
               filter: _filter,
+              onDelete: widget.canManage ? _deleteTask : null,
             ),
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(child: Text('加载失败: $e')),
@@ -419,6 +420,44 @@ class _TaskTabState extends ConsumerState<_TaskTab> {
         ),
       ],
     );
+  }
+
+  Future<void> _deleteTask(FamilyTask task) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('确认删除'),
+        content: Text('确定删除任务「${task.title}」吗？'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('取消')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('删除', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+
+    try {
+      final dio = ref.read(dioProvider);
+      await dio.delete('/family-tasks/${task.id}', queryParameters: {'familyId': widget.familyId});
+      ref.invalidate(familyTasksProvider(widget.familyId));
+      final now = DateTime.now();
+      ref.invalidate(calendarTasksProvider(CalendarQuery(
+        familyId: widget.familyId,
+        year: now.year,
+        month: now.month,
+      )));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('任务已删除')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('删除失败: $e')));
+      }
+    }
   }
 }
 
@@ -477,6 +516,7 @@ class _TaskListView extends ConsumerWidget {
   final bool canManage;
   final bool canComplete;
   final String filter;
+  final void Function(FamilyTask task)? onDelete;
 
   const _TaskListView({
     required this.tasks,
@@ -484,6 +524,7 @@ class _TaskListView extends ConsumerWidget {
     required this.canManage,
     required this.canComplete,
     required this.filter,
+    this.onDelete,
   });
 
   @override
@@ -515,6 +556,7 @@ class _TaskListView extends ConsumerWidget {
           familyId: familyId,
           canManage: canManage,
           canComplete: canComplete,
+          onDelete: canManage ? () => onDelete?.call(filtered[index]) : null,
         ),
       ),
     );
@@ -526,12 +568,14 @@ class _TaskListCard extends ConsumerWidget {
   final String familyId;
   final bool canManage;
   final bool canComplete;
+  final VoidCallback? onDelete;
 
   const _TaskListCard({
     required this.task,
     required this.familyId,
     required this.canManage,
     required this.canComplete,
+    this.onDelete,
   });
 
   @override
@@ -623,6 +667,17 @@ class _TaskListCard extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(Icons.check_rounded, size: 18, color: AppColors.success),
+                    ),
+                  ),
+                ],
+                if (onDelete != null) ...[
+                  const SizedBox(width: 8),
+                  InkWell(
+                    onTap: onDelete,
+                    borderRadius: BorderRadius.circular(8),
+                    child: const Padding(
+                      padding: EdgeInsets.all(4),
+                      child: Icon(Icons.delete_outline_rounded, color: AppColors.textTertiary, size: 18),
                     ),
                   ),
                 ],

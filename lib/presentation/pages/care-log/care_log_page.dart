@@ -13,6 +13,9 @@ import '../../../data/models/family.dart' as models;
 import '../../providers/family_provider.dart';
 import '../../widgets/empty_state.dart';
 
+/// 截断超长名称（用于显示）
+String _truncate4(String s) => s.length > 4 ? '${s.substring(0, 4)}…' : s;
+
 /// 照护日志页
 class CareLogPage extends ConsumerStatefulWidget {
   const CareLogPage({super.key});
@@ -591,20 +594,39 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
                                   color: AppColors.surfaceContainerLow,
                                   shape: BoxShape.circle,
                                 ),
-                                child: Center(
-                                  child: Text(
-                                    entry.author.isNotEmpty ? entry.author[0] : '?',
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.primary,
-                                    ),
-                                  ),
-                                ),
+                                child: entry.authorAvatar != null && entry.authorAvatar!.isNotEmpty
+                                    ? ClipOval(
+                                        child: Image.network(
+                                          ApiConfig.avatarUrl(entry.authorAvatar!)!,
+                                          width: 24,
+                                          height: 24,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) => Center(
+                                            child: Text(
+                                              _truncate4(entry.author).isNotEmpty ? _truncate4(entry.author)[0] : '?',
+                                              style: const TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w700,
+                                                color: AppColors.primary,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                    : Center(
+                                        child: Text(
+                                          _truncate4(entry.author).isNotEmpty ? _truncate4(entry.author)[0] : '?',
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.primary,
+                                          ),
+                                        ),
+                                      ),
                               ),
                             const SizedBox(width: 6),
                             Text(
-                              entry.author,
+                              _truncate4(entry.author),
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: AppColors.textSecondary,

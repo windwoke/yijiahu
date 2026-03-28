@@ -5,9 +5,10 @@ import { TaskCompletion } from './entities/task-completion.entity';
 import { FamilyTaskService } from './family-task.service';
 import { FamilyTaskController } from './family-task.controller';
 import { CommonModule } from '../common/services/common.module';
+import { FamilyMember } from '../family/entities/family-member.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([FamilyTask, TaskCompletion]), CommonModule],
+  imports: [TypeOrmModule.forFeature([FamilyTask, TaskCompletion, FamilyMember]), CommonModule],
   controllers: [FamilyTaskController],
   providers: [FamilyTaskService],
   exports: [FamilyTaskService],

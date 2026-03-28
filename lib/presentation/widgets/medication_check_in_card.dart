@@ -6,6 +6,9 @@ import '../../core/constants/constants.dart';
 import '../../data/models/models.dart';
 import 'empty_state.dart';
 
+/// 截断超长名称
+String _truncate4(String s) => s.length > 4 ? '${s.substring(0, 4)}…' : s;
+
 class MedicationCheckInCard extends StatelessWidget {
   final TodayMedicationSummary today;
   final void Function(MedicationLogItem item) onCheckIn;
@@ -231,7 +234,7 @@ class MedicationCheckInCard extends StatelessWidget {
         const SizedBox(height: 1),
         // 第二行：谁记录的
         Text(
-          '由 ${item.takenBy!.name} 记录',
+          '由 ${_truncate4(item.takenBy!.name)} 记录',
           style: const TextStyle(
             fontSize: 10,
             color: AppColors.textSecondary,

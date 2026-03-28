@@ -13,13 +13,19 @@ import '../../../core/network/api_client.dart';
 import '../../providers/providers.dart';
 import '../../widgets/sos_button.dart';
 import '../../widgets/medication_check_in_card.dart';
+import '../../widgets/appointment_task_detail_sheets.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class HomePage extends ConsumerWidget {
+class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends ConsumerState<HomePage> {
+  @override
+  Widget build(BuildContext context) {
     final recipientsAsync = ref.watch(careRecipientsProvider);
 
     return Scaffold(
@@ -30,9 +36,9 @@ class HomePage extends ConsumerWidget {
           recipientsAsync.when(
             data: (recipients) {
               if (recipients.isEmpty) {
-                return _buildEmptyStateBody(context, ref);
+                return _buildEmptyStateBody(context);
               }
-              return _buildContentBody(context, ref, recipients);
+              return _buildContentBody(context, recipients);
             },
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (error, stack) => Center(
@@ -57,7 +63,7 @@ class HomePage extends ConsumerWidget {
             top: 0,
             left: 0,
             right: 0,
-            child: _buildGlassTopBar(context, ref),
+            child: _buildGlassTopBar(context),
           ),
         ],
       ),
@@ -73,7 +79,7 @@ class HomePage extends ConsumerWidget {
     );
   }
 
-  Widget _buildGlassTopBar(BuildContext context, WidgetRef ref) {
+  Widget _buildGlassTopBar(BuildContext context) {
     final family = ref.watch(currentFamilyProvider);
     // 在线人数：后端暂无 presence 追踪，默认至少显示当前用户自己（1）
     final onlineCount = 1;
@@ -185,28 +191,28 @@ class HomePage extends ConsumerWidget {
     );
   }
 
-  Future<void> _onRefreshEmpty(WidgetRef ref) async {
+  Future<void> _onRefreshEmpty() async {
     ref.invalidate(careRecipientsProvider);
     await ref.read(careRecipientsProvider.future);
   }
 
-  Widget _buildEmptyStateBody(BuildContext context, WidgetRef ref) {
+  Widget _buildEmptyStateBody(BuildContext context) {
     final topHeight = MediaQuery.of(context).padding.top + 72;
     return RefreshIndicator(
       color: AppColors.primary,
-      onRefresh: () => _onRefreshEmpty(ref),
+      onRefresh: () => _onRefreshEmpty(),
       child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
           SliverToBoxAdapter(child: SizedBox(height: topHeight)),
-          SliverToBoxAdapter(child: _buildEmptyStateContent(context, ref)),
+          SliverToBoxAdapter(child: _buildEmptyStateContent(context)),
           const SliverFillRemaining(hasScrollBody: false, child: SizedBox(height: 100)),
         ],
       ),
     );
   }
 
-  Widget _buildEmptyStateContent(BuildContext context, WidgetRef ref) {
+  Widget _buildEmptyStateContent(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 100),
       child: Container(
@@ -279,7 +285,7 @@ class HomePage extends ConsumerWidget {
     );
   }
 
-  Future<void> _onRefresh(WidgetRef ref, List<CareRecipient> recipients) async {
+  Future<void> _onRefresh(List<CareRecipient> recipients) async {
     // 刷新照护对象列表
     ref.invalidate(careRecipientsProvider);
 
@@ -294,7 +300,6 @@ class HomePage extends ConsumerWidget {
 
   Widget _buildContentBody(
     BuildContext context,
-    WidgetRef ref,
     List<CareRecipient> recipients,
   ) {
     final topHeight = MediaQuery.of(context).padding.top + 72;
@@ -302,7 +307,7 @@ class HomePage extends ConsumerWidget {
 
     return RefreshIndicator(
       color: AppColors.primary,
-      onRefresh: () => _onRefresh(ref, recipients),
+      onRefresh: () => _onRefresh(recipients),
       child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
@@ -317,12 +322,12 @@ class HomePage extends ConsumerWidget {
                 (context, index) {
                   // 第一个区块：日历摘要
                   if (index == 0) {
-                    return _buildCalendarSummarySection(context, ref);
+                    return _buildCalendarSummarySection(context);
                   }
                   // 照护对象列表
                   final recipientIndex = index - 1;
                   if (recipientIndex < recipients.length) {
-                    return _buildRecipientSection(context, ref, recipients[recipientIndex]);
+                    return _buildRecipientSection(context, recipients[recipientIndex]);
                   }
                   return const SizedBox.shrink();
                 },
@@ -335,7 +340,7 @@ class HomePage extends ConsumerWidget {
     );
   }
 
-  Widget _buildCalendarSummarySection(BuildContext context, WidgetRef ref) {
+  Widget _buildCalendarSummarySection(BuildContext context) {
     final family = ref.watch(currentFamilyProvider);
     if (family == null) return const SizedBox.shrink();
 
@@ -357,16 +362,24 @@ class HomePage extends ConsumerWidget {
             final upcoming = appointments.where((a) =>
                 a.status == 'upcoming' &&
                 a.appointmentTime.isAfter(now) &&
-                a.appointmentTime.isBefore(now.add(const Duration(days: 7))));
+                a.appointmentTime.isBefore(now.add(const Duration(days: 7)))).toList();
             if (upcoming.isEmpty) return const SizedBox.shrink();
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildSectionHeader('📅', '复诊提醒', AppColors.coral, () {
-                  context.go(AppRoutes.calendar);
-                }),
+                _buildSectionHeader(
+                  '📅', '复诊提醒', AppColors.coral, () => context.go(AppRoutes.calendar),
+                ),
                 const SizedBox(height: 8),
-                ...upcoming.take(2).map((a) => _AppointmentHomeCard(appointment: a)),
+                ...upcoming.take(2).map((a) => _AppointmentHomeCard(
+                      appointment: a,
+                      onTap: () => showModalBottomSheet(
+                        context: context,
+                        backgroundColor: Colors.transparent,
+                        isScrollControlled: true,
+                        builder: (c) => AppointmentDetailSheet(appointment: a),
+                      ),
+                    )),
                 const SizedBox(height: 20),
               ],
             );
@@ -390,11 +403,35 @@ class HomePage extends ConsumerWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildSectionHeader('📝', '今日任务', AppColors.blue, () {
-                  context.push(AppRoutes.familyTasks);
-                }),
+                _buildSectionHeader(
+                  '📝', '今日任务', AppColors.blue, () => context.push(AppRoutes.familyTasks),
+                ),
                 const SizedBox(height: 8),
-                ...todayTasks.take(3).map((t) => _TaskHomeCard(task: t, familyId: family.id)),
+                ...todayTasks.take(3).map((t) => _TaskHomeCard(
+                      task: t,
+                      familyId: family.id,
+                      onTap: () {
+                        final now = DateTime.now();
+                        showModalBottomSheet(
+                          context: context,
+                          backgroundColor: Colors.transparent,
+                          isScrollControlled: true,
+                          builder: (c) => TaskDetailSheet(
+                            task: t,
+                            familyId: family.id,
+                            onComplete: () {
+                              ref.invalidate(upcomingTasksProvider(family.id));
+                              ref.invalidate(familyTasksProvider(family.id));
+                              ref.invalidate(calendarEventsProvider(CalendarQuery(
+                                familyId: family.id,
+                                year: now.year,
+                                month: now.month,
+                              )));
+                            },
+                          ),
+                        );
+                      },
+                    )),
                 const SizedBox(height: 20),
               ],
             );
@@ -406,7 +443,7 @@ class HomePage extends ConsumerWidget {
     );
   }
 
-  Widget _buildSectionHeader(String emoji, String title, Color color, VoidCallback onSeeAll) {
+  Widget _buildSectionHeader(String emoji, String title, Color color, VoidCallback onSeeAll, {Widget? trailing}) {
     return Row(
       children: [
         Text(emoji, style: const TextStyle(fontSize: 16)),
@@ -420,6 +457,8 @@ class HomePage extends ConsumerWidget {
           ),
         ),
         const Spacer(),
+        if (trailing != null) trailing,
+        if (trailing != null) const SizedBox(width: 4),
         InkWell(
           onTap: onSeeAll,
           borderRadius: BorderRadius.circular(8),
@@ -446,7 +485,6 @@ class HomePage extends ConsumerWidget {
 
   Widget _buildRecipientSection(
     BuildContext context,
-    WidgetRef ref,
     CareRecipient recipient,
   ) {
     final todayAsync = ref.watch(todayMedicationProvider(recipient.id));
@@ -601,7 +639,7 @@ class HomePage extends ConsumerWidget {
                           ),
                           const SizedBox(width: 3),
                           Text(
-                            '主要照护人：${caregiver!.caregiver!.name}',
+                            '主要照护人：${caregiver!.displayName}',
                             style: TextStyle(
                               fontSize: 12,
                               color: AppColors.primary,
@@ -662,8 +700,9 @@ class HomePage extends ConsumerWidget {
 /// 首页复诊卡片（紧凑）
 class _AppointmentHomeCard extends StatelessWidget {
   final Appointment appointment;
+  final VoidCallback? onTap;
 
-  const _AppointmentHomeCard({required this.appointment});
+  const _AppointmentHomeCard({required this.appointment, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -673,7 +712,7 @@ class _AppointmentHomeCard extends StatelessWidget {
     final dateStr = '${d.month}月${d.day}日（${weekdays[d.weekday - 1]}）';
     final timeStr = '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
 
-    return Container(
+    Widget content = Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -791,6 +830,11 @@ class _AppointmentHomeCard extends StatelessWidget {
         ],
       ),
     );
+
+    if (onTap != null) {
+      return InkWell(onTap: onTap, borderRadius: BorderRadius.circular(16), child: content);
+    }
+    return content;
   }
 }
 
@@ -798,12 +842,13 @@ class _AppointmentHomeCard extends StatelessWidget {
 class _TaskHomeCard extends ConsumerWidget {
   final FamilyTask task;
   final String familyId;
+  final VoidCallback? onTap;
 
-  const _TaskHomeCard({required this.task, required this.familyId});
+  const _TaskHomeCard({required this.task, required this.familyId, this.onTap});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Container(
+    Widget content = Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -885,7 +930,7 @@ class _TaskHomeCard extends ConsumerWidget {
                           size: 12, color: AppColors.textTertiary),
                       const SizedBox(width: 2),
                       Text(
-                        task.assignee!.name,
+                        task.assignee!.displayName,
                         style: const TextStyle(
                           fontSize: 12,
                           color: AppColors.textSecondary,
@@ -916,6 +961,7 @@ class _TaskHomeCard extends ConsumerWidget {
                 }
                 final now = DateTime.now();
                 ref.invalidate(upcomingTasksProvider(familyId));
+                ref.invalidate(familyTasksProvider(familyId));
                 ref.invalidate(calendarEventsProvider(CalendarQuery(
                   familyId: familyId,
                   year: now.year,
@@ -948,6 +994,11 @@ class _TaskHomeCard extends ConsumerWidget {
         ],
       ),
     );
+
+    if (onTap != null) {
+      return InkWell(onTap: onTap, borderRadius: BorderRadius.circular(16), child: content);
+    }
+    return content;
   }
 }
 

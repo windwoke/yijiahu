@@ -1,31 +1,50 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, MoreThanOrEqual, LessThanOrEqual, Between } from 'typeorm';
+import { Repository, LessThanOrEqual } from 'typeorm';
 import { FamilyTask, TaskFrequency, TaskStatus } from './entities/family-task.entity';
 import { TaskCompletion } from './entities/task-completion.entity';
 import { CreateFamilyTaskDto, UpdateFamilyTaskDto, CompleteTaskDto } from './dto/family-task.dto';
+import { FamilyMember } from '../family/entities/family-member.entity';
 
 @Injectable()
 export class FamilyTaskService {
   constructor(
     @InjectRepository(FamilyTask) private taskRepo: Repository<FamilyTask>,
     @InjectRepository(TaskCompletion) private completionRepo: Repository<TaskCompletion>,
+    @InjectRepository(FamilyMember) private memberRepo: Repository<FamilyMember>,
   ) {}
+
+  /** 批量附加 FamilyMember.nickname 到 tasks */
+  private async enrichWithNicknames(tasks: FamilyTask[], familyId: string): Promise<FamilyTask[]> {
+    if (tasks.length === 0) return [];
+    const assigneeIds = [...new Set(tasks.map(t => t.assigneeId).filter(Boolean))];
+    const members = assigneeIds.length > 0
+      ? await this.memberRepo
+          .createQueryBuilder('m')
+          .where('m.familyId = :familyId', { familyId })
+          .andWhere('m.userId IN (:...assigneeIds)', { assigneeIds })
+          .getMany()
+      : [];
+    const memberMap = new Map<string, string>();
+    for (const m of members) {
+      memberMap.set(m.userId, m.nickname);
+    }
+    return tasks.map(t => ({
+      ...t,
+      assignee: t.assignee
+        ? { ...t.assignee, nickname: memberMap.get(t.assigneeId) || null }
+        : null,
+    }) as unknown as FamilyTask);
+  }
 
   /** 按家庭查询所有任务 */
   async findByFamily(familyId: string) {
     const tasks = await this.taskRepo.find({
       where: { familyId },
-      relations: ['assignee', 'assignee.user', 'recipient', 'createdBy'],
+      relations: ['assignee', 'recipient', 'createdBy'],
       order: { nextDueAt: 'ASC', createdAt: 'DESC' },
     });
-    // 附加 assignee 的真实姓名
-    return tasks.map((t) => ({
-      ...t,
-      assignee: t.assignee
-        ? { ...t.assignee, userName: (t.assignee as any).user?.name || null }
-        : null,
-    }));
+    return this.enrichWithNicknames(tasks, familyId);
   }
 
   /** 即将到期的任务（未来7天，排除今天已完成的周期任务实例） */
@@ -40,7 +59,7 @@ export class FamilyTaskService {
         status: TaskStatus.PENDING,
         nextDueAt: LessThanOrEqual(future),
       },
-      relations: ['assignee', 'assignee.user', 'recipient', 'createdBy'],
+      relations: ['assignee', 'recipient', 'createdBy'],
       order: { nextDueAt: 'ASC' },
     });
 
@@ -62,14 +81,8 @@ export class FamilyTaskService {
 
     // 周期任务如果今天已完成，nextDueAt 已在 complete() 时更新为下一个到期，
     // 直接返回即可（不用再调用 calculateNextDue，避免重复推进）
-    return tasks
-      .filter(task => !completedTodaySet.has(task.id))
-      .map((t) => ({
-        ...t,
-        assignee: t.assignee
-          ? { ...t.assignee, userName: (t.assignee as any).user?.name || null }
-          : null,
-      }));
+    const pending = tasks.filter(task => !completedTodaySet.has(task.id));
+    return this.enrichWithNicknames(pending, familyId);
   }
 
   /** 将 Date 转换为北京时区 YYYY-MM-DD 字符串 */
@@ -86,23 +99,18 @@ export class FamilyTaskService {
     const endDate = new Date(year, month, 0, 23, 59, 59);
 
     // 查询所有非取消状态的任务（取消后不显示在日历中）
-    const tasks = await this.taskRepo.find({
+    const rawTasks = await this.taskRepo.find({
       where: { familyId },
-      relations: ['assignee', 'assignee.user', 'recipient', 'createdBy'],
+      relations: ['assignee', 'recipient', 'createdBy'],
       order: { nextDueAt: 'ASC' },
-    }).then(ts => ts
-      .filter(t => t.status !== TaskStatus.CANCELLED)
-      .map((t) => ({
-        ...t,
-        assignee: t.assignee
-          ? { ...t.assignee, userName: (t.assignee as any).user?.name || null }
-          : null,
-      })) as any[]);
+    });
+    const tasks = rawTasks.filter(t => t.status !== TaskStatus.CANCELLED);
+    const enriched = await this.enrichWithNicknames(tasks, familyId);
 
-    if (tasks.length === 0) return [];
+    if (enriched.length === 0) return [];
 
     // 预加载当月所有任务的完成记录（按scheduledDate精确匹配）
-    const taskIds = tasks.map(t => t.id);
+    const taskIds = enriched.map(t => t.id);
     const monthStart = `${year}-${String(month).padStart(2, '0')}-01`;
     const lastDay = new Date(year, month, 0).getDate();
     const monthEnd = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
@@ -128,7 +136,7 @@ export class FamilyTaskService {
     // 展开 recurring 任务
     const result: any[] = [];
 
-    for (const task of tasks) {
+    for (const task of enriched) {
       if (task.frequency === TaskFrequency.ONCE) {
         // 单次任务：nextDueAt 在当月内则显示
         if (task.nextDueAt >= startDate && task.nextDueAt <= endDate) {

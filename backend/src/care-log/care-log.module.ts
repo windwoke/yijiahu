@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CareLog } from './entities/care-log.entity';
 import { CareLogAttachment } from './entities/care-log-attachment.entity';
 import { User } from '../user/entities/user.entity';
+import { FamilyMember } from '../family/entities/family-member.entity';
 import { CareLogService } from './care-log.service';
 import { CareLogController } from './care-log.controller';
 import { CareLogAttachmentService } from './care-log-attachment.service';
@@ -11,7 +12,7 @@ import { CommonModule } from '../common/services/common.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([CareLog, CareLogAttachment, User]),
+    TypeOrmModule.forFeature([CareLog, CareLogAttachment, User, FamilyMember]),
     CommonModule,
   ],
   controllers: [CareLogController, CareLogAttachmentController],

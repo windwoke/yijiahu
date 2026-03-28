@@ -66,6 +66,7 @@ class TimelineEntry extends Equatable {
   final String content;
   final String author;
   final String? authorId;
+  final String? authorAvatar;
   final String recipientId;
   final String? source; // 'care_log' | 'medication_log' | 'health_record' | 'daily_care_checkin'
   /// 健康记录专用字段
@@ -86,6 +87,7 @@ class TimelineEntry extends Equatable {
     required this.content,
     required this.author,
     this.authorId,
+    this.authorAvatar,
     required this.recipientId,
     this.source,
     this.healthValue,
@@ -109,6 +111,7 @@ class TimelineEntry extends Equatable {
       content: json['content'] as String? ?? '',
       author: json['authorName'] as String? ?? json['author_name'] as String? ?? '家庭成员',
       authorId: json['authorId'] as String? ?? json['author_id'] as String?,
+      authorAvatar: json['authorAvatar'] as String?,
       recipientId: json['recipientId'] as String? ?? json['recipient_id'] as String? ?? '',
       source: 'care_log',
       attachments: attachmentsList,
@@ -123,6 +126,7 @@ class TimelineEntry extends Equatable {
       content: json['content'] as String? ?? '',
       author: json['authorName'] as String? ?? json['author_name'] as String? ?? '家庭成员',
       authorId: json['authorId'] as String? ?? json['author_id'] as String?,
+      authorAvatar: json['authorAvatar'] as String?,
       recipientId: json['recipientId'] as String? ?? json['recipient_id'] as String? ?? '',
       source: 'medication_log',
     );
@@ -141,6 +145,7 @@ class TimelineEntry extends Equatable {
       content: content,
       author: json['authorName'] as String? ?? '家庭成员',
       authorId: json['recordedById'] as String? ?? json['authorId'] as String?,
+      authorAvatar: json['authorAvatar'] as String?,
       recipientId: json['recipientId'] as String? ?? '',
       source: 'health_record',
       healthValue: value,
@@ -169,13 +174,15 @@ class TimelineEntry extends Equatable {
       time: DateTime.tryParse(json['createdAt'] as String? ?? '') ?? DateTime.now(),
       type: CareLogType.other,
       content: content,
-      author: (json['checkedInBy'] != null
+      author: json['authorName'] as String? ??
+          (json['checkedInBy'] != null
               ? (json['checkedInBy'] as Map<String, dynamic>)['name'] as String?
               : null) ??
           '家庭成员',
-      authorId: (json['checkedInBy'] != null
+      authorId: json['checkedInBy'] != null
           ? (json['checkedInBy'] as Map<String, dynamic>)['id'] as String?
-          : null),
+          : null,
+      authorAvatar: json['authorAvatar'] as String?,
       recipientId: json['careRecipientId'] as String? ?? json['care_recipient_id'] as String? ?? '',
       source: 'daily_care_checkin',
       checkinStatus: status,

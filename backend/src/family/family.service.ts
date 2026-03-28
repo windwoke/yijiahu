@@ -177,6 +177,7 @@ export class FamilyService {
       ...m,
       avatarUrl: m.avatarUrl || m.user?.avatar || null,
       userName: m.user?.name || null,
+      phone: m.user?.phone || null,
     }));
   }
 

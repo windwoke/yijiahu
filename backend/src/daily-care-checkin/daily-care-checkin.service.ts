@@ -5,6 +5,7 @@ import { DailyCareCheckin } from './entities/daily-care-checkin.entity';
 import { CreateDailyCareCheckinDto } from './dto/daily-care-checkin.dto';
 import { MedicationLog } from '../medication-log/entities/medication-log.entity';
 import { CareRecipient } from '../care-recipient/entities/care-recipient.entity';
+import { FamilyMember } from '../family/entities/family-member.entity';
 
 @Injectable()
 export class DailyCareCheckinService {
@@ -12,6 +13,7 @@ export class DailyCareCheckinService {
     @InjectRepository(DailyCareCheckin) private repo: Repository<DailyCareCheckin>,
     @InjectRepository(MedicationLog) private medLogRepo: Repository<MedicationLog>,
     @InjectRepository(CareRecipient) private recipientRepo: Repository<CareRecipient>,
+    @InjectRepository(FamilyMember) private memberRepo: Repository<FamilyMember>,
   ) {}
 
   /** 验证照护对象属于指定家庭 */
@@ -119,6 +121,45 @@ export class DailyCareCheckinService {
       qb.where('careRecipient.familyId = :familyId', { familyId });
     }
 
-    return qb.getMany();
+    const records = await qb.getMany();
+
+    // 通过 FamilyMember 查 nickname 和头像
+    const userIds = records.map(r => r.checkedInById).filter(Boolean);
+    const memberMap = new Map<string, { nickname: string; avatarUrl: string | null }>();
+    if (userIds.length > 0 && familyId) {
+      const members = await this.memberRepo
+        .createQueryBuilder('m')
+        .leftJoinAndSelect('m.user', 'user')
+        .where('m.userId IN (:...userIds)', { userIds })
+        .andWhere('m.familyId = :familyId', { familyId })
+        .getMany();
+      for (const m of members) {
+        memberMap.set(m.userId, { nickname: m.nickname, avatarUrl: m.avatarUrl || (m.user as any)?.avatar || null });
+      }
+    }
+
+    return records.map(r => ({
+      id: r.id,
+      careRecipientId: r.careRecipientId,
+      checkinDate: r.checkinDate,
+      status: r.status,
+      medicationCompleted: r.medicationCompleted,
+      medicationTotal: r.medicationTotal,
+      specialNote: r.specialNote,
+      checkedInById: r.checkedInById,
+      authorName: memberMap.get(r.checkedInById)?.nickname
+        || r.checkedInBy?.name
+        || r.checkedInBy?.phone
+        || '家庭成员',
+      authorAvatar: memberMap.get(r.checkedInById)?.avatarUrl || null,
+      createdAt: formatLocalTime(r.createdAt),
+    }));
   }
+}
+
+/** 格式化日期为北京时间字符串 */
+function formatLocalTime(date: Date): string {
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  const local = new Date(date.getTime() + 8 * 60 * 60 * 1000);
+  return `${local.getUTCFullYear()}-${pad(local.getUTCMonth() + 1)}-${pad(local.getUTCDate())} ${pad(local.getUTCHours())}:${pad(local.getUTCMinutes())}:${pad(local.getUTCSeconds())}`;
 }

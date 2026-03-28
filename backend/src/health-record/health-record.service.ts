@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { HealthRecord } from './entities/health-record.entity';
 import { User } from '../user/entities/user.entity';
 import { CareRecipient } from '../care-recipient/entities/care-recipient.entity';
+import { FamilyMember } from '../family/entities/family-member.entity';
 import { CreateHealthRecordDto } from './dto/health-record.dto';
 
 @Injectable()
@@ -12,6 +13,7 @@ export class HealthRecordService {
     @InjectRepository(HealthRecord) private repo: Repository<HealthRecord>,
     @InjectRepository(User) private userRepo: Repository<User>,
     @InjectRepository(CareRecipient) private recipientRepo: Repository<CareRecipient>,
+    @InjectRepository(FamilyMember) private memberRepo: Repository<FamilyMember>,
   ) {}
 
   /** 验证照护对象属于指定家庭 */
@@ -55,12 +57,20 @@ export class HealthRecordService {
 
     const records = await qb.getMany();
 
-    // 查记录人姓名
+    // 通过 FamilyMember 查 nickname 和头像
     const userIds = records.map(r => r.recordedById).filter(Boolean);
-    const users = userIds.length > 0
-      ? await this.userRepo.findBy(userIds.map(id => ({ id } as any)))
-      : [];
-    const userMap = new Map(users.map(u => [u.id, u.name || u.phone]));
+    const memberMap = new Map<string, { nickname: string; avatarUrl: string | null }>();
+    if (userIds.length > 0 && familyId) {
+      const members = await this.memberRepo
+        .createQueryBuilder('m')
+        .leftJoinAndSelect('m.user', 'user')
+        .where('m.userId IN (:...userIds)', { userIds })
+        .andWhere('m.familyId = :familyId', { familyId })
+        .getMany();
+      for (const m of members) {
+        memberMap.set(m.userId, { nickname: m.nickname, avatarUrl: m.avatarUrl || (m.user as any)?.avatar || null });
+      }
+    }
 
     return records.map(r => ({
       id: r.id,
@@ -70,7 +80,8 @@ export class HealthRecordService {
       note: r.note,
       recordedAt: formatLocalTime(r.recordedAt),
       recordedById: r.recordedById,
-      authorName: userMap.get(r.recordedById!) || '家庭成员',
+      authorName: memberMap.get(r.recordedById!)?.nickname || '家庭成员',
+      authorAvatar: memberMap.get(r.recordedById!)?.avatarUrl || null,
     }));
   }
 

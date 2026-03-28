@@ -90,12 +90,19 @@ export class MedicationLogService {
       order: { scheduledTime: 'ASC' },
     });
 
-    // 取出打卡人信息
+    // 取出打卡人信息（用 FamilyMember.nickname）
     const userIds = logs.map(l => l.takenBy).filter(Boolean);
-    const users = userIds.length > 0
-      ? await this.userRepo.findBy(userIds.map(id => ({ id } as any)))
+    const members = userIds.length > 0
+      ? await this.memberRepo
+          .createQueryBuilder('m')
+          .leftJoinAndSelect('m.user', 'user')
+          .where('m.userId IN (:...userIds)', { userIds })
+          .getMany()
       : [];
-    const userMap = new Map(users.map(u => [u.id, u.name || u.phone]));
+    const memberMap = new Map(members.map(m => [m.userId, {
+      nickname: m.nickname,
+      avatarUrl: m.avatarUrl || (m.user as any)?.avatar || null,
+    }]));
 
     const items = logs.map((log) => ({
       id: log.id,
@@ -107,7 +114,8 @@ export class MedicationLogService {
       actualTime: log.takenAt ? formatLocalTime(log.takenAt) : null,
       takenBy: log.takenBy ? {
         id: log.takenBy,
-        name: userMap.get(log.takenBy) || '家庭成员',
+        name: memberMap.get(log.takenBy)?.nickname || '家庭成员',
+        avatarUrl: memberMap.get(log.takenBy)?.avatarUrl || null,
       } : null,
     }));
 
@@ -191,22 +199,31 @@ export class MedicationLogService {
 
     const logs = await qb.getMany();
 
-    // takenBy 存的是 userId，通过 User 表查姓名和头像
+    // takenBy 存的是 userId，通过 FamilyMember 表查 nickname
     const userIds = logs.map(l => l.takenBy).filter(Boolean);
-    const users = userIds.length > 0
-      ? await this.userRepo.findBy(userIds.map(id => ({ id } as any)))
+    const familyIds = [...new Set(logs.map(l => (l as any).recipient?.familyId).filter(Boolean))];
+
+    const members = userIds.length > 0 && familyIds.length > 0
+      ? await this.memberRepo
+          .createQueryBuilder('m')
+          .leftJoinAndSelect('m.user', 'user')
+          .where('m.userId IN (:...userIds)', { userIds })
+          .andWhere('m.familyId IN (:...familyIds)', { familyIds })
+          .getMany()
       : [];
-    const userMap = new Map(users.map(u => [u.id, { name: u.name || u.phone, avatar: u.avatar || null }]));
+    const memberMap = new Map<string, { nickname: string; avatarUrl: string | null }>();
+    for (const m of members) {
+      memberMap.set(m.userId, { nickname: m.nickname, avatarUrl: m.avatarUrl || (m.user as any)?.avatar || null });
+    }
 
     return logs.map((log) => ({
       id: log.id,
       type: 'medication',
       content: `${log.medication?.name || ''} 已${log.status === MedicationLogStatus.TAKEN ? '服用' : '跳过'}${log.medication?.dosage ? ' · ' + log.medication.dosage : ''}`,
-      authorName: userMap.get(log.takenBy!)?.name || '家庭成员',
-      authorAvatar: userMap.get(log.takenBy!)?.avatar || null,
+      authorName: memberMap.get(log.takenBy!)?.nickname || '家庭成员',
+      authorAvatar: memberMap.get(log.takenBy!)?.avatarUrl || null,
       authorId: log.takenBy,
       recipientId: log.recipientId,
-      // 直接返回格式化好的本地时间字符串，避免时区问题
       time: formatLocalTime(log.takenAt!),
       status: log.status,
     }));

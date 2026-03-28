@@ -104,7 +104,7 @@ class CaregiverRecordCard extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              current.caregiver!.name ?? '家庭成员',
+                              current.displayName,
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
@@ -284,20 +284,14 @@ class _CaregiverRecordSheetState extends ConsumerState<_CaregiverRecordSheet> {
             backgroundColor: isCurrent
                 ? AppColors.primary.withValues(alpha: 0.1)
                 : AppColors.grey100,
-            child: record.caregiver != null
-                ? Text(
-                    record.caregiver!.name?.isNotEmpty == true
-                        ? record.caregiver!.name![0]
-                        : '?',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: isCurrent ? AppColors.primary : AppColors.textSecondary,
-                    ),
-                  )
-                : Icon(Icons.person_rounded,
-                    size: 18,
-                    color: isCurrent ? AppColors.primary : AppColors.textTertiary),
+            child: Text(
+              record.displayName.isNotEmpty ? record.displayName[0] : '?',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: isCurrent ? AppColors.primary : AppColors.textSecondary,
+              ),
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -307,7 +301,7 @@ class _CaregiverRecordSheetState extends ConsumerState<_CaregiverRecordSheet> {
                 Row(
                   children: [
                     Text(
-                      record.caregiver?.name ?? '未知用户',
+                      record.displayName,
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
@@ -366,7 +360,7 @@ class _CaregiverRecordSheetState extends ConsumerState<_CaregiverRecordSheet> {
       context: ctx,
       builder: (c) => AlertDialog(
         title: const Text('删除记录'),
-        content: Text('确定要删除"${record.caregiver?.name ?? '该照护人'}"的照护记录吗？'),
+        content: Text('确定要删除"${record.displayName}"的照护记录吗？'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(c, false), child: const Text(AppTexts.cancel)),
           TextButton(

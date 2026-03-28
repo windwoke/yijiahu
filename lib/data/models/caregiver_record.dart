@@ -10,6 +10,7 @@ class CaregiverRecord extends Equatable {
   final String careRecipientId;
   final String caregiverId;
   final User? caregiver;
+  final String? caregiverNickname; // 来自 FamilyMember.nickname
   final DateTime periodStart;
   final DateTime? periodEnd;
   final String? note;
@@ -20,6 +21,7 @@ class CaregiverRecord extends Equatable {
     required this.careRecipientId,
     required this.caregiverId,
     this.caregiver,
+    this.caregiverNickname,
     required this.periodStart,
     this.periodEnd,
     this.note,
@@ -27,6 +29,13 @@ class CaregiverRecord extends Equatable {
   });
 
   bool get isCurrent => periodEnd == null;
+
+  /// 显示名称：优先用 nickname，其次用 caregiver.name
+  String get displayName {
+    final name = caregiverNickname ?? caregiver?.name ?? '家庭成员';
+    if (name.length > 4) return '${name.substring(0, 4)}…';
+    return name;
+  }
 
   String get periodLabel {
     final start = '${periodStart.year}/${periodStart.month}/${periodStart.day}';
@@ -54,6 +63,7 @@ class CaregiverRecord extends Equatable {
       caregiver: json['caregiver'] != null
           ? User.fromJson(json['caregiver'] as Map<String, dynamic>)
           : null,
+      caregiverNickname: json['caregiverNickname'] as String?,
       periodStart: parseDate(json['periodStart'] ?? json['period_start']) ?? DateTime.now(),
       periodEnd: parseDate(json['periodEnd'] ?? json['period_end']),
       note: json['note'] as String?,

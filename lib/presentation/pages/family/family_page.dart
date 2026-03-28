@@ -43,7 +43,7 @@ class FamilyMemberSection {
 
   String get displayName {
     if (isRecipient) return recipient!.name;
-    return member!.fullDisplayName;
+    return member!.displayName;
   }
 
   String get displayAvatar {
@@ -702,195 +702,165 @@ class FamilyPage extends ConsumerWidget {
     final isElevated = !section.isRecipient && (section.member?.role == 'owner' || section.member?.role == 'coordinator');
 
     return GestureDetector(
-      onTap: section.isRecipient
-          ? () {
-              if (section.recipient != null) {
-                context.push(AppRoutes.careRecipientDetail, extra: section.recipient);
-              }
-            }
-          : null,
+      onTap: () {
+        if (section.isRecipient) {
+          if (section.recipient != null) {
+            context.push(AppRoutes.careRecipientDetail, extra: section.recipient);
+          }
+        } else {
+          _showMemberDetailSheet(context, ref, family, section, canManageMembers);
+        }
+      },
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceContainerLowest,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.shadowSoft,
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-            BoxShadow(
-              color: AppColors.shadowSoft2,
-              blurRadius: 3,
-              offset: const Offset(0, 1),
-            ),
-          ],
-        ),
-        child: Row(
+        child: Stack(
+          clipBehavior: Clip.none,
           children: [
-            // 头像
             Container(
-              width: 48,
-              height: 48,
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: section.isRecipient
-                    ? AppColors.coral.withValues(alpha: 0.1)
-                    : AppColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(16),
+                color: AppColors.surfaceContainerLowest,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.shadowSoft,
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                  BoxShadow(
+                    color: AppColors.shadowSoft2,
+                    blurRadius: 3,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
               ),
-              child: Stack(
+              child: Row(
                 children: [
-                  Center(
-                    child: section.avatarUrl != null && section.avatarUrl!.isNotEmpty
-                        ? ClipRRect(
+                  // 头像
+                  SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: Stack(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: section.isRecipient
+                                ? AppColors.coral.withValues(alpha: 0.1)
+                                : AppColors.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(16),
-                            child: Image.network(
-                              ApiConfig.avatarUrl(section.avatarUrl!) ?? '',
-                              width: 48,
-                              height: 48,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stack) => Text(
-                                section.displayAvatar,
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.primary),
-                              ),
-                            ),
-                          )
-                        : section.isRecipient
-                            ? Text(section.displayAvatar, style: const TextStyle(fontSize: 24))
-                            : Text(
-                                section.displayAvatar,
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.primary,
+                          ),
+                          child: Center(
+                            child: section.avatarUrl != null && section.avatarUrl!.isNotEmpty
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(16),
+                                    child: Image.network(
+                                      ApiConfig.avatarUrl(section.avatarUrl!) ?? '',
+                                      width: 48,
+                                      height: 48,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stack) => Text(
+                                        section.displayAvatar,
+                                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.primary),
+                                      ),
+                                    ),
+                                  )
+                                : section.isRecipient
+                                    ? Text(section.displayAvatar, style: const TextStyle(fontSize: 24))
+                                    : Text(
+                                        section.displayAvatar,
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.primary,
+                                        ),
+                                      ),
+                          ),
+                        ),
+                        // 在线状态
+                        if (section.isOnline)
+                          Positioned(
+                            right: 0,
+                            bottom: 0,
+                            child: Container(
+                              width: 12,
+                              height: 12,
+                              decoration: BoxDecoration(
+                                color: AppColors.success,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: AppColors.surfaceContainerLowest,
+                                  width: 2,
                                 ),
                               ),
-                  ),
-                  if (section.isOnline)
-                    Positioned(
-                      right: 0,
-                      bottom: 0,
-                      child: Container(
-                        width: 12,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: AppColors.success,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: AppColors.surfaceContainerLowest,
-                            width: 2,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 14),
-            // 姓名 + 角色 + 电话
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        section.displayName,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: section.isRecipient
-                              ? AppColors.coral.withValues(alpha: 0.1)
-                              : (section.isElevatedRole
-                                  ? AppColors.primary.withValues(alpha: 0.1)
-                                  : AppColors.surfaceContainerLow),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (!section.isRecipient && isElevated)
-                              const Icon(Icons.star,
-                                  size: 12, color: AppColors.primary),
-                            if (!section.isRecipient && isElevated)
-                              const SizedBox(width: 3),
-                            Text(
-                              roleLabel,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: section.isRecipient || section.isElevatedRole
-                                        ? AppColors.primary
-                                        : AppColors.textSecondary,
-                              ),
                             ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  if (displayPhone != null)
-                    Row(
-                      children: [
-                        const Icon(Icons.phone_android,
-                            size: 13, color: AppColors.textSecondary),
-                        const SizedBox(width: 4),
-                        Text(
-                          _maskPhone(displayPhone),
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: AppColors.textSecondary,
                           ),
-                        ),
                       ],
                     ),
-                  if (section.isRecipient)
-                    Text(
-                      '角色：被动用户（仅查看）',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textSecondary.withValues(alpha: 0.7),
-                      ),
+                  ),
+                  const SizedBox(width: 14),
+                  // 姓名 + 电话 + 职责
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          section.displayName,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        if (displayPhone != null) ...[
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const Icon(Icons.phone_android,
+                                  size: 13, color: AppColors.textSecondary),
+                              const SizedBox(width: 4),
+                              Text(
+                                _maskPhone(displayPhone),
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                        const SizedBox(height: 6),
+                        _buildResponsibilityTag(section),
+                      ],
                     ),
-                  // 职责描述
-                  const SizedBox(height: 6),
-                  _buildResponsibilityTag(section),
+                  ),
+                  const Icon(Icons.chevron_right, color: AppColors.textSecondary),
                 ],
               ),
             ),
-            // 照护对象显示箭头，家庭成员显示编辑按钮
-            if (section.isRecipient)
-              const Icon(Icons.chevron_right, color: AppColors.textSecondary)
-            else if (canManageMembers)
-              GestureDetector(
-                onTap: () => _showEditMemberSheet(context, ref, family, section, canManageMembers),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceContainerLow,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Text(
-                    '编辑',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w500,
-                    ),
+            // 角色标签 — 卡片右上角
+            Positioned(
+              right: 0,
+              top: -6,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                decoration: BoxDecoration(
+                  color: section.isRecipient
+                      ? AppColors.coral
+                      : (isElevated ? AppColors.primary : AppColors.textSecondary),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  roleLabel,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
                   ),
                 ),
               ),
+            ),
           ],
         ),
       ),
@@ -1257,6 +1227,135 @@ class FamilyPage extends ConsumerWidget {
           onChanged: onChanged,
         ),
       ],
+    );
+  }
+
+  void _showMemberDetailSheet(
+    BuildContext context,
+    WidgetRef ref,
+    models.Family family,
+    FamilyMemberSection section,
+    bool canManageMembers,
+  ) {
+    final currentUser = ref.read(authStateProvider).user;
+    final isOwnCard = section.member?.userId == currentUser?.id;
+    final isElevated = section.member?.role == 'owner' || section.member?.role == 'coordinator';
+    final memberRole = models.FamilyMemberRole.fromString(section.member?.role);
+    final displayPhone = isOwnCard ? currentUser?.phone : section.member?.phone;
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 拖动条
+            Container(
+              width: 40, height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.border,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // 头像 + 姓名 + 角色
+            Row(
+              children: [
+                Container(
+                  width: 56, height: 56,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Center(
+                    child: section.avatarUrl != null && section.avatarUrl!.isNotEmpty
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Image.network(
+                              ApiConfig.avatarUrl(section.avatarUrl!) ?? '',
+                              width: 56, height: 56, fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Text(
+                                section.displayAvatar,
+                                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.primary),
+                              ),
+                            ),
+                          )
+                        : Text(
+                            section.displayAvatar,
+                            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.primary),
+                          ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(section.displayName,
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: isElevated ? AppColors.primary.withValues(alpha: 0.1) : AppColors.surfaceContainerLow,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (isElevated) ...[
+                                  const Icon(Icons.star, size: 12, color: AppColors.primary),
+                                  const SizedBox(width: 3),
+                                ],
+                                Text(memberRole.label,
+                                  style: TextStyle(
+                                    fontSize: 12, fontWeight: FontWeight.w500,
+                                    color: isElevated ? AppColors.primary : AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (displayPhone != null) ...[
+                            const SizedBox(width: 10),
+                            Text(_maskPhone(displayPhone),
+                              style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                          ],
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            // 编辑按钮
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  _showEditMemberSheet(context, ref, family, section, canManageMembers);
+                },
+                child: const Text('编辑成员', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
     );
   }
 

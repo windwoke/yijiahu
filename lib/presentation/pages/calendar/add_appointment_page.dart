@@ -568,13 +568,17 @@ class _AddAppointmentPageState extends ConsumerState<AddAppointmentPage> {
         queryParameters: {'familyId': familyId},
       );
 
-      // 刷新日历数据
+      // 递增刷新计数器，CalendarPage 的 calendarEventsProvider 会自动重新拉取
+      ref.read(calendarRefreshProvider.notifier).update((s) => s + 1);
+      // 刷新首页复诊数据和日历页数据
       final now = DateTime.now();
-      ref.invalidate(calendarEventsProvider(CalendarQuery(
+      final query = CalendarQuery(
         familyId: familyId ?? '',
         year: now.year,
         month: now.month,
-      )));
+      );
+      ref.invalidate(calendarEventsProvider(query));
+      ref.invalidate(calendarAppointmentsProvider(query));
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

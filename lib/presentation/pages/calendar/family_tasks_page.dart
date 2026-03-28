@@ -470,7 +470,7 @@ class _TaskListCard extends StatelessWidget {
                     if (task.assignee != null)
                       _InfoChip(
                         icon: Icons.person_outline_rounded,
-                        label: task.assignee!.fullDisplayName,
+                        label: task.assignee!.displayName,
                         color: AppColors.textSecondary,
                       ),
                   ],

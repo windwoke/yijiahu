@@ -683,6 +683,17 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
         );
         // 递增刷新计数器，CalendarPage 的 calendarEventsProvider 会自动重新拉取
         ref.read(calendarRefreshProvider.notifier).update((s) => s + 1);
+        // 刷新日历页任务数据和任务列表、首页任务数据
+        if (familyId != null) {
+          final now = DateTime.now();
+          ref.invalidate(calendarEventsProvider(CalendarQuery(
+            familyId: familyId,
+            year: now.year,
+            month: now.month,
+          )));
+          ref.invalidate(familyTasksProvider(familyId));
+          ref.invalidate(upcomingTasksProvider(familyId));
+        }
         await Future.delayed(const Duration(milliseconds: 600));
         if (mounted) context.pop();
       }

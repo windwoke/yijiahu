@@ -209,12 +209,15 @@ class FamilyMember extends Equatable {
     return FamilyMemberRole.fromString(role).label;
   }
 
-  /// 显示名称：昵称（真实姓名），如果昵称和真实姓名相同则只显示昵称
-  String get fullDisplayName {
+  /// 截断超长文本
+  static String _truncate(String s, int max) => s.length > max ? '${s.substring(0, max)}…' : s;
+
+  /// 显示名称：昵称（用户名），相同则只显示一个，超长截断（合计最多10字）
+  String get displayName {
     if (userName != null && userName!.isNotEmpty && userName != nickname) {
-      return '$nickname（$userName）';
+      return _truncate('$nickname（$userName）', 10);
     }
-    return nickname;
+    return _truncate(nickname, 10);
   }
 
   @override

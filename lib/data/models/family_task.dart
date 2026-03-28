@@ -105,26 +105,24 @@ class FamilyTask {
 
 class AssigneeMini {
   final String id;
-  final String name; // 昵称
+  final String name; // 昵称（来自 FamilyMember.nickname）
   final String? avatarUrl;
-  final String? userName; // 真实姓名
+  final String? nickname; // 备用（与 name 相同来源）
 
-  AssigneeMini({required this.id, required this.name, this.avatarUrl, this.userName});
+  AssigneeMini({required this.id, required this.name, this.avatarUrl, this.nickname});
 
   factory AssigneeMini.fromJson(Map<String, dynamic> json) {
     return AssigneeMini(
       id: json['id'] ?? '',
-      name: json['name'] ?? json['phone'] ?? '',
+      name: json['nickname'] ?? json['name'] ?? json['phone'] ?? '',
       avatarUrl: json['avatarUrl'],
-      userName: json['userName'] as String?,
+      nickname: json['nickname'] as String?,
     );
   }
 
-  /// 显示名称：昵称（真实姓名）
-  String get fullDisplayName {
-    if (userName != null && userName!.isNotEmpty && userName != name) {
-      return '$name（$userName）';
-    }
+  /// 显示名称：截断超长昵称
+  String get displayName {
+    if (name.length > 4) return '${name.substring(0, 4)}…';
     return name;
   }
 }

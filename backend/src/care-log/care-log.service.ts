@@ -6,6 +6,7 @@ import { CareLogAttachment } from './entities/care-log-attachment.entity';
 import { CareLogAttachmentService } from './care-log-attachment.service';
 import { CreateCareLogDto } from './dto/care-log.dto';
 import { User } from '../user/entities/user.entity';
+import { FamilyMember } from '../family/entities/family-member.entity';
 
 @Injectable()
 export class CareLogService {
@@ -16,6 +17,8 @@ export class CareLogService {
     private readonly attachmentRepo: Repository<CareLogAttachment>,
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+    @InjectRepository(FamilyMember)
+    private readonly memberRepo: Repository<FamilyMember>,
     private readonly attachmentService: CareLogAttachmentService,
   ) {}
 
@@ -67,11 +70,28 @@ export class CareLogService {
     }
 
     const logs = await qb.getMany();
+
+    // 通过 FamilyMember 查 nickname 和头像
+    const authorIds = logs.map(l => l.authorId).filter(Boolean);
+    const members = authorIds.length > 0
+      ? await this.memberRepo
+          .createQueryBuilder('m')
+          .leftJoinAndSelect('m.user', 'user')
+          .where('m.familyId = :familyId', { familyId })
+          .andWhere('m.userId IN (:...authorIds)', { authorIds })
+          .getMany()
+      : [];
+    const memberMap = new Map<string, { nickname: string; avatarUrl: string | null }>();
+    for (const m of members) {
+      memberMap.set(m.userId, { nickname: m.nickname, avatarUrl: m.avatarUrl || (m.user as any)?.avatar || null });
+    }
+
     return logs.map(log => ({
       id: log.id,
       recipientId: log.recipientId,
       authorId: log.authorId,
-      authorName: log.authorName,
+      authorName: memberMap.get(log.authorId)?.nickname || log.authorName || '家庭成员',
+      authorAvatar: memberMap.get(log.authorId)?.avatarUrl || null,
       type: log.type,
       content: log.content,
       createdAt: formatLocalTime(log.createdAt),

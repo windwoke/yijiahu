@@ -78,7 +78,11 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
           SizedBox(height: MediaQuery.of(context).padding.top),
           // 照护对象切换器（全部 + 各照护人）
           recipientsAsync.when(
-            data: (recipients) => _buildRecipientSwitcher(recipients, family),
+            data: (recipients) {
+              // 只有1个照护对象时隐藏切换器
+              if (recipients.length <= 1) return const SizedBox.shrink();
+              return _buildRecipientSwitcher(recipients, family);
+            },
             loading: () => const SizedBox(height: 56),
             error: (_, __) => const SizedBox(height: 56),
           ),
@@ -781,11 +785,16 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
   void _onAddLog(Family? family) {
     if (family == null) return;
 
-    // 如果没有选择照护人（全部模式），先选照护人
-    if (_selectedRecipientId == null) {
-      _showRecipientPicker(family.id);
-    } else {
-      _showAddLogSheet(family.id, _selectedRecipientId!);
+    // 默认使用已选中的，或第一个照护对象
+    String recipientId = _selectedRecipientId ?? '';
+    if (recipientId.isEmpty) {
+      final recipients = ref.read(careRecipientsProvider).valueOrNull ?? [];
+      if (recipients.isNotEmpty) {
+        recipientId = recipients.first.id;
+      }
+    }
+    if (recipientId.isNotEmpty) {
+      _showAddLogSheet(family.id, recipientId);
     }
   }
 

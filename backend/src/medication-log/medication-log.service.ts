@@ -199,24 +199,22 @@ export class MedicationLogService {
 
     const logs = await qb.getMany();
 
-    // takenBy 存的是 userId，通过 FamilyMember 表查 nickname
-    const userIds = logs.map(l => l.takenBy).filter(Boolean);
+    // takenBy 存的是 familyMemberId，通过 FamilyMember 表查 nickname
+    const memberIds = logs.map(l => l.takenBy).filter(Boolean);
     const familyIds = [...new Set(logs.map(l => (l as any).recipient?.familyId).filter(Boolean))];
 
-    const members = userIds.length > 0 && familyIds.length > 0
+    const members = memberIds.length > 0 && familyIds.length > 0
       ? await this.memberRepo
           .createQueryBuilder('m')
           .leftJoinAndSelect('m.user', 'user')
-          .where('m.userId IN (:...userIds)', { userIds })
+          .where('m.id IN (:...memberIds)', { memberIds })
           .andWhere('m.familyId IN (:...familyIds)', { familyIds })
           .getMany()
       : [];
-    // takenBy 存的是 familyMemberId，同时用 familyMemberId 和 userId 建索引
     const memberMap = new Map<string, { nickname: string; avatarUrl: string | null }>();
     for (const m of members) {
       const info = { nickname: m.nickname, avatarUrl: m.avatarUrl || (m.user as any)?.avatar || null };
-      memberMap.set(m.id, info);         // familyMemberId -> info
-      memberMap.set(m.userId, info);    // userId -> info
+      memberMap.set(m.id, info);  // familyMemberId -> info
     }
 
     return logs.map((log) => ({

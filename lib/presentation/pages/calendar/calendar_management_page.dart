@@ -554,6 +554,11 @@ class _TaskListCard extends ConsumerWidget {
               familyId: familyId,
               onComplete: () {
                 ref.invalidate(familyTasksProvider(familyId));
+                ref.invalidate(calendarTasksProvider(CalendarQuery(
+                  familyId: familyId,
+                  year: DateTime.now().year,
+                  month: DateTime.now().month,
+                )));
               },
             ),
           ),
@@ -639,6 +644,11 @@ class _TaskListCard extends ConsumerWidget {
           queryParameters: {'familyId': familyId},
           data: scheduledDate != null ? {'scheduledDate': scheduledDate} : {});
       ref.invalidate(familyTasksProvider(familyId));
+      ref.invalidate(calendarTasksProvider(CalendarQuery(
+        familyId: familyId,
+        year: DateTime.now().year,
+        month: DateTime.now().month,
+      )));
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('任务已完成')));
       }

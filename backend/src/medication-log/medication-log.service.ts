@@ -173,7 +173,6 @@ export class MedicationLogService {
     const qb = this.logRepo
       .createQueryBuilder('log')
       .leftJoinAndSelect('log.medication', 'medication')
-      .leftJoin('log.recipient', 'cr')
       .where('log.status IN (:...statuses)', {
         statuses: [MedicationLogStatus.TAKEN, MedicationLogStatus.SKIPPED],
       })
@@ -181,40 +180,27 @@ export class MedicationLogService {
       .orderBy('log.takenAt', 'DESC')
       .take(50);
 
-    if (before) {
-      qb.andWhere('log.takenAt < :before', { before });
-    }
-
-    if (recipientId) {
-      qb.andWhere('log.recipientId = :recipientId', { recipientId });
-    }
-
-    if (familyId) {
-      qb.andWhere('cr.familyId = :familyId', { familyId });
-    }
-
-    if (medicationId) {
-      qb.andWhere('log.medicationId = :medicationId', { medicationId });
-    }
+    if (before) qb.andWhere('log.takenAt < :before', { before });
+    if (recipientId) qb.andWhere('log.recipientId = :recipientId', { recipientId });
+    if (familyId) qb.andWhere('log.recipientId IN (SELECT cr.id FROM care_recipients cr WHERE cr."familyId" = :familyId)', { familyId });
+    if (medicationId) qb.andWhere('log.medicationId = :medicationId', { medicationId });
 
     const logs = await qb.getMany();
 
-    // takenBy 存的是 familyMemberId，通过 FamilyMember 表查 nickname
-    const memberIds = logs.map(l => l.takenBy).filter(Boolean);
-    const familyIds = [...new Set(logs.map(l => (l as any).recipient?.familyId).filter(Boolean))];
-
-    const members = memberIds.length > 0 && familyIds.length > 0
+    // takenBy 存的是 userId，通过 FamilyMember 表查 nickname（通过 userId 匹配）
+    const userIds = logs.map(l => l.takenBy).filter(Boolean);
+    const members = userIds.length > 0
       ? await this.memberRepo
           .createQueryBuilder('m')
           .leftJoinAndSelect('m.user', 'user')
-          .where('m.id IN (:...memberIds)', { memberIds })
-          .andWhere('m.familyId IN (:...familyIds)', { familyIds })
+          .where('m.userId IN (:...userIds)', { userIds })
+          .andWhere(familyId ? 'm."familyId" = :familyId' : '1=1', familyId ? { familyId } : {})
           .getMany()
       : [];
     const memberMap = new Map<string, { nickname: string; avatarUrl: string | null }>();
     for (const m of members) {
       const info = { nickname: m.nickname, avatarUrl: m.avatarUrl || (m.user as any)?.avatar || null };
-      memberMap.set(m.id, info);  // familyMemberId -> info
+      memberMap.set(m.userId, info);  // userId -> info
     }
 
     return logs.map((log) => ({

@@ -81,7 +81,7 @@ class Appointment {
   }
 
   String get displayTime {
-    final d = appointmentTime;
+    final d = appointmentTime.add(const Duration(hours: 8));
     return '${d.year}年${d.month}月${d.day}日 ${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
   }
 

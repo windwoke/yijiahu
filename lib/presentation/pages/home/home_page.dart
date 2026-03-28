@@ -708,9 +708,10 @@ class _AppointmentHomeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final recipient = appointment.recipient;
     final d = appointment.appointmentTime;
+    final bd = d.add(const Duration(hours: 8));
     final weekdays = ['一', '二', '三', '四', '五', '六', '日'];
-    final dateStr = '${d.month}月${d.day}日（${weekdays[d.weekday - 1]}）';
-    final timeStr = '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+    final dateStr = '${bd.month}月${bd.day}日（${weekdays[bd.weekday - 1]}）';
+    final timeStr = '${bd.hour.toString().padLeft(2, '0')}:${bd.minute.toString().padLeft(2, '0')}';
 
     Widget content = Container(
       margin: const EdgeInsets.only(bottom: 10),

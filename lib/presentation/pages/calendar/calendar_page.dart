@@ -556,6 +556,7 @@ class _AppointmentCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final r = appointment.recipient;
     final d = appointment.appointmentTime;
+    final bd = d.add(const Duration(hours: 8));
     const wd = ['一', '二', '三', '四', '五', '六', '日'];
     final content = Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -572,12 +573,12 @@ class _AppointmentCard extends StatelessWidget {
             decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.borderLight))),
             child: Row(
               children: [
-                Text('${d.month}月${d.day}日（${wd[d.weekday - 1]}）', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.coral)),
+                Text('${bd.month}月${bd.day}日（${wd[bd.weekday - 1]}）', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.coral)),
                 const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(color: AppColors.coral.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-                  child: Text('${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.coral)),
+                  child: Text('${bd.hour.toString().padLeft(2, '0')}:${bd.minute.toString().padLeft(2, '0')}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.coral)),
                 ),
               ],
             ),

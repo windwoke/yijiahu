@@ -69,6 +69,7 @@ class AppointmentDetailSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final r = appointment.recipient;
     final d = appointment.appointmentTime;
+    final bd = d.add(const Duration(hours: 8));
     const wd = ['一', '二', '三', '四', '五', '六', '日'];
 
     return Container(
@@ -118,7 +119,7 @@ class AppointmentDetailSheet extends StatelessWidget {
                 const Divider(color: AppColors.borderLight, height: 1),
 
                 DetailRow(icon: Icons.schedule_rounded, label: '复诊时间',
-                    value: '${d.year}年${d.month}月${d.day}日（${wd[d.weekday - 1]}） ${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}'),
+                    value: '${bd.year}年${bd.month}月${bd.day}日（${wd[bd.weekday - 1]}） ${bd.hour.toString().padLeft(2, '0')}:${bd.minute.toString().padLeft(2, '0')}'),
 
                 DetailRow(icon: Icons.local_hospital_rounded, label: '就诊医院', value: appointment.hospital),
 

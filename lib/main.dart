@@ -59,6 +59,20 @@ class YijiahuApp extends ConsumerWidget {
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
       ],
+      builder: (context, child) {
+        return ScrollConfiguration(
+          behavior: _NoGlowScrollBehavior(),
+          child: child!,
+        );
+      },
     );
+  }
+}
+
+/// 移除 iOS 橡皮筋 overscroll 绿色发光效果
+class _NoGlowScrollBehavior extends ScrollBehavior {
+  @override
+  Widget buildOverscrollIndicator(BuildContext context, Widget child, ScrollableDetails details) {
+    return child;
   }
 }

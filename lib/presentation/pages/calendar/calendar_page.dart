@@ -106,6 +106,9 @@ class _CalendarPageState extends ConsumerState<CalendarPage>
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         title: const Text('复诊日历'),
         actions: [
           IconButton(
@@ -137,6 +140,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage>
 
   Widget _buildMonthHeader() {
     return Container(
+      color: AppColors.background,
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -172,8 +176,10 @@ class _CalendarPageState extends ConsumerState<CalendarPage>
     // 固定高度 280px，日历超出可内部滚动，6行月份刚好不溢出
     return SizedBox(
       height: 280,
+      child: Container(
+        color: AppColors.background,
       child: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
+        physics: const ClampingScrollPhysics(),
         child: TableCalendar<CalendarEvent>(
           firstDay: DateTime(2020),
           lastDay: DateTime(2030),
@@ -244,6 +250,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage>
           headerVisible: false,
           availableGestures: AvailableGestures.horizontalSwipe,
         ),
+      ),
       ),
     );
   }
@@ -432,7 +439,7 @@ class _EventListView extends StatelessWidget {
     }
 
     return ListView.builder(
-      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+      physics: const ClampingScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       itemCount: grouped.length,
       itemBuilder: (context, i) {
@@ -486,7 +493,7 @@ class _DayEventsView extends StatelessWidget {
       return const EmptyState(emoji: '📅', title: '当天暂无安排', subtitle: '点击右上角"+"添加');
     }
     return ListView(
-      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+      physics: const ClampingScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
       children: [
         if (dayEvents.any((e) => e.type == EventType.appointment)) ...[

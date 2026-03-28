@@ -17,15 +17,6 @@ export class FamilyTaskController {
     private readonly permission: PermissionService,
   ) {}
 
-  @Get(':id')
-  @ApiOperation({ summary: '任务详情（含最近完成记录）' })
-  async findOne(
-    @Param('id') id: string,
-    @Query('familyId') familyId: string,
-  ) {
-    return this.service.findById(id, familyId);
-  }
-
   @Get()
   @ApiOperation({ summary: '家庭任务列表' })
   findAll(@Query('familyId') familyId: string) {
@@ -46,6 +37,16 @@ export class FamilyTaskController {
     @Query('month') month: string,
   ) {
     return this.service.findByMonth(familyId, parseInt(year), parseInt(month));
+  }
+
+  // ⚠️ 动态路由必须放在具体路由之后，否则 /calendar /upcoming 会被 :id 捕获
+  @Get(':id')
+  @ApiOperation({ summary: '任务详情（含最近完成记录）' })
+  async findOne(
+    @Param('id') id: string,
+    @Query('familyId') familyId: string,
+  ) {
+    return this.service.findById(id, familyId);
   }
 
   @Post()

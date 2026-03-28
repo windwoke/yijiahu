@@ -137,10 +137,11 @@ class TaskCompletion {
     );
   }
 
-  /// 格式化为显示字符串
+  /// 格式化为显示字符串（UTC 转北京时间 +8 小时）
   String get displayCompletedAt {
-    final d = completedAt;
-    return '${d.month}月${d.day}日 ${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+    // completedAt 是 UTC 时间，转为北京时间
+    final beijing = completedAt.add(const Duration(hours: 8));
+    return '${beijing.month}月${beijing.day}日 ${beijing.hour.toString().padLeft(2, '0')}:${beijing.minute.toString().padLeft(2, '0')}';
   }
 }
 

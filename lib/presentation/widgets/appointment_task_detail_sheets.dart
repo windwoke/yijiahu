@@ -276,10 +276,6 @@ class TaskDetailSheetState extends ConsumerState<TaskDetailSheet> {
                               ),
                               const SizedBox(width: 8),
                               Text(c.completedBy?.displayName ?? '成员', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-                              if (c.scheduledDate != null) ...[
-                                const SizedBox(width: 4),
-                                Text('· ${c.scheduledDate}', style: const TextStyle(fontSize: 11, color: AppColors.textTertiary)),
-                              ],
                             ],
                           ),
                         )),

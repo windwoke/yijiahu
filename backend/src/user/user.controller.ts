@@ -41,7 +41,7 @@ export class UserController {
       });
       if (hasRecipients > 0) {
         const family = await this.familyRepo.findOne({ where: { id: member.familyId } });
-        if (family) return { family };
+        if (family) return { family: { ...family, myRole: member.role } };
       }
     }
 
@@ -49,7 +49,7 @@ export class UserController {
     if (members.length > 0) {
       const firstMember = members[0];
       const family = await this.familyRepo.findOne({ where: { id: firstMember.familyId } });
-      if (family) return { family };
+      if (family) return { family: { ...family, myRole: firstMember.role } };
     }
 
     // 新用户：自动创建家庭

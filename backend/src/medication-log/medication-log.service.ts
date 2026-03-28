@@ -211,9 +211,12 @@ export class MedicationLogService {
           .andWhere('m.familyId IN (:...familyIds)', { familyIds })
           .getMany()
       : [];
+    // takenBy 存的是 familyMemberId，同时用 familyMemberId 和 userId 建索引
     const memberMap = new Map<string, { nickname: string; avatarUrl: string | null }>();
     for (const m of members) {
-      memberMap.set(m.userId, { nickname: m.nickname, avatarUrl: m.avatarUrl || (m.user as any)?.avatar || null });
+      const info = { nickname: m.nickname, avatarUrl: m.avatarUrl || (m.user as any)?.avatar || null };
+      memberMap.set(m.id, info);         // familyMemberId -> info
+      memberMap.set(m.userId, info);    // userId -> info
     }
 
     return logs.map((log) => ({

@@ -103,6 +103,68 @@ class FamilyTask {
   }
 }
 
+/// 任务完成记录
+class TaskCompletion {
+  final String id;
+  final String taskId;
+  final String completedById;
+  final UserMini? completedBy;
+  final DateTime completedAt;
+  final String? scheduledDate; // YYYY-MM-DD
+  final String? note;
+
+  TaskCompletion({
+    required this.id,
+    required this.taskId,
+    required this.completedById,
+    this.completedBy,
+    required this.completedAt,
+    this.scheduledDate,
+    this.note,
+  });
+
+  factory TaskCompletion.fromJson(Map<String, dynamic> json) {
+    return TaskCompletion(
+      id: json['id'] ?? '',
+      taskId: json['taskId'] ?? '',
+      completedById: json['completedById'] ?? '',
+      completedBy: json['completedBy'] != null ? UserMini.fromJson(json['completedBy']) : null,
+      completedAt: json['completedAt'] != null
+          ? (DateTime.tryParse(json['completedAt'].toString()) ?? DateTime.now())
+          : DateTime.now(),
+      scheduledDate: json['scheduledDate'] as String?,
+      note: json['note'] as String?,
+    );
+  }
+
+  /// 格式化为显示字符串
+  String get displayCompletedAt {
+    final d = completedAt;
+    return '${d.month}月${d.day}日 ${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+  }
+}
+
+class UserMini {
+  final String id;
+  final String nickname;
+  final String? avatarUrl;
+
+  UserMini({required this.id, required this.nickname, this.avatarUrl});
+
+  factory UserMini.fromJson(Map<String, dynamic> json) {
+    return UserMini(
+      id: json['id'] ?? '',
+      nickname: json['nickname'] ?? json['name'] ?? '',
+      avatarUrl: json['avatarUrl'],
+    );
+  }
+
+  String get displayName {
+    if (nickname.length > 4) return '${nickname.substring(0, 4)}…';
+    return nickname;
+  }
+}
+
 class AssigneeMini {
   final String id;
   final String name; // 昵称（来自 FamilyMember.nickname）

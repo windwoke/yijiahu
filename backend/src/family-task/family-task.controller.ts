@@ -17,6 +17,15 @@ export class FamilyTaskController {
     private readonly permission: PermissionService,
   ) {}
 
+  @Get(':id')
+  @ApiOperation({ summary: '任务详情（含最近完成记录）' })
+  async findOne(
+    @Param('id') id: string,
+    @Query('familyId') familyId: string,
+  ) {
+    return this.service.findById(id, familyId);
+  }
+
   @Get()
   @ApiOperation({ summary: '家庭任务列表' })
   findAll(@Query('familyId') familyId: string) {

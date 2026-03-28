@@ -260,3 +260,40 @@ class CompleteTaskParams {
   @override
   int get hashCode => Object.hash(taskId, familyId);
 }
+
+/// 任务详情（含完成记录）
+class TaskDetailResult {
+  final models.FamilyTask task;
+  final List<models.TaskCompletion> completions;
+
+  TaskDetailResult({required this.task, required this.completions});
+}
+
+/// 获取任务详情（含最近3条完成记录）
+final taskDetailProvider = FutureProvider.family<TaskDetailResult, TaskDetailQuery>((ref, query) async {
+  final dio = ref.read(dioProvider);
+  final response = await dio.get('/family-tasks/${query.taskId}', queryParameters: {
+    'familyId': query.familyId,
+  });
+  final data = response.data as Map<String, dynamic>;
+  final task = models.FamilyTask.fromJson(data['task']);
+  final completions = (data['completions'] as List<dynamic>?)
+          ?.map((e) => models.TaskCompletion.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      [];
+  return TaskDetailResult(task: task, completions: completions);
+});
+
+class TaskDetailQuery {
+  final String taskId;
+  final String familyId;
+
+  TaskDetailQuery({required this.taskId, required this.familyId});
+
+  @override
+  bool operator ==(Object other) =>
+      other is TaskDetailQuery && other.taskId == taskId && other.familyId == familyId;
+
+  @override
+  int get hashCode => Object.hash(taskId, familyId);
+}

@@ -184,6 +184,10 @@ class TaskDetailSheetState extends ConsumerState<TaskDetailSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final detailAsync = ref.watch(taskDetailProvider(TaskDetailQuery(
+      taskId: widget.task.id,
+      familyId: widget.familyId,
+    )));
     final isPending = !_completedLocally && widget.task.isPending;
     final statusColor = isPending ? AppColors.primary : AppColors.textTertiary;
     final statusLabel = _completedLocally ? '已完成' : widget.task.statusLabel;
@@ -248,6 +252,46 @@ class TaskDetailSheetState extends ConsumerState<TaskDetailSheet> {
                 if (widget.task.assignee != null) DetailRow(icon: Icons.person_rounded, label: '负责人', value: widget.task.assignee!.displayName),
                 if (widget.task.description != null) DetailRow(icon: Icons.description_rounded, label: '任务描述', value: widget.task.description!),
                 if (widget.task.note != null) DetailRow(icon: Icons.note_rounded, label: '备注', value: widget.task.note!),
+
+                // === 完成记录 ===
+                detailAsync.when(
+                  data: (detail) {
+                    if (detail.completions.isEmpty) return const SizedBox.shrink();
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 16),
+                        const Divider(color: AppColors.borderLight, height: 1),
+                        const SizedBox(height: 12),
+                        const Text('完成记录', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+                        const SizedBox(height: 8),
+                        ...detail.completions.map((c) => Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(color: AppColors.success.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
+                                child: Text(c.displayCompletedAt, style: const TextStyle(fontSize: 11, color: AppColors.success, fontWeight: FontWeight.w500)),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(c.completedBy?.displayName ?? '成员', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                              if (c.scheduledDate != null) ...[
+                                const SizedBox(width: 4),
+                                Text('· ${c.scheduledDate}', style: const TextStyle(fontSize: 11, color: AppColors.textTertiary)),
+                              ],
+                            ],
+                          ),
+                        )),
+                      ],
+                    );
+                  },
+                  loading: () => const Padding(
+                    padding: EdgeInsets.only(top: 12),
+                    child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                  ),
+                  error: (_, __) => const SizedBox.shrink(),
+                ),
 
                 const SizedBox(height: 20),
 

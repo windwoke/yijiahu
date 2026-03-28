@@ -37,6 +37,25 @@ export class FamilyTaskService {
     }) as unknown as FamilyTask);
   }
 
+  /** 任务详情（含最近完成记录，eager 加载 completedBy 用户） */
+  async findById(id: string, familyId: string) {
+    const task = await this.taskRepo.findOne({
+      where: { id, familyId },
+      relations: ['assignee', 'recipient'],
+    });
+    if (!task) throw new NotFoundException('任务不存在');
+
+    // 最近3条完成记录（已完成状态的任务才查）
+    const completions = await this.completionRepo.find({
+      where: { taskId: id },
+      order: { completedAt: 'DESC' },
+      take: 3,
+      relations: ['completedBy'],
+    });
+
+    return { task, completions };
+  }
+
   /** 按家庭查询所有任务 */
   async findByFamily(familyId: string) {
     const tasks = await this.taskRepo.find({

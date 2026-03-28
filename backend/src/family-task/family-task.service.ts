@@ -14,7 +14,32 @@ export class FamilyTaskService {
     @InjectRepository(FamilyMember) private memberRepo: Repository<FamilyMember>,
   ) {}
 
-  /** 批量附加 FamilyMember.nickname 到 tasks */
+  /** 按年月筛选任务：返回该月到期的任务 + 该月完成的任务（最多100条） */
+  async findByFamily(familyId: string, year?: number, month?: number) {
+    const tasks = await this.taskRepo.find({
+      where: { familyId },
+      relations: ['assignee', 'recipient', 'createdBy'],
+      order: { nextDueAt: 'ASC', createdAt: 'DESC' },
+      take: 100,
+    });
+
+    if (year == null || month == null) {
+      return this.enrichWithNicknames(tasks, familyId);
+    }
+
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59);
+
+    const filtered = tasks.filter(t => {
+      if (t.nextDueAt) {
+        const d = new Date(t.nextDueAt);
+        if (d >= startDate && d <= endDate) return true;
+      }
+      return t.status === 'completed';
+    });
+
+    return this.enrichWithNicknames(filtered, familyId);
+  }
   private async enrichWithNicknames(tasks: FamilyTask[], familyId: string): Promise<FamilyTask[]> {
     if (tasks.length === 0) return [];
     const assigneeIds = [...new Set(tasks.map(t => t.assigneeId).filter(Boolean))];
@@ -57,15 +82,6 @@ export class FamilyTaskService {
   }
 
   /** 按家庭查询所有任务 */
-  async findByFamily(familyId: string) {
-    const tasks = await this.taskRepo.find({
-      where: { familyId },
-      relations: ['assignee', 'recipient', 'createdBy'],
-      order: { nextDueAt: 'ASC', createdAt: 'DESC' },
-    });
-    return this.enrichWithNicknames(tasks, familyId);
-  }
-
   /** 即将到期的任务（未来7天，排除今天已完成的周期任务实例） */
   async findUpcoming(familyId: string) {
     const now = new Date();

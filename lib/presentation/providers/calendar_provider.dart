@@ -67,6 +67,31 @@ final familyTasksProvider =
       .toList();
 });
 
+/// 任务列表（管理页用，支持年月筛选）
+class ManagementTasksQuery {
+  final String familyId;
+  final int year;
+  final int month;
+  ManagementTasksQuery({required this.familyId, required this.year, required this.month});
+}
+
+final managementTasksProvider =
+    FutureProvider.family<List<models.FamilyTask>, ManagementTasksQuery>((
+  ref,
+  query,
+) async {
+  final dio = ref.read(dioProvider);
+  final response = await dio.get('/family-tasks', queryParameters: {
+    'familyId': query.familyId,
+    'year': query.year.toString(),
+    'month': query.month.toString(),
+  });
+  final data = response.data as List<dynamic>;
+  return data
+      .map((e) => models.FamilyTask.fromJson(e as Map<String, dynamic>))
+      .toList();
+});
+
 /// 即将到期的任务
 final upcomingTasksProvider =
     FutureProvider.family<List<models.FamilyTask>, String>((

@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString, IsUUID, IsBoolean, IsInt, Min } from 'class-validator';
 import { Transform } from 'class-transformer';
+import { AppointmentStatus } from '../entities/appointment.entity';
 
 export class CreateAppointmentDto {
   @ApiProperty({ description: '照护对象ID' })
@@ -86,3 +87,9 @@ export class CreateAppointmentDto {
 }
 
 export class UpdateAppointmentDto extends PartialType(CreateAppointmentDto) {}
+
+export class UpdateAppointmentStatusDto {
+  @ApiProperty({ description: '状态', enum: AppointmentStatus })
+  @IsNotEmpty()
+  status: AppointmentStatus;
+}

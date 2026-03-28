@@ -219,6 +219,9 @@ class _AppointmentTab extends ConsumerWidget {
         itemBuilder: (context, index) => _AppointmentListCard(
           appointment: filtered[index],
           familyId: familyId,
+          onComplete: canManage && filtered[index].status == 'upcoming'
+              ? () => _completeAppointment(context, ref, filtered[index])
+              : null,
           onDelete: canManage ? () => _deleteAppointment(context, ref, filtered[index]) : null,
         ),
       ),
@@ -261,17 +264,59 @@ class _AppointmentTab extends ConsumerWidget {
       }
     }
   }
+
+  Future<void> _completeAppointment(BuildContext context, WidgetRef ref, Appointment appt) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('确认完成'),
+        content: Text('确定将 ${appt.hospital} 复诊标记为已完成吗？'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('取消')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.success),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('确认', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+
+    try {
+      final dio = ref.read(dioProvider);
+      await dio.patch('/appointments/${appt.id}/status',
+        queryParameters: {'familyId': familyId},
+        data: {'status': 'completed'},
+      );
+      final now = DateTime.now();
+      ref.invalidate(calendarAppointmentsProvider(CalendarQuery(
+        familyId: familyId,
+        year: now.year,
+        month: now.month,
+      )));
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('复诊已完成')));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('操作失败: $e')));
+      }
+    }
+  }
 }
 
 class _AppointmentListCard extends StatelessWidget {
   final Appointment appointment;
   final String familyId;
   final VoidCallback? onDelete;
+  final VoidCallback? onComplete;
 
   const _AppointmentListCard({
     required this.appointment,
     required this.familyId,
     this.onDelete,
+    this.onComplete,
   });
 
   @override
@@ -352,6 +397,21 @@ class _AppointmentListCard extends StatelessWidget {
                     ],
                   ),
                 ),
+                if (onComplete != null) ...[
+                  const SizedBox(width: 8),
+                  InkWell(
+                    onTap: onComplete,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.success.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.check_rounded, size: 18, color: AppColors.success),
+                    ),
+                  ),
+                ],
                 if (onDelete != null) ...[
                   const SizedBox(width: 8),
                   InkWell(
@@ -396,7 +456,12 @@ class _TaskTabState extends ConsumerState<_TaskTab> {
 
   @override
   Widget build(BuildContext context) {
-    final tasksAsync = ref.watch(familyTasksProvider(widget.familyId));
+    final now = DateTime.now();
+    final tasksAsync = ref.watch(managementTasksProvider(ManagementTasksQuery(
+      familyId: widget.familyId,
+      year: now.year,
+      month: now.month,
+    )));
 
     return Column(
       children: [
@@ -409,6 +474,8 @@ class _TaskTabState extends ConsumerState<_TaskTab> {
             data: (tasks) => _TaskListView(
               tasks: tasks,
               familyId: widget.familyId,
+              year: now.year,
+              month: now.month,
               canManage: widget.canManage,
               canComplete: widget.canComplete,
               filter: _filter,
@@ -443,7 +510,7 @@ class _TaskTabState extends ConsumerState<_TaskTab> {
     try {
       final dio = ref.read(dioProvider);
       await dio.delete('/family-tasks/${task.id}', queryParameters: {'familyId': widget.familyId});
-      ref.invalidate(familyTasksProvider(widget.familyId));
+      ref.invalidate(managementTasksProvider(ManagementTasksQuery(familyId: widget.familyId, year: DateTime.now().year, month: DateTime.now().month)));
       final now = DateTime.now();
       ref.invalidate(calendarTasksProvider(CalendarQuery(
         familyId: widget.familyId,
@@ -513,6 +580,8 @@ class _TaskFilterBar extends StatelessWidget {
 class _TaskListView extends ConsumerWidget {
   final List<FamilyTask> tasks;
   final String familyId;
+  final int year;
+  final int month;
   final bool canManage;
   final bool canComplete;
   final String filter;
@@ -521,6 +590,8 @@ class _TaskListView extends ConsumerWidget {
   const _TaskListView({
     required this.tasks,
     required this.familyId,
+    required this.year,
+    required this.month,
     required this.canManage,
     required this.canComplete,
     required this.filter,
@@ -546,7 +617,7 @@ class _TaskListView extends ConsumerWidget {
     return RefreshIndicator(
       color: AppColors.blue,
       onRefresh: () async {
-        ref.invalidate(familyTasksProvider(familyId));
+        ref.invalidate(managementTasksProvider(ManagementTasksQuery(familyId: familyId, year: year, month: month)));
       },
       child: ListView.builder(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
@@ -554,6 +625,8 @@ class _TaskListView extends ConsumerWidget {
         itemBuilder: (context, index) => _TaskListCard(
           task: filtered[index],
           familyId: familyId,
+          year: year,
+          month: month,
           canManage: canManage,
           canComplete: canComplete,
           onDelete: canManage ? () => onDelete?.call(filtered[index]) : null,
@@ -566,6 +639,8 @@ class _TaskListView extends ConsumerWidget {
 class _TaskListCard extends ConsumerWidget {
   final FamilyTask task;
   final String familyId;
+  final int year;
+  final int month;
   final bool canManage;
   final bool canComplete;
   final VoidCallback? onDelete;
@@ -573,6 +648,8 @@ class _TaskListCard extends ConsumerWidget {
   const _TaskListCard({
     required this.task,
     required this.familyId,
+    required this.year,
+    required this.month,
     required this.canManage,
     required this.canComplete,
     this.onDelete,
@@ -699,7 +776,7 @@ class _TaskListCard extends ConsumerWidget {
       await dio.post('/family-tasks/${task.id}/complete',
           queryParameters: {'familyId': familyId},
           data: scheduledDate != null ? {'scheduledDate': scheduledDate} : {});
-      ref.invalidate(familyTasksProvider(familyId));
+      ref.invalidate(managementTasksProvider(ManagementTasksQuery(familyId: familyId, year: year, month: month)));
       ref.invalidate(calendarTasksProvider(CalendarQuery(
         familyId: familyId,
         year: DateTime.now().year,

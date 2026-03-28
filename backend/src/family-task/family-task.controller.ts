@@ -19,8 +19,16 @@ export class FamilyTaskController {
 
   @Get()
   @ApiOperation({ summary: '家庭任务列表' })
-  findAll(@Query('familyId') familyId: string) {
-    return this.service.findByFamily(familyId);
+  findAll(
+    @Query('familyId') familyId: string,
+    @Query('year') year?: string,
+    @Query('month') month?: string,
+  ) {
+    return this.service.findByFamily(
+      familyId,
+      year ? parseInt(year) : undefined,
+      month ? parseInt(month) : undefined,
+    );
   }
 
   @Get('upcoming')

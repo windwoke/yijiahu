@@ -4,7 +4,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { PermissionService } from '../common/services/permission.service';
 import { AppointmentService } from './appointment.service';
-import { CreateAppointmentDto, UpdateAppointmentDto } from './dto/appointment.dto';
+import { CreateAppointmentDto, UpdateAppointmentDto, UpdateAppointmentStatusDto } from './dto/appointment.dto';
 import { AppointmentStatus } from './entities/appointment.entity';
 import { FamilyMemberRole } from '../family/entities/family-member.entity';
 
@@ -68,6 +68,21 @@ export class AppointmentController {
       FamilyMemberRole.COORDINATOR,
     ]);
     return this.service.update(id, familyId, dto);
+  }
+
+  @Patch(':id/status')
+  @ApiOperation({ summary: '更新复诊状态' })
+  async updateStatus(
+    @Param('id') id: string,
+    @Body() dto: UpdateAppointmentStatusDto,
+    @CurrentUser('id') userId: string,
+    @Query('familyId') familyId: string,
+  ) {
+    await this.permission.requireRole(userId, familyId, [
+      FamilyMemberRole.OWNER,
+      FamilyMemberRole.COORDINATOR,
+    ]);
+    return this.service.updateStatus(id, familyId, dto.status);
   }
 
   @Delete(':id')

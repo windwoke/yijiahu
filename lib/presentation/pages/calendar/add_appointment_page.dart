@@ -582,7 +582,7 @@ class _AddAppointmentPageState extends ConsumerState<AddAppointmentPage> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('复诊已添加')),
+          SnackBar(content: Text('复诊已添加到 ${_appointmentTime.month}月${_appointmentTime.day}日')),
         );
         // 稍等 snackbar 显示后再返回
         await Future.delayed(const Duration(milliseconds: 600));

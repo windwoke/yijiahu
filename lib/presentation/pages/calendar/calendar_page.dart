@@ -109,6 +109,11 @@ class _CalendarPageState extends ConsumerState<CalendarPage>
         title: const Text('复诊日历'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.list_rounded),
+            tooltip: '管理列表',
+            onPressed: () => context.push('${AppRoutes.calendarManagement}?tab=tasks'),
+          ),
+          IconButton(
             icon: const Icon(Icons.add_rounded),
             onPressed: () => _showAddSheet(context),
           ),
@@ -350,11 +355,6 @@ class _CalendarPageState extends ConsumerState<CalendarPage>
                     const SizedBox(width: 12),
                     Expanded(child: role.canManageTask ? _AddBtn(emoji: '📝', label: '添加任务', color: AppColors.blue, onTap: () { Navigator.pop(ctx); context.push(AppRoutes.addTask); }) : const SizedBox.shrink()),
                   ],
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: _AddBtn(emoji: '📋', label: '查看所有任务', color: AppColors.primary, wide: true, onTap: () { Navigator.pop(ctx); context.push(AppRoutes.familyTasks); }),
                 ),
               ],
             ),

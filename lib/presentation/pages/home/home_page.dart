@@ -368,7 +368,7 @@ class _HomePageState extends ConsumerState<HomePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildSectionHeader(
-                  '📅', '复诊提醒', AppColors.coral, () => context.go(AppRoutes.calendar),
+                  '📅', '复诊提醒', AppColors.coral, () => context.push('${AppRoutes.calendarManagement}?tab=appointments'),
                 ),
                 const SizedBox(height: 8),
                 ...upcoming.take(2).map((a) => _AppointmentHomeCard(
@@ -404,7 +404,7 @@ class _HomePageState extends ConsumerState<HomePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildSectionHeader(
-                  '📝', '今日任务', AppColors.blue, () => context.push(AppRoutes.familyTasks),
+                  '📝', '今日任务', AppColors.blue, () => context.push('${AppRoutes.calendarManagement}?tab=tasks'),
                 ),
                 const SizedBox(height: 8),
                 ...todayTasks.take(3).map((t) => _TaskHomeCard(

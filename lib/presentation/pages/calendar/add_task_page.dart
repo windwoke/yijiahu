@@ -660,7 +660,7 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
             ? _descriptionController.text
             : null,
         'frequency': _frequency,
-        'scheduledTime': _frequency != 'once' ? '$h:$m' : '$h:$m',
+        'scheduledTime': '$h:$m',
         'scheduledDay':
             _scheduledDays.isNotEmpty ? _scheduledDays : null,
         'scheduledDate': _frequency == 'once'
@@ -679,7 +679,11 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(_editingTaskId != null ? '任务已更新' : '任务已添加')),
+          SnackBar(content: Text(_editingTaskId != null
+              ? '任务已更新'
+              : _frequency == 'once'
+                  ? '任务已添加到 ${_scheduledDate.month}月${_scheduledDate.day}日'
+                  : '任务已添加')),
         );
         // 递增刷新计数器，CalendarPage 的 calendarEventsProvider 会自动重新拉取
         ref.read(calendarRefreshProvider.notifier).update((s) => s + 1);

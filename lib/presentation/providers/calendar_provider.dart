@@ -37,6 +37,8 @@ final calendarAppointmentsProvider =
   ref,
   query,
 ) async {
+  // watch 刷新计数器，复诊保存后递增可触发重新拉取
+  ref.watch(calendarRefreshProvider);
   final dio = ref.read(dioProvider);
   final response = await dio.get('/appointments/calendar', queryParameters: {
     'familyId': query.familyId,
@@ -87,6 +89,8 @@ final calendarTasksProvider =
   ref,
   query,
 ) async {
+  // watch 刷新计数器，任务保存后递增可触发重新拉取
+  ref.watch(calendarRefreshProvider);
   final dio = ref.read(dioProvider);
   final response = await dio.get('/family-tasks/calendar', queryParameters: {
     'familyId': query.familyId,

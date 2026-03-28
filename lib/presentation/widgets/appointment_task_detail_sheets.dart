@@ -165,12 +165,14 @@ class AppointmentDetailSheet extends StatelessWidget {
 }
 
 /// 任务详情弹层
+/// scheduledDate: 当前查看的日期 YYYY-MM-DD，用于过滤只显示该日期的完成记录
 class TaskDetailSheet extends ConsumerStatefulWidget {
   final FamilyTask task;
   final String familyId;
+  final String? scheduledDate; // 过滤用
   final VoidCallback? onComplete;
   final VoidCallback? onDeleted;
-  const TaskDetailSheet({required this.task, required this.familyId, this.onComplete, this.onDeleted});
+  const TaskDetailSheet({required this.task, required this.familyId, this.scheduledDate, this.onComplete, this.onDeleted});
 
   @override
   ConsumerState<TaskDetailSheet> createState() => TaskDetailSheetState();
@@ -254,10 +256,13 @@ class TaskDetailSheetState extends ConsumerState<TaskDetailSheet> {
                 if (widget.task.description != null) DetailRow(icon: Icons.description_rounded, label: '任务描述', value: widget.task.description!),
                 if (widget.task.note != null) DetailRow(icon: Icons.note_rounded, label: '备注', value: widget.task.note!),
 
-                // === 完成记录 ===
+                // === 完成记录（按 scheduledDate 过滤，只显示当前选中日期的记录）===
                 detailAsync.when(
                   data: (detail) {
-                    if (detail.completions.isEmpty) return const SizedBox.shrink();
+                    final filtered = widget.scheduledDate != null
+                        ? detail.completions.where((c) => c.scheduledDate == widget.scheduledDate).toList()
+                        : detail.completions;
+                    if (filtered.isEmpty) return const SizedBox.shrink();
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -266,7 +271,7 @@ class TaskDetailSheetState extends ConsumerState<TaskDetailSheet> {
                         const SizedBox(height: 12),
                         const Text('完成记录', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
                         const SizedBox(height: 8),
-                        ...detail.completions.map((c) => Padding(
+                        ...filtered.map((c) => Padding(
                           padding: const EdgeInsets.only(bottom: 6),
                           child: Row(
                             children: [

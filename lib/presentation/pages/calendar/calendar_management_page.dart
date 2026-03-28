@@ -552,6 +552,7 @@ class _TaskListCard extends ConsumerWidget {
             builder: (c) => TaskDetailSheet(
               task: task,
               familyId: familyId,
+              scheduledDate: task.nextDueAt != null ? '${task.nextDueAt!.year}-${task.nextDueAt!.month.toString().padLeft(2, '0')}-${task.nextDueAt!.day.toString().padLeft(2, '0')}' : null,
               onComplete: () {
                 ref.invalidate(familyTasksProvider(familyId));
                 ref.invalidate(calendarTasksProvider(CalendarQuery(

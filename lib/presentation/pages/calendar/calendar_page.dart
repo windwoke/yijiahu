@@ -71,7 +71,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage>
       context: ctx,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (c) => TaskDetailSheet(task: task, familyId: familyId, onComplete: () {
+      builder: (c) => TaskDetailSheet(task: task, familyId: familyId, scheduledDate: _formatDate(_selectedDay), onComplete: () {
         Navigator.pop(c);
         _refresh();
       }),
@@ -79,6 +79,11 @@ class _CalendarPageState extends ConsumerState<CalendarPage>
   }
 
   String get familyId => ref.read(currentFamilyProvider)?.id ?? '';
+
+  String _formatDate(DateTime? d) {
+    if (d == null) return '';
+    return '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -109,7 +114,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage>
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
-        title: const Text('复诊日历'),
+        title: const Text('日历'),
         actions: [
           IconButton(
             icon: const Icon(Icons.list_rounded),

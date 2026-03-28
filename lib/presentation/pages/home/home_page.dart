@@ -419,6 +419,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                           builder: (c) => TaskDetailSheet(
                             task: t,
                             familyId: family.id,
+                            scheduledDate: t.nextDueAt != null ? '${t.nextDueAt!.year}-${t.nextDueAt!.month.toString().padLeft(2, '0')}-${t.nextDueAt!.day.toString().padLeft(2, '0')}' : null,
                             onComplete: () {
                               ref.invalidate(upcomingTasksProvider(family.id));
                               ref.invalidate(familyTasksProvider(family.id));

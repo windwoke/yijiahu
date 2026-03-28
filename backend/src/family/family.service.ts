@@ -176,6 +176,7 @@ export class FamilyService {
     return members.map((m) => ({
       ...m,
       avatarUrl: m.avatarUrl || m.user?.avatar || null,
+      userName: m.user?.name || null,
     }));
   }
 

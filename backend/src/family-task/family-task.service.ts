@@ -14,11 +14,18 @@ export class FamilyTaskService {
 
   /** 按家庭查询所有任务 */
   async findByFamily(familyId: string) {
-    return this.taskRepo.find({
+    const tasks = await this.taskRepo.find({
       where: { familyId },
-      relations: ['assignee', 'recipient', 'createdBy'],
+      relations: ['assignee', 'assignee.user', 'recipient', 'createdBy'],
       order: { nextDueAt: 'ASC', createdAt: 'DESC' },
     });
+    // 附加 assignee 的真实姓名
+    return tasks.map((t) => ({
+      ...t,
+      assignee: t.assignee
+        ? { ...t.assignee, userName: (t.assignee as any).user?.name || null }
+        : null,
+    }));
   }
 
   /** 即将到期的任务（未来7天，排除今天已完成的周期任务实例） */
@@ -33,7 +40,7 @@ export class FamilyTaskService {
         status: TaskStatus.PENDING,
         nextDueAt: LessThanOrEqual(future),
       },
-      relations: ['assignee', 'recipient', 'createdBy'],
+      relations: ['assignee', 'assignee.user', 'recipient', 'createdBy'],
       order: { nextDueAt: 'ASC' },
     });
 
@@ -55,7 +62,14 @@ export class FamilyTaskService {
 
     // 周期任务如果今天已完成，nextDueAt 已在 complete() 时更新为下一个到期，
     // 直接返回即可（不用再调用 calculateNextDue，避免重复推进）
-    return tasks.filter(task => !completedTodaySet.has(task.id));
+    return tasks
+      .filter(task => !completedTodaySet.has(task.id))
+      .map((t) => ({
+        ...t,
+        assignee: t.assignee
+          ? { ...t.assignee, userName: (t.assignee as any).user?.name || null }
+          : null,
+      }));
   }
 
   /** 将 Date 转换为北京时区 YYYY-MM-DD 字符串 */
@@ -74,9 +88,16 @@ export class FamilyTaskService {
     // 查询所有非取消状态的任务（取消后不显示在日历中）
     const tasks = await this.taskRepo.find({
       where: { familyId },
-      relations: ['assignee', 'recipient', 'createdBy'],
+      relations: ['assignee', 'assignee.user', 'recipient', 'createdBy'],
       order: { nextDueAt: 'ASC' },
-    }).then(ts => ts.filter(t => t.status !== TaskStatus.CANCELLED));
+    }).then(ts => ts
+      .filter(t => t.status !== TaskStatus.CANCELLED)
+      .map((t) => ({
+        ...t,
+        assignee: t.assignee
+          ? { ...t.assignee, userName: (t.assignee as any).user?.name || null }
+          : null,
+      })) as any[]);
 
     if (tasks.length === 0) return [];
 

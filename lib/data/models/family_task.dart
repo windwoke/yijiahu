@@ -105,16 +105,26 @@ class FamilyTask {
 
 class AssigneeMini {
   final String id;
-  final String name;
+  final String name; // 昵称
   final String? avatarUrl;
+  final String? userName; // 真实姓名
 
-  AssigneeMini({required this.id, required this.name, this.avatarUrl});
+  AssigneeMini({required this.id, required this.name, this.avatarUrl, this.userName});
 
   factory AssigneeMini.fromJson(Map<String, dynamic> json) {
     return AssigneeMini(
       id: json['id'] ?? '',
       name: json['name'] ?? json['phone'] ?? '',
       avatarUrl: json['avatarUrl'],
+      userName: json['userName'] as String?,
     );
+  }
+
+  /// 显示名称：昵称（真实姓名）
+  String get fullDisplayName {
+    if (userName != null && userName!.isNotEmpty && userName != name) {
+      return '$name（$userName）';
+    }
+    return name;
   }
 }

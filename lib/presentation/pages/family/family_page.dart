@@ -43,7 +43,7 @@ class FamilyMemberSection {
 
   String get displayName {
     if (isRecipient) return recipient!.name;
-    return member!.nickname;
+    return member!.fullDisplayName;
   }
 
   String get displayAvatar {

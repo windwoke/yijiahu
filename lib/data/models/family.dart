@@ -177,6 +177,7 @@ class FamilyMember extends Equatable {
   final String? phone;
   final bool isOnline;
   final DateTime joinedAt;
+  final String? userName; // 真实姓名（来自 User.name）
 
   const FamilyMember({
     required this.id,
@@ -187,6 +188,7 @@ class FamilyMember extends Equatable {
     this.phone,
     this.isOnline = false,
     required this.joinedAt,
+    this.userName,
   });
 
   factory FamilyMember.fromJson(Map<String, dynamic> json) {
@@ -199,11 +201,20 @@ class FamilyMember extends Equatable {
       phone: json['phone'] as String?,
       isOnline: json['isOnline'] as bool? ?? json['is_online'] as bool? ?? false,
       joinedAt: DateTime.tryParse(json['joinedAt'] as String? ?? json['joined_at'] as String? ?? '') ?? DateTime.now(),
+      userName: json['userName'] as String?,
     );
   }
 
   String get roleLabel {
     return FamilyMemberRole.fromString(role).label;
+  }
+
+  /// 显示名称：昵称（真实姓名），如果昵称和真实姓名相同则只显示昵称
+  String get fullDisplayName {
+    if (userName != null && userName!.isNotEmpty && userName != nickname) {
+      return '$nickname（$userName）';
+    }
+    return nickname;
   }
 
   @override

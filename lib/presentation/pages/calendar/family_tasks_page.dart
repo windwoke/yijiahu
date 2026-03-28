@@ -66,7 +66,7 @@ class _FamilyTasksPageState extends ConsumerState<FamilyTasksPage> {
           // 任务列表
           Expanded(
             child: tasksAsync.when(
-              data: (tasks) => _buildTaskList(tasks, familyId),
+              data: (tasks) => _buildTaskList(tasks, familyId, canManage, canComplete),
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => Center(child: Text('加载失败: $e')),
             ),
@@ -123,7 +123,7 @@ class _FamilyTasksPageState extends ConsumerState<FamilyTasksPage> {
     );
   }
 
-  Widget _buildTaskList(List<FamilyTask> allTasks, String familyId) {
+  Widget _buildTaskList(List<FamilyTask> allTasks, String familyId, bool canManage, bool canComplete) {
     final filtered = allTasks.where((t) {
       if (_filterStatus == 'all') return t.status != 'cancelled';
       return t.status == _filterStatus;
@@ -470,7 +470,7 @@ class _TaskListCard extends StatelessWidget {
                     if (task.assignee != null)
                       _InfoChip(
                         icon: Icons.person_outline_rounded,
-                        label: task.assignee!.name,
+                        label: task.assignee!.fullDisplayName,
                         color: AppColors.textSecondary,
                       ),
                   ],

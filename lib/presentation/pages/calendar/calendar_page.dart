@@ -690,7 +690,7 @@ class _TaskCardState extends ConsumerState<_TaskCard> {
                     if (widget.task.scheduledTime != null) ...[const SizedBox(width: 6), Text(widget.task.scheduledTime!, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary))],
                     if (widget.task.nextDueAt != null) ...[const SizedBox(width: 8), const Icon(Icons.event_rounded, size: 12, color: AppColors.textTertiary), const SizedBox(width: 2),
                       Text(widget.task.displayDueAt, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary))],
-                    if (widget.task.assignee != null) ...[const SizedBox(width: 8), const Icon(Icons.person_outline_rounded, size: 12, color: AppColors.textTertiary), const SizedBox(width: 2), Text(widget.task.assignee!.name, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary))],
+                    if (widget.task.assignee != null) ...[const SizedBox(width: 8), const Icon(Icons.person_outline_rounded, size: 12, color: AppColors.textTertiary), const SizedBox(width: 2), Text(widget.task.assignee!.fullDisplayName, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary))],
                   ],
                 ),
               ],
@@ -996,7 +996,7 @@ class _TaskDetailSheetState extends ConsumerState<_TaskDetailSheet> {
                 if (widget.task.recipient != null) _DetailRow(icon: Icons.people_rounded, label: '照护对象', value: widget.task.recipient!.name),
                 _DetailRow(icon: Icons.schedule_rounded, label: '执行时间', value: '${dayLabel()} ${widget.task.scheduledTime ?? ''}'.trim()),
                 if (widget.task.nextDueAt != null) _DetailRow(icon: Icons.event_rounded, label: '下次到期', value: widget.task.displayDueAt),
-                if (widget.task.assignee != null) _DetailRow(icon: Icons.person_rounded, label: '负责人', value: widget.task.assignee!.name),
+                if (widget.task.assignee != null) _DetailRow(icon: Icons.person_rounded, label: '负责人', value: widget.task.assignee!.fullDisplayName),
                 if (widget.task.description != null) _DetailRow(icon: Icons.description_rounded, label: '任务描述', value: widget.task.description!),
                 if (widget.task.note != null) _DetailRow(icon: Icons.note_rounded, label: '备注', value: widget.task.note!),
 

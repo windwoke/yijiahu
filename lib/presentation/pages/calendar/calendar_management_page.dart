@@ -604,13 +604,9 @@ class _TaskTabState extends ConsumerState<_TaskTab> {
     try {
       final dio = ref.read(dioProvider);
       await dio.delete('/family-tasks/${task.id}', queryParameters: {'familyId': widget.familyId});
+      // 递增刷新计数器，calendarTasksProvider 监听了它，所有月份缓存同步失效
+      ref.read(calendarRefreshProvider.notifier).state++;
       ref.invalidate(managementTasksProvider(ManagementTasksQuery(familyId: widget.familyId, year: _queryYear, month: _queryMonth)));
-      final now = DateTime.now();
-      ref.invalidate(calendarTasksProvider(CalendarQuery(
-        familyId: widget.familyId,
-        year: now.year,
-        month: now.month,
-      )));
       ref.invalidate(upcomingTasksProvider(widget.familyId));
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('任务已删除')));

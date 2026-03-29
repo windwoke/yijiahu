@@ -426,12 +426,12 @@ class _SosPageState extends ConsumerState<SosPage> with SingleTickerProviderStat
                 _buildCallButton('110 报警', Icons.local_police_rounded, () => _call('110')),
                 if (recipient?.doctorPhone != null) ...[
                   const SizedBox(height: 12),
-                  _buildCallButton('联系主治医生 · ${recipient!.name}', Icons.phone_rounded,
-                      () => _call(recipient.doctorPhone!)),
+                  _buildCallButton('联系主治医生 · ${recipient?.doctorName ?? ''}', Icons.phone_rounded,
+                      () => _call(recipient!.doctorPhone!)),
                 ],
                 if (recipient?.emergencyPhone != null) ...[
                   const SizedBox(height: 12),
-                  _buildCallButton('紧急联系人', Icons.phone_rounded,
+                  _buildCallButton('紧急联系人${recipient?.emergencyContact != null ? ' · ${recipient!.emergencyContact}' : ''}', Icons.phone_rounded,
                       () => _call(recipient!.emergencyPhone!)),
                 ],
                 const SizedBox(height: 20),

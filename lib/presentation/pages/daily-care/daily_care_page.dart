@@ -117,11 +117,8 @@ class _DailyCarePageState extends ConsumerState<DailyCarePage> {
         medicationTotal: _medTotal,
         specialNote: _noteController.text.isNotEmpty ? _noteController.text : null,
       );
-      // invalidate providers
-      final recipients = await ref.read(careRecipientsProvider.future);
-      if (!mounted) return;
-      final ids = recipients.map((r) => r.id).toList();
-      ref.invalidate(todayCheckinsProvider(ids));
+      // 刷新今日打卡数据（todayCheckinsProvider 内部已监听 careRecipientsProvider）
+      ref.invalidate(careRecipientsProvider);
       ref.invalidate(checkinHistoryProvider(widget.recipientId));
 
       if (mounted) {

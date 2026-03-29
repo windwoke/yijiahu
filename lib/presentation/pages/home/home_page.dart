@@ -1097,7 +1097,21 @@ class _DailyCareBanner extends ConsumerWidget {
                 ],
               );
             },
-            loading: () => const SizedBox.shrink(),
+            loading: () => Column(
+              children: List.generate(
+                2,
+                (i) => Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Container(
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ),
             error: (_, __) => const Text('加载失败', style: TextStyle(color: Colors.white70)),
           ),
         ],

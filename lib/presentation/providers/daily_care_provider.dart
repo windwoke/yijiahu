@@ -7,9 +7,12 @@ import '../../core/network/api_client.dart';
 import 'family_provider.dart';
 
 /// 今日打卡状态（首页横幅用，按照护对象 ID 索引）
+/// 内部监听 careRecipientsProvider，invalidate 该 provider 时自动刷新
 final todayCheckinsProvider =
     FutureProvider.family<Map<String, models.DailyCareCheckin>, List<String>>(
   (ref, recipientIds) async {
+    // 监听 careRecipientsProvider，外部 invalidate 它时自动触发重新拉取
+    ref.watch(careRecipientsProvider);
     if (recipientIds.isEmpty) return {};
     final dio = ref.read(dioProvider);
     final familyId = ref.read(currentFamilyProvider)?.id;

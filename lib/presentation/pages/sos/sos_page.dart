@@ -96,6 +96,25 @@ class _SosPageState extends ConsumerState<SosPage> with SingleTickerProviderStat
             ? const Center(child: CircularProgressIndicator(color: Colors.white))
             : (_isTriggered ? _buildTriggeredView() : _buildPreTriggerView()),
       ),
+      bottomNavigationBar: _isTriggered && !_isDataLoading
+          ? Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                border: Border(top: BorderSide(color: Color(0xFFE8E8E8), width: 0.5)),
+              ),
+              child: SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  child: TextButton.icon(
+                    onPressed: _isLoading ? null : () => _cancelSos(),
+                    icon: const Icon(Icons.close_rounded, color: AppColors.textSecondary),
+                    label: const Text('取消 SOS', style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+                  ),
+                ),
+              ),
+            )
+          : null,
     );
   }
 
@@ -450,19 +469,6 @@ class _SosPageState extends ConsumerState<SosPage> with SingleTickerProviderStat
             ),
           ),
         ),
-        // 底部悬浮取消按钮
-        Container(
-          color: Colors.white,
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 12),
-          child: SafeArea(
-            top: false,
-            child: TextButton.icon(
-              onPressed: _isLoading ? null : () => _cancelSos(),
-              icon: const Icon(Icons.close_rounded, color: AppColors.textSecondary),
-              label: const Text('取消 SOS', style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
-            ),
-          ),
-        ),
       ],
     );
   }
@@ -591,6 +597,7 @@ class _SosPageState extends ConsumerState<SosPage> with SingleTickerProviderStat
         decoration: BoxDecoration(
           color: AppColors.coral,
           borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,

@@ -1166,17 +1166,55 @@ class _DailyCareBanner extends ConsumerWidget {
                         color: Colors.white,
                       ),
                     ),
-                    Text(
-                      isCheckedIn
-                          ? '${status!.label} · ${checkin.medicationLabel}'
-                          : '今日尚未打卡',
-                      style: TextStyle(fontSize: 12, color: isCheckedIn ? Colors.white70 : Colors.white54),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    const SizedBox(height: 4),
+                    // 状态标签 + 用药情况
+                    if (isCheckedIn) ...[
+                      Row(
+                        children: [
+                          // 状态 chip：图标 + 文字
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: iconColor.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(icon, size: 11, color: iconColor),
+                                const SizedBox(width: 3),
+                                Text(
+                                  status!.label,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: iconColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              checkin.medicationLabel,
+                              style: const TextStyle(fontSize: 11, color: Colors.white60),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ] else ...[
+                      Text(
+                        '今日尚未打卡',
+                        style: TextStyle(fontSize: 12, color: Colors.white54),
+                      ),
+                    ],
                   ],
                 ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(

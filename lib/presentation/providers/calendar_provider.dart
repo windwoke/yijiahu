@@ -73,6 +73,18 @@ class ManagementTasksQuery {
   final int year;
   final int month;
   ManagementTasksQuery({required this.familyId, required this.year, required this.month});
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ManagementTasksQuery &&
+          runtimeType == other.runtimeType &&
+          familyId == other.familyId &&
+          year == other.year &&
+          month == other.month;
+
+  @override
+  int get hashCode => Object.hash(familyId, year, month);
 }
 
 final managementTasksProvider =
@@ -86,8 +98,10 @@ final managementTasksProvider =
     'year': query.year.toString(),
     'month': query.month.toString(),
   });
-  final data = response.data as List<dynamic>;
-  return data
+  final data = response.data;
+  if (data == null) return <models.FamilyTask>[];
+  final list = data as List<dynamic>;
+  return list
       .map((e) => models.FamilyTask.fromJson(e as Map<String, dynamic>))
       .toList();
 });

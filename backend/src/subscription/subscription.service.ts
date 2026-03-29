@@ -64,7 +64,7 @@ export class SubscriptionService {
     // 更新家庭订阅字段
     family.subscriptionPlan = dto.plan as SubscriptionPlan;
     family.subscriptionExpiresAt = expiresAt;
-    // 免费版限制升级
+    // 基础版限制升级
     family.maxRecipients = dto.plan === 'premium' ? 5 : 10;
     family.maxMembers = dto.plan === 'premium' ? 10 : 20;
     family.maxLogsPerMonth = dto.plan === 'premium' ? 500 : -1; // -1 表示不限
@@ -127,14 +127,14 @@ export class SubscriptionService {
         const memberCount = await this.countMembers(familyId);
         if (memberCount >= family.maxMembers) {
           throw new BadRequestException(
-            `免费版最多添加 ${family.maxMembers} 位成员，请升级会员`,
+            `基础版最多添加 ${family.maxMembers} 位成员，请升级会员`,
           );
         }
       } else {
         const recipientCount = await this.countRecipients(familyId);
         if (recipientCount >= family.maxRecipients) {
           throw new BadRequestException(
-            `免费版最多添加 ${family.maxRecipients} 位照护对象，请升级会员`,
+            `基础版最多添加 ${family.maxRecipients} 位照护对象，请升级会员`,
           );
         }
       }

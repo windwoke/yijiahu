@@ -54,15 +54,15 @@ export class Family {
   @Column({ default: 'CN' })
   region: string;
 
-  /** 免费版可添加照护对象上限 */
+  /** 基础版可添加照护对象上限 */
   @Column({ default: 1 })
   maxRecipients: number;
 
-  /** 免费版可添加成员上限 */
+  /** 基础版可添加成员上限 */
   @Column({ default: 3 })
   maxMembers: number;
 
-  /** 免费版每月日志上限 */
+  /** 基础版每月日志上限 */
   @Column({ default: 50 })
   maxLogsPerMonth: number;
 

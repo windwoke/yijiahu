@@ -355,7 +355,7 @@ final subscriptionStatusProvider =
     });
     return models.SubscriptionStatus.fromJson(response.data as Map<String, dynamic>);
   } catch (_) {
-    // 兼容：订阅接口不可用时返回免费版状态
+    // 兼容：订阅接口不可用时返回基础版状态
     return const models.SubscriptionStatus(
       plan: 'free',
       status: 'free',

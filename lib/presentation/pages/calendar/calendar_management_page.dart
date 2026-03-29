@@ -611,6 +611,7 @@ class _TaskTabState extends ConsumerState<_TaskTab> {
         year: now.year,
         month: now.month,
       )));
+      ref.invalidate(upcomingTasksProvider(widget.familyId));
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('任务已删除')));
       }

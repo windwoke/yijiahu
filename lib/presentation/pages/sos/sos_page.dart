@@ -4,9 +4,12 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/constants.dart';
+import '../../../core/env/env_config.dart';
+import '../../../core/network/api_client.dart';
 import '../../../data/models/models.dart';
 import '../../providers/providers.dart';
 
@@ -22,7 +25,10 @@ class _SosPageState extends ConsumerState<SosPage> with SingleTickerProviderStat
   double _pressProgress = 0;
   bool _isTriggered = false;
   bool _isLoading = false;
+  bool _isDataLoading = true;
   SosAlert? _activeAlert;
+  List<CareRecipient> _recipients = [];
+  List<FamilyMember> _members = [];
 
   @override
   void initState() {
@@ -33,28 +39,72 @@ class _SosPageState extends ConsumerState<SosPage> with SingleTickerProviderStat
   Future<void> _loadActiveSos() async {
     final family = ref.read(currentFamilyProvider);
     if (family == null) return;
-    final alert = await ref.read(activeSosProvider(family.id).future);
-    if (alert != null && mounted) {
-      setState(() {
-        _activeAlert = alert;
-        _isTriggered = true;
+    try {
+      final dio = ref.read(dioProvider);
+
+      // 三个并行请求，各自 try-catch 避免一个失败影响其他
+      dynamic alertData;
+      dynamic membersData;
+      dynamic recipientsData;
+
+      await Future(() async {
+        try { alertData = (await dio.get('/sos-alerts/active', queryParameters: {'familyId': family.id})).data; } catch (_) {}
+        try { membersData = (await dio.get('/families/${family.id}/members')).data; } catch (_) {}
+        try { recipientsData = (await dio.get('/care-recipients', queryParameters: {'familyId': family.id})).data; } catch (_) {}
       });
+
+      if (!mounted) return;
+
+      // 解析 members
+      if (membersData is List) {
+        _members = (membersData as List)
+            .map((e) => FamilyMember.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+
+      // 解析 recipients
+      if (recipientsData is List) {
+        _recipients = (recipientsData as List)
+            .map((e) => CareRecipient.fromJson(e as Map<String, dynamic>))
+            .toList();
+      } else if (recipientsData is Map && (recipientsData as Map)['data'] is List) {
+        _recipients = ((recipientsData as Map)['data'] as List)
+            .map((e) => CareRecipient.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+
+      setState(() => _isDataLoading = false);
+
+      // 解析 active alert
+      if (alertData is Map<String, dynamic>) {
+        setState(() {
+          _activeAlert = SosAlert.fromJson(alertData);
+          _isTriggered = true;
+        });
+      }
+    } catch (e) {
+      debugPrint('[_loadActiveSos] error: $e');
+      if (mounted) setState(() => _isDataLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.coral,
+      backgroundColor: _isTriggered ? Colors.white : AppColors.coral,
       body: SafeArea(
-        child: _isTriggered ? _buildTriggeredView() : _buildPreTriggerView(),
+        child: _isDataLoading
+            ? const Center(child: CircularProgressIndicator(color: Colors.white))
+            : (_isTriggered ? _buildTriggeredView() : _buildPreTriggerView()),
       ),
     );
   }
 
   Widget _buildPreTriggerView() {
-    final recipients = ref.watch(careRecipientsProvider).valueOrNull ?? [];
-    final recipient = recipients.isNotEmpty ? recipients.first : null;
+    // watch provider 触发加载并响应更新，fallback 到本地 state
+    final providerRecipients = ref.watch(careRecipientsProvider).valueOrNull;
+    final allRecipients = providerRecipients ?? _recipients;
+    final recipient = allRecipients.isNotEmpty ? allRecipients.first : null;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -170,11 +220,17 @@ class _SosPageState extends ConsumerState<SosPage> with SingleTickerProviderStat
         children: [
           Row(
             children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: AppColors.coral.withValues(alpha: 0.1),
-                child: Text(recipient.displayAvatar, style: const TextStyle(fontSize: 20)),
-              ),
+              if (recipient.avatarUrl != null && recipient.avatarUrl!.isNotEmpty)
+                CircleAvatar(
+                  radius: 20,
+                  backgroundImage: NetworkImage(ApiConfig.avatarUrl(recipient.avatarUrl!) ?? ''),
+                )
+              else
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: AppColors.coral.withValues(alpha: 0.1),
+                  child: Text(recipient.displayAvatar, style: const TextStyle(fontSize: 20)),
+                ),
               const SizedBox(width: 12),
               Text(
                 recipient.name,
@@ -214,11 +270,36 @@ class _SosPageState extends ConsumerState<SosPage> with SingleTickerProviderStat
           ],
           if (conditions.isNotEmpty) ...[
             const SizedBox(height: 8),
-            Text(
-              '病史：${conditions.join('、')}',
-              style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            Row(
+              children: [
+                const Icon(Icons.medical_information_rounded, size: 14, color: AppColors.primary),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    '慢病：${conditions.join('、')}',
+                    style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ],
+          if (recipient.medicalHistory != null && recipient.medicalHistory!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.history_rounded, size: 14, color: AppColors.textSecondary),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    '病史：${recipient.medicalHistory}',
+                    style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
             ),
           ],
           if (recipient.hospital != null) ...[
@@ -278,29 +359,33 @@ class _SosPageState extends ConsumerState<SosPage> with SingleTickerProviderStat
   }
 
   Widget _buildTriggeredView() {
+    // watch provider 触发加载并响应更新，fallback 到本地 state
+    final providerRecipients = ref.watch(careRecipientsProvider).valueOrNull;
     final family = ref.watch(currentFamilyProvider);
-    final members = (family != null)
-        ? ref.watch(familyMembersProvider(family.id)).valueOrNull ?? []
-        : <FamilyMember>[];
-    final recipients = ref.watch(careRecipientsProvider).valueOrNull ?? [];
+    final providerMembers = family != null
+        ? ref.watch(familyMembersProvider(family.id)).valueOrNull
+        : null;
+    final allRecipients = providerRecipients ?? _recipients;
+    final allMembers = providerMembers ?? _members;
     final recipient = _activeAlert?.recipientId != null
-        ? recipients.where((r) => r.id == _activeAlert!.recipientId).firstOrNull
-        : (recipients.isNotEmpty ? recipients.first : null);
+        ? allRecipients.where((r) => r.id == _activeAlert!.recipientId).firstOrNull
+        : (allRecipients.isNotEmpty ? allRecipients.first : null);
+    debugPrint('[_buildTriggeredView] allRecipients=${allRecipients.length}, allMembers=${allMembers.length}, recipient=${recipient?.name}, _activeAlert=${_activeAlert?.id}');
 
     return Column(
       children: [
         const SizedBox(height: 16),
         // 顶部状态
-        const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 40),
+        const Icon(Icons.warning_amber_rounded, color: AppColors.coral, size: 40),
         const SizedBox(height: 8),
         const Text(
           'SOS 已发出',
-          style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.white),
+          style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
         ),
         const SizedBox(height: 4),
         const Text(
           '紧急求助已通知所有家人',
-          style: TextStyle(fontSize: 14, color: Colors.white70),
+          style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
         ),
         const SizedBox(height: 20),
         // 紧急信息卡
@@ -316,12 +401,12 @@ class _SosPageState extends ConsumerState<SosPage> with SingleTickerProviderStat
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Row(
               children: [
-                const Icon(Icons.location_on_rounded, size: 14, color: Colors.white70),
+                const Icon(Icons.location_on_rounded, size: 14, color: AppColors.textSecondary),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     _activeAlert!.address!,
-                    style: const TextStyle(fontSize: 13, color: Colors.white70),
+                    style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -351,23 +436,23 @@ class _SosPageState extends ConsumerState<SosPage> with SingleTickerProviderStat
                 ],
                 const SizedBox(height: 20),
                 // 家庭成员确认状态
-                if (members.isNotEmpty) ...[
+                if (allMembers.isNotEmpty) ...[
                   const Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
                       '已通知家人',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white),
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                     ),
                   ),
                   const SizedBox(height: 10),
-                  ...members.map((m) => _buildMemberItem(m)),
+                  ...allMembers.map((m) => _buildMemberItem(m)),
                   const SizedBox(height: 20),
                 ],
                 // 取消按钮
                 TextButton.icon(
                   onPressed: _isLoading ? null : () => _cancelSos(),
-                  icon: const Icon(Icons.close_rounded, color: Colors.white70),
-                  label: const Text('取消 SOS', style: TextStyle(color: Colors.white70, fontSize: 14)),
+                  icon: const Icon(Icons.close_rounded, color: AppColors.textSecondary),
+                  label: const Text('取消 SOS', style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
                 ),
                 const SizedBox(height: 16),
               ],
@@ -386,37 +471,43 @@ class _SosPageState extends ConsumerState<SosPage> with SingleTickerProviderStat
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.15),
+        color: const Color(0xFFF5EDD8),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+        border: Border.all(color: const Color(0xFFE0C89A)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: Colors.white.withValues(alpha: 0.2),
-                child: Text(recipient.displayAvatar, style: const TextStyle(fontSize: 18)),
-              ),
+              if (recipient.avatarUrl != null && recipient.avatarUrl!.isNotEmpty)
+                CircleAvatar(
+                  radius: 18,
+                  backgroundImage: NetworkImage(ApiConfig.avatarUrl(recipient.avatarUrl!) ?? ''),
+                )
+              else
+                CircleAvatar(
+                  radius: 18,
+                  backgroundColor: const Color(0xFFE8D8C0),
+                  child: Text(recipient.displayAvatar, style: const TextStyle(fontSize: 18)),
+                ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   recipient.name,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                 ),
               ),
               if (recipient.bloodType != null)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
+                    color: const Color(0xFFE8D8C0),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     '🩸 ${recipient.bloodType}型',
-                    style: const TextStyle(fontSize: 12, color: Colors.white),
+                    style: const TextStyle(fontSize: 12, color: AppColors.textPrimary),
                   ),
                 ),
             ],
@@ -425,27 +516,61 @@ class _SosPageState extends ConsumerState<SosPage> with SingleTickerProviderStat
             const SizedBox(height: 8),
             Row(
               children: [
-                const Icon(Icons.warning_rounded, size: 13, color: Colors.white),
+                const Icon(Icons.warning_rounded, size: 13, color: AppColors.coral),
                 const SizedBox(width: 6),
-                Text(
-                  '过敏：${recipient.allergies.join('、')}',
-                  style: const TextStyle(fontSize: 12, color: Colors.white),
+                Expanded(
+                  child: Text(
+                    '过敏：${recipient.allergies.join('、')}',
+                    style: const TextStyle(fontSize: 12, color: AppColors.coral),
+                  ),
+                ),
+              ],
+            ),
+          ],
+          if (recipient.medicalHistory != null && recipient.medicalHistory!.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.history_rounded, size: 13, color: AppColors.textSecondary),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    '病史：${recipient.medicalHistory}',
+                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  ),
                 ),
               ],
             ),
           ],
           if (conditions.isNotEmpty) ...[
             const SizedBox(height: 4),
-            Text(
-              '病史：${conditions.join('、')}',
-              style: const TextStyle(fontSize: 12, color: Colors.white70),
+            Row(
+              children: [
+                const Icon(Icons.medical_information_rounded, size: 13, color: AppColors.textSecondary),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    '慢病：${conditions.join('、')}',
+                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  ),
+                ),
+              ],
             ),
           ],
           if (recipient.hospital != null) ...[
             const SizedBox(height: 4),
-            Text(
-              '🏥 ${recipient.hospital}${recipient.department != null ? ' · ${recipient.department}' : ''}',
-              style: const TextStyle(fontSize: 12, color: Colors.white70),
+            Row(
+              children: [
+                const Icon(Icons.local_hospital_rounded, size: 13, color: AppColors.textSecondary),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    '${recipient.hospital}${recipient.department != null ? ' · ${recipient.department}' : ''}',
+                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  ),
+                ),
+              ],
             ),
           ],
         ],
@@ -460,17 +585,17 @@ class _SosPageState extends ConsumerState<SosPage> with SingleTickerProviderStat
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.coral,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: AppColors.coral, size: 20),
+            const Icon(Icons.phone_rounded, color: Colors.white, size: 20),
             const SizedBox(width: 10),
             Text(
               label,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.coral),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
             ),
           ],
         ),
@@ -479,33 +604,41 @@ class _SosPageState extends ConsumerState<SosPage> with SingleTickerProviderStat
   }
 
   Widget _buildMemberItem(FamilyMember member) {
+    final avatar = member.avatarUrl != null && member.avatarUrl!.isNotEmpty
+        ? NetworkImage(ApiConfig.avatarUrl(member.avatarUrl!) ?? '')
+        : null;
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.1),
+        color: const Color(0xFFF5EDD8),
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE0C89A)),
       ),
       child: Row(
         children: [
           CircleAvatar(
             radius: 16,
-            backgroundColor: Colors.white.withValues(alpha: 0.2),
-            child: member.avatarUrl != null
-                ? null
-                : Text(member.nickname.isNotEmpty ? member.nickname[0] : '?',
-                    style: const TextStyle(fontSize: 14, color: Colors.white)),
+            backgroundColor: const Color(0xFFE8D8C0),
+            backgroundImage: avatar,
+            child: avatar == null
+                ? Text(
+                    member.displayName.isNotEmpty ? member.displayName[0].toUpperCase() : '?',
+                    style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
+                  )
+                : null,
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              member.nickname,
-              style: const TextStyle(fontSize: 14, color: Colors.white),
+              member.displayName,
+              style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           const Text(
             '已通知',
-            style: TextStyle(fontSize: 13, color: Colors.white70),
+            style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
           ),
         ],
       ),
@@ -547,16 +680,38 @@ class _SosPageState extends ConsumerState<SosPage> with SingleTickerProviderStat
   Future<void> _triggerSos() async {
     HapticFeedback.heavyImpact();
     setState(() => _isLoading = true);
+
+    // 获取位置（坐标存到 SOS 记录，地址由后端用国内服务反解）
+    double? lat, lng;
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
+        try {
+          final pos = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.high,
+          ).timeout(const Duration(seconds: 10));
+          lat = pos.latitude;
+          lng = pos.longitude;
+        } catch (_) {}
+      }
+    } catch (_) {}
+
     try {
       final family = ref.read(currentFamilyProvider);
       if (family == null) return;
-      final recipients = ref.read(careRecipientsProvider).valueOrNull ?? [];
-      final recipient = recipients.isNotEmpty ? recipients.first : null;
+      final recipient = _recipients.isNotEmpty ? _recipients.first : null;
+      debugPrint('[_triggerSos] family=${family.id}, lat=$lat, lng=$lng');
       final alert = await triggerSos(
         ref: ref,
         familyId: family.id,
         recipientId: recipient?.id,
+        latitude: lat,
+        longitude: lng,
       );
+      debugPrint('[_triggerSos] alert created: ${alert.id}');
       if (mounted) {
         setState(() {
           _isTriggered = true;
@@ -564,6 +719,7 @@ class _SosPageState extends ConsumerState<SosPage> with SingleTickerProviderStat
         });
       }
     } catch (e) {
+      debugPrint('[_triggerSos] error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('SOS 触发失败: $e')),
@@ -616,8 +772,15 @@ class _SosPageState extends ConsumerState<SosPage> with SingleTickerProviderStat
 
   Future<void> _call(String number) async {
     final uri = Uri.parse('tel:$number');
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
+    final canLaunch = await canLaunchUrl(uri);
+    if (canLaunch) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('当前设备不支持拨打电话')),
+        );
+      }
     }
   }
 

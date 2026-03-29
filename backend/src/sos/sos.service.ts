@@ -27,7 +27,13 @@ export class SosService {
       address: dto.address,
       status: SosStatus.ACTIVE,
     });
-    return this.repo.save(record);
+    const saved = await this.repo.save(record);
+    const result = await this.repo.findOne({
+      where: { id: saved.id },
+      relations: ['recipient', 'triggeredBy'],
+    });
+    if (!result) throw new NotFoundException('SOS记录创建失败');
+    return result;
   }
 
   async findActive(familyId: string): Promise<SosRecord | null> {

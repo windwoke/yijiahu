@@ -293,13 +293,19 @@ class _HomePageState extends ConsumerState<HomePage> {
       onRefresh: () => _onRefresh(recipients),
       child: SingleChildScrollView(
         physics: const ClampingScrollPhysics(),
-        child: Column(
-          children: [
-            _DailyCareBanner(recipientIds: recipientIds, recipients: recipients),
-            _buildCalendarSummarySection(context),
-            ...recipients.map((r) => _buildRecipientSection(context, r)),
-            const SizedBox(height: 100),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 16),
+              _DailyCareBanner(recipientIds: recipientIds, recipients: recipients),
+              const SizedBox(height: 20),
+              _buildCalendarSummarySection(context),
+              ...recipients.map((r) => _buildRecipientSection(context, r)),
+              const SizedBox(height: 100),
+            ],
+          ),
         ),
       ),
     );

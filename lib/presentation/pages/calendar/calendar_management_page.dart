@@ -453,14 +453,23 @@ class _TaskTab extends ConsumerStatefulWidget {
 
 class _TaskTabState extends ConsumerState<_TaskTab> {
   String _filter = 'all';
+  late final int _queryYear;
+  late final int _queryMonth;
+
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    _queryYear = now.year;
+    _queryMonth = now.month;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
     final tasksAsync = ref.watch(managementTasksProvider(ManagementTasksQuery(
       familyId: widget.familyId,
-      year: now.year,
-      month: now.month,
+      year: _queryYear,
+      month: _queryMonth,
     )));
 
     return Column(
@@ -474,8 +483,8 @@ class _TaskTabState extends ConsumerState<_TaskTab> {
             data: (tasks) => _TaskListView(
               tasks: tasks,
               familyId: widget.familyId,
-              year: now.year,
-              month: now.month,
+              year: _queryYear,
+              month: _queryMonth,
               canManage: widget.canManage,
               canComplete: widget.canComplete,
               filter: _filter,
@@ -510,7 +519,7 @@ class _TaskTabState extends ConsumerState<_TaskTab> {
     try {
       final dio = ref.read(dioProvider);
       await dio.delete('/family-tasks/${task.id}', queryParameters: {'familyId': widget.familyId});
-      ref.invalidate(managementTasksProvider(ManagementTasksQuery(familyId: widget.familyId, year: DateTime.now().year, month: DateTime.now().month)));
+      ref.invalidate(managementTasksProvider(ManagementTasksQuery(familyId: widget.familyId, year: _queryYear, month: _queryMonth)));
       final now = DateTime.now();
       ref.invalidate(calendarTasksProvider(CalendarQuery(
         familyId: widget.familyId,

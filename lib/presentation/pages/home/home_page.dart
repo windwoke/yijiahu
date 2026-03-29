@@ -407,7 +407,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   Icons.task_alt_rounded, '今日任务', AppColors.blue, () => context.push('${AppRoutes.calendarManagement}?tab=tasks'),
                 ),
                 const SizedBox(height: 8),
-                ...todayTasks.take(3).map((t) => _TaskHomeCard(
+                ...todayTasks.take(2).map((t) => _TaskHomeCard(
                       task: t,
                       familyId: family.id,
                       onTap: () {

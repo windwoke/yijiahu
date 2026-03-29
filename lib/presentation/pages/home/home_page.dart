@@ -368,7 +368,7 @@ class _HomePageState extends ConsumerState<HomePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildSectionHeader(
-                  '📅', '复诊提醒', AppColors.coral, () => context.push('${AppRoutes.calendarManagement}?tab=appointments'),
+                  Icons.local_hospital_rounded, '复诊提醒', AppColors.coral, () => context.push('${AppRoutes.calendarManagement}?tab=appointments'),
                 ),
                 const SizedBox(height: 8),
                 ...upcoming.take(2).map((a) => _AppointmentHomeCard(
@@ -404,7 +404,7 @@ class _HomePageState extends ConsumerState<HomePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildSectionHeader(
-                  '📝', '今日任务', AppColors.blue, () => context.push('${AppRoutes.calendarManagement}?tab=tasks'),
+                  Icons.task_alt_rounded, '今日任务', AppColors.blue, () => context.push('${AppRoutes.calendarManagement}?tab=tasks'),
                 ),
                 const SizedBox(height: 8),
                 ...todayTasks.take(3).map((t) => _TaskHomeCard(
@@ -444,10 +444,10 @@ class _HomePageState extends ConsumerState<HomePage> {
     );
   }
 
-  Widget _buildSectionHeader(String emoji, String title, Color color, VoidCallback onSeeAll, {Widget? trailing}) {
+  Widget _buildSectionHeader(IconData icon, String title, Color color, VoidCallback onSeeAll, {Widget? trailing}) {
     return Row(
       children: [
-        Text(emoji, style: const TextStyle(fontSize: 16)),
+        Icon(icon, size: 18, color: color),
         const SizedBox(width: 6),
         Text(
           title,
@@ -1059,7 +1059,7 @@ class _DailyCareBanner extends ConsumerWidget {
         children: [
           Row(
             children: [
-              const Text('📋', style: TextStyle(fontSize: 20)),
+              const Icon(Icons.favorite_rounded, size: 20, color: Colors.white),
               const SizedBox(width: 8),
               const Text(
                 '今日护理打卡',

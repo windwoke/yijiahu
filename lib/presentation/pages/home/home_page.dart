@@ -30,50 +30,38 @@ class _HomePageState extends ConsumerState<HomePage> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Stack(
-        children: [
-          // 状态栏覆盖层（纯白，挡住状态栏区域）
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: MediaQuery.of(context).padding.top,
-            child: Container(color: Colors.white),
-          ),
-          // 主体内容（滚动）
-          recipientsAsync.when(
-            data: (recipients) {
-              if (recipients.isEmpty) {
-                return _buildEmptyStateBody(context);
-              }
-              return _buildContentBody(context, recipients);
-            },
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, stack) => Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.error_outline,
-                      size: 48, color: AppColors.error),
-                  const SizedBox(height: 16),
-                  Text('加载失败: $error'),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => ref.invalidate(careRecipientsProvider),
-                    child: const Text('重试'),
-                  ),
-                ],
+      appBar: AppBar(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        toolbarHeight: 72,
+        titleSpacing: 0,
+        flexibleSpace: _buildGlassTopBar(context),
+      ),
+      body: recipientsAsync.when(
+        data: (recipients) {
+          if (recipients.isEmpty) {
+            return _buildEmptyStateBody(context);
+          }
+          return _buildContentBody(context, recipients);
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline,
+                  size: 48, color: AppColors.error),
+              const SizedBox(height: 16),
+              Text('加载失败: $error'),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => ref.invalidate(careRecipientsProvider),
+                child: const Text('重试'),
               ),
-            ),
+            ],
           ),
-          // 固定顶栏
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: _buildGlassTopBar(context),
-          ),
-        ],
+        ),
       ),
       // SOS 按钮固定在底部
       bottomNavigationBar: Container(
@@ -93,12 +81,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     final onlineCount = 1;
 
     return Padding(
-      padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 8,
-        left: 16,
-        right: 16,
-        bottom: 8,
-      ),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       child: Container(
         height: 56,
         decoration: BoxDecoration(

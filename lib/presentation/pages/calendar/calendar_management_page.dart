@@ -453,8 +453,8 @@ class _TaskTab extends ConsumerStatefulWidget {
 
 class _TaskTabState extends ConsumerState<_TaskTab> {
   String _filter = 'all';
-  late final int _queryYear;
-  late final int _queryMonth;
+  late int _queryYear;
+  late int _queryMonth;
 
   @override
   void initState() {
@@ -462,6 +462,28 @@ class _TaskTabState extends ConsumerState<_TaskTab> {
     final now = DateTime.now();
     _queryYear = now.year;
     _queryMonth = now.month;
+  }
+
+  void _goPrevMonth() {
+    setState(() {
+      if (_queryMonth == 1) {
+        _queryMonth = 12;
+        _queryYear--;
+      } else {
+        _queryMonth--;
+      }
+    });
+  }
+
+  void _goNextMonth() {
+    setState(() {
+      if (_queryMonth == 12) {
+        _queryMonth = 1;
+        _queryYear++;
+      } else {
+        _queryMonth++;
+      }
+    });
   }
 
   @override
@@ -474,6 +496,33 @@ class _TaskTabState extends ConsumerState<_TaskTab> {
 
     return Column(
       children: [
+        // 月份导航
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                onPressed: _goPrevMonth,
+                icon: const Icon(Icons.chevron_left_rounded, color: AppColors.textSecondary),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '$_queryYear年$_queryMonth月',
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                onPressed: _goNextMonth,
+                icon: const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+              ),
+            ],
+          ),
+        ),
         _TaskFilterBar(
           filter: _filter,
           onFilterChanged: (f) => setState(() => _filter = f),

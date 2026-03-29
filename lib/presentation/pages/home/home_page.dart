@@ -1037,13 +1037,11 @@ class _DailyCareBanner extends ConsumerWidget {
     WidgetRef ref,
     AsyncValue<Map<String, DailyCareCheckin>> checkinsAsync,
   ) {
-    const bannerColor = AppColors.primary;
-
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.85),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: const [
           BoxShadow(color: AppColors.shadowSoft, blurRadius: 10, offset: Offset(0, 3)),
@@ -1054,22 +1052,22 @@ class _DailyCareBanner extends ConsumerWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.favorite_rounded, size: 20, color: Colors.white),
+              const Icon(Icons.favorite_rounded, size: 20, color: AppColors.coral),
               const SizedBox(width: 8),
               const Text(
                 '今日护理打卡',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
               ),
               const Spacer(),
               if (checkinsAsync.isLoading)
-                const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
+                const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary)),
             ],
           ),
           const SizedBox(height: 12),
           checkinsAsync.when(
             data: (checkins) {
               if (recipients.isEmpty) {
-                return const Text('暂无照护对象', style: TextStyle(color: Colors.white70, fontSize: 13));
+                return const Text('暂无照护对象', style: TextStyle(color: AppColors.textTertiary, fontSize: 13));
               }
               final visible = recipients.take(2).toList();
               final hasMore = recipients.length > 2;
@@ -1086,10 +1084,10 @@ class _DailyCareBanner extends ConsumerWidget {
                           children: [
                             Text(
                               '查看全部 ${recipients.length} 人',
-                              style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.8), fontWeight: FontWeight.w500),
+                              style: const TextStyle(fontSize: 13, color: AppColors.primary, fontWeight: FontWeight.w500),
                             ),
                             const SizedBox(width: 4),
-                            Icon(Icons.arrow_forward_ios_rounded, size: 12, color: Colors.white.withValues(alpha: 0.7)),
+                            const Icon(Icons.arrow_forward_ios_rounded, size: 12, color: AppColors.primary),
                           ],
                         ),
                       ),
@@ -1103,30 +1101,30 @@ class _DailyCareBanner extends ConsumerWidget {
                 (i) => Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: Container(
-                    height: 52,
+                    height: 60,
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
+                      color: AppColors.grey100,
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                 ),
               ),
             ),
-            error: (_, __) => const Text('加载失败', style: TextStyle(color: Colors.white70)),
+            error: (_, __) => const Text('加载失败', style: TextStyle(color: AppColors.error, fontSize: 13)),
           ),
         ],
       ),
     );
   }
 
-  /// 根据打卡状态返回图标和颜色
+  /// 根据打卡状态返回图标和颜色（遵循设计搞语义色）
   (IconData, Color) _statusIcon(CheckinStatus? status, bool isCheckedIn) {
-    if (!isCheckedIn) return (Icons.schedule_rounded, Colors.white70);
+    if (!isCheckedIn) return (Icons.schedule_rounded, AppColors.textTertiary);
     switch (status!) {
-      case CheckinStatus.normal:    return (Icons.check_circle_rounded, const Color(0xFF4CAF50));
-      case CheckinStatus.concerning: return (Icons.info_rounded, const Color(0xFFFF9800));
-      case CheckinStatus.poor:       return (Icons.warning_rounded, const Color(0xFFFF5722));
-      case CheckinStatus.critical:   return (Icons.error_rounded, const Color(0xFFF44336));
+      case CheckinStatus.normal:    return (Icons.check_circle_rounded, AppColors.success);  // 鼠尾草绿系
+      case CheckinStatus.concerning: return (Icons.info_rounded, AppColors.warning);         // 暖琥珀
+      case CheckinStatus.poor:      return (Icons.warning_rounded, AppColors.coral);          // 暖杏/陶土
+      case CheckinStatus.critical:   return (Icons.error_rounded, AppColors.coral);           // 暖杏/陶土
     }
   }
 
@@ -1135,6 +1133,7 @@ class _DailyCareBanner extends ConsumerWidget {
     final status = checkin?.status;
     final (icon, iconColor) = _statusIcon(status, isCheckedIn);
     final isAlert = isCheckedIn && status != CheckinStatus.normal;
+    final isCritical = isCheckedIn && status == CheckinStatus.critical;
 
     return Padding(
       padding: const EdgeInsets.only(top: 8),
@@ -1146,13 +1145,19 @@ class _DailyCareBanner extends ConsumerWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
-            color: isAlert ? Colors.white.withValues(alpha: 0.18) : Colors.white.withValues(alpha: 0.12),
+            color: isCritical
+                ? AppColors.coral.withValues(alpha: 0.06)
+                : Colors.white,
             borderRadius: BorderRadius.circular(12),
-            border: isAlert ? Border.all(color: Colors.white.withValues(alpha: 0.25)) : null,
+            border: isCritical
+                ? Border.all(color: AppColors.coral, width: 2)
+                : isAlert
+                    ? Border.all(color: iconColor.withValues(alpha: 0.4), width: 1.5)
+                    : Border.all(color: AppColors.border.withValues(alpha: 0.5)),
           ),
           child: Row(
             children: [
-              Icon(icon, size: isAlert ? 22 : 18, color: iconColor),
+              Icon(icon, size: isCritical ? 24 : (isAlert ? 22 : 18), color: iconColor),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -1162,8 +1167,8 @@ class _DailyCareBanner extends ConsumerWidget {
                       recipient.name,
                       style: TextStyle(
                         fontSize: 14,
-                        fontWeight: isAlert ? FontWeight.w700 : FontWeight.w600,
-                        color: Colors.white,
+                        fontWeight: isCritical ? FontWeight.w700 : FontWeight.w600,
+                        color: AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -1175,7 +1180,7 @@ class _DailyCareBanner extends ConsumerWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
-                              color: iconColor.withValues(alpha: 0.2),
+                              color: iconColor.withValues(alpha: isCritical ? 0.2 : 0.12),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Row(
@@ -1198,7 +1203,7 @@ class _DailyCareBanner extends ConsumerWidget {
                           Expanded(
                             child: Text(
                               checkin.medicationLabel,
-                              style: const TextStyle(fontSize: 11, color: Colors.white60),
+                              style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -1208,7 +1213,7 @@ class _DailyCareBanner extends ConsumerWidget {
                     ] else ...[
                       Text(
                         '今日尚未打卡',
-                        style: TextStyle(fontSize: 12, color: Colors.white54),
+                        style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
                       ),
                     ],
                   ],
@@ -1218,7 +1223,11 @@ class _DailyCareBanner extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: isCheckedIn ? 0.25 : 0.9),
+                  color: isCritical
+                      ? AppColors.coral
+                      : isCheckedIn
+                          ? iconColor.withValues(alpha: 0.1)
+                          : AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -1226,7 +1235,11 @@ class _DailyCareBanner extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color: isCheckedIn ? Colors.white : AppColors.primary,
+                    color: isCritical
+                        ? Colors.white
+                        : isCheckedIn
+                            ? iconColor
+                            : AppColors.primary,
                   ),
                 ),
               ),

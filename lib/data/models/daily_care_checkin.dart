@@ -31,10 +31,10 @@ enum CheckinStatus {
 
   Color get color {
     switch (this) {
-      case CheckinStatus.normal: return const Color(0xFF4CAF50);
-      case CheckinStatus.concerning: return const Color(0xFFFF9800);
-      case CheckinStatus.poor: return const Color(0xFFFF5722);
-      case CheckinStatus.critical: return const Color(0xFFF44336);
+      case CheckinStatus.normal:    return const Color(0xFF6BA07E); // 成功-鼠尾草绿系
+      case CheckinStatus.concerning: return const Color(0xFFD4A855); // 警告-暖琥珀
+      case CheckinStatus.poor:      return const Color(0xFFE07B5D); // 错误-暖杏/陶土
+      case CheckinStatus.critical:   return const Color(0xFFE07B5D); // 错误-暖杏/陶土（更强烈由UI表达）
     }
   }
 

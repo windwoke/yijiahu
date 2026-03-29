@@ -7,3 +7,4 @@ export 'medication.dart';
 export 'care_log.dart';
 export 'appointment.dart';
 export 'family_task.dart';
+export 'sos_alert.dart';

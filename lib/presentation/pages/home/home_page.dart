@@ -997,10 +997,7 @@ class _DailyCareBanner extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final checkinsAsync = ref.watch(todayCheckinsProvider(recipientIds));
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-      child: _buildBanner(context, ref, checkinsAsync),
-    );
+    return _buildBanner(context, ref, checkinsAsync);
   }
 
   Widget _buildBanner(

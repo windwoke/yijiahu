@@ -27,7 +27,6 @@ class CalendarManagementPage extends ConsumerStatefulWidget {
 class _CalendarManagementPageState extends ConsumerState<CalendarManagementPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  String _appointmentFilter = 'all'; // all, upcoming, completed
 
   @override
   void initState() {
@@ -89,8 +88,6 @@ class _CalendarManagementPageState extends ConsumerState<CalendarManagementPage>
           // === 复诊 Tab ===
           _AppointmentTab(
             familyId: family.id,
-            filter: _appointmentFilter,
-            onFilterChanged: (f) => setState(() => _appointmentFilter = f),
             canManage: role.canCreateAppointment,
           ),
           // === 任务 Tab ===
@@ -109,35 +106,78 @@ class _CalendarManagementPageState extends ConsumerState<CalendarManagementPage>
 // 复诊列表
 // ═══════════════════════════════════════════════════════════════
 
-class _AppointmentTab extends ConsumerWidget {
+class _AppointmentTab extends ConsumerStatefulWidget {
   final String familyId;
-  final String filter;
-  final ValueChanged<String> onFilterChanged;
   final bool canManage;
 
-  const _AppointmentTab({
-    required this.familyId,
-    required this.filter,
-    required this.onFilterChanged,
-    required this.canManage,
-  });
+  const _AppointmentTab({required this.familyId, required this.canManage});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_AppointmentTab> createState() => _AppointmentTabState();
+}
+
+class _AppointmentTabState extends ConsumerState<_AppointmentTab> {
+  late int _queryYear;
+  late int _queryMonth;
+  String _filter = 'upcoming';
+
+  @override
+  void initState() {
+    super.initState();
     final now = DateTime.now();
-    final query = CalendarQuery(
-      familyId: familyId,
-      year: now.year,
-      month: now.month,
-    );
+    _queryYear = now.year;
+    _queryMonth = now.month;
+  }
+
+  void _goPrevMonth() {
+    setState(() {
+      if (_queryMonth == 1) { _queryMonth = 12; _queryYear--; } else { _queryMonth--; }
+    });
+  }
+
+  void _goNextMonth() {
+    setState(() {
+      if (_queryMonth == 12) { _queryMonth = 1; _queryYear++; } else { _queryMonth++; }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final query = CalendarQuery(familyId: widget.familyId, year: _queryYear, month: _queryMonth);
     final appointmentsAsync = ref.watch(calendarAppointmentsProvider(query));
 
     return Column(
       children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                onPressed: _goPrevMonth,
+                icon: const Icon(Icons.chevron_left_rounded, color: AppColors.textSecondary),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '$_queryYear年$_queryMonth月',
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                onPressed: _goNextMonth,
+                icon: const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+              ),
+            ],
+          ),
+        ),
         _buildFilterBar(),
         Expanded(
           child: appointmentsAsync.when(
-            data: (appointments) => _buildList(context, ref, appointments),
+            data: (appointments) => _buildList(appointments),
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(child: Text('加载失败: $e')),
           ),
@@ -152,11 +192,11 @@ class _AppointmentTab extends ConsumerWidget {
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       child: Row(
         children: filters.map((f) {
-          final selected = filter == f.$2;
+          final selected = _filter == f.$2;
           return Padding(
             padding: const EdgeInsets.only(right: 8),
             child: InkWell(
-              onTap: () => onFilterChanged(f.$2),
+              onTap: () => setState(() => _filter = f.$2),
               borderRadius: BorderRadius.circular(20),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
@@ -184,33 +224,31 @@ class _AppointmentTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildList(BuildContext context, WidgetRef ref, List<Appointment> appointments) {
+  Widget _buildList(List<Appointment> appointments) {
     final now = DateTime.now();
     final filtered = appointments.where((a) {
-      if (filter == 'upcoming') return a.status == 'upcoming' && a.appointmentTime.isAfter(now.subtract(const Duration(hours: 1)));
-      if (filter == 'completed') return a.status == 'completed';
+      if (_filter == 'upcoming') return a.status == 'upcoming' && a.appointmentTime.isAfter(now.subtract(const Duration(hours: 1)));
+      if (_filter == 'completed') return a.status == 'completed';
       return true;
     }).toList();
 
-    // 按时间倒序
     filtered.sort((a, b) => b.appointmentTime.compareTo(a.appointmentTime));
 
     if (filtered.isEmpty) {
       return EmptyState(
-        emoji: filter == 'all' ? '🏥' : '✅',
-        title: filter == 'all' ? '暂无复诊记录' : '暂无${filter == 'upcoming' ? '待复诊' : '已完成'}记录',
-        subtitle: canManage ? '点击右上角"+"添加复诊' : null,
+        emoji: _filter == 'all' ? '🏥' : '✅',
+        title: _filter == 'all' ? '暂无复诊记录' : '暂无${_filter == 'upcoming' ? '待复诊' : '已完成'}记录',
+        subtitle: widget.canManage ? '点击右上角"+"添加复诊' : null,
       );
     }
 
     return RefreshIndicator(
       color: AppColors.coral,
       onRefresh: () async {
-        final now = DateTime.now();
         ref.invalidate(calendarAppointmentsProvider(CalendarQuery(
-          familyId: familyId,
-          year: now.year,
-          month: now.month,
+          familyId: widget.familyId,
+          year: _queryYear,
+          month: _queryMonth,
         )));
       },
       child: ListView.builder(
@@ -218,17 +256,17 @@ class _AppointmentTab extends ConsumerWidget {
         itemCount: filtered.length,
         itemBuilder: (context, index) => _AppointmentListCard(
           appointment: filtered[index],
-          familyId: familyId,
-          onComplete: canManage && filtered[index].status == 'upcoming'
-              ? () => _completeAppointment(context, ref, filtered[index])
+          familyId: widget.familyId,
+          onComplete: widget.canManage && filtered[index].status == 'upcoming'
+              ? () => _completeAppointment(filtered[index])
               : null,
-          onDelete: canManage ? () => _deleteAppointment(context, ref, filtered[index]) : null,
+          onDelete: widget.canManage ? () => _deleteAppointment(filtered[index]) : null,
         ),
       ),
     );
   }
 
-  Future<void> _deleteAppointment(BuildContext context, WidgetRef ref, Appointment appt) async {
+  Future<void> _deleteAppointment(Appointment appt) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -248,24 +286,23 @@ class _AppointmentTab extends ConsumerWidget {
 
     try {
       final dio = ref.read(dioProvider);
-      await dio.delete('/appointments/${appt.id}', queryParameters: {'familyId': familyId});
-      final now = DateTime.now();
+      await dio.delete('/appointments/${appt.id}', queryParameters: {'familyId': widget.familyId});
       ref.invalidate(calendarAppointmentsProvider(CalendarQuery(
-        familyId: familyId,
-        year: now.year,
-        month: now.month,
+        familyId: widget.familyId,
+        year: _queryYear,
+        month: _queryMonth,
       )));
-      if (context.mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('复诊已删除')));
       }
     } catch (e) {
-      if (context.mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('删除失败: $e')));
       }
     }
   }
 
-  Future<void> _completeAppointment(BuildContext context, WidgetRef ref, Appointment appt) async {
+  Future<void> _completeAppointment(Appointment appt) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -286,20 +323,19 @@ class _AppointmentTab extends ConsumerWidget {
     try {
       final dio = ref.read(dioProvider);
       await dio.patch('/appointments/${appt.id}/status',
-        queryParameters: {'familyId': familyId},
+        queryParameters: {'familyId': widget.familyId},
         data: {'status': 'completed'},
       );
-      final now = DateTime.now();
       ref.invalidate(calendarAppointmentsProvider(CalendarQuery(
-        familyId: familyId,
-        year: now.year,
-        month: now.month,
+        familyId: widget.familyId,
+        year: _queryYear,
+        month: _queryMonth,
       )));
-      if (context.mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('复诊已完成')));
       }
     } catch (e) {
-      if (context.mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('操作失败: $e')));
       }
     }
@@ -452,7 +488,7 @@ class _TaskTab extends ConsumerStatefulWidget {
 }
 
 class _TaskTabState extends ConsumerState<_TaskTab> {
-  String _filter = 'all';
+  String _filter = 'pending';
   late int _queryYear;
   late int _queryMonth;
 

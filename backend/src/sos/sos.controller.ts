@@ -16,7 +16,7 @@ export class SosController {
 
   @Post()
   @ApiOperation({ summary: '触发 SOS 紧急求助' })
-  create(@Body() dto: CreateSosDto, @CurrentUser('sub') userId: string) {
+  create(@Body() dto: CreateSosDto, @CurrentUser('id') userId: string) {
     return this.service.create(dto, userId);
   }
 
@@ -38,7 +38,7 @@ export class SosController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateSosDto,
     @Query('familyId', ParseUUIDPipe) familyId: string,
-    @CurrentUser('sub') userId: string,
+    @CurrentUser('id') userId: string,
   ) {
     return this.service.updateStatus(id, familyId, dto.status, userId);
   }

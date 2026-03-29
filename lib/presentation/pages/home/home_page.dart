@@ -30,38 +30,40 @@ class _HomePageState extends ConsumerState<HomePage> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        toolbarHeight: 72,
-        titleSpacing: 0,
-        flexibleSpace: _buildGlassTopBar(context),
-      ),
-      body: recipientsAsync.when(
-        data: (recipients) {
-          if (recipients.isEmpty) {
-            return _buildEmptyStateBody(context);
-          }
-          return _buildContentBody(context, recipients);
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.error_outline,
-                  size: 48, color: AppColors.error),
-              const SizedBox(height: 16),
-              Text('加载失败: $error'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => ref.invalidate(careRecipientsProvider),
-                child: const Text('重试'),
-              ),
-            ],
+      body: Column(
+        children: [
+          SafeArea(
+            bottom: false,
+            child: _buildGlassTopBar(context),
           ),
-        ),
+          Expanded(
+            child: recipientsAsync.when(
+              data: (recipients) {
+                if (recipients.isEmpty) {
+                  return _buildEmptyStateContent(context);
+                }
+                return _buildScrollableContent(context, recipients);
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, stack) => Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.error_outline,
+                        size: 48, color: AppColors.error),
+                    const SizedBox(height: 16),
+                    Text('加载失败: $error'),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => ref.invalidate(careRecipientsProvider),
+                      child: const Text('重试'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
       // SOS 按钮固定在底部
       bottomNavigationBar: Container(
@@ -81,7 +83,12 @@ class _HomePageState extends ConsumerState<HomePage> {
     final onlineCount = 1;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        MediaQuery.of(context).padding.top + 8,
+        16,
+        8,
+      ),
       child: Container(
         height: 56,
         decoration: BoxDecoration(
@@ -187,24 +194,13 @@ class _HomePageState extends ConsumerState<HomePage> {
     await ref.read(careRecipientsProvider.future);
   }
 
-  Widget _buildEmptyStateBody(BuildContext context) {
-    final topHeight = MediaQuery.of(context).padding.top + 72;
+  Widget _buildEmptyStateContent(BuildContext context) {
     return RefreshIndicator(
       color: AppColors.primary,
       onRefresh: () => _onRefreshEmpty(),
-      child: CustomScrollView(
+      child: SingleChildScrollView(
         physics: const ClampingScrollPhysics(),
-        slivers: [
-          SliverToBoxAdapter(child: SizedBox(height: topHeight)),
-          SliverToBoxAdapter(child: _buildEmptyStateContent(context)),
-          const SliverFillRemaining(hasScrollBody: false, child: SizedBox(height: 100)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyStateContent(BuildContext context) {
-    return Padding(
+        child: Padding(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 100),
       child: Container(
         padding: const EdgeInsets.all(32),
@@ -272,6 +268,8 @@ class _HomePageState extends ConsumerState<HomePage> {
               ),
           ],
         ),
+        ),
+      ),
       ),
     );
   }
@@ -289,44 +287,25 @@ class _HomePageState extends ConsumerState<HomePage> {
     await ref.read(careRecipientsProvider.future);
   }
 
-  Widget _buildContentBody(
+  Widget _buildScrollableContent(
     BuildContext context,
     List<CareRecipient> recipients,
   ) {
-    final topHeight = MediaQuery.of(context).padding.top + 72;
     final recipientIds = recipients.map((r) => r.id).toList();
 
     return RefreshIndicator(
       color: AppColors.primary,
       onRefresh: () => _onRefresh(recipients),
-      child: CustomScrollView(
+      child: SingleChildScrollView(
         physics: const ClampingScrollPhysics(),
-        slivers: [
-          SliverToBoxAdapter(child: SizedBox(height: topHeight)),
-          SliverToBoxAdapter(
-            child: _DailyCareBanner(recipientIds: recipientIds, recipients: recipients),
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-            sliver: SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  // 第一个区块：日历摘要
-                  if (index == 0) {
-                    return _buildCalendarSummarySection(context);
-                  }
-                  // 照护对象列表
-                  final recipientIndex = index - 1;
-                  if (recipientIndex < recipients.length) {
-                    return _buildRecipientSection(context, recipients[recipientIndex]);
-                  }
-                  return const SizedBox.shrink();
-                },
-                childCount: recipients.length + 1,
-              ),
-            ),
-          ),
-        ],
+        child: Column(
+          children: [
+            _DailyCareBanner(recipientIds: recipientIds, recipients: recipients),
+            _buildCalendarSummarySection(context),
+            ...recipients.map((r) => _buildRecipientSection(context, r)),
+            const SizedBox(height: 100),
+          ],
+        ),
       ),
     );
   }

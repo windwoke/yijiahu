@@ -32,6 +32,14 @@ class _HomePageState extends ConsumerState<HomePage> {
       backgroundColor: AppColors.background,
       body: Stack(
         children: [
+          // 状态栏覆盖层（纯白，挡住状态栏区域）
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: MediaQuery.of(context).padding.top,
+            child: Container(color: Colors.white),
+          ),
           // 主体内容（滚动）
           recipientsAsync.when(
             data: (recipients) {

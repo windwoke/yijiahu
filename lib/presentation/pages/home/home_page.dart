@@ -1043,14 +1043,10 @@ class _DailyCareBanner extends ConsumerWidget {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [bannerColor, Color(0xFF6B8C72)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: AppColors.primary.withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(color: bannerColor.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4)),
+        boxShadow: const [
+          BoxShadow(color: AppColors.shadowSoft, blurRadius: 10, offset: Offset(0, 3)),
         ],
       ),
       child: Column(

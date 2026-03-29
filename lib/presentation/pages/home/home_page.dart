@@ -97,7 +97,7 @@ class _HomePageState extends ConsumerState<HomePage> {
           color: AppColors.glassSurface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: Colors.black.withValues(alpha: 0.08),
+            color: AppColors.shadow,
           ),
         ),
         child: ClipRRect(

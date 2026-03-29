@@ -217,7 +217,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage>
             todayDecoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.2), shape: BoxShape.circle),
             todayTextStyle: const TextStyle(color: AppColors.primaryDark, fontWeight: FontWeight.w600),
             selectedDecoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
-            selectedTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+            selectedTextStyle: const TextStyle(color: AppColors.surface, fontWeight: FontWeight.w600),
             defaultTextStyle: const TextStyle(color: AppColors.textPrimary),
             weekendTextStyle: const TextStyle(color: AppColors.textSecondary),
             outsideTextStyle: const TextStyle(color: AppColors.textTertiary),

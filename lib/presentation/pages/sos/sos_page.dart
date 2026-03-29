@@ -83,7 +83,6 @@ class _SosPageState extends ConsumerState<SosPage> with SingleTickerProviderStat
         });
       }
     } catch (e) {
-      debugPrint('[_loadActiveSos] error: $e');
       if (mounted) setState(() => _isDataLoading = false);
     }
   }
@@ -370,7 +369,6 @@ class _SosPageState extends ConsumerState<SosPage> with SingleTickerProviderStat
     final recipient = _activeAlert?.recipientId != null
         ? allRecipients.where((r) => r.id == _activeAlert!.recipientId).firstOrNull
         : (allRecipients.isNotEmpty ? allRecipients.first : null);
-    debugPrint('[_buildTriggeredView] allRecipients=${allRecipients.length}, allMembers=${allMembers.length}, recipient=${recipient?.name}, _activeAlert=${_activeAlert?.id}');
 
     return Column(
       children: [
@@ -448,14 +446,20 @@ class _SosPageState extends ConsumerState<SosPage> with SingleTickerProviderStat
                   ...allMembers.map((m) => _buildMemberItem(m)),
                   const SizedBox(height: 20),
                 ],
-                // 取消按钮
-                TextButton.icon(
-                  onPressed: _isLoading ? null : () => _cancelSos(),
-                  icon: const Icon(Icons.close_rounded, color: AppColors.textSecondary),
-                  label: const Text('取消 SOS', style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
-                ),
-                const SizedBox(height: 16),
               ],
+            ),
+          ),
+        ),
+        // 底部悬浮取消按钮
+        Container(
+          color: Colors.white,
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 12),
+          child: SafeArea(
+            top: false,
+            child: TextButton.icon(
+              onPressed: _isLoading ? null : () => _cancelSos(),
+              icon: const Icon(Icons.close_rounded, color: AppColors.textSecondary),
+              label: const Text('取消 SOS', style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
             ),
           ),
         ),
@@ -703,7 +707,6 @@ class _SosPageState extends ConsumerState<SosPage> with SingleTickerProviderStat
       final family = ref.read(currentFamilyProvider);
       if (family == null) return;
       final recipient = _recipients.isNotEmpty ? _recipients.first : null;
-      debugPrint('[_triggerSos] family=${family.id}, lat=$lat, lng=$lng');
       final alert = await triggerSos(
         ref: ref,
         familyId: family.id,
@@ -711,7 +714,6 @@ class _SosPageState extends ConsumerState<SosPage> with SingleTickerProviderStat
         latitude: lat,
         longitude: lng,
       );
-      debugPrint('[_triggerSos] alert created: ${alert.id}');
       if (mounted) {
         setState(() {
           _isTriggered = true;

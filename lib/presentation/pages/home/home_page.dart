@@ -898,6 +898,17 @@ class _TaskHomeCard extends ConsumerWidget {
                     ),
                   ],
                 ),
+                if (task.description != null && task.description!.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    task.description!.length > 30
+                        ? '${task.description!.substring(0, 30)}…'
+                        : task.description!,
+                    style: const TextStyle(fontSize: 12, color: AppColors.textTertiary),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
                 const SizedBox(height: 4),
                 Row(
                   children: [

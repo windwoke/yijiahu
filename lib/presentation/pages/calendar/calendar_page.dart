@@ -696,6 +696,17 @@ class _TaskCardState extends ConsumerState<_TaskCard> {
                         style: TextStyle(fontSize: 11, color: _statusColor, fontWeight: FontWeight.w600))),
                   ],
                 ),
+                if (widget.task.description != null && widget.task.description!.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    widget.task.description!.length > 30
+                        ? '${widget.task.description!.substring(0, 30)}…'
+                        : widget.task.description!,
+                    style: const TextStyle(fontSize: 12, color: AppColors.textTertiary),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
                 const SizedBox(height: 5),
                 Row(
                   children: [

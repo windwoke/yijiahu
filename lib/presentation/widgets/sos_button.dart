@@ -16,7 +16,6 @@ class SosButton extends StatefulWidget {
 
 class _SosButtonState extends State<SosButton>
     with SingleTickerProviderStateMixin {
-  bool _isPressed = false;
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
   late Animation<double> _glowAnimation;
@@ -45,33 +44,30 @@ class _SosButtonState extends State<SosButton>
 
   @override
   Widget build(BuildContext context) {
-    final buttonColor = AppColors.coral;
-
     return GestureDetector(
-      onLongPressStart: (_) => _onPressStart(),
-      onLongPressEnd: (_) => _onPressEnd(),
-      onLongPressCancel: () => _onPressCancel(),
+      onTap: () {
+        HapticFeedback.lightImpact();
+        context.push(AppRoutes.sos);
+      },
       child: AnimatedBuilder(
         animation: _pulseController,
         builder: (context, _) {
-          // 呼吸外发光：模糊 12→28px，扩散 0→6px，透明度同步呼吸
-          final glowBlur = _isPressed ? 12.0 : 12.0 + _glowAnimation.value * 16.0;
-          final glowSpread = _isPressed ? 0.0 : _glowAnimation.value * 6.0;
-          final glowOpacity = _isPressed ? 0.3 : 0.3 - _glowAnimation.value * 0.12;
+          final glowBlur = 12.0 + _glowAnimation.value * 16.0;
+          final glowSpread = _glowAnimation.value * 6.0;
+          final glowOpacity = 0.3 - _glowAnimation.value * 0.12;
 
           return Transform.scale(
-            scale: _isPressed ? 1.0 : _pulseAnimation.value,
+            scale: _pulseAnimation.value,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
               width: double.infinity,
               height: 56,
               decoration: BoxDecoration(
-                color: _isPressed ? AppColors.error : buttonColor,
+                color: AppColors.coral,
                 borderRadius: BorderRadius.circular(28),
                 boxShadow: [
                   BoxShadow(
-                    color: (_isPressed ? AppColors.error : buttonColor)
-                        .withValues(alpha: glowOpacity),
+                    color: AppColors.coral.withValues(alpha: glowOpacity),
                     blurRadius: glowBlur,
                     spreadRadius: glowSpread,
                     offset: const Offset(0, 4),
@@ -80,16 +76,12 @@ class _SosButtonState extends State<SosButton>
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.emergency,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                  const SizedBox(width: 8),
+                children: const [
+                  Icon(Icons.emergency, color: Colors.white, size: 24),
+                  SizedBox(width: 8),
                   Text(
-                    _isPressed ? AppTexts.releaseToCancel : '紧急求助',
-                    style: const TextStyle(
+                    '紧急求助',
+                    style: TextStyle(
                       color: Colors.white,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -102,46 +94,5 @@ class _SosButtonState extends State<SosButton>
         },
       ),
     );
-  }
-
-  void _onPressStart() {
-    HapticFeedback.heavyImpact();
-    setState(() => _isPressed = true);
-    _pulseController.stop();
-    _startProgress();
-  }
-
-  int _count = 0;
-  void _startProgress() {
-    _count = 0;
-    _progressLoop();
-  }
-
-  void _progressLoop() {
-    if (!_isPressed) return;
-    _count++;
-    if (_count >= 30) {
-      _triggerSos();
-      return;
-    }
-    Future.delayed(const Duration(milliseconds: 100), _progressLoop);
-  }
-
-  void _onPressEnd() {
-    HapticFeedback.lightImpact();
-    setState(() => _isPressed = false);
-    _count = 0;
-    _pulseController.repeat(reverse: true);
-  }
-
-  void _onPressCancel() {
-    setState(() => _isPressed = false);
-    _count = 0;
-    _pulseController.repeat(reverse: true);
-  }
-
-  void _triggerSos() {
-    HapticFeedback.heavyImpact();
-    context.push(AppRoutes.sos);
   }
 }

@@ -83,12 +83,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     final onlineCount = 1;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(
-        16,
-        MediaQuery.of(context).padding.top + 8,
-        16,
-        8,
-      ),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       child: Container(
         height: 56,
         decoration: BoxDecoration(

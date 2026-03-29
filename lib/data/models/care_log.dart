@@ -3,6 +3,7 @@ library;
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
+import '../../core/constants/app_colors.dart';
 import 'daily_care_checkin.dart';
 
 enum CareLogType {
@@ -15,12 +16,12 @@ enum CareLogType {
 
   Color get color {
     switch (this) {
-      case CareLogType.medication: return const Color(0xFF4A90D9); // 静谧蓝
-      case CareLogType.health: return const Color(0xFFE07B5D);     // 暖杏
-      case CareLogType.emotion: return const Color(0xFFD4A855);   // 暖琥珀
-      case CareLogType.activity: return const Color(0xFF7B9E87);  // 鼠尾草绿
-      case CareLogType.meal: return const Color(0xFFD4A855);      // 暖琥珀
-      case CareLogType.other: return const Color(0xFF6B6B6B);     // 柔和灰
+      case CareLogType.medication: return AppColors.blue;          // 静谧蓝
+      case CareLogType.health: return AppColors.coral;              // 暖杏
+      case CareLogType.emotion: return AppColors.warning;          // 暖琥珀
+      case CareLogType.activity: return AppColors.primary;         // 鼠尾草绿
+      case CareLogType.meal: return AppColors.warning;             // 暖琥珀
+      case CareLogType.other: return AppColors.textSecondary;      // 柔和灰
     }
   }
 

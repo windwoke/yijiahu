@@ -3,6 +3,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../constants/app_colors.dart';
 import 'package:go_router/go_router.dart';
 import '../../presentation/pages/auth/login_page.dart';
 import '../../presentation/pages/home/home_page.dart';
@@ -235,20 +236,20 @@ class MainBottomNav extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFFAF9F7),
+        color: AppColors.background,
         border: const Border(
-          top: BorderSide(color: Color(0xFFE8E6E2), width: 0.5),
+          top: BorderSide(color: AppColors.border, width: 0.5),
         ),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: const Color(0x0A000000),
+            color: AppColors.shadowSoft,
             blurRadius: 8,
-            offset: const Offset(0, -2),
+            offset: Offset(0, -2),
           ),
           BoxShadow(
-            color: const Color(0x06000000),
+            color: AppColors.shadowSoft2,
             blurRadius: 4,
-            offset: const Offset(0, -1),
+            offset: Offset(0, -1),
           ),
         ],
       ),
@@ -323,8 +324,8 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const selectedColor = Color(0xFF7B9E87);   // 鼠尾草绿
-    const unselectedColor = Color(0xFFB0ADAD); // 柔和灰
+    const selectedColor = AppColors.primary;
+    const unselectedColor = AppColors.textTertiary;
 
     return GestureDetector(
       onTap: onTap,

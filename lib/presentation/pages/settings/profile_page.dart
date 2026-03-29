@@ -1230,7 +1230,7 @@ class _SubscriptionCard extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF5C8268), Color(0xFF7B9E87)],
+          colors: [AppColors.primaryDark, AppColors.primary],
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [

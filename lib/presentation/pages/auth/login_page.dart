@@ -315,8 +315,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Color(0xFFF0F7F4), // 淡绿背景
-                    Color(0xFFFAF9F7), // 米白背景
+                    const Color(0xFFF0F7F4), // 淡绿背景（AppColors 暂无对应值）
+                    AppColors.background,      // 米白背景
                   ],
                 ),
               ),

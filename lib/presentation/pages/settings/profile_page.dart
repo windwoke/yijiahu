@@ -257,6 +257,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: ListView(
+        physics: const ClampingScrollPhysics(),
         padding: EdgeInsets.only(
           top: MediaQuery.of(context).padding.top + 16,
           bottom: MediaQuery.of(context).padding.bottom + 32,

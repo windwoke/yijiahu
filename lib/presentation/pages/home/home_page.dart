@@ -202,7 +202,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       color: AppColors.primary,
       onRefresh: () => _onRefreshEmpty(),
       child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
+        physics: const ClampingScrollPhysics(),
         slivers: [
           SliverToBoxAdapter(child: SizedBox(height: topHeight)),
           SliverToBoxAdapter(child: _buildEmptyStateContent(context)),
@@ -309,7 +309,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       color: AppColors.primary,
       onRefresh: () => _onRefresh(recipients),
       child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
+        physics: const ClampingScrollPhysics(),
         slivers: [
           SliverToBoxAdapter(child: SizedBox(height: topHeight)),
           SliverToBoxAdapter(

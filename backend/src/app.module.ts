@@ -16,6 +16,7 @@ import { AppointmentModule } from './appointment/appointment.module';
 import { FamilyTaskModule } from './family-task/family-task.module';
 import { CaregiverRecordModule } from './caregiver-record/caregiver-record.module';
 import { DailyCareCheckinModule } from './daily-care-checkin/daily-care-checkin.module';
+import { SosModule } from './sos/sos.module';
 
 @Module({
   imports: [
@@ -57,6 +58,7 @@ import { DailyCareCheckinModule } from './daily-care-checkin/daily-care-checkin.
     FamilyTaskModule,
     CaregiverRecordModule,
     DailyCareCheckinModule,
+    SosModule,
   ],
 })
 export class AppModule {}

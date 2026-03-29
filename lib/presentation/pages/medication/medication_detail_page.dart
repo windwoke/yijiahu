@@ -382,8 +382,10 @@ class MedicationDetailPage extends ConsumerWidget {
                   ),
                 const SizedBox(width: 6),
                 Text(
-                  log.authorName!,
-                  style: TextStyle(fontSize: 13, color: AppColors.textTertiary),
+                  log.authorName!.length > 4
+                      ? '${log.authorName!.substring(0, 4)}…'
+                      : log.authorName!,
+                  style: const TextStyle(fontSize: 13, color: AppColors.textTertiary),
                 ),
               ],
             ),

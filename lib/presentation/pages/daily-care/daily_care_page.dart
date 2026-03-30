@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/constants.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/env/env_config.dart';
 import '../../../data/models/models.dart';
 import '../../providers/providers.dart';
 
@@ -238,12 +239,23 @@ class _DailyCarePageState extends ConsumerState<DailyCarePage> {
           CircleAvatar(
             radius: 28,
             backgroundColor: AppColors.coral.withValues(alpha: 0.1),
-            child: widget.recipient.displayAvatar.isNotEmpty
-                ? Text(
-                    widget.recipient.displayAvatar,
-                    style: const TextStyle(fontSize: 24),
+            child: (widget.recipient.avatarUrl != null && widget.recipient.avatarUrl!.isNotEmpty)
+                ? Image.network(
+                    ApiConfig.avatarUrl(widget.recipient.avatarUrl!) ?? '',
+                    fit: BoxFit.cover,
+                    width: 56,
+                    height: 56,
+                    errorBuilder: (_, __, ___) => Text(
+                      widget.recipient.displayAvatar,
+                      style: const TextStyle(fontSize: 24),
+                    ),
                   )
-                : const Icon(Icons.person_rounded, color: AppColors.coral, size: 28),
+                : widget.recipient.displayAvatar.isNotEmpty
+                    ? Text(
+                        widget.recipient.displayAvatar,
+                        style: const TextStyle(fontSize: 24),
+                      )
+                    : const Icon(Icons.person_rounded, color: AppColors.coral, size: 28),
           ),
           const SizedBox(width: 14),
           Expanded(

@@ -156,13 +156,48 @@ class _HomePageState extends ConsumerState<HomePage> {
                     ),
                   ),
                   // 通知图标
-                  IconButton(
-                    onPressed: () {},
-                    icon: const Icon(
-                      Icons.notifications_rounded,
-                      color: AppColors.textPrimary,
-                      size: 22,
-                    ),
+                  Consumer(
+                    builder: (context, ref, child) {
+                      final unreadCount = ref.watch(unreadCountProvider);
+                      return IconButton(
+                        onPressed: () => context.push(AppRoutes.notifications),
+                        icon: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            const Icon(
+                              Icons.notifications_rounded,
+                              color: AppColors.textPrimary,
+                              size: 22,
+                            ),
+                            if (unreadCount.hasValue && (unreadCount.value ?? 0) > 0)
+                              Positioned(
+                                right: -4,
+                                top: -4,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.coral,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                                  child: Center(
+                                    child: Text(
+                                      (unreadCount.value ?? 0) > 99
+                                          ? '99+'
+                                          : '${unreadCount.value ?? 0}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),

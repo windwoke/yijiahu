@@ -28,6 +28,9 @@ export class User {
   @Column({ nullable: true })
   lastLoginAt: Date;
 
+  @Column({ nullable: true })
+  pushToken: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

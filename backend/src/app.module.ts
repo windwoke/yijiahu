@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import configuration from './config/configuration';
@@ -17,6 +18,7 @@ import { FamilyTaskModule } from './family-task/family-task.module';
 import { CaregiverRecordModule } from './caregiver-record/caregiver-record.module';
 import { DailyCareCheckinModule } from './daily-care-checkin/daily-care-checkin.module';
 import { SosModule } from './sos/sos.module';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
   imports: [
@@ -27,6 +29,8 @@ import { SosModule } from './sos/sos.module';
     }),
 
     // 数据库
+    ScheduleModule.forRoot(),
+
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -59,6 +63,7 @@ import { SosModule } from './sos/sos.module';
     CaregiverRecordModule,
     DailyCareCheckinModule,
     SosModule,
+    NotificationModule,
   ],
 })
 export class AppModule {}

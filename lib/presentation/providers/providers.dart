@@ -5,3 +5,4 @@ export 'caregiver_record_provider.dart';
 export 'daily_care_provider.dart';
 export 'sos_provider.dart';
 export 'onboarding_provider.dart';
+export 'notification_provider.dart';

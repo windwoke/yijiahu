@@ -1,14 +1,20 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SosRecord, SosStatus } from './entities/sos-record.entity';
 import { CreateSosDto } from './dto/create-sos.dto';
+import { NotificationService } from '../notification/notification.service';
+import { User } from '../user/entities/user.entity';
 
 @Injectable()
 export class SosService {
   constructor(
     @InjectRepository(SosRecord)
     private readonly repo: Repository<SosRecord>,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
+    @Inject(forwardRef(() => NotificationService))
+    private readonly notificationSvc: NotificationService,
   ) {}
 
   async create(dto: CreateSosDto, userId: string): Promise<SosRecord> {
@@ -33,6 +39,16 @@ export class SosService {
       relations: ['recipient', 'triggeredBy'],
     });
     if (!result) throw new NotFoundException('SOS记录创建失败');
+
+    // 发送 SOS 通知给同家庭成员（除触发者）
+    await this.notificationSvc.notifySOS(
+      dto.familyId,
+      userId,
+      saved.id,
+      result.recipient?.name || '照护对象',
+      dto.address || '未知位置',
+    );
+
     return result;
   }
 
@@ -51,6 +67,16 @@ export class SosService {
     if (status === SosStatus.ACKNOWLEDGED && userId) {
       record.acknowledgedById = userId;
       record.acknowledgedAt = new Date();
+      // 发送 SOS 已确认通知给同家庭成员（除确认者）
+      const acknowledger = await this.userRepo.findOne({ where: { id: userId } });
+      if (acknowledger && record.familyId) {
+        await this.notificationSvc.notifySOSAcknowledged(
+          record.familyId,
+          userId,
+          id,
+          acknowledger.name || acknowledger.phone || '家庭成员',
+        );
+      }
     }
     if (status === SosStatus.RESOLVED) {
       record.resolvedAt = new Date();

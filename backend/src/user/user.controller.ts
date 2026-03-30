@@ -2,6 +2,7 @@ import { Controller, Get, Patch, Body, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { IsOptional, IsString } from 'class-validator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { UserService } from './user.service';
@@ -9,6 +10,12 @@ import { FamilyMember } from '../family/entities/family-member.entity';
 import { Family } from '../family/entities/family.entity';
 import { CareRecipient } from '../care-recipient/entities/care-recipient.entity';
 import { FamilyService } from '../family/family.service';
+
+class UpdatePushTokenDto {
+  @IsString()
+  @IsOptional()
+  pushToken?: string;
+}
 
 @ApiTags('用户')
 @ApiBearerAuth()
@@ -80,5 +87,11 @@ export class UserController {
   @ApiOperation({ summary: '更新当前用户信息' })
   updateMe(@CurrentUser('id') userId: string, @Body() body: Record<string, unknown>) {
     return this.userService.update(userId, body);
+  }
+
+  @Patch('me/push-token')
+  @ApiOperation({ summary: '更新极光推送 token' })
+  updatePushToken(@CurrentUser('id') userId: string, @Body() dto: UpdatePushTokenDto) {
+    return this.userService.update(userId, { pushToken: dto.pushToken });
   }
 }

@@ -26,6 +26,7 @@ import '../../presentation/pages/settings/password_change_page.dart';
 import '../../presentation/pages/care-recipient/add_care_recipient_page.dart';
 import '../../presentation/pages/care-recipient/care_recipient_detail_page.dart';
 import '../../presentation/pages/daily-care/daily_care_page.dart';
+import '../../presentation/pages/notification/notification_list_page.dart';
 import '../../presentation/providers/auth_provider.dart';
 
 /// 路由名称
@@ -47,6 +48,7 @@ class AppRoutes {
   static const String addCareRecipient = '/care-recipient/add';
   static const String careRecipientDetail = '/care-recipient/detail';
   static const String dailyCare = '/daily-care';
+  static const String notifications = '/notifications';
 }
 
 /// 路由配置
@@ -174,6 +176,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             recipient: extra['recipient'] as CareRecipient,
           );
         },
+      ),
+      GoRoute(
+        path: AppRoutes.notifications,
+        builder: (context, state) => const NotificationListPage(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

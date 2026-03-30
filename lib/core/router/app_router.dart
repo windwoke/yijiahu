@@ -182,16 +182,42 @@ final routerProvider = Provider<GoRouter>((ref) {
   );
 });
 
-/// 主页面脚手架（含底部导航）
-class MainScaffold extends StatelessWidget {
+/// 主页面脚手架（含底部导航，切换家庭后自动修复路由）
+class MainScaffold extends ConsumerStatefulWidget {
   final Widget child;
 
   const MainScaffold({super.key, required this.child});
 
   @override
+  ConsumerState<MainScaffold> createState() => _MainScaffoldState();
+}
+
+class _MainScaffoldState extends ConsumerState<MainScaffold> {
+  bool _listening = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // 监听家庭切换，切换后验证当前路由是否对新角色有效
+    // 注意：listener 在 initState 时会立即触发一次，用 _listening 过滤首次
+    ref.listen(currentFamilyProvider, (prev, next) {
+      if (!_listening) { _listening = true; return; } // 跳过首次触发
+      if (prev?.id == next?.id) return;
+      final isCaregiver = next?.myRole == FamilyMemberRole.caregiver;
+      final location = GoRouterState.of(context).uri.path;
+      final validRoutes = isCaregiver
+          ? {AppRoutes.home, AppRoutes.careLog, AppRoutes.profile}
+          : {AppRoutes.home, AppRoutes.calendar, AppRoutes.careLog, AppRoutes.family, AppRoutes.profile};
+      if (!validRoutes.contains(location)) {
+        context.go(AppRoutes.home);
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: child,
+      body: widget.child,
       bottomNavigationBar: const MainBottomNav(),
     );
   }

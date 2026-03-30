@@ -70,20 +70,21 @@ class _HomePageState extends ConsumerState<HomePage> {
                   ),
                 ),
               ),
+              // 底部 SOS 按钮（移入 Column，确保能被遮罩覆盖）
+              Container(
+                color: AppColors.background,
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                child: SafeArea(
+                  top: false,
+                  child: const SosButton(),
+                ),
+              ),
             ],
           ),
+          // 全屏遮罩（覆盖所有内容，包括底部 SOS 按钮）
           if (showOnboarding)
             _FamilyOnboardingOverlay(onComplete: _hideOnboarding),
         ],
-      ),
-      // SOS 按钮固定在底部
-      bottomNavigationBar: Container(
-        color: AppColors.background,
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-        child: SafeArea(
-          top: false,
-          child: const SosButton(),
-        ),
       ),
     );
   }

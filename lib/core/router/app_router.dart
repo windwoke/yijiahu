@@ -8,6 +8,9 @@ import 'package:go_router/go_router.dart';
 import '../../presentation/pages/auth/login_page.dart';
 import '../../presentation/pages/home/home_page.dart';
 import '../../presentation/pages/calendar/calendar_page.dart';
+import '../../presentation/providers/onboarding_provider.dart';
+import '../../presentation/providers/family_provider.dart';
+import '../../presentation/widgets/family_onboarding.dart';
 import '../../presentation/pages/calendar/add_appointment_page.dart';
 import '../../presentation/pages/calendar/add_task_page.dart';
 import '../../presentation/pages/calendar/family_tasks_page.dart';
@@ -181,17 +184,31 @@ final routerProvider = Provider<GoRouter>((ref) {
   );
 });
 
-/// 主页面脚手架（含底部导航）
-class MainScaffold extends StatelessWidget {
+/// 主页面脚手架（含底部导航 + 引导遮罩）
+class MainScaffold extends ConsumerWidget {
   final Widget child;
 
   const MainScaffold({super.key, required this.child});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final showOnboarding = ref.watch(showOnboardingProvider);
+
     return Scaffold(
-      body: child,
-      bottomNavigationBar: const MainBottomNav(),
+      body: Stack(
+        children: [
+          Column(
+            children: [
+              Expanded(child: child),
+              const MainBottomNav(),
+            ],
+          ),
+          if (showOnboarding)
+            FamilyOnboardingOverlay(
+              onComplete: () => ref.invalidate(myFamiliesProvider),
+            ),
+        ],
+      ),
     );
   }
 }

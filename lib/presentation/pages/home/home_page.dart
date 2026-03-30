@@ -71,8 +71,8 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   Widget _buildGlassTopBar(BuildContext context) {
     final family = ref.watch(currentFamilyProvider);
-    // 在线人数：后端暂无 presence 追踪，默认至少显示当前用户自己（1）
-    final onlineCount = 1;
+    final membersAsync = ref.watch(familyMembersProvider(family?.id ?? ''));
+    final memberCount = membersAsync.valueOrNull?.length ?? 0;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -136,20 +136,17 @@ class _HomePageState extends ConsumerState<HomePage> {
                         const SizedBox(height: 2),
                         Row(
                           children: [
-                            Container(
-                              width: 6,
-                              height: 6,
-                              decoration: const BoxDecoration(
-                                color: AppColors.success,
-                                shape: BoxShape.circle,
-                              ),
+                            const Icon(
+                              Icons.people_rounded,
+                              size: 12,
+                              color: AppColors.textSecondary,
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '$onlineCount人在线',
+                              '$memberCount位成员',
                               style: const TextStyle(
                                 fontSize: 12,
-                                color: AppColors.success,
+                                color: AppColors.textSecondary,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),

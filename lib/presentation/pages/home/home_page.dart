@@ -29,12 +29,6 @@ class _HomePageState extends ConsumerState<HomePage> {
   @override
   void initState() {
     super.initState();
-    // 监听家庭切换，重置引导标志（允许切换家庭后再次触发）
-    ref.listen(currentFamilyProvider, (prev, next) {
-      if (prev?.id != next?.id) {
-        setState(() => _onboardingShown = false);
-      }
-    });
   }
 
   void _showOnboarding() {
@@ -48,8 +42,14 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    // 监听家庭切换，重置引导标志（允许切换家庭后再次触发）
+    ref.listen(currentFamilyProvider, (prev, next) {
+      if (prev?.id != next?.id) {
+        setState(() => _onboardingShown = false);
+      }
+    });
+
     // watch myFamiliesProvider，provider 数据就绪后自动触发引导检查
-    // 用 when 而非 whenData：确保 provider 已是 data 状态时也能触发
     final familiesAsync = ref.watch(myFamiliesProvider);
     familiesAsync.when(
       data: (list) {

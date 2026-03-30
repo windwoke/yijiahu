@@ -55,12 +55,16 @@ class _HomePageState extends ConsumerState<HomePage> {
   void _checkAndShowOnboarding() {
     if (_onboardingShown) return;
     final families = ref.read(myFamiliesProvider);
-    families.whenData((list) {
-      if (list.isEmpty) {
-        _onboardingShown = true;
-        _showOnboardingSheet();
-      }
-    });
+    families.when(
+      data: (list) {
+        if (list.isEmpty) {
+          _onboardingShown = true;
+          _showOnboardingSheet();
+        }
+      },
+      loading: () {},
+      error: (_, __) {},
+    );
   }
 
   void _showOnboardingSheet() {

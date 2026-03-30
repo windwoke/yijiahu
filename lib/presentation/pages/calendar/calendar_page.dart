@@ -91,7 +91,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage>
     if (family == null) {
       return Scaffold(
         backgroundColor: AppColors.background,
-        appBar: AppBar(title: const Text('复诊日历')),
+        appBar: AppBar(title: const Text('日历')),
         body: const EmptyState(
           emoji: '🏠',
           title: '请先加入一个家庭',
@@ -100,6 +100,8 @@ class _CalendarPageState extends ConsumerState<CalendarPage>
       );
     }
 
+    final role = family.myRole;
+    final isCaregiver = role == FamilyMemberRole.caregiver;
     final familyId = family.id;
     final query = CalendarQuery(
       familyId: familyId,
@@ -116,11 +118,12 @@ class _CalendarPageState extends ConsumerState<CalendarPage>
         surfaceTintColor: Colors.transparent,
         title: const Text('日历'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.list_rounded),
-            tooltip: '管理列表',
-            onPressed: () => context.push('${AppRoutes.calendarManagement}?tab=tasks'),
-          ),
+          if (!isCaregiver)
+            IconButton(
+              icon: const Icon(Icons.list_rounded),
+              tooltip: '管理列表',
+              onPressed: () => context.push('${AppRoutes.calendarManagement}?tab=tasks'),
+            ),
           IconButton(
             icon: const Icon(Icons.add_rounded),
             onPressed: () => _showAddSheet(context),
@@ -132,12 +135,12 @@ class _CalendarPageState extends ConsumerState<CalendarPage>
         children: [
           _buildMonthHeader(),
           eventsAsync.when(
-            data: (events) => _buildCalendar(events),
-            loading: () => _buildCalendar({}),
-            error: (e, st) => _buildCalendar({}),
+            data: (events) => _buildCalendar(events, isCaregiver),
+            loading: () => _buildCalendar({}, false),
+            error: (e, st) => _buildCalendar({}, false),
           ),
           const Divider(height: 1, color: AppColors.border),
-          Expanded(child: _buildEventsSection(familyId, eventsAsync)),
+          Expanded(child: _buildEventsSection(familyId, eventsAsync, isCaregiver)),
         ],
       ),
     );
@@ -177,7 +180,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage>
     );
   }
 
-  Widget _buildCalendar(Map<DateTime, List<CalendarEvent>> events) {
+  Widget _buildCalendar(Map<DateTime, List<CalendarEvent>> events, bool isCaregiver) {
     // 固定高度 280px，日历超出可内部滚动，6行月份刚好不溢出
     return SizedBox(
       height: 280,
@@ -192,7 +195,10 @@ class _CalendarPageState extends ConsumerState<CalendarPage>
           selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
           eventLoader: (day) {
             final key = DateTime(day.year, day.month, day.day);
-            return events[key] ?? [];
+            final list = events[key] ?? [];
+            // 保姆模式隐藏复诊，只显示任务
+            if (isCaregiver) return list.where((e) => e.type == EventType.task).toList();
+            return list;
           },
           onDaySelected: (selectedDay, focusedDay) {
             setState(() {
@@ -227,6 +233,18 @@ class _CalendarPageState extends ConsumerState<CalendarPage>
           calendarBuilders: CalendarBuilders(
             markerBuilder: (context, day, events) {
               if (events.isEmpty) return null;
+              // 保姆模式不显示复诊标记
+              if (isCaregiver) {
+                final hasTask = events.any((e) => e.type == EventType.task);
+                if (!hasTask) return null;
+                return Container(
+                  width: 6, height: 6,
+                  decoration: const BoxDecoration(
+                    color: AppColors.blue,
+                    shape: BoxShape.circle,
+                  ),
+                );
+              }
               final hasAppointment = events.any((e) => e.type == EventType.appointment);
               final hasTask = events.any((e) => e.type == EventType.task);
               return Row(
@@ -263,6 +281,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage>
   Widget _buildEventsSection(
     String familyId,
     AsyncValue<Map<DateTime, List<CalendarEvent>>> eventsAsync,
+    bool isCaregiver,
   ) {
     return Column(
       children: [
@@ -272,23 +291,25 @@ class _CalendarPageState extends ConsumerState<CalendarPage>
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             children: [
-              const Text(
-                '本月日程',
-                style: TextStyle(
+              Text(
+                isCaregiver ? '我的任务' : '本月日程',
+                style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textSecondary,
                 ),
               ),
               const SizedBox(width: 12),
-              // 图例：复诊=暖杏，任务=静谧蓝
-              Container(
-                width: 6, height: 6,
-                decoration: const BoxDecoration(color: AppColors.coral, shape: BoxShape.circle),
-              ),
-              const SizedBox(width: 3),
-              const Text('复诊', style: TextStyle(fontSize: 11, color: AppColors.textTertiary)),
-              const SizedBox(width: 8),
+              if (!isCaregiver) ...[
+                // 图例：复诊=暖杏，任务=静谧蓝
+                Container(
+                  width: 6, height: 6,
+                  decoration: const BoxDecoration(color: AppColors.coral, shape: BoxShape.circle),
+                ),
+                const SizedBox(width: 3),
+                const Text('复诊', style: TextStyle(fontSize: 11, color: AppColors.textTertiary)),
+                const SizedBox(width: 8),
+              ],
               Container(
                 width: 6, height: 6,
                 decoration: const BoxDecoration(color: AppColors.blue, shape: BoxShape.circle),
@@ -320,6 +341,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage>
                 return _EventListView(
                   allEvents: allEvents,
                   familyId: familyId,
+                  isCaregiver: isCaregiver,
                   showAppointmentDetail: (a) => _showAppointmentDetail(context, a),
                   showTaskDetail: (t) => _showTaskDetail(context, t),
                 );
@@ -327,6 +349,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage>
                 return _DayEventsView(
                   allEvents: allEvents,
                   familyId: familyId,
+                  isCaregiver: isCaregiver,
                   selectedDay: _selectedDay,
                   showAppointmentDetail: (a) => _showAppointmentDetail(context, a),
                   showTaskDetail: (t) => _showTaskDetail(context, t),
@@ -412,9 +435,10 @@ class _ToggleBtn extends StatelessWidget {
 class _EventListView extends StatelessWidget {
   final Map<DateTime, List<CalendarEvent>> allEvents;
   final String familyId;
+  final bool isCaregiver;
   final void Function(Appointment) showAppointmentDetail;
   final void Function(FamilyTask) showTaskDetail;
-  const _EventListView({required this.allEvents, required this.familyId, required this.showAppointmentDetail, required this.showTaskDetail});
+  const _EventListView({required this.allEvents, required this.familyId, required this.isCaregiver, required this.showAppointmentDetail, required this.showTaskDetail});
 
   @override
   Widget build(BuildContext context) {
@@ -422,6 +446,8 @@ class _EventListView extends StatelessWidget {
     final all = <_Item>[];
     for (final e in allEvents.entries) {
       for (final ev in e.value) {
+        // 保姆模式过滤掉复诊
+        if (isCaregiver && ev.type == EventType.appointment) continue;
         all.add(_Item(
           time: ev.type == EventType.appointment
               ? ev.appointment!.appointmentTime
@@ -434,7 +460,11 @@ class _EventListView extends StatelessWidget {
     final future = all.where((i) => i.time.isAfter(now.subtract(const Duration(days: 1)))).toList();
 
     if (future.isEmpty) {
-      return const EmptyState(emoji: '📅', title: '本月暂无日程安排', subtitle: '点击右上角"+"添加复诊或任务');
+      return EmptyState(
+        emoji: '📅',
+        title: isCaregiver ? '本月暂无分配给我的任务' : '本月暂无日程安排',
+        subtitle: isCaregiver ? '等待管理员分配任务' : '点击右上角"+"添加复诊或任务',
+      );
     }
 
     final grouped = <String, List<_Item>>{};
@@ -485,23 +515,32 @@ class _EventListView extends StatelessWidget {
 class _DayEventsView extends StatelessWidget {
   final Map<DateTime, List<CalendarEvent>> allEvents;
   final String familyId;
+  final bool isCaregiver;
   final DateTime? selectedDay;
   final void Function(Appointment) showAppointmentDetail;
   final void Function(FamilyTask) showTaskDetail;
-  const _DayEventsView({required this.allEvents, required this.familyId, this.selectedDay, required this.showAppointmentDetail, required this.showTaskDetail});
+  const _DayEventsView({required this.allEvents, required this.familyId, required this.isCaregiver, this.selectedDay, required this.showAppointmentDetail, required this.showTaskDetail});
 
   @override
   Widget build(BuildContext context) {
     if (selectedDay == null) return const Center(child: Text('请选择日期'));
-    final dayEvents = allEvents[DateTime(selectedDay!.year, selectedDay!.month, selectedDay!.day)] ?? [];
+    var dayEvents = allEvents[DateTime(selectedDay!.year, selectedDay!.month, selectedDay!.day)] ?? [];
+    // 保姆模式过滤掉复诊
+    if (isCaregiver) {
+      dayEvents = dayEvents.where((e) => e.type == EventType.task).toList();
+    }
     if (dayEvents.isEmpty) {
-      return const EmptyState(emoji: '📅', title: '当天暂无安排', subtitle: '点击右上角"+"添加');
+      return EmptyState(
+        emoji: '📅',
+        title: isCaregiver ? '今天没有分配给我的任务' : '当天暂无安排',
+        subtitle: isCaregiver ? '等待管理员分配任务' : '点击右上角"+"添加',
+      );
     }
     return ListView(
       physics: const ClampingScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
       children: [
-        if (dayEvents.any((e) => e.type == EventType.appointment)) ...[
+        if (!isCaregiver && dayEvents.any((e) => e.type == EventType.appointment)) ...[
           const _SectionTag(label: '复诊', color: AppColors.coral),
           const SizedBox(height: 8),
           ...dayEvents.where((e) => e.type == EventType.appointment)
@@ -654,6 +693,11 @@ class _TaskCardState extends ConsumerState<_TaskCard> {
   bool get _isCancelled => widget.task.status == 'cancelled';
   bool get _canComplete {
     final role = ref.watch(currentFamilyProvider)?.myRole ?? FamilyMemberRole.guest;
+    if (role == FamilyMemberRole.caregiver) {
+      // 照护人只能完成分配给自己的任务
+      final currentUserId = ref.watch(authStateProvider).user?.id;
+      return currentUserId != null && widget.task.assigneeId == currentUserId;
+    }
     return role.canCompleteTask;
   }
   Color get _statusColor {

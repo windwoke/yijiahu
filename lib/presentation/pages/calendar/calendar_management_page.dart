@@ -61,6 +61,27 @@ class _CalendarManagementPageState extends ConsumerState<CalendarManagementPage>
 
     final role = family.myRole;
 
+    // 保姆模式只有任务Tab
+    final isCaregiver = role == FamilyMemberRole.caregiver;
+
+    if (isCaregiver) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          title: const Text('我的任务'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_rounded),
+            onPressed: () => context.pop(),
+          ),
+        ),
+        body: _TaskTab(
+          familyId: family.id,
+          canManage: false,
+          canComplete: role.canCompleteTask,
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -749,6 +770,12 @@ class _TaskListCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isPending = task.status == 'pending' || task.status == 'overdue';
+    // 照护人只能完成分配给自己的任务
+    final role = ref.watch(currentFamilyProvider)?.myRole ?? FamilyMemberRole.guest;
+    final currentUserId = ref.watch(authStateProvider).user?.id;
+    final canCompleteThis = role == FamilyMemberRole.caregiver
+        ? (currentUserId != null && task.assigneeId == currentUserId)
+        : canComplete;
 
     return Container(
       margin: const EdgeInsets.only(top: 12),
@@ -834,7 +861,7 @@ class _TaskListCard extends ConsumerWidget {
                     ],
                   ),
                 ),
-                if (isPending && canComplete) ...[
+                if (isPending && canCompleteThis) ...[
                   const SizedBox(width: 8),
                   InkWell(
                     onTap: () => _completeTask(context, ref),

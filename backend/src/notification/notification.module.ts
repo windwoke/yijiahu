@@ -9,6 +9,8 @@ import { Medication } from '../medication/entities/medication.entity';
 import { CareRecipient } from '../care-recipient/entities/care-recipient.entity';
 import { CaregiverRecord } from '../caregiver-record/entities/caregiver-record.entity';
 import { Appointment } from '../appointment/entities/appointment.entity';
+import { FamilyTask } from '../family-task/entities/family-task.entity';
+import { DailyCareCheckin } from '../daily-care-checkin/entities/daily-care-checkin.entity';
 import { FamilyMember } from '../family/entities/family-member.entity';
 import { User } from '../user/entities/user.entity';
 
@@ -21,6 +23,8 @@ import { User } from '../user/entities/user.entity';
       CareRecipient,
       CaregiverRecord,
       Appointment,
+      FamilyTask,
+      DailyCareCheckin,
       FamilyMember,
       User,
     ]),

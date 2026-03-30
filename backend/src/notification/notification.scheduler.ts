@@ -1,12 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, MoreThanOrEqual, LessThan, IsNull, Between } from 'typeorm';
+import { Repository, IsNull, Between } from 'typeorm';
 import { MedicationLog, MedicationLogStatus } from '../medication-log/entities/medication-log.entity';
 import { Medication } from '../medication/entities/medication.entity';
 import { CareRecipient } from '../care-recipient/entities/care-recipient.entity';
 import { CaregiverRecord } from '../caregiver-record/entities/caregiver-record.entity';
 import { Appointment } from '../appointment/entities/appointment.entity';
+import { FamilyTask, TaskStatus } from '../family-task/entities/family-task.entity';
+import { DailyCareCheckin } from '../daily-care-checkin/entities/daily-care-checkin.entity';
+import { FamilyMember } from '../family/entities/family-member.entity';
 import {
   Notification,
   NotificationType,
@@ -30,6 +33,12 @@ export class NotificationScheduler {
     private readonly caregiverRepo: Repository<CaregiverRecord>,
     @InjectRepository(Appointment)
     private readonly apptRepo: Repository<Appointment>,
+    @InjectRepository(FamilyTask)
+    private readonly taskRepo: Repository<FamilyTask>,
+    @InjectRepository(DailyCareCheckin)
+    private readonly checkinRepo: Repository<DailyCareCheckin>,
+    @InjectRepository(FamilyMember)
+    private readonly memberRepo: Repository<FamilyMember>,
     @InjectRepository(Notification)
     private readonly notificationRepo: Repository<Notification>,
     private readonly notificationSvc: NotificationService,
@@ -236,6 +245,124 @@ export class NotificationScheduler {
       }
     } catch (e) {
       this.logger.error('handleAppointmentReminders 出错', e);
+    }
+  }
+
+  /**
+   * 任务到期提醒：每分钟执行，检查未来 15 分钟内到期的任务
+   * - 仅通知负责人（assignee）
+   * - 排除已通知过的任务
+   */
+  @Cron(CronExpression.EVERY_MINUTE)
+  async handleTaskReminders() {
+    try {
+      const now = new Date();
+      const in15min = new Date(now.getTime() + 15 * 60 * 1000);
+
+      // 查找 nextDueAt 在 [now, now+15min) 的待办任务
+      const tasks = await this.taskRepo
+        .createQueryBuilder('t')
+        .leftJoinAndSelect('t.recipient', 'recipient')
+        .where('t.status = :pending', { pending: TaskStatus.PENDING })
+        .andWhere('t.nextDueAt BETWEEN :now AND :in15min', { now, in15min })
+        .getMany();
+
+      for (const task of tasks) {
+        // 检查是否已发送提醒
+        const alreadySent = await this.notificationRepo.findOne({
+          where: {
+            sourceId: task.id,
+            type: NotificationType.TASK_REMINDER,
+          },
+        });
+        if (alreadySent) continue;
+
+        await this.notificationSvc.create({
+          userId: task.assigneeId,
+          familyId: task.familyId,
+          type: NotificationType.TASK_REMINDER,
+          title: '任务提醒',
+          body: task.recipient
+            ? `${task.recipient.name}的任务「${task.title}」即将到期`
+            : `任务「${task.title}」即将到期`,
+          level: NotificationLevel.NORMAL,
+          sourceType: 'family_task',
+          sourceId: task.id,
+          channel: NotificationChannel.APP,
+          dataJson: {
+            taskId: task.id,
+            recipientId: task.recipientId,
+            title: task.title,
+          },
+        });
+
+        this.logger.debug(`任务提醒已发送：${task.title} → ${task.assigneeId}`);
+      }
+    } catch (e) {
+      this.logger.error('handleTaskReminders 出错', e);
+    }
+  }
+
+  /**
+   * 每日护理打卡提醒：每天 09:00 执行
+   * - 查找前一日未打卡的照护对象
+   * - 通知该对象的当前照护人
+   */
+  @Cron('0 0 9 * * *') // 每天 09:00
+  async handleDailyCheckinReminders() {
+    try {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      yesterday.setHours(0, 0, 0, 0);
+      const yesterdayEnd = new Date(yesterday);
+      yesterdayEnd.setHours(23, 59, 59, 999);
+
+      // 查找所有照护对象
+      const recipients = await this.recipientRepo.find();
+
+      for (const recipient of recipients) {
+        // 检查昨日是否已打卡
+        const checkedIn = await this.checkinRepo.findOne({
+          where: {
+            careRecipientId: recipient.id,
+            checkinDate: Between(yesterday, yesterdayEnd),
+          },
+        });
+        if (checkedIn) continue; // 已打卡，跳过
+
+        // 获取当前照护人
+        const caregiver = await this.getCurrentCaregiver(recipient.id);
+        if (!caregiver) continue;
+
+        // 检查是否已发送打卡提醒（用日期+照护对象+类型去重）
+        const alreadySent = await this.notificationRepo.findOne({
+          where: {
+            sourceId: recipient.id,
+            type: NotificationType.DAILY_CHECKIN,
+          },
+        });
+        if (alreadySent) continue;
+
+        await this.notificationSvc.create({
+          userId: caregiver.caregiverId,
+          familyId: recipient.familyId,
+          type: NotificationType.DAILY_CHECKIN,
+          title: '每日打卡提醒',
+          body: `${recipient.name}昨日（${yesterday.getMonth() + 1}/${yesterday.getDate()}）尚未提交护理打卡，请及时补录`,
+          level: NotificationLevel.NORMAL,
+          sourceType: 'daily_care_checkin',
+          sourceId: recipient.id,
+          channel: NotificationChannel.APP,
+          dataJson: {
+            recipientId: recipient.id,
+            checkinDate: yesterday.toISOString().split('T')[0],
+          },
+        });
+
+        this.logger.debug(`打卡提醒已发送：${recipient.name} → ${caregiver.caregiverId}`);
+      }
+    } catch (e) {
+      this.logger.error('handleDailyCheckinReminders 出错', e);
     }
   }
 

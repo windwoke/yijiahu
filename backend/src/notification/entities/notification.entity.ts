@@ -11,16 +11,19 @@ import {
 import { User } from '../../user/entities/user.entity';
 import { Family } from '../../family/entities/family.entity';
 
+// L0+L1 已实现
 export enum NotificationType {
   MEDICATION_REMINDER = 'medication_reminder',
   MISSED_DOSE = 'missed_dose',
   APPOINTMENT_REMINDER = 'appointment_reminder',
-  TASK_REMINDER = 'task_reminder',
-  TASK_ASSIGNED = 'task_assigned',
   SOS = 'sos',
   SOS_ACKNOWLEDGED = 'sos_acknowledged',
+  // L2 后续实现
   MEMBER_JOINED = 'member_joined',
   MEMBER_LEFT = 'member_left',
+  TASK_REMINDER = 'task_reminder',
+  TASK_ASSIGNED = 'task_assigned',
+  TASK_COMPLETED = 'task_completed',
   DAILY_CHECKIN = 'daily_checkin',
   HEALTH_ALERT = 'health_alert',
   CAREGIVER_CHANGED = 'caregiver_changed',

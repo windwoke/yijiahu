@@ -26,43 +26,6 @@ class HomePage extends ConsumerStatefulWidget {
 class _HomePageState extends ConsumerState<HomePage> {
   bool _onboardingShown = false;
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // 主动检查当前状态（可能已加载）
-      _checkAndShowOnboarding();
-      // 监听 myFamiliesProvider 后续变化
-      ref.listen(myFamiliesProvider, (prev, next) {
-        if (_onboardingShown) return;
-        next.whenData((list) {
-          if (list.isEmpty) {
-            _onboardingShown = true;
-            _showOnboardingSheet();
-          }
-        });
-      });
-      // 监听家庭切换，重置标志（允许再次触发引导）
-      ref.listen(currentFamilyProvider, (prev, next) {
-        if (prev?.id != next?.id) {
-          _onboardingShown = false;
-          _checkAndShowOnboarding();
-        }
-      });
-    });
-  }
-
-  void _checkAndShowOnboarding() {
-    if (_onboardingShown) return;
-    final families = ref.read(myFamiliesProvider);
-    families.whenData((list) {
-      if (list.isEmpty) {
-        _onboardingShown = true;
-        _showOnboardingSheet();
-      }
-    });
-  }
-
   void _showOnboardingSheet() {
     showModalBottomSheet(
       context: context,
@@ -81,6 +44,17 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    // watch myFamiliesProvider，等异步加载完成后判断是否显示引导
+    final familiesAsync = ref.watch(myFamiliesProvider);
+    familiesAsync.whenData((list) {
+      if (!_onboardingShown && list.isEmpty) {
+        _onboardingShown = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _showOnboardingSheet();
+        });
+      }
+    });
+
     final recipientsAsync = ref.watch(careRecipientsProvider);
 
     return Scaffold(

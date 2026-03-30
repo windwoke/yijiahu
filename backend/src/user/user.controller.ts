@@ -52,9 +52,8 @@ export class UserController {
       if (family) return { family: { ...family, myRole: firstMember.role } };
     }
 
-    // 新用户：自动创建家庭
-    const family = await this.familyService.create(userId, { name: '我的家庭' });
-    return { family };
+    // 新用户无家庭：返回 null，由 Flutter 端显示引导弹层
+    return { family: null };
   }
 
   @Get('me/families')

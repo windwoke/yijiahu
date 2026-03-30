@@ -4,7 +4,7 @@ import { Repository, LessThanOrEqual } from 'typeorm';
 import { FamilyTask, TaskFrequency, TaskStatus } from './entities/family-task.entity';
 import { TaskCompletion } from './entities/task-completion.entity';
 import { CreateFamilyTaskDto, UpdateFamilyTaskDto, CompleteTaskDto } from './dto/family-task.dto';
-import { FamilyMember } from '../family/entities/family-member.entity';
+import { FamilyMember, FamilyMemberRole } from '../family/entities/family-member.entity';
 
 @Injectable()
 export class FamilyTaskService {
@@ -14,8 +14,10 @@ export class FamilyTaskService {
     @InjectRepository(FamilyMember) private memberRepo: Repository<FamilyMember>,
   ) {}
 
-  /** 按年月筛选任务：返回该月到期的任务 + 该月完成的任务（最多100条） */
-  async findByFamily(familyId: string, year?: number, month?: number) {
+  /** 按年月筛选任务：返回该月到期的任务 + 该月完成的任务（最多100条）
+   * caregiver 只能看到分配给自己的任务
+   */
+  async findByFamily(familyId: string, userId: string, year?: number, month?: number) {
     const tasks = await this.taskRepo.find({
       where: { familyId },
       relations: ['assignee', 'recipient', 'createdBy'],
@@ -23,14 +25,20 @@ export class FamilyTaskService {
       take: 100,
     });
 
+    // caregiver 只能看到分配给自己的任务
+    const role = await this.getMemberRole(userId, familyId);
+    const visible = role === FamilyMemberRole.CAREGIVER
+      ? tasks.filter(t => t.assigneeId === userId)
+      : tasks;
+
     if (year == null || month == null) {
-      return this.enrichWithNicknames(tasks, familyId);
+      return this.enrichWithNicknames(visible, familyId);
     }
 
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59);
 
-    const filtered = tasks.filter(t => {
+    const filtered = visible.filter(t => {
       if (t.nextDueAt) {
         const d = new Date(t.nextDueAt);
         if (d >= startDate && d <= endDate) return true;
@@ -40,6 +48,11 @@ export class FamilyTaskService {
 
     return this.enrichWithNicknames(filtered, familyId);
   }
+  private async getMemberRole(userId: string, familyId: string): Promise<FamilyMemberRole | null> {
+    const member = await this.memberRepo.findOne({ where: { userId, familyId } });
+    return member?.role ?? null;
+  }
+
   private async enrichWithNicknames(tasks: FamilyTask[], familyId: string): Promise<FamilyTask[]> {
     if (tasks.length === 0) return [];
     const assigneeIds = [...new Set(tasks.map(t => t.assigneeId).filter(Boolean))];
@@ -62,13 +75,21 @@ export class FamilyTaskService {
     }) as unknown as FamilyTask);
   }
 
-  /** 任务详情（含最近完成记录，eager 加载 completedBy 用户） */
-  async findById(id: string, familyId: string) {
+  /** 任务详情（含最近完成记录，eager 加载 completedBy 用户）
+   * caregiver 只能查看分配给自己的任务
+   */
+  async findById(id: string, familyId: string, userId: string) {
     const task = await this.taskRepo.findOne({
       where: { id, familyId },
       relations: ['assignee', 'recipient'],
     });
     if (!task) throw new NotFoundException('任务不存在');
+
+    // caregiver 只能查看分配给自己的任务
+    const role = await this.getMemberRole(userId, familyId);
+    if (role === FamilyMemberRole.CAREGIVER && task.assigneeId !== userId) {
+      throw new NotFoundException('任务不存在');
+    }
 
     // 最近3条完成记录（已完成状态的任务才查）
     const completions = await this.completionRepo.find({
@@ -82,8 +103,10 @@ export class FamilyTaskService {
   }
 
   /** 按家庭查询所有任务 */
-  /** 即将到期的任务（未来7天，排除今天已完成的周期任务实例） */
-  async findUpcoming(familyId: string) {
+  /** 即将到期的任务（未来7天，排除今天已完成的周期任务实例）
+   * caregiver 只能看到分配给自己的任务
+   */
+  async findUpcoming(familyId: string, userId: string) {
     const now = new Date();
     const future = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
@@ -117,7 +140,14 @@ export class FamilyTaskService {
     // 周期任务如果今天已完成，nextDueAt 已在 complete() 时更新为下一个到期，
     // 直接返回即可（不用再调用 calculateNextDue，避免重复推进）
     const pending = tasks.filter(task => !completedTodaySet.has(task.id));
-    return this.enrichWithNicknames(pending, familyId);
+
+    // caregiver 只能看到分配给自己的任务
+    const role = await this.getMemberRole(userId, familyId);
+    const visible = role === FamilyMemberRole.CAREGIVER
+      ? pending.filter(t => t.assigneeId === userId)
+      : pending;
+
+    return this.enrichWithNicknames(visible, familyId);
   }
 
   /** 将 Date 转换为北京时区 YYYY-MM-DD 字符串 */
@@ -128,8 +158,10 @@ export class FamilyTaskService {
     return `${y}-${m}-${d}`;
   }
 
-  /** 按月查询（按原始周期频率展开，不依赖 nextDueAt 过滤，因为 nextDueAt 会随完成而推进） */
-  async findByMonth(familyId: string, year: number, month: number) {
+  /** 按月查询（按原始周期频率展开，不依赖 nextDueAt 过滤，因为 nextDueAt 会随完成而推进）
+   * caregiver 只能看到分配给自己的任务
+   */
+  async findByMonth(familyId: string, userId: string, year: number, month: number) {
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59);
 
@@ -139,7 +171,14 @@ export class FamilyTaskService {
       relations: ['assignee', 'recipient', 'createdBy'],
       order: { nextDueAt: 'ASC' },
     });
-    const tasks = rawTasks.filter(t => t.status !== TaskStatus.CANCELLED);
+    let tasks = rawTasks.filter(t => t.status !== TaskStatus.CANCELLED);
+
+    // caregiver 只能看到分配给自己的任务
+    const role = await this.getMemberRole(userId, familyId);
+    if (role === FamilyMemberRole.CAREGIVER) {
+      tasks = tasks.filter(t => t.assigneeId === userId);
+    }
+
     const enriched = await this.enrichWithNicknames(tasks, familyId);
 
     if (enriched.length === 0) return [];

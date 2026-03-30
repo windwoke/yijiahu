@@ -21,11 +21,13 @@ export class FamilyTaskController {
   @ApiOperation({ summary: '家庭任务列表' })
   findAll(
     @Query('familyId') familyId: string,
+    @CurrentUser('id') userId: string,
     @Query('year') year?: string,
     @Query('month') month?: string,
   ) {
     return this.service.findByFamily(
       familyId,
+      userId,
       year ? parseInt(year) : undefined,
       month ? parseInt(month) : undefined,
     );
@@ -33,18 +35,22 @@ export class FamilyTaskController {
 
   @Get('upcoming')
   @ApiOperation({ summary: '即将到期的任务' })
-  findUpcoming(@Query('familyId') familyId: string) {
-    return this.service.findUpcoming(familyId);
+  findUpcoming(
+    @Query('familyId') familyId: string,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.service.findUpcoming(familyId, userId);
   }
 
   @Get('calendar')
   @ApiOperation({ summary: '任务日历月视图' })
   getCalendar(
     @Query('familyId') familyId: string,
+    @CurrentUser('id') userId: string,
     @Query('year') year: string,
     @Query('month') month: string,
   ) {
-    return this.service.findByMonth(familyId, parseInt(year), parseInt(month));
+    return this.service.findByMonth(familyId, userId, parseInt(year), parseInt(month));
   }
 
   // ⚠️ 动态路由必须放在具体路由之后，否则 /calendar /upcoming 会被 :id 捕获
@@ -53,8 +59,9 @@ export class FamilyTaskController {
   async findOne(
     @Param('id') id: string,
     @Query('familyId') familyId: string,
+    @CurrentUser('id') userId: string,
   ) {
-    return this.service.findById(id, familyId);
+    return this.service.findById(id, familyId, userId);
   }
 
   @Post()

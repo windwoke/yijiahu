@@ -345,6 +345,12 @@ final myFamiliesProvider = FutureProvider<List<models.Family>>((ref) async {
   }
 });
 
+/// 是否显示新用户引导弹层（家庭列表为空且数据加载完成时为 true）
+final showOnboardingProvider = Provider<bool>((ref) {
+  final familiesAsync = ref.watch(myFamiliesProvider);
+  return familiesAsync.valueOrNull?.isEmpty ?? false;
+});
+
 /// 订阅状态
 final subscriptionStatusProvider =
     FutureProvider.family<models.SubscriptionStatus, String>((ref, familyId) async {

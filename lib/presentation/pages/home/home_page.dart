@@ -29,45 +29,15 @@ class _HomePageState extends ConsumerState<HomePage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // 主动检查当前状态（可能已加载）
-      _checkAndShowOnboarding();
-      // 监听 myFamiliesProvider 后续变化
-      ref.listen(myFamiliesProvider, (prev, next) {
-        if (_onboardingShown) return;
-        next.whenData((list) {
-          if (list.isEmpty) {
-            _onboardingShown = true;
-            _showOnboardingSheet();
-          }
-        });
-      });
-      // 监听家庭切换，重置标志（允许再次触发引导）
-      ref.listen(currentFamilyProvider, (prev, next) {
-        if (prev?.id != next?.id) {
-          _onboardingShown = false;
-          _checkAndShowOnboarding();
-        }
-      });
+    // 监听家庭切换，重置引导标志（允许切换家庭后再次触发）
+    ref.listen(currentFamilyProvider, (prev, next) {
+      if (prev?.id != next?.id) {
+        setState(() => _onboardingShown = false);
+      }
     });
   }
 
-  void _checkAndShowOnboarding() {
-    if (_onboardingShown) return;
-    final families = ref.read(myFamiliesProvider);
-    families.when(
-      data: (list) {
-        if (list.isEmpty) {
-          _onboardingShown = true;
-          _showOnboardingSheet();
-        }
-      },
-      loading: () {},
-      error: (_, __) {},
-    );
-  }
-
-  void _showOnboardingSheet() {
+  void _showOnboarding() {
     setState(() => _onboardingShown = true);
   }
 
@@ -78,6 +48,14 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    // watch myFamiliesProvider，provider 数据就绪后自动触发引导检查
+    final familiesAsync = ref.watch(myFamiliesProvider);
+    familiesAsync.whenData((list) {
+      if (!_onboardingShown && list.isEmpty) {
+        _showOnboarding();
+      }
+    });
+
     final recipientsAsync = ref.watch(careRecipientsProvider);
 
     return Scaffold(

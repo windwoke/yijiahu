@@ -91,12 +91,14 @@ export class MedicationLogService {
     });
 
     // 取出打卡人信息（用 FamilyMember.nickname）
+    // takenBy 存的是 userId，通过 userId + familyId 匹配 FamilyMember 查 nickname
     const userIds = logs.map(l => l.takenBy).filter(Boolean);
     const members = userIds.length > 0
       ? await this.memberRepo
           .createQueryBuilder('m')
           .leftJoinAndSelect('m.user', 'user')
           .where('m.userId IN (:...userIds)', { userIds })
+          .andWhere('m.familyId = :familyId', { familyId })
           .getMany()
       : [];
     const memberMap = new Map(members.map(m => [m.userId, {

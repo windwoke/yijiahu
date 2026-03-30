@@ -44,7 +44,7 @@ export class MedicationLog {
   takenAt: Date;
 
   @Column({ nullable: true })
-  takenBy: string; // familyMemberId
+  takenBy: string; // userId，记录打卡人的用户ID
 
   @Column({ nullable: true })
   note: string;

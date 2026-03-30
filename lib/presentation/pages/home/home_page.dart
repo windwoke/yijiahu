@@ -26,72 +26,97 @@ class HomePage extends ConsumerStatefulWidget {
 class _HomePageState extends ConsumerState<HomePage> {
   bool _onboardingShown = false;
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // 主动检查当前状态（可能已加载）
+      _checkAndShowOnboarding();
+      // 监听 myFamiliesProvider 后续变化
+      ref.listen(myFamiliesProvider, (prev, next) {
+        if (_onboardingShown) return;
+        next.whenData((list) {
+          if (list.isEmpty) {
+            _onboardingShown = true;
+            _showOnboardingSheet();
+          }
+        });
+      });
+      // 监听家庭切换，重置标志（允许再次触发引导）
+      ref.listen(currentFamilyProvider, (prev, next) {
+        if (prev?.id != next?.id) {
+          _onboardingShown = false;
+          _checkAndShowOnboarding();
+        }
+      });
+    });
+  }
+
+  void _checkAndShowOnboarding() {
+    if (_onboardingShown) return;
+    final families = ref.read(myFamiliesProvider);
+    families.whenData((list) {
+      if (list.isEmpty) {
+        _onboardingShown = true;
+        _showOnboardingSheet();
+      }
+    });
+  }
+
   void _showOnboardingSheet() {
-    showModalBottomSheet(
-      context: context,
-      isDismissible: false,
-      enableDrag: false,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (ctx) => _FamilyOnboardingSheet(
-        onComplete: () {
-          Navigator.pop(ctx);
-          ref.invalidate(myFamiliesProvider);
-        },
-      ),
-    );
+    setState(() => _onboardingShown = true);
+  }
+
+  void _hideOnboarding() {
+    setState(() => _onboardingShown = false);
+    ref.invalidate(myFamiliesProvider);
   }
 
   @override
   Widget build(BuildContext context) {
-    // watch myFamiliesProvider，等异步加载完成后判断是否显示引导
-    final familiesAsync = ref.watch(myFamiliesProvider);
-    familiesAsync.whenData((list) {
-      if (!_onboardingShown && list.isEmpty) {
-        _onboardingShown = true;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _showOnboardingSheet();
-        });
-      }
-    });
-
     final recipientsAsync = ref.watch(careRecipientsProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Column(
+      body: Stack(
         children: [
-          SafeArea(
-            bottom: false,
-            child: _buildGlassTopBar(context),
-          ),
-          Expanded(
-            child: recipientsAsync.when(
-              data: (recipients) {
-                if (recipients.isEmpty) {
-                  return _buildEmptyStateContent(context);
-                }
-                return _buildScrollableContent(context, recipients);
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stack) => Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.error_outline,
-                        size: 48, color: AppColors.error),
-                    const SizedBox(height: 16),
-                    Text('加载失败: $error'),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () => ref.invalidate(careRecipientsProvider),
-                      child: const Text('重试'),
+          Column(
+            children: [
+              SafeArea(
+                bottom: false,
+                child: _buildGlassTopBar(context),
+              ),
+              Expanded(
+                child: recipientsAsync.when(
+                  data: (recipients) {
+                    if (recipients.isEmpty) {
+                      return _buildEmptyStateContent(context);
+                    }
+                    return _buildScrollableContent(context, recipients);
+                  },
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (error, stack) => Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.error_outline,
+                            size: 48, color: AppColors.error),
+                        const SizedBox(height: 16),
+                        Text('加载失败: $error'),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () => ref.invalidate(careRecipientsProvider),
+                          child: const Text('重试'),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
+          if (_onboardingShown)
+            _FamilyOnboardingOverlay(onComplete: _hideOnboarding),
         ],
       ),
       // SOS 按钮固定在底部
@@ -1248,17 +1273,36 @@ class _DailyCareBanner extends ConsumerWidget {
   }
 }
 
-/// 家庭引导页（新用户无家庭时弹出）
-class _FamilyOnboardingSheet extends ConsumerStatefulWidget {
+/// 家庭引导遮罩（全屏覆盖，禁用底部 Tab 切换）
+class _FamilyOnboardingOverlay extends StatelessWidget {
   final VoidCallback onComplete;
 
-  const _FamilyOnboardingSheet({required this.onComplete});
+  const _FamilyOnboardingOverlay({required this.onComplete});
 
   @override
-  ConsumerState<_FamilyOnboardingSheet> createState() => _FamilyOnboardingSheetState();
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.black.withValues(alpha: 0.5),
+      child: SafeArea(
+        child: Center(
+          child: _FamilyOnboardingCard(onComplete: onComplete),
+        ),
+      ),
+    );
+  }
 }
 
-class _FamilyOnboardingSheetState extends ConsumerState<_FamilyOnboardingSheet> {
+/// 家庭引导卡片（弹窗风格）
+class _FamilyOnboardingCard extends ConsumerStatefulWidget {
+  final VoidCallback onComplete;
+
+  const _FamilyOnboardingCard({required this.onComplete});
+
+  @override
+  ConsumerState<_FamilyOnboardingCard> createState() => _FamilyOnboardingCardState();
+}
+
+class _FamilyOnboardingCardState extends ConsumerState<_FamilyOnboardingCard> {
   bool _joining = false; // 切换到邀请码输入模式
   final _inviteCodeController = TextEditingController();
   bool _isLoading = false;
@@ -1327,148 +1371,135 @@ class _FamilyOnboardingSheetState extends ConsumerState<_FamilyOnboardingSheet> 
     }
   }
 
-@override
+  @override
   Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.all(24),
-      child: Material(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // 图标
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Center(
-                  child: Text('👨‍👩‍👧‍👦', style: TextStyle(fontSize: 32)),
-                ),
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(24),
+      elevation: 8,
+      shadowColor: Colors.black.withValues(alpha: 0.2),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 图标
+            Container(
+              width: 64, height: 64,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
               ),
-              const SizedBox(height: 16),
+              child: const Center(
+                child: Text('👨‍👩‍👧‍👦', style: TextStyle(fontSize: 32)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              '欢迎使用一家护',
+              style: TextStyle(
+                fontSize: 20, fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              '创建或加入一个家庭，开始使用',
+              style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 24),
+            if (!_joining) ...[
+              // 两列按钮
+              Row(
+                children: [
+                  Expanded(
+                    child: _OnboardBtn(
+                      emoji: '🏠', label: '创建新家庭',
+                      color: AppColors.primary,
+                      onTap: _createFamily,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _OnboardBtn(
+                      emoji: '🔗', label: '输入邀请码加入',
+                      color: AppColors.blue,
+                      onTap: () => setState(() => _joining = true),
+                    ),
+                  ),
+                ],
+              ),
+            ] else ...[
+              // 邀请码输入
               const Text(
-                '欢迎使用一家护',
+                '输入家庭邀请码',
                 style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 15, fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
               ),
-              const SizedBox(height: 8),
-              const Text(
-                '创建或加入一个家庭，开始使用',
-                style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _inviteCodeController,
+                autofocus: true,
+                textCapitalization: TextCapitalization.characters,
+                style: const TextStyle(fontSize: 16, letterSpacing: 2),
+                decoration: InputDecoration(
+                  hintText: '请输入 8 位邀请码',
+                  hintStyle: const TextStyle(color: AppColors.grey400, letterSpacing: 0),
+                  filled: true,
+                  fillColor: AppColors.surfaceContainerLow,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                ),
               ),
-              const SizedBox(height: 24),
-              if (!_joining) ...[
-                // 两列按钮
-                Row(
-                  children: [
-                    Expanded(
-                      child: _OnboardBtn(
-                        emoji: '🏠',
-                        label: '创建新家庭',
-                        color: AppColors.primary,
-                        onTap: _createFamily,
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => setState(() => _joining = false),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.textSecondary,
+                        side: const BorderSide(color: AppColors.border),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
+                      child: const Text('返回'),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _OnboardBtn(
-                        emoji: '🔗',
-                        label: '输入邀请码加入',
-                        color: AppColors.blue,
-                        onTap: () => setState(() => _joining = true),
-                      ),
-                    ),
-                  ],
-                ),
-              ] else ...[
-                // 邀请码输入
-                const Text(
-                  '输入家庭邀请码',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
                   ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _inviteCodeController,
-                  autofocus: true,
-                  textCapitalization: TextCapitalization.characters,
-                  style: const TextStyle(fontSize: 16, letterSpacing: 2),
-                  decoration: InputDecoration(
-                    hintText: '请输入 8 位邀请码',
-                    hintStyle: const TextStyle(color: AppColors.grey400, letterSpacing: 0),
-                    filled: true,
-                    fillColor: AppColors.surfaceContainerLow,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _joinFamily,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.blue,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      child: _isLoading
+                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          : const Text('确认加入', style: TextStyle(fontWeight: FontWeight.w600)),
                     ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.primary, width: 2),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => setState(() => _joining = false),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.textSecondary,
-                          side: const BorderSide(color: AppColors.border),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
-                        child: const Text('返回'),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _joinFamily,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.blue,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                              )
-                            : const Text('确认加入', style: TextStyle(fontWeight: FontWeight.w600)),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                ],
+              ),
             ],
-          ),
+          ],
         ),
       ),
     );
   }
 }
-
-
 
 /// 引导页操作按钮
 class _OnboardBtn extends StatelessWidget {

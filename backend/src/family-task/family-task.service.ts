@@ -25,9 +25,9 @@ export class FamilyTaskService {
       take: 100,
     });
 
-    // caregiver 只能看到分配给自己的任务
+    // caregiver/guest 只能看到分配给自己的任务
     const role = await this.getMemberRole(userId, familyId);
-    const visible = role === FamilyMemberRole.CAREGIVER
+    const visible = [FamilyMemberRole.CAREGIVER, FamilyMemberRole.GUEST].includes(role as FamilyMemberRole)
       ? tasks.filter(t => t.assigneeId === userId)
       : tasks;
 
@@ -85,9 +85,9 @@ export class FamilyTaskService {
     });
     if (!task) throw new NotFoundException('任务不存在');
 
-    // caregiver 只能查看分配给自己的任务
+    // caregiver/guest 只能查看分配给自己的任务
     const role = await this.getMemberRole(userId, familyId);
-    if (role === FamilyMemberRole.CAREGIVER && task.assigneeId !== userId) {
+    if ([FamilyMemberRole.CAREGIVER, FamilyMemberRole.GUEST].includes(role as FamilyMemberRole) && task.assigneeId !== userId) {
       throw new NotFoundException('任务不存在');
     }
 

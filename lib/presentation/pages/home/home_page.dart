@@ -49,12 +49,17 @@ class _HomePageState extends ConsumerState<HomePage> {
   @override
   Widget build(BuildContext context) {
     // watch myFamiliesProvider，provider 数据就绪后自动触发引导检查
+    // 用 when 而非 whenData：确保 provider 已是 data 状态时也能触发
     final familiesAsync = ref.watch(myFamiliesProvider);
-    familiesAsync.whenData((list) {
-      if (!_onboardingShown && list.isEmpty) {
-        _showOnboarding();
-      }
-    });
+    familiesAsync.when(
+      data: (list) {
+        if (!_onboardingShown && list.isEmpty) {
+          _showOnboarding();
+        }
+      },
+      loading: () {},
+      error: (_, __) {},
+    );
 
     final recipientsAsync = ref.watch(careRecipientsProvider);
 

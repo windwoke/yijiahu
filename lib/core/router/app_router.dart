@@ -24,7 +24,6 @@ import '../../presentation/pages/care-recipient/add_care_recipient_page.dart';
 import '../../presentation/pages/care-recipient/care_recipient_detail_page.dart';
 import '../../presentation/pages/daily-care/daily_care_page.dart';
 import '../../presentation/providers/auth_provider.dart';
-import '../../presentation/providers/providers.dart';
 
 /// 路由名称
 class AppRoutes {
@@ -182,72 +181,58 @@ final routerProvider = Provider<GoRouter>((ref) {
   );
 });
 
-/// 主页面脚手架（含底部导航，切换家庭后自动修复路由）
-class MainScaffold extends ConsumerStatefulWidget {
+/// 主页面脚手架（含底部导航）
+class MainScaffold extends StatelessWidget {
   final Widget child;
 
   const MainScaffold({super.key, required this.child});
 
   @override
-  ConsumerState<MainScaffold> createState() => _MainScaffoldState();
-}
-
-class _MainScaffoldState extends ConsumerState<MainScaffold> {
-  bool _listening = false;
-
-  @override
-  void initState() {
-    super.initState();
-    // 监听家庭切换，切换后验证当前路由是否对新角色有效
-    // 注意：listener 在 initState 时会立即触发一次，用 _listening 过滤首次
-    ref.listen(currentFamilyProvider, (prev, next) {
-      if (!_listening) { _listening = true; return; } // 跳过首次触发
-      if (prev?.id == next?.id) return;
-      final isCaregiver = next?.myRole == FamilyMemberRole.caregiver;
-      final location = GoRouterState.of(context).uri.path;
-      final validRoutes = isCaregiver
-          ? {AppRoutes.home, AppRoutes.careLog, AppRoutes.profile}
-          : {AppRoutes.home, AppRoutes.calendar, AppRoutes.careLog, AppRoutes.family, AppRoutes.profile};
-      if (!validRoutes.contains(location)) {
-        context.go(AppRoutes.home);
-      }
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: widget.child,
+      body: child,
       bottomNavigationBar: const MainBottomNav(),
     );
   }
 }
 
-/// 底部导航栏（品牌化定制，动态适配保姆模式）
-class MainBottomNav extends ConsumerWidget {
+/// 底部导航栏（品牌化定制）
+class MainBottomNav extends StatelessWidget {
   const MainBottomNav({super.key});
 
+  int _calculateSelectedIndex(BuildContext context) {
+    final location = GoRouterState.of(context).uri.path;
+    if (location == AppRoutes.home || location == '/') return 0;
+    if (location.startsWith(AppRoutes.calendar)) return 1;
+    if (location.startsWith(AppRoutes.careLog)) return 2;
+    if (location.startsWith(AppRoutes.family)) return 3;
+    if (location.startsWith(AppRoutes.profile)) return 4;
+    return 0;
+  }
+
+  void _onItemTapped(BuildContext context, int index) {
+    switch (index) {
+      case 0:
+        context.go(AppRoutes.home);
+        break;
+      case 1:
+        context.go(AppRoutes.calendar);
+        break;
+      case 2:
+        context.go(AppRoutes.careLog);
+        break;
+      case 3:
+        context.go(AppRoutes.family);
+        break;
+      case 4:
+        context.go(AppRoutes.profile);
+        break;
+    }
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final family = ref.watch(currentFamilyProvider);
-    final isCaregiver = family?.myRole == FamilyMemberRole.caregiver;
-
-    // 保姆模式只有首页/日志/我的 3个Tab
-    final navItems = isCaregiver
-        ? [
-            _NavItemData(AppRoutes.home, '首页', Icons.home_rounded, Icons.home_outlined),
-            _NavItemData(AppRoutes.careLog, '日志', Icons.edit_note_rounded, Icons.edit_note_outlined),
-            _NavItemData(AppRoutes.profile, '我的', Icons.person_rounded, Icons.person_outlined),
-          ]
-        : [
-            _NavItemData(AppRoutes.home, '首页', Icons.home_rounded, Icons.home_outlined),
-            _NavItemData(AppRoutes.calendar, '日历', Icons.calendar_today_rounded, Icons.calendar_today_outlined),
-            _NavItemData(AppRoutes.careLog, '日志', Icons.edit_note_rounded, Icons.edit_note_outlined),
-            _NavItemData(AppRoutes.family, '家庭', Icons.people_rounded, Icons.people_outlined),
-            _NavItemData(AppRoutes.profile, '我的', Icons.person_rounded, Icons.person_outlined),
-          ];
-
-    final selectedIndex = _calculateSelectedIndex(context, isCaregiver);
+  Widget build(BuildContext context) {
+    final selectedIndex = _calculateSelectedIndex(context);
 
     return Container(
       decoration: BoxDecoration(
@@ -274,39 +259,53 @@ class MainBottomNav extends ConsumerWidget {
           height: 64,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: List.generate(navItems.length, (i) {
-              final item = navItems[i];
-              return _NavItem(
-                icon: selectedIndex == i ? item.iconSelected : item.icon,
-                label: item.label,
-                isSelected: selectedIndex == i,
-                onTap: () => context.go(item.route),
-              );
-            }),
+            children: [
+              _NavItem(
+                icon: selectedIndex == 0
+                    ? Icons.home_rounded
+                    : Icons.home_outlined,
+                label: '首页',
+                isSelected: selectedIndex == 0,
+                onTap: () => _onItemTapped(context, 0),
+              ),
+              _NavItem(
+                icon: selectedIndex == 1
+                    ? Icons.calendar_today_rounded
+                    : Icons.calendar_today_outlined,
+                label: '日历',
+                isSelected: selectedIndex == 1,
+                onTap: () => _onItemTapped(context, 1),
+              ),
+              _NavItem(
+                icon: selectedIndex == 2
+                    ? Icons.edit_note_rounded
+                    : Icons.edit_note_outlined,
+                label: '日志',
+                isSelected: selectedIndex == 2,
+                onTap: () => _onItemTapped(context, 2),
+              ),
+              _NavItem(
+                icon: selectedIndex == 3
+                    ? Icons.people_rounded
+                    : Icons.people_outlined,
+                label: '家庭',
+                isSelected: selectedIndex == 3,
+                onTap: () => _onItemTapped(context, 3),
+              ),
+              _NavItem(
+                icon: selectedIndex == 4
+                    ? Icons.person_rounded
+                    : Icons.person_outlined,
+                label: '我的',
+                isSelected: selectedIndex == 4,
+                onTap: () => _onItemTapped(context, 4),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
-
-  int _calculateSelectedIndex(BuildContext context, bool isCaregiver) {
-    final location = GoRouterState.of(context).uri.path;
-    if (location == AppRoutes.home || location == '/') return 0;
-    if (location.startsWith(AppRoutes.calendar)) return isCaregiver ? -1 : 1;
-    if (location.startsWith(AppRoutes.careLog)) return isCaregiver ? 1 : 2;
-    if (location.startsWith(AppRoutes.family)) return isCaregiver ? -1 : 3;
-    if (location.startsWith(AppRoutes.profile)) return isCaregiver ? 2 : 4;
-    return 0;
-  }
-}
-
-/// 导航项数据
-class _NavItemData {
-  final String route;
-  final String label;
-  final IconData iconSelected;
-  final IconData icon;
-  const _NavItemData(this.route, this.label, this.iconSelected, this.icon);
 }
 
 /// 底部导航单项

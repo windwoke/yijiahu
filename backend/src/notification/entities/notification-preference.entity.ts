@@ -38,6 +38,9 @@ export class NotificationPreference {
   dailyCheckin: boolean;
 
   @Column({ type: 'boolean', default: true })
+  dailyCheckinCompleted: boolean;
+
+  @Column({ type: 'boolean', default: true })
   healthAlert: boolean;
 
   @Column({ type: 'boolean', default: true })

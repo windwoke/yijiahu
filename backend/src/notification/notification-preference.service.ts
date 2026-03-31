@@ -28,7 +28,7 @@ export class NotificationPreferenceService {
     }
     const allowedFields: (keyof UpdatePreferenceDto)[] = [
       'medicationReminder', 'missedDose', 'appointmentReminder',
-      'taskReminder', 'taskAssigned', 'dailyCheckin', 'healthAlert', 'sosEnabled',
+      'taskReminder', 'taskAssigned', 'dailyCheckin', 'dailyCheckinCompleted', 'healthAlert', 'sosEnabled',
       'memberJoined', 'careLog',
       'medicationLeadMinutes', 'appointmentLeadHours',
       'dndEnabled', 'dndStart', 'dndEnd',
@@ -52,7 +52,7 @@ export class NotificationPreferenceService {
       task_reminder: 'taskReminder',
       task_assigned: 'taskAssigned',
       daily_checkin: 'dailyCheckin',
-      daily_checkin_completed: 'dailyCheckin',
+      daily_checkin_completed: 'dailyCheckinCompleted',
       health_alert: 'healthAlert',
       sos: 'sosEnabled',
       member_joined: 'memberJoined',

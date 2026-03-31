@@ -28,6 +28,10 @@ export class UpdatePreferenceDto {
 
   @IsOptional()
   @IsBoolean()
+  dailyCheckinCompleted?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
   healthAlert?: boolean;
 
   @IsOptional()

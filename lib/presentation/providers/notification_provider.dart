@@ -81,7 +81,9 @@ class NotificationPreference {
   final bool missedDose;
   final bool appointmentReminder;
   final bool taskReminder;
+  final bool taskAssigned;
   final bool dailyCheckin;
+  final bool dailyCheckinCompleted;
   final bool healthAlert;
   final bool sosEnabled;
   final bool memberJoined;
@@ -101,7 +103,9 @@ class NotificationPreference {
     this.missedDose = true,
     this.appointmentReminder = true,
     this.taskReminder = true,
+    this.taskAssigned = true,
     this.dailyCheckin = true,
+    this.dailyCheckinCompleted = true,
     this.healthAlert = true,
     this.sosEnabled = true,
     this.memberJoined = true,
@@ -123,7 +127,9 @@ class NotificationPreference {
       missedDose: json['missedDose'] as bool? ?? true,
       appointmentReminder: json['appointmentReminder'] as bool? ?? true,
       taskReminder: json['taskReminder'] as bool? ?? true,
+      taskAssigned: json['taskAssigned'] as bool? ?? true,
       dailyCheckin: json['dailyCheckin'] as bool? ?? true,
+      dailyCheckinCompleted: json['dailyCheckinCompleted'] as bool? ?? true,
       healthAlert: json['healthAlert'] as bool? ?? true,
       sosEnabled: json['sosEnabled'] as bool? ?? true,
       memberJoined: json['memberJoined'] as bool? ?? true,
@@ -145,7 +151,9 @@ class NotificationPreference {
     bool? missedDose,
     bool? appointmentReminder,
     bool? taskReminder,
+    bool? taskAssigned,
     bool? dailyCheckin,
+    bool? dailyCheckinCompleted,
     bool? healthAlert,
     bool? sosEnabled,
     bool? memberJoined,
@@ -165,7 +173,9 @@ class NotificationPreference {
       missedDose: missedDose ?? this.missedDose,
       appointmentReminder: appointmentReminder ?? this.appointmentReminder,
       taskReminder: taskReminder ?? this.taskReminder,
+      taskAssigned: taskAssigned ?? this.taskAssigned,
       dailyCheckin: dailyCheckin ?? this.dailyCheckin,
+      dailyCheckinCompleted: dailyCheckinCompleted ?? this.dailyCheckinCompleted,
       healthAlert: healthAlert ?? this.healthAlert,
       sosEnabled: sosEnabled ?? this.sosEnabled,
       memberJoined: memberJoined ?? this.memberJoined,

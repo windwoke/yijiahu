@@ -69,7 +69,9 @@ class _NotificationSettingsPageState extends ConsumerState<NotificationSettingsP
       case 'missedDose': return _pref!.missedDose;
       case 'appointmentReminder': return _pref!.appointmentReminder;
       case 'taskReminder': return _pref!.taskReminder;
+      case 'taskAssigned': return _pref!.taskAssigned;
       case 'dailyCheckin': return _pref!.dailyCheckin;
+      case 'dailyCheckinCompleted': return _pref!.dailyCheckinCompleted;
       case 'healthAlert': return _pref!.healthAlert;
       case 'sosEnabled': return _pref!.sosEnabled;
       case 'dndEnabled': return _pref!.dndEnabled;
@@ -174,6 +176,14 @@ class _NotificationSettingsPageState extends ConsumerState<NotificationSettingsP
             subtitle: '前一日未打卡时09:00发送提醒',
             value: _getBoolValue('dailyCheckin', true),
             onChanged: (v) => _onToggle('dailyCheckin', v),
+          ),
+          _buildDivider(),
+          _buildSwitchItem(
+            icon: Icons.check_circle_outline_rounded,
+            title: '护理打卡完成通知',
+            subtitle: '家庭成员完成打卡时通知其他成员',
+            value: _getBoolValue('dailyCheckinCompleted', true),
+            onChanged: (v) => _onToggle('dailyCheckinCompleted', v),
           ),
           _buildDivider(),
           _buildSwitchItem(

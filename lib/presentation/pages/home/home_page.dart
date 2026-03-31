@@ -159,17 +159,18 @@ class _HomePageState extends ConsumerState<HomePage> {
                   Consumer(
                     builder: (context, ref, child) {
                       final unreadCount = ref.watch(unreadCountProvider);
+                      final hasUnread = unreadCount.hasValue && (unreadCount.value ?? 0) > 0;
                       return IconButton(
                         onPressed: () => context.push(AppRoutes.notifications),
                         icon: Stack(
                           clipBehavior: Clip.none,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.notifications_rounded,
-                              color: AppColors.textPrimary,
+                              color: hasUnread ? AppColors.primary : AppColors.textPrimary,
                               size: 22,
                             ),
-                            if (unreadCount.hasValue && (unreadCount.value ?? 0) > 0)
+                            if (hasUnread)
                               Positioned(
                                 right: -4,
                                 top: -4,

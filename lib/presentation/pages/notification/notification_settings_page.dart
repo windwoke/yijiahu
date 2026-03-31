@@ -428,65 +428,70 @@ class _NotificationSettingsPageState extends ConsumerState<NotificationSettingsP
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.surface,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (ctx) {
+        // 固定头部估算高度
+        const headerHeight = 120.0;
+        // 用屏幕高度的 45% 减去固定头部，得出列表最大高度
+        final screenH = MediaQuery.of(context).size.height;
+        final maxListH = (screenH * 0.45 - headerHeight).clamp(80.0, screenH * 0.5);
+
         return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                margin: const EdgeInsets.only(top: 12),
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.grey300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(top: 12),
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.grey300,
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-              ),
-              // 限制高度，超出部分可滚动
-              ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * 0.45,
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: options.length,
-                  itemBuilder: (context, i) {
-                    final isSelected = i == currentIndex;
-                    return ListTile(
-                      title: Text(
-                        options[i],
-                        style: TextStyle(
-                          color: isSelected ? AppColors.primary : AppColors.textPrimary,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                SizedBox(
+                  height: maxListH,
+                  child: ListView.builder(
+                    itemCount: options.length,
+                    itemBuilder: (ctx2, i) {
+                      final isSelected = i == currentIndex;
+                      return ListTile(
+                        title: Text(
+                          options[i],
+                          style: TextStyle(
+                            color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                          ),
                         ),
-                      ),
-                      trailing: isSelected
-                          ? const Icon(Icons.check_rounded, color: AppColors.primary)
-                          : null,
-                      onTap: () {
-                        onSelect(i);
-                        Navigator.pop(ctx);
-                      },
-                    );
-                  },
+                        trailing: isSelected
+                            ? const Icon(Icons.check_rounded, color: AppColors.primary)
+                            : null,
+                        onTap: () {
+                          onSelect(i);
+                          Navigator.pop(ctx);
+                        },
+                      );
+                    },
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-            ],
+              ],
+            ),
           ),
         );
       },

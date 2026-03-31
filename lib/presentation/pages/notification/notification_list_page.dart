@@ -232,6 +232,12 @@ class _NotificationListPageState extends ConsumerState<NotificationListPage> {
     await deleteNotification(ref, n.id);
     setState(() => _notifications.remove(n));
   }
+
+  @override
+  void dispose() {
+    ref.invalidate(unreadCountProvider);
+    super.dispose();
+  }
 }
 
 class _NotificationItem extends StatelessWidget {

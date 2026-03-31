@@ -121,12 +121,12 @@ server {
 NGINXEOF
 
 ln -sf /etc/nginx/sites-available/yijiahu /etc/nginx/sites-enabled/yijiahu
-nginx -t && systemctl reload nginx
-systemctl restart nginx
+nginx -t && systemctl restart nginx
 log_ok "Nginx configured (HTTP only, certbot will add SSL)"
 
 # ── 6. SSL Certificate ──
 log_info "[6/8] Getting SSL certificate..."
+systemctl restart nginx
 certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos --email "admin@$DOMAIN" --redirect > /dev/null 2>&1 || true
 systemctl enable certbot.timer
 systemctl start certbot.timer

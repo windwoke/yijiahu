@@ -413,7 +413,7 @@ class _NotificationSettingsPageState extends ConsumerState<NotificationSettingsP
     String label(int h) {
       if (h >= 72) return '3 天';
       if (h >= 48) return '2 天';
-      if (h >= 24) return '$h 小时（${h ~/ 24} 天）';
+      if (h >= 24) return '1 天';
       return '$h 小时';
     }
     _showPicker(

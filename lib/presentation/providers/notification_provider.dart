@@ -193,12 +193,12 @@ final notificationPreferenceProvider = FutureProvider<NotificationPreference>((r
 });
 
 /// 更新通知偏好（单个字段）
+/// 注意：不 invalidate 缓存，由 UI 本地 _pendingChanges 管理乐观更新
 Future<NotificationPreference> updateNotificationPreference(
   WidgetRef ref,
   Map<String, dynamic> updates,
 ) async {
   final dio = ref.read(dioProvider);
   final response = await dio.put('/notification-preferences', data: updates);
-  ref.invalidate(notificationPreferenceProvider);
   return NotificationPreference.fromJson(response.data as Map<String, dynamic>);
 }

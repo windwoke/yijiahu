@@ -279,7 +279,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             _buildSettingItem(
               icon: Icons.notifications_rounded,
               title: '通知设置',
-              onTap: () => _showToast('通知设置'),
+              onTap: () => context.push(AppRoutes.notificationSettings),
             ),
             _buildDivider(),
             _buildSettingItem(

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull, Between } from 'typeorm';
@@ -17,6 +17,7 @@ import {
 } from './entities/notification.entity';
 import { NotificationService } from './notification.service';
 import { NotificationChannel } from './entities/notification.entity';
+import { NotificationPreferenceService } from './notification-preference.service';
 
 @Injectable()
 export class NotificationScheduler {
@@ -42,12 +43,14 @@ export class NotificationScheduler {
     @InjectRepository(Notification)
     private readonly notificationRepo: Repository<Notification>,
     private readonly notificationSvc: NotificationService,
+    @Inject(NotificationPreferenceService)
+    private readonly prefSvc: NotificationPreferenceService,
   ) {}
 
   /**
-   * 用药提醒：每分钟执行，检查未来 5 分钟内需要服药的记录
+   * 用药提醒：每分钟执行，检查未来 N 分钟内需要服药的记录
+   * - N 由用户偏好 medicationLeadMinutes 控制（默认 5 分钟）
    * - 向当前照护人推送提醒
-   * - 排除已打卡或已通知过的记录
    */
   @Cron(CronExpression.EVERY_MINUTE)
   async handleMedicationReminders() {
@@ -55,7 +58,6 @@ export class NotificationScheduler {
       const now = new Date();
       const nowStr = now.toTimeString().substring(0, 5); // "HH:mm"
 
-      // 查找今日所有待服用的用药记录
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
       const todayEnd = new Date();
@@ -72,17 +74,21 @@ export class NotificationScheduler {
       for (const log of pendingLogs) {
         if (!log.medication) continue;
 
-        // 检查是否在提醒窗口（服药时间前 5 分钟内）
-        const scheduledTime = log.scheduledTime; // "HH:mm"
+        const scheduledTime = log.scheduledTime;
         const [schedHour, schedMin] = scheduledTime.split(':').map(Number);
         const [nowHour, nowMin] = nowStr.split(':').map(Number);
         const schedMinutes = schedHour * 60 + schedMin;
         const nowMinutes = nowHour * 60 + nowMin;
 
-        // 提醒窗口：服药时间前 5 分钟到服药时间
-        if (schedMinutes - nowMinutes > 5 || schedMinutes < nowMinutes) continue;
+        // 照护人偏好提前时间（分钟）
+        const caregiver = await this.getCurrentCaregiver(log.recipientId);
+        if (!caregiver) continue;
+        const leadMinutes = await this.prefSvc.getMedicationLeadMinutes(caregiver.caregiverId);
 
-        // 检查是否已发送过提醒（通过 sourceId 去重）
+        // 提醒窗口：服药时间前 leadMinutes 分钟内
+        if (schedMinutes - nowMinutes > leadMinutes || schedMinutes < nowMinutes) continue;
+
+        // 检查是否已发送过提醒
         const alreadySent = await this.notificationRepo.findOne({
           where: {
             sourceId: log.id,
@@ -90,10 +96,6 @@ export class NotificationScheduler {
           },
         });
         if (alreadySent) continue;
-
-        // 获取照护人
-        const caregiver = await this.getCurrentCaregiver(log.recipientId);
-        if (!caregiver) continue;
 
         const recipient = await this.recipientRepo.findOne({ where: { id: log.recipientId } });
 
@@ -114,7 +116,7 @@ export class NotificationScheduler {
           },
         });
 
-        this.logger.debug(`用药提醒已发送：${log.medication.name} → ${caregiver.caregiverId}`);
+        this.logger.debug(`用药提醒已发送：${log.medication.name} → ${caregiver.caregiverId}（提前${leadMinutes}分钟）`);
       }
     } catch (e) {
       this.logger.error('handleMedicationReminders 出错', e);
@@ -195,19 +197,21 @@ export class NotificationScheduler {
   }
 
   /**
-   * 复诊提醒：每小时执行，检查 24 小时内即将到来的复诊
+   * 复诊提醒：每小时执行，检查 N 小时内即将到来的复诊
+   * - N 由用户偏好 appointmentLeadHours 控制（默认 24 小时）
    */
   @Cron(CronExpression.EVERY_HOUR)
   async handleAppointmentReminders() {
     try {
       const now = new Date();
-      const in24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      const leadHours = 24; // TODO: 可扩展为 per-member 偏好
+      const inHours = new Date(now.getTime() + leadHours * 60 * 60 * 1000);
 
       const upcomingAppts = await this.apptRepo
         .createQueryBuilder('a')
         .leftJoinAndSelect('a.recipient', 'recipient')
         .leftJoinAndSelect('a.assignedDriver', 'driver')
-        .where('a.appointmentTime BETWEEN :now AND :in24h', { now, in24h })
+        .where('a.appointmentTime BETWEEN :now AND :inHours', { now, inHours })
         .andWhere('a.status = :status', { status: 'upcoming' })
         .getMany();
 

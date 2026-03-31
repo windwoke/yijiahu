@@ -11,6 +11,7 @@ import {
 import { CreateNotificationDto, BroadcastNotificationDto } from './dto/notification.dto';
 import { FamilyMember } from '../family/entities/family-member.entity';
 import { User } from '../user/entities/user.entity';
+import { NotificationPreferenceService } from './notification-preference.service';
 
 @Injectable()
 export class NotificationService {
@@ -21,6 +22,7 @@ export class NotificationService {
     private readonly memberRepo: Repository<FamilyMember>,
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+    private readonly prefSvc: NotificationPreferenceService,
   ) {}
 
   /** 查询用户通知列表（分页） */
@@ -61,9 +63,24 @@ export class NotificationService {
   }
 
   /** 创建单条通知并推送 */
-  async create(dto: CreateNotificationDto): Promise<Notification> {
+  async create(dto: CreateNotificationDto): Promise<Notification | null> {
+    const userId = dto.userId;
+
+    // SOS 强制推送，绕过所有限制
+    const isUrgent = dto.level === NotificationLevel.URGENT || dto.type === NotificationType.SOS;
+
+    if (!isUrgent) {
+      // 检查通知类型开关
+      const enabled = await this.prefSvc.isTypeEnabled(userId, dto.type);
+      if (!enabled) return null;
+
+      // 检查免打扰时段（非 SOS 通知）
+      const inDnd = await this.prefSvc.isInDndPeriod(userId);
+      if (inDnd) return null;
+    }
+
     const n = this.repo.create({
-      userId: dto.userId,
+      userId,
       familyId: dto.familyId,
       type: dto.type,
       title: dto.title,
@@ -80,7 +97,7 @@ export class NotificationService {
     const saved = (await this.repo.save(n) as unknown) as Notification;
 
     // TODO: 触发极光推送（生产环境）
-    // await this.pushToUser(dto.userId, saved);
+    // await this.pushToUser(userId, saved);
 
     return saved;
   }

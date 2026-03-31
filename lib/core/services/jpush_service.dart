@@ -12,9 +12,10 @@ class JPushService {
   factory JPushService() => _instance;
   JPushService._internal();
 
-  late final JPushFlutterInterface _jpush;
+  JPushFlutterInterface? _jpush;
   final FlutterLocalNotificationsPlugin _localNotif = FlutterLocalNotificationsPlugin();
   bool _initialized = false;
+  bool _supported = false;
 
   /// 通知点击回调（App运行时点击推送触发）
   void Function(Map<String, dynamic> extra)? onNotificationTap;
@@ -25,6 +26,12 @@ class JPushService {
   Future<void> initialize() async {
     if (_initialized) return;
     _initialized = true;
+
+    // 未配置 AppKey 时跳过
+    if (_jpushAppKey.isEmpty) {
+      debugPrint('[JPush] 未配置 JPUSH_APP_KEY，跳过初始化');
+      return;
+    }
 
     // 初始化本地通知（用于展示收到的推送）
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -38,34 +45,46 @@ class JPushService {
       iOS: iosSettings,
     );
 
-    await _localNotif.initialize(
-      initSettings,
-      onDidReceiveNotificationResponse: _onLocalNotificationTap,
-    );
+    try {
+      await _localNotif.initialize(
+        initSettings,
+        onDidReceiveNotificationResponse: _onLocalNotificationTap,
+      );
+    } catch (e) {
+      debugPrint('[JPush] 本地通知初始化失败: $e');
+    }
 
-    // 获取 JPush 实例
-    _jpush = JPush.newJPush();
+    try {
+      // 获取 JPush 实例
+      _jpush = JPush.newJPush();
 
-    // 初始化（同步调用）
-    _jpush.setup(
-      appKey: _jpushAppKey,
-      production: dotenv.env['FLUTTER_ENV'] == 'prod',
-      channel: dotenv.env['FLUTTER_ENV'] == 'prod' ? 'production' : 'development',
-      debug: dotenv.env['FLUTTER_ENV'] != 'prod',
-    );
+      // 初始化（同步调用）
+      _jpush!.setup(
+        appKey: _jpushAppKey,
+        production: dotenv.env['FLUTTER_ENV'] == 'prod',
+        channel: dotenv.env['FLUTTER_ENV'] == 'prod' ? 'production' : 'development',
+        debug: dotenv.env['FLUTTER_ENV'] != 'prod',
+      );
 
-    // iOS 申请推送权限
-    _jpush.applyPushAuthority();
+      // iOS 申请推送权限
+      _jpush!.applyPushAuthority();
 
-    // 监听接收消息（EventHandler = Future<dynamic> Function(Map)）
-    _jpush.addEventHandler(
-      onReceiveNotification: _handleReceiveNotification,
-      onOpenNotification: _handleOpenNotification,
-      onReceiveMessage: _handleReceiveMessage,
-    );
+      // 监听接收消息（EventHandler = Future<dynamic> Function(Map)）
+      _jpush!.addEventHandler(
+        onReceiveNotification: _handleReceiveNotification,
+        onOpenNotification: _handleOpenNotification,
+        onReceiveMessage: _handleReceiveMessage,
+      );
 
-    // 延迟获取 registration ID（setup 后才能拿到）
-    Future.delayed(const Duration(seconds: 3), _registerDevice);
+      _supported = true;
+      debugPrint('[JPush] 初始化成功');
+
+      // 延迟获取 registration ID（setup 后才能拿到）
+      Future.delayed(const Duration(seconds: 3), _registerDevice);
+    } catch (e) {
+      debugPrint('[JPush] 初始化失败（可能是模拟器或平台不支持）: $e');
+      _supported = false;
+    }
   }
 
   Future<dynamic> _handleReceiveNotification(Map<String, dynamic> message) async {
@@ -106,12 +125,14 @@ class JPushService {
     );
     const details = NotificationDetails(android: androidDetails, iOS: iosDetails);
 
-    await _localNotif.show(
-      DateTime.now().millisecondsSinceEpoch % 100000,
-      title,
-      body,
-      details,
-    );
+    try {
+      await _localNotif.show(
+        DateTime.now().millisecondsSinceEpoch % 100000,
+        title,
+        body,
+        details,
+      );
+    } catch (_) {}
   }
 
   void _onLocalNotificationTap(NotificationResponse response) {
@@ -120,8 +141,10 @@ class JPushService {
 
   /// 注册设备到后端
   Future<void> _registerDevice() async {
+    if (!_supported || _jpush == null) return;
+
     try {
-      final registrationId = await _jpush.getRegistrationID();
+      final registrationId = await _jpush!.getRegistrationID();
       if (registrationId.isEmpty) return;
 
       final prefs = await SharedPreferences.getInstance();
@@ -151,8 +174,10 @@ class JPushService {
 
   /// 登录后关联别名
   Future<void> setAlias(String userId) async {
+    if (!_supported || _jpush == null) return;
+
     try {
-      await _jpush.setAlias(userId);
+      await _jpush!.setAlias(userId);
       debugPrint('[JPush] 设置别名成功: $userId');
     } catch (e) {
       debugPrint('[JPush] 设置别名失败: $e');
@@ -161,16 +186,20 @@ class JPushService {
 
   /// 退出登录时清除别名
   Future<void> deleteAlias() async {
+    if (!_supported || _jpush == null) return;
+
     try {
-      await _jpush.deleteAlias();
+      await _jpush!.deleteAlias();
       debugPrint('[JPush] 清除别名成功');
     } catch (_) {}
   }
 
   /// 清除 iOS badge
   Future<void> clearBadge() async {
+    if (!_supported || _jpush == null) return;
+
     try {
-      await _jpush.setBadge(0);
+      await _jpush!.setBadge(0);
     } catch (_) {}
   }
 }

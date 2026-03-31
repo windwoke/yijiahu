@@ -30,6 +30,10 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true
+        manifestPlaceholders += mapOf(
+            "JPUSH_CHANNEL" to "default_channel",
+            "JPUSH_APPKEY" to ""
+        )
     }
 
     buildTypes {

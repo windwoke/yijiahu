@@ -58,8 +58,8 @@ class SosAlert extends Equatable {
       familyId: json['familyId'] as String? ?? json['family_id'] as String? ?? '',
       recipientId: json['recipientId'] as String? ?? json['recipient_id'] as String?,
       triggeredById: json['triggeredById'] as String? ?? json['triggered_by_id'] as String? ?? '',
-      latitude: (json['latitude'] as num?)?.toDouble(),
-      longitude: (json['longitude'] as num?)?.toDouble(),
+      latitude: _parseDouble(json['latitude']),
+      longitude: _parseDouble(json['longitude']),
       address: json['address'] as String?,
       status: SosStatus.fromString(json['status'] as String?),
       acknowledgedById: json['acknowledgedById'] as String? ?? json['acknowledged_by_id'] as String?,
@@ -84,4 +84,11 @@ class SosAlert extends Equatable {
 
   @override
   List<Object?> get props => [id, familyId, status, createdAt];
+}
+
+double? _parseDouble(dynamic value) {
+  if (value == null) return null;
+  if (value is num) return value.toDouble();
+  if (value is String) return double.tryParse(value);
+  return null;
 }

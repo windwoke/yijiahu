@@ -40,6 +40,8 @@ final unreadCountProvider = AsyncNotifierProvider<_UnreadCountNotifier, int>(
 class _UnreadCountNotifier extends AsyncNotifier<int> {
   @override
   Future<int> build() async {
+    // watch currentFamilyProvider，切换家庭时自动重新拉取
+    ref.watch(currentFamilyProvider);
     return _fetch();
   }
 

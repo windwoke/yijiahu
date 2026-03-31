@@ -316,44 +316,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
           const SizedBox(height: 16),
 
-          // 提醒
-          _buildSectionHeader('提醒'),
-          _buildCard([
-            _buildSettingItem(
-              icon: Icons.schedule_outlined,
-              title: '用药提醒提前',
-              subtitle: '15 分钟',
-              trailing: const Icon(Icons.chevron_right, color: AppColors.textTertiary, size: 20),
-              onTap: () => _showToast('用药提醒提前'),
-            ),
-            _buildDivider(),
-            _buildSettingItem(
-              icon: Icons.event_outlined,
-              title: '复诊提醒提前',
-              subtitle: '48 小时',
-              trailing: const Icon(Icons.chevron_right, color: AppColors.textTertiary, size: 20),
-              onTap: () => _showToast('复诊提醒提前'),
-            ),
-            _buildDivider(),
-            _buildSettingItem(
-              icon: Icons.volume_up_rounded,
-              title: '推送声音',
-              subtitle: '默认',
-              trailing: const Icon(Icons.chevron_right, color: AppColors.textTertiary, size: 20),
-              onTap: () => _showToast('推送声音'),
-            ),
-            _buildDivider(),
-            _buildSettingItem(
-              icon: Icons.do_not_disturb_on_outlined,
-              title: '免打扰时段',
-              subtitle: '22:00 - 07:00',
-              trailing: const Icon(Icons.chevron_right, color: AppColors.textTertiary, size: 20),
-              onTap: () => _showToast('免打扰时段'),
-            ),
-          ]),
-
-          const SizedBox(height: 16),
-
           // 微信生态
           _buildSectionHeader('微信生态'),
           _buildCard([

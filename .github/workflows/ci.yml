@@ -27,7 +27,7 @@ jobs:
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
       - name: Test
-        run: flutter test --passWithNoTests
+        run: if [ -d "test" ]; then flutter test; fi
 
   # push 到 main 时构建 iOS（仅 macOS runner 可构建 iOS）
   build-ios:

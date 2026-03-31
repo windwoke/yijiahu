@@ -159,7 +159,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   Consumer(
                     builder: (context, ref, child) {
                       final unreadCount = ref.watch(unreadCountProvider);
-                      final hasUnread = unreadCount.hasValue && (unreadCount.value ?? 0) > 0;
+                      final hasUnread = unreadCount > 0;
                       return IconButton(
                         onPressed: () => context.push(AppRoutes.notifications),
                         icon: Stack(
@@ -183,9 +183,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                                   constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
                                   child: Center(
                                     child: Text(
-                                      (unreadCount.value ?? 0) > 99
-                                          ? '99+'
-                                          : '${unreadCount.value ?? 0}',
+                                      unreadCount > 99 ? '99+' : '$unreadCount',
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 9,

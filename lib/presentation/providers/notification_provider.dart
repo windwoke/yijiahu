@@ -30,25 +30,44 @@ final notificationListProvider = FutureProvider.family<List<AppNotification>, in
   },
 );
 
-/// 未读数
-final unreadCountProvider = FutureProvider<int>((ref) async {
-  final dio = ref.read(dioProvider);
-  try {
-    final response = await dio.get('/notifications/unread-count');
-    final data = response.data as Map<String, dynamic>?;
-    return data?['count'] as int? ?? 0;
-  } catch (_) {
+/// 未读数 Notifier（autoDispose：重新watch时自动fetch最新值）
+final unreadCountProvider = NotifierProvider.autoDispose<_UnreadCountNotifier, int>(
+  _UnreadCountNotifier.new,
+);
+
+class _UnreadCountNotifier extends AutoDisposeNotifier<int> {
+  @override
+  int build() {
+    _fetch();
     return 0;
   }
-});
+
+  Future<void> _fetch() async {
+    final dio = ref.read(dioProvider);
+    try {
+      final response = await dio.get('/notifications/unread-count');
+      final data = response.data as Map<String, dynamic>?;
+      state = data?['count'] as int? ?? 0;
+    } catch (_) {
+      state = 0;
+    }
+  }
+
+  void decrement() {
+    if (state > 0) state = state - 1;
+  }
+
+  void setZero() {
+    state = 0;
+  }
+}
 
 /// 标记单条已读
 Future<void> markAsRead(WidgetRef ref, String notificationId) async {
   final dio = ref.read(dioProvider);
   try {
     await dio.put('/notifications/$notificationId/read');
-    // 刷新未读数
-    ref.invalidate(unreadCountProvider);
+    ref.read(unreadCountProvider.notifier).decrement();
   } catch (_) {}
 }
 
@@ -57,7 +76,7 @@ Future<void> markAllAsRead(WidgetRef ref) async {
   final dio = ref.read(dioProvider);
   try {
     await dio.put('/notifications/read-all');
-    ref.invalidate(unreadCountProvider);
+    ref.read(unreadCountProvider.notifier).setZero();
   } catch (_) {}
 }
 

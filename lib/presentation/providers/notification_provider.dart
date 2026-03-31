@@ -30,35 +30,40 @@ final notificationListProvider = FutureProvider.family<List<AppNotification>, in
   },
 );
 
-/// 未读数 Notifier（autoDispose：重新watch时自动fetch最新值）
-final unreadCountProvider = NotifierProvider.autoDispose<_UnreadCountNotifier, int>(
+/// 未读数 AsyncNotifier（autoDispose：重新watch时自动fetch最新值）
+final unreadCountProvider = AsyncNotifierProvider.autoDispose<_UnreadCountNotifier, int>(
   _UnreadCountNotifier.new,
 );
 
-class _UnreadCountNotifier extends AutoDisposeNotifier<int> {
+class _UnreadCountNotifier extends AutoDisposeAsyncNotifier<int> {
   @override
-  int build() {
-    _fetch();
-    return 0;
+  Future<int> build() async {
+    return _fetch();
   }
 
-  Future<void> _fetch() async {
+  Future<int> _fetch() async {
     final dio = ref.read(dioProvider);
     try {
       final response = await dio.get('/notifications/unread-count');
       final data = response.data as Map<String, dynamic>?;
-      state = data?['count'] as int? ?? 0;
+      return data?['count'] as int? ?? 0;
     } catch (_) {
-      state = 0;
+      return 0;
     }
   }
 
+  Future<void> refresh() async {
+    state = const AsyncLoading();
+    state = AsyncData(await _fetch());
+  }
+
   void decrement() {
-    if (state > 0) state = state - 1;
+    final current = state.valueOrNull ?? 0;
+    if (current > 0) state = AsyncData(current - 1);
   }
 
   void setZero() {
-    state = 0;
+    state = const AsyncData(0);
   }
 }
 

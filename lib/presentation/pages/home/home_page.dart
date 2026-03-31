@@ -158,7 +158,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                   // 通知图标
                   Consumer(
                     builder: (context, ref, child) {
-                      final unreadCount = ref.watch(unreadCountProvider);
+                      final unreadAsync = ref.watch(unreadCountProvider);
+                      final unreadCount = unreadAsync.valueOrNull ?? 0;
                       final hasUnread = unreadCount > 0;
                       return IconButton(
                         onPressed: () => context.push(AppRoutes.notifications),

@@ -316,26 +316,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
           const SizedBox(height: 16),
 
-          // 微信生态
-          _buildSectionHeader('微信生态'),
-          _buildCard([
-            _buildSettingItem(
-              icon: Icons.chat_bubble_outline_rounded,
-              title: '微信服务通知',
-              trailing: _buildSwitch(true, (_) {}),
-              onTap: null,
-            ),
-            _buildDivider(),
-            _buildSettingItem(
-              icon: Icons.share_outlined,
-              title: '微信分享',
-              trailing: _buildSwitch(true, (_) {}),
-              onTap: null,
-            ),
-          ]),
-
-          const SizedBox(height: 16),
-
           // 订阅
           _buildSectionHeader('订阅'),
           _buildSubscriptionCard(family?.id),

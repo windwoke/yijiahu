@@ -142,8 +142,8 @@ jobs:
           echo "在服务器执行部署..."
           ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_HOST << 'REMOTE'
             set -e
-            APP_DIR="/opt/yijiahu"
-            BACKUP_DIR="/opt/yijiahu_backup_$(date +%Y%m%d_%H%M%S)"
+            APP_DIR="/opt/yijiahu/yijiahu"
+            BACKUP_DIR="/opt/yijiahu/yijiahu_backup_$(date +%Y%m%d_%H%M%S)"
             ENV_FILE="$APP_DIR/.env.prod"
 
             # 备份当前版本
@@ -153,19 +153,15 @@ jobs:
 
             # 解压新版本
             mkdir -p "$APP_DIR/backend"
-            tar -xzf /tmp/yijiahu-backend.tar.gz -C /APP_DIR/backend/
+            tar -xzf /tmp/yijiahu-backend.tar.gz -C "$APP_DIR/backend/"
 
             cd "$APP_DIR/backend"
 
             # 安装依赖（生产）
-            npm ci --production --omit=dev 2>/dev/null || npm ci --omit=dev
+            npm ci --omit=dev 2>/dev/null || npm ci --production
 
-            # 数据库迁移
-            if [[ "${{ github.event.inputs.skip_migrate }}" != "true" ]]; then
-              echo "执行数据库迁移..."
-              source "$ENV_FILE"
-              npx prisma migrate deploy || echo "迁移完成或无需迁移"
-            fi
+            # 构建（TypeORM 不需要迁移，synchronize 已关闭）
+            npm run build
 
             # 重启服务
             systemctl restart yijiahu

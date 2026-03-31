@@ -16,9 +16,8 @@ class NotificationSettingsPage extends ConsumerStatefulWidget {
 
 class _NotificationSettingsPageState extends ConsumerState<NotificationSettingsPage> {
   bool _isLoading = true;
-  late NotificationPreference _pref;
+  NotificationPreference? _pref;
   final Map<String, dynamic> _pendingChanges = {};
-  bool _hasChanges = false;
 
   @override
   void initState() {
@@ -27,53 +26,55 @@ class _NotificationSettingsPageState extends ConsumerState<NotificationSettingsP
   }
 
   Future<void> _loadPreferences() async {
-    final pref = await ref.read(notificationPreferenceProvider.future);
-    if (mounted) {
-      setState(() {
-        _pref = pref;
-        _isLoading = false;
-      });
+    try {
+      final pref = await ref.read(notificationPreferenceProvider.future);
+      if (mounted) {
+        setState(() {
+          _pref = pref;
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   void _onToggle(String key, bool value) {
-    setState(() {
-      _pendingChanges[key] = value;
-      _hasChanges = true;
-    });
+    setState(() => _pendingChanges[key] = value);
     _savePreference({key: value});
   }
 
   void _onIntChange(String key, int value) {
-    setState(() {
-      _pendingChanges[key] = value;
-      _hasChanges = true;
-    });
+    setState(() => _pendingChanges[key] = value);
     _savePreference({key: value});
   }
 
   Future<void> _savePreference(Map<String, dynamic> updates) async {
     try {
-      await updateNotificationPreference(ref, updates);
+      final updated = await updateNotificationPreference(ref, updates);
+      // 用 API 返回的完整数据更新本地缓存，避免 invalidate 重刷覆盖 pendingChanges
+      if (mounted) setState(() => _pref = updated);
     } catch (_) {}
   }
 
-  bool _getValue(String key, bool defaultVal) {
-    return _pendingChanges[key] ?? _pref != null ? _getPrefValue(key, defaultVal) : defaultVal;
+  bool _getBoolValue(String key, bool defaultVal) {
+    if (_pendingChanges.containsKey(key)) return _pendingChanges[key] as bool;
+    if (_pref != null) return _getPrefBool(key, defaultVal);
+    return defaultVal;
   }
 
-  bool _getPrefValue(String key, bool defaultVal) {
+  bool _getPrefBool(String key, bool defaultVal) {
     switch (key) {
-      case 'medicationReminder': return _pref.medicationReminder;
-      case 'missedDose': return _pref.missedDose;
-      case 'appointmentReminder': return _pref.appointmentReminder;
-      case 'taskReminder': return _pref.taskReminder;
-      case 'dailyCheckin': return _pref.dailyCheckin;
-      case 'healthAlert': return _pref.healthAlert;
-      case 'sosEnabled': return _pref.sosEnabled;
-      case 'dndEnabled': return _pref.dndEnabled;
-      case 'soundEnabled': return _pref.soundEnabled;
-      case 'vibrationEnabled': return _pref.vibrationEnabled;
+      case 'medicationReminder': return _pref!.medicationReminder;
+      case 'missedDose': return _pref!.missedDose;
+      case 'appointmentReminder': return _pref!.appointmentReminder;
+      case 'taskReminder': return _pref!.taskReminder;
+      case 'dailyCheckin': return _pref!.dailyCheckin;
+      case 'healthAlert': return _pref!.healthAlert;
+      case 'sosEnabled': return _pref!.sosEnabled;
+      case 'dndEnabled': return _pref!.dndEnabled;
+      case 'soundEnabled': return _pref!.soundEnabled;
+      case 'vibrationEnabled': return _pref!.vibrationEnabled;
       default: return defaultVal;
     }
   }
@@ -82,8 +83,8 @@ class _NotificationSettingsPageState extends ConsumerState<NotificationSettingsP
     if (_pendingChanges.containsKey(key)) return _pendingChanges[key] as int;
     if (_pref != null) {
       switch (key) {
-        case 'medicationLeadMinutes': return _pref.medicationLeadMinutes;
-        case 'appointmentLeadHours': return _pref.appointmentLeadHours;
+        case 'medicationLeadMinutes': return _pref!.medicationLeadMinutes;
+        case 'appointmentLeadHours': return _pref!.appointmentLeadHours;
       }
     }
     return defaultVal;
@@ -93,8 +94,8 @@ class _NotificationSettingsPageState extends ConsumerState<NotificationSettingsP
     if (_pendingChanges.containsKey(key)) return _pendingChanges[key] as String;
     if (_pref != null) {
       switch (key) {
-        case 'dndStart': return _pref.dndStart;
-        case 'dndEnd': return _pref.dndEnd;
+        case 'dndStart': return _pref!.dndStart;
+        case 'dndEnd': return _pref!.dndEnd;
       }
     }
     return defaultVal;
@@ -102,8 +103,6 @@ class _NotificationSettingsPageState extends ConsumerState<NotificationSettingsP
 
   @override
   Widget build(BuildContext context) {
-    final prefAsync = ref.watch(notificationPreferenceProvider);
-
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -126,11 +125,7 @@ class _NotificationSettingsPageState extends ConsumerState<NotificationSettingsP
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : prefAsync.when(
-              data: (_) => _buildContent(),
-              loading: () => _buildContent(),
-              error: (_, __) => _buildContent(),
-            ),
+          : _buildContent(),
     );
   }
 
@@ -145,7 +140,7 @@ class _NotificationSettingsPageState extends ConsumerState<NotificationSettingsP
             icon: Icons.medication_outlined,
             title: '用药提醒',
             subtitle: '药品服用时间前发送提醒',
-            value: _getValue('medicationReminder', true),
+            value: _getBoolValue('medicationReminder', true),
             onChanged: (v) => _onToggle('medicationReminder', v),
           ),
           _buildDivider(),
@@ -153,7 +148,7 @@ class _NotificationSettingsPageState extends ConsumerState<NotificationSettingsP
             icon: Icons.warning_amber_rounded,
             title: '漏服通知',
             subtitle: '服药时间超过30分钟未打卡时通知',
-            value: _getValue('missedDose', true),
+            value: _getBoolValue('missedDose', true),
             onChanged: (v) => _onToggle('missedDose', v),
           ),
           _buildDivider(),
@@ -161,7 +156,7 @@ class _NotificationSettingsPageState extends ConsumerState<NotificationSettingsP
             icon: Icons.event_outlined,
             title: '复诊提醒',
             subtitle: '复诊前24小时发送提醒',
-            value: _getValue('appointmentReminder', true),
+            value: _getBoolValue('appointmentReminder', true),
             onChanged: (v) => _onToggle('appointmentReminder', v),
           ),
           _buildDivider(),
@@ -169,7 +164,7 @@ class _NotificationSettingsPageState extends ConsumerState<NotificationSettingsP
             icon: Icons.task_alt_outlined,
             title: '任务提醒',
             subtitle: '家庭任务到期前15分钟通知',
-            value: _getValue('taskReminder', true),
+            value: _getBoolValue('taskReminder', true),
             onChanged: (v) => _onToggle('taskReminder', v),
           ),
           _buildDivider(),
@@ -177,7 +172,7 @@ class _NotificationSettingsPageState extends ConsumerState<NotificationSettingsP
             icon: Icons.edit_calendar_outlined,
             title: '每日打卡提醒',
             subtitle: '前一日未打卡时09:00发送提醒',
-            value: _getValue('dailyCheckin', true),
+            value: _getBoolValue('dailyCheckin', true),
             onChanged: (v) => _onToggle('dailyCheckin', v),
           ),
           _buildDivider(),
@@ -185,7 +180,7 @@ class _NotificationSettingsPageState extends ConsumerState<NotificationSettingsP
             icon: Icons.favorite_outline,
             title: '健康告警',
             subtitle: '血压/血糖超出正常范围时通知',
-            value: _getValue('healthAlert', true),
+            value: _getBoolValue('healthAlert', true),
             onChanged: (v) => _onToggle('healthAlert', v),
           ),
           _buildDivider(),
@@ -193,7 +188,7 @@ class _NotificationSettingsPageState extends ConsumerState<NotificationSettingsP
             icon: Icons.emergency_outlined,
             title: '紧急求助（SOS）',
             subtitle: '家庭成员触发SOS时通知（强制推送）',
-            value: _getValue('sosEnabled', true),
+            value: _getBoolValue('sosEnabled', true),
             onChanged: (v) => _onToggle('sosEnabled', v),
           ),
         ]),
@@ -225,10 +220,10 @@ class _NotificationSettingsPageState extends ConsumerState<NotificationSettingsP
             icon: Icons.do_not_disturb_on_outlined,
             title: '免打扰时段',
             subtitle: '开启后在设定时段内不发送普通通知',
-            value: _getValue('dndEnabled', false),
+            value: _getBoolValue('dndEnabled', false),
             onChanged: (v) => _onToggle('dndEnabled', v),
           ),
-          if (_getValue('dndEnabled', false)) ...[
+          if (_getBoolValue('dndEnabled', false)) ...[
             _buildDivider(),
             _buildPickerItem(
               icon: Icons.bedtime_outlined,
@@ -254,7 +249,7 @@ class _NotificationSettingsPageState extends ConsumerState<NotificationSettingsP
             icon: Icons.volume_up_rounded,
             title: '声音',
             subtitle: '收到通知时播放提示音',
-            value: _getValue('soundEnabled', true),
+            value: _getBoolValue('soundEnabled', true),
             onChanged: (v) => _onToggle('soundEnabled', v),
           ),
           _buildDivider(),
@@ -262,7 +257,7 @@ class _NotificationSettingsPageState extends ConsumerState<NotificationSettingsP
             icon: Icons.vibration_outlined,
             title: '振动',
             subtitle: '收到通知时振动提醒',
-            value: _getValue('vibrationEnabled', true),
+            value: _getBoolValue('vibrationEnabled', true),
             onChanged: (v) => _onToggle('vibrationEnabled', v),
           ),
         ]),
@@ -349,7 +344,7 @@ class _NotificationSettingsPageState extends ConsumerState<NotificationSettingsP
           Switch.adaptive(
             value: value,
             onChanged: onChanged,
-            activeColor: AppColors.primary,
+            activeTrackColor: AppColors.primary,
           ),
         ],
       ),
@@ -461,25 +456,35 @@ class _NotificationSettingsPageState extends ConsumerState<NotificationSettingsP
                   ),
                 ),
               ),
-              ...List.generate(options.length, (i) {
-                final isSelected = i == currentIndex;
-                return ListTile(
-                  title: Text(
-                    options[i],
-                    style: TextStyle(
-                      color: isSelected ? AppColors.primary : AppColors.textPrimary,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                    ),
-                  ),
-                  trailing: isSelected
-                      ? const Icon(Icons.check_rounded, color: AppColors.primary)
-                      : null,
-                  onTap: () {
-                    onSelect(i);
-                    Navigator.pop(ctx);
+              // 限制高度，超出部分可滚动
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.45,
+                ),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: options.length,
+                  itemBuilder: (context, i) {
+                    final isSelected = i == currentIndex;
+                    return ListTile(
+                      title: Text(
+                        options[i],
+                        style: TextStyle(
+                          color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                        ),
+                      ),
+                      trailing: isSelected
+                          ? const Icon(Icons.check_rounded, color: AppColors.primary)
+                          : null,
+                      onTap: () {
+                        onSelect(i);
+                        Navigator.pop(ctx);
+                      },
+                    );
                   },
-                );
-              }),
+                ),
+              ),
               const SizedBox(height: 8),
             ],
           ),

@@ -171,6 +171,14 @@ class _NotificationSettingsPageState extends ConsumerState<NotificationSettingsP
           ),
           _buildDivider(),
           _buildSwitchItem(
+            icon: Icons.assignment_ind_outlined,
+            title: '任务被指派',
+            subtitle: '有人给你分配任务时通知',
+            value: _getBoolValue('taskAssigned', true),
+            onChanged: (v) => _onToggle('taskAssigned', v),
+          ),
+          _buildDivider(),
+          _buildSwitchItem(
             icon: Icons.edit_calendar_outlined,
             title: '每日打卡提醒',
             subtitle: '前一日未打卡时09:00发送提醒',

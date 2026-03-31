@@ -242,6 +242,47 @@ export class NotificationService {
     });
   }
 
+  /** 每日打卡完成：通知全员（除打卡人） */
+  async notifyDailyCheckinCompleted(
+    familyId: string,
+    excludeUserId: string,
+    recipientName: string,
+    checkinStatus: string,
+    medicationCompleted: number,
+    medicationTotal: number,
+    specialNote: string | null,
+    sourceId: string,
+    dataJson?: Record<string, any>,
+  ) {
+    const statusLabel: Record<string, string> = {
+      normal: '正常',
+      concerning: '需关注',
+      poor: '较差',
+      critical: '危急',
+    };
+    const label = statusLabel[checkinStatus] || checkinStatus;
+    const medDesc = medicationTotal > 0
+      ? `用药 ${medicationCompleted}/${medicationTotal}`
+      : '今日无用药记录';
+    let body = `${recipientName} 护理打卡完成（${label}）${medDesc}`;
+    if (specialNote) {
+      body += `。备注：${specialNote}`;
+    }
+    return this.broadcast({
+      familyId,
+      excludeUserId,
+      type: NotificationType.DAILY_CHECKIN_COMPLETED,
+      title: `${recipientName} 护理打卡`,
+      body,
+      level: checkinStatus === 'critical' || checkinStatus === 'poor'
+        ? NotificationLevel.HIGH
+        : NotificationLevel.NORMAL,
+      sourceType: 'daily_care_checkin',
+      sourceId,
+      dataJson,
+    });
+  }
+
   /** SOS 被确认：通知全员（除确认者） */
   async notifySOSAcknowledged(
     familyId: string,

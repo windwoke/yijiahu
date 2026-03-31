@@ -25,6 +25,7 @@ export enum NotificationType {
   TASK_ASSIGNED = 'task_assigned',
   TASK_COMPLETED = 'task_completed',
   DAILY_CHECKIN = 'daily_checkin',
+  DAILY_CHECKIN_COMPLETED = 'daily_checkin_completed',
   HEALTH_ALERT = 'health_alert',
   CAREGIVER_CHANGED = 'caregiver_changed',
 }

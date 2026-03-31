@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, forwardRef, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between } from 'typeorm';
 import { DailyCareCheckin } from './entities/daily-care-checkin.entity';
@@ -6,6 +6,7 @@ import { CreateDailyCareCheckinDto } from './dto/daily-care-checkin.dto';
 import { MedicationLog } from '../medication-log/entities/medication-log.entity';
 import { CareRecipient } from '../care-recipient/entities/care-recipient.entity';
 import { FamilyMember } from '../family/entities/family-member.entity';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class DailyCareCheckinService {
@@ -14,6 +15,8 @@ export class DailyCareCheckinService {
     @InjectRepository(MedicationLog) private medLogRepo: Repository<MedicationLog>,
     @InjectRepository(CareRecipient) private recipientRepo: Repository<CareRecipient>,
     @InjectRepository(FamilyMember) private memberRepo: Repository<FamilyMember>,
+    @Inject(forwardRef(() => NotificationService))
+    private readonly notifSvc: NotificationService,
   ) {}
 
   /** 验证照护对象属于指定家庭 */
@@ -61,7 +64,8 @@ export class DailyCareCheckinService {
   /** 创建或更新打卡（upsert）*/
   async upsert(dto: CreateDailyCareCheckinDto, userId: string) {
     // 验证照护对象归属
-    await this.validateRecipientInFamily(dto.careRecipientId, dto.familyId);
+    const recipient = await this.validateRecipientInFamily(dto.careRecipientId, dto.familyId);
+    const recipientName = recipient.name;
     const existing = await this.repo
       .createQueryBuilder('c')
       .where('c.careRecipientId = :careRecipientId', { careRecipientId: dto.careRecipientId })
@@ -80,13 +84,14 @@ export class DailyCareCheckinService {
     });
     const completedCount = medLogs.filter((m) => m.status === 'taken').length;
 
+    let saved: DailyCareCheckin;
     if (existing) {
       existing.status = dto.status;
       existing.medicationCompleted = dto.medicationCompleted ?? completedCount;
       existing.medicationTotal = dto.medicationTotal ?? 0;
       existing.specialNote = dto.specialNote ?? null;
       existing.checkedInById = userId;
-      return this.repo.save(existing);
+      saved = await this.repo.save(existing);
     } else {
       // 直接用字符串创建 date，避免 new Date() 的 UTC 解释导致时区偏移
       const checkin = this.repo.create({
@@ -98,8 +103,23 @@ export class DailyCareCheckinService {
         specialNote: dto.specialNote ?? null,
         checkedInById: userId,
       });
-      return this.repo.save(checkin);
+      saved = await this.repo.save(checkin);
     }
+
+    // 通知所有家庭成员（异步，不阻塞响应）
+    this.notifSvc.notifyDailyCheckinCompleted(
+      dto.familyId,
+      userId,
+      recipientName,
+      dto.status,
+      saved.medicationCompleted,
+      saved.medicationTotal,
+      saved.specialNote,
+      saved.id,
+      { careRecipientId: dto.careRecipientId },
+    ).catch(() => {}); // fire-and-forget
+
+    return saved;
   }
 
   /** 获取照护对象的打卡历史（用于时间线）

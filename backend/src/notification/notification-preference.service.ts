@@ -51,6 +51,7 @@ export class NotificationPreferenceService {
       appointment_reminder: 'appointmentReminder',
       task_reminder: 'taskReminder',
       daily_checkin: 'dailyCheckin',
+      daily_checkin_completed: 'dailyCheckin',
       health_alert: 'healthAlert',
       sos: 'sosEnabled',
       member_joined: 'memberJoined',

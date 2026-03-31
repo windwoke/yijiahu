@@ -19,7 +19,8 @@ enum NotificationType {
   taskReminder('task_reminder', '📋', '任务提醒'),
   taskAssigned('task_assigned', '👋', '任务指派'),
   taskCompleted('task_completed', '✅', '任务已完成'),
-  dailyCheckin('daily_checkin', '📝', '每日打卡'),
+  dailyCheckin('daily_checkin', '📝', '每日打卡提醒'),
+  dailyCheckinCompleted('daily_checkin_completed', '📝', '护理打卡'),
   healthAlert('health_alert', '🩺', '健康告警'),
   caregiverChanged('caregiver_changed', '🔄', '照护人变更');
 

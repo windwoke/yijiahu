@@ -12,6 +12,7 @@ import '../../data/models/models.dart' as models;
 import '../../core/network/api_client.dart';
 import '../../core/services/jpush_service.dart';
 import 'family_provider.dart';
+import 'notification_provider.dart';
 
 /// 认证状态
 class AuthState {
@@ -77,6 +78,8 @@ class AuthNotifier extends Notifier<AuthState> {
       await _loadCurrentFamily();
       // 自动登录后关联 JPush
       await _setupJPushAfterLogin();
+      // 登录后刷新未读数
+      ref.read(unreadCountProvider.notifier).refresh();
     }
     debugPrint('[Auth] _loadFromStorage 结束');
   }
@@ -196,6 +199,8 @@ class AuthNotifier extends Notifier<AuthState> {
       // 登录成功后加载当前用户家庭
       await _loadCurrentFamily();
       await _setupJPushAfterLogin();
+      // 登录后刷新未读数
+      ref.read(unreadCountProvider.notifier).refresh();
     } on DioException catch (e) {
       try {
         state = state.copyWith(isLoading: false, error: handleDioError(e).message);
@@ -216,6 +221,8 @@ class AuthNotifier extends Notifier<AuthState> {
     ref.invalidate(myFamiliesProvider);
     ref.invalidate(careRecipientsProvider);
     ref.invalidate(familyMembersProvider);
+    // 退出时清零未读数
+    ref.read(unreadCountProvider.notifier).setZero();
     state = const AuthState();
     JPushService().deleteAlias();
     debugPrint('[Auth] logout 完成');
@@ -279,6 +286,8 @@ class AuthNotifier extends Notifier<AuthState> {
       // 登录成功后加载当前用户家庭
       await _loadCurrentFamily();
       await _setupJPushAfterLogin();
+      // 登录后刷新未读数
+      ref.read(unreadCountProvider.notifier).refresh();
     } on DioException catch (e) {
       try {
         state = state.copyWith(isLoading: false, error: handleDioError(e).message);

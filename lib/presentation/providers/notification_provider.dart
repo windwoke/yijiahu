@@ -30,12 +30,12 @@ final notificationListProvider = FutureProvider.family<List<AppNotification>, in
   },
 );
 
-/// 未读数 AsyncNotifier（autoDispose：重新watch时自动fetch最新值）
-final unreadCountProvider = AsyncNotifierProvider.autoDispose<_UnreadCountNotifier, int>(
+/// 未读数 AsyncNotifier（持久 provider，首页铃铛始终保持活跃）
+final unreadCountProvider = AsyncNotifierProvider<_UnreadCountNotifier, int>(
   _UnreadCountNotifier.new,
 );
 
-class _UnreadCountNotifier extends AutoDisposeAsyncNotifier<int> {
+class _UnreadCountNotifier extends AsyncNotifier<int> {
   @override
   Future<int> build() async {
     return _fetch();
@@ -46,7 +46,10 @@ class _UnreadCountNotifier extends AutoDisposeAsyncNotifier<int> {
     try {
       final response = await dio.get('/notifications/unread-count');
       final data = response.data as Map<String, dynamic>?;
-      return data?['count'] as int? ?? 0;
+      // 兼容 {code:0, data:{count:1}} 和 {count:1} 两种格式
+      final count = (data?['data'] as Map<String, dynamic>?)?['count']
+          ?? data?['count'] as int?;
+      return count ?? 0;
     } catch (_) {
       return 0;
     }

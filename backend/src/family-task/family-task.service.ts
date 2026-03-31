@@ -112,7 +112,12 @@ export class FamilyTaskService {
     const now = new Date();
     const future = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-    // 查询所有 pending 且未来7天到期的任务
+    // 查询所有 pending 且未来7天到期的任务（不含已逾期的）
+    // 起始时间：北京时间今天 00:00（兼容跨天时区问题）
+    const todayBeijing = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+    const todayStart = new Date(todayBeijing.getFullYear(), todayBeijing.getMonth(), todayBeijing.getDate(), 0, 0, 0);
+    const todayStartUtc = new Date(todayStart.getTime() - 8 * 60 * 60 * 1000);
+
     const tasks = await this.taskRepo.find({
       where: {
         familyId,
@@ -123,13 +128,16 @@ export class FamilyTaskService {
       order: { nextDueAt: 'ASC' },
     });
 
-    if (tasks.length === 0) return [];
+    // 内存中过滤掉已逾期的（nextDueAt < 今天北京时间00:00）
+    const notOverdue = tasks.filter(t => !t.nextDueAt || t.nextDueAt >= todayStartUtc);
+
+    if (notOverdue.length === 0) return [];
 
     // 获取今天的北京时区日期（YYYY-MM-DD）
     const todayStr = this.toLocalDateStr(now);
 
     // 查询这些任务中今天已完成的记录
-    const taskIds = tasks.map(t => t.id);
+    const taskIds = notOverdue.map(t => t.id);
     const todayCompletions = await this.completionRepo
       .createQueryBuilder('tc')
       .select('tc.taskId', 'taskId')
@@ -139,9 +147,8 @@ export class FamilyTaskService {
 
     const completedTodaySet = new Set(todayCompletions.map(c => c.taskId));
 
-    // 周期任务如果今天已完成，nextDueAt 已在 complete() 时更新为下一个到期，
-    // 直接返回即可（不用再调用 calculateNextDue，避免重复推进）
-    const pending = tasks.filter(task => !completedTodaySet.has(task.id));
+    // 过滤今天已完成的，保留未完成的
+    const pending = notOverdue.filter(t => !completedTodaySet.has(t.id));
 
     // caregiver 只能看到分配给自己的任务
     const role = await this.getMemberRole(userId, familyId);

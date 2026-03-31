@@ -13,6 +13,7 @@ import '../../../core/network/api_client.dart';
 import '../../providers/providers.dart';
 import '../../widgets/medication_check_in_card.dart';
 import '../../widgets/appointment_task_detail_sheets.dart';
+import '../../widgets/sos_button.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -30,40 +31,52 @@ class _HomePageState extends ConsumerState<HomePage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: recipientsAsync.when(
-          data: (recipients) {
-            if (recipients.isEmpty) {
-              return Column(
-                children: [
-                  _buildGlassTopBar(context),
-                  Expanded(child: _buildEmptyStateContent(context)),
-                ],
-              );
-            }
-            return Column(
-              children: [
-                _buildGlassTopBar(context),
-                Expanded(child: _buildScrollableContent(context, recipients)),
-              ],
-            );
-          },
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stack) => Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.error_outline,
-                    size: 48, color: AppColors.error),
-                const SizedBox(height: 16),
-                Text('加载失败: $error'),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => ref.invalidate(careRecipientsProvider),
-                  child: const Text('重试'),
+        bottom: false,
+        child: Column(
+          children: [
+            Expanded(
+              child: recipientsAsync.when(
+                data: (recipients) {
+                  if (recipients.isEmpty) {
+                    return Column(
+                      children: [
+                        _buildGlassTopBar(context),
+                        Expanded(child: _buildEmptyStateContent(context)),
+                      ],
+                    );
+                  }
+                  return Column(
+                    children: [
+                      _buildGlassTopBar(context),
+                      Expanded(child: _buildScrollableContent(context, recipients)),
+                    ],
+                  );
+                },
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, stack) => Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.error_outline,
+                          size: 48, color: AppColors.error),
+                      const SizedBox(height: 16),
+                      Text('加载失败: $error'),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () => ref.invalidate(careRecipientsProvider),
+                        child: const Text('重试'),
+                      ),
+                    ],
+                  ),
                 ),
-              ],
+              ),
             ),
-          ),
+            // SOS 按钮固定在底部（在底部导航栏上方）
+            Container(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              child: const SosButton(),
+            ),
+          ],
         ),
       ),
     );
@@ -220,7 +233,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       child: SingleChildScrollView(
         physics: const ClampingScrollPhysics(),
         child: Padding(
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 100),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
       child: Container(
         padding: const EdgeInsets.all(32),
         decoration: BoxDecoration(
@@ -322,12 +335,12 @@ class _HomePageState extends ConsumerState<HomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               _DailyCareBanner(recipientIds: recipientIds, recipients: recipients),
-              const SizedBox(height: 20),
-              _buildCalendarSummarySection(context),
+              const SizedBox(height: 16),
               ...recipients.map((r) => _buildRecipientSection(context, r)),
-              const SizedBox(height: 100),
+              _buildCalendarSummarySection(context),
+              const SizedBox(height: 32),
             ],
           ),
         ),
@@ -487,7 +500,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     final caregiverAsync = ref.watch(currentCaregiverProvider(recipient.id));
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 24),
+      margin: const EdgeInsets.only(bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

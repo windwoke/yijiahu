@@ -106,17 +106,6 @@ server {
     listen 80;
     listen [::]:80;
     server_name $DOMAIN;
-    location / { return 301 https://\$host\$request_uri; }
-}
-server {
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
-    server_name $DOMAIN;
-    ssl_certificate /etc/letsencrypt/live/$DOMAIN/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/$DOMAIN/privkey.pem;
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256;
-    ssl_prefer_server_ciphers off;
     location / {
         proxy_pass http://127.0.0.1:3000;
         proxy_http_version 1.1;
@@ -133,11 +122,11 @@ NGINXEOF
 
 ln -sf /etc/nginx/sites-available/yijiahu /etc/nginx/sites-enabled/yijiahu
 nginx -t && systemctl reload nginx
-log_ok "Nginx configured"
+systemctl restart nginx
+log_ok "Nginx configured (HTTP only, certbot will add SSL)"
 
 # ── 6. SSL Certificate ──
 log_info "[6/8] Getting SSL certificate..."
-systemctl restart nginx
 certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos --email "admin@$DOMAIN" --redirect > /dev/null 2>&1 || true
 systemctl enable certbot.timer
 systemctl start certbot.timer

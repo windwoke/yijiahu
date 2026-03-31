@@ -169,7 +169,7 @@ jobs:
 
             if systemctl is-active --quiet yijiahu; then
               echo "部署成功！版本: $(git log -1 --oneline)"
-              echo "API 健康检查: $(curl -s -o /dev/null -w '%{http_code}' http://localhost/v1/health || echo 'FAIL')"
+              echo "API 健康检查: $(curl -s -o /dev/null -w '%{http_code}' http://localhost/v1/auth/me || echo 'FAIL')"
             else
               echo "部署失败，回滚中..."
               if [ -d "$BACKUP_DIR/dist" ]; then
@@ -186,7 +186,7 @@ jobs:
           sleep 5
           HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
             -H "Authorization: Bearer test" \
-            http://${{ secrets.PRODUCTION_DOMAIN }}/v1/health || echo "000")
+            http://${{ secrets.PRODUCTION_DOMAIN }}/v1/auth/me || echo "000")
           echo "Health check HTTP code: $HTTP_CODE"
           if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "401" ]; then
             echo "API 服务正常"

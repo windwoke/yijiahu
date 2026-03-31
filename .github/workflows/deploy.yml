@@ -151,9 +151,9 @@ jobs:
               cp -r "$APP_DIR/backend/dist" "$BACKUP_DIR/dist" 2>/dev/null || true
             fi
 
-            # 解压新版本
-            mkdir -p "$APP_DIR/backend"
-            tar -xzf /tmp/yijiahu-backend.tar.gz -C "$APP_DIR/backend/"
+            # 解压新版本（tarball 包含 repo root，直接解压到 APP_DIR）
+            mkdir -p "$APP_DIR"
+            tar -xzf /tmp/yijiahu-backend.tar.gz -C "$APP_DIR/"
 
             cd "$APP_DIR/backend"
 

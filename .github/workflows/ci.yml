@@ -7,6 +7,24 @@ on:
     branches: [main]
 
 jobs:
+  # 检测 Flutter 代码是否变化
+  flutter-changes:
+    name: Detect Flutter Changes
+    runs-on: ubuntu-latest
+    outputs:
+      flutter: ${{ steps.filter.outputs.flutter }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        filters:
+          flutter: |
+            lib/**
+            android/**
+            ios/**
+            pubspec.yaml
+            pubspec.lock
+
   # PR 和 push 到 main 都运行：代码分析 + 测试
   analyze:
     name: Analyze & Test
@@ -29,12 +47,12 @@ jobs:
       - name: Test
         run: if [ -d "test" ]; then flutter test; fi
 
-  # push 到 main 时构建 iOS（仅 macOS runner 可构建 iOS）
+  # push 到 main 且 Flutter 代码变化时构建 iOS（仅 macOS runner 可构建 iOS）
   build-ios:
     name: Build iOS
     runs-on: macos-14
-    needs: analyze
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [analyze, flutter-changes]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.flutter-changes.outputs.flutter == 'true'
 
     steps:
       - uses: actions/checkout@v4
@@ -43,7 +61,6 @@ jobs:
         with:
           flutter-version: '3.41.3'
           channel: 'stable'
-          xcode-version: '16.0'
 
       - name: Get dependencies
         run: flutter pub get
@@ -60,12 +77,12 @@ jobs:
           path: build/ios/iphonesimulator/Runner.app
           retention-days: 7
 
-  # push 到 main 时构建 Android
+  # push 到 main 且 Flutter 代码变化时构建 Android
   build-android:
     name: Build Android
     runs-on: ubuntu-latest
-    needs: analyze
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [analyze, flutter-changes]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.flutter-changes.outputs.flutter == 'true'
 
     steps:
       - uses: actions/checkout@v4

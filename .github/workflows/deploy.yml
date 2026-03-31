@@ -17,6 +17,24 @@ on:
         default: 'false'
 
 jobs:
+  # ─── 0. 检测 Flutter 代码变化 ─────────────────
+  flutter-changes:
+    name: Detect Flutter Changes
+    runs-on: ubuntu-latest
+    outputs:
+      flutter: ${{ steps.filter.outputs.flutter }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        filters:
+          flutter: |
+            lib/**
+            android/**
+            ios/**
+            pubspec.yaml
+            pubspec.lock
+
   # ─── 1. 构建后端（NestJS）────────────────
   build-backend:
     name: Build Backend
@@ -50,10 +68,12 @@ jobs:
           path: backend/dist
           retention-days: 1
 
-  # ─── 2. 构建 Flutter App ─────────────────
+  # ─── 2. 构建 Flutter App（仅 Flutter 代码变化时）────────────────
   build-flutter:
     name: Build Flutter App
     runs-on: macos-14
+    needs: flutter-changes
+    if: needs.flutter-changes.outputs.flutter == 'true'
     steps:
       - uses: actions/checkout@v4
 

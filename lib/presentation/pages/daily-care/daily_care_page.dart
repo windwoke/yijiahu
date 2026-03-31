@@ -118,9 +118,11 @@ class _DailyCarePageState extends ConsumerState<DailyCarePage> {
         medicationTotal: _medTotal,
         specialNote: _noteController.text.isNotEmpty ? _noteController.text : null,
       );
-      // 刷新今日打卡数据（todayCheckinsProvider 内部已监听 careRecipientsProvider）
+      // 刷新今日打卡数据
       ref.invalidate(careRecipientsProvider);
       ref.invalidate(checkinHistoryProvider(widget.recipientId));
+      final familyId = ref.read(currentFamilyProvider)?.id;
+      if (familyId != null) ref.invalidate(todayCheckinsProvider(familyId));
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

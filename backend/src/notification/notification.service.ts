@@ -28,17 +28,19 @@ export class NotificationService {
     private readonly jpushSvc: JPushService,
   ) {}
 
-  /** 查询用户通知列表（分页） */
+  /** 查询用户通知列表（分页，可按家庭过滤） */
   async findByUser(
     userId: string,
     page = 1,
     pageSize = 20,
     type?: NotificationType,
     isRead?: boolean,
+    familyId?: string,
   ) {
     const where: any = { userId, deletedAt: IsNull() };
     if (type) where.type = type;
     if (isRead !== undefined) where.isRead = isRead;
+    if (familyId) where.familyId = familyId;
 
     const [list, total] = await this.repo.findAndCount({
       where,
@@ -58,11 +60,11 @@ export class NotificationService {
     };
   }
 
-  /** 获取用户未读数 */
-  async getUnreadCount(userId: string): Promise<number> {
-    return this.repo.count({
-      where: { userId, isRead: false, deletedAt: IsNull() },
-    });
+  /** 获取用户未读数（可按家庭过滤） */
+  async getUnreadCount(userId: string, familyId?: string): Promise<number> {
+    const where: any = { userId, isRead: false, deletedAt: IsNull() };
+    if (familyId) where.familyId = familyId;
+    return this.repo.count({ where });
   }
 
   /** 创建单条通知并推送 */
@@ -142,8 +144,10 @@ export class NotificationService {
   }
 
   /** 标记单条已读 */
-  async markAsRead(id: string, userId: string): Promise<Notification> {
-    const n = await this.repo.findOne({ where: { id, userId } });
+  async markAsRead(id: string, userId: string, familyId?: string): Promise<Notification> {
+    const where: any = { id, userId };
+    if (familyId) where.familyId = familyId;
+    const n = await this.repo.findOne({ where });
     if (!n) throw new NotFoundException('通知不存在');
     n.isRead = true;
     n.readAt = new Date();
@@ -152,17 +156,18 @@ export class NotificationService {
     return this.repo.save(n);
   }
 
-  /** 全部已读 */
-  async markAllAsRead(userId: string): Promise<void> {
-    await this.repo.update(
-      { userId, isRead: false, deletedAt: IsNull() },
-      { isRead: true, readAt: new Date() },
-    );
+  /** 全部已读（可按家庭过滤） */
+  async markAllAsRead(userId: string, familyId?: string): Promise<void> {
+    const where: any = { userId, isRead: false, deletedAt: IsNull() };
+    if (familyId) where.familyId = familyId;
+    await this.repo.update(where, { isRead: true, readAt: new Date() });
   }
 
-  /** 删除通知 */
-  async delete(id: string, userId: string): Promise<void> {
-    const n = await this.repo.findOne({ where: { id, userId } });
+  /** 删除通知（可按家庭过滤） */
+  async delete(id: string, userId: string, familyId?: string): Promise<void> {
+    const where: any = { id, userId };
+    if (familyId) where.familyId = familyId;
+    const n = await this.repo.findOne({ where });
     if (!n) throw new NotFoundException('通知不存在');
     await this.repo.softRemove(n);
   }

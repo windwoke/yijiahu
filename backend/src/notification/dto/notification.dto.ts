@@ -22,6 +22,9 @@ export class NotificationQueryDto {
   @IsOptional()
   @IsIn(['true', 'false'])
   isRead?: string;
+
+  @IsOptional()
+  familyId?: string;
 }
 
 export class CreateNotificationDto {

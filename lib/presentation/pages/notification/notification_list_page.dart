@@ -8,6 +8,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/network/api_client.dart';
 import '../../../data/models/notification.dart';
 import '../../providers/notification_provider.dart';
+import '../../providers/family_provider.dart';
 
 class NotificationListPage extends ConsumerStatefulWidget {
   const NotificationListPage({super.key});
@@ -33,10 +34,12 @@ class _NotificationListPageState extends ConsumerState<NotificationListPage> {
     setState(() => _isLoading = true);
 
     final dio = ref.read(dioProvider);
+    final familyId = ref.read(currentFamilyProvider)?.id;
     try {
       final response = await dio.get('/notifications', queryParameters: {
         'page': _page,
         'pageSize': 20,
+        if (familyId != null) 'familyId': familyId,
       });
       final data = response.data as Map<String, dynamic>?;
       if (data == null) return;

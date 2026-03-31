@@ -4,15 +4,17 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/notification.dart';
 import '../../core/network/api_client.dart';
+import 'family_provider.dart';
 
-/// 通知列表
-final notificationListProvider = FutureProvider.family<List<AppNotification>, int>(
-  (ref, page) async {
+/// 通知列表（按家庭过滤）
+final notificationListProvider = FutureProvider.family<List<AppNotification>, ({int page, String? familyId})>(
+  (ref, params) async {
     final dio = ref.read(dioProvider);
     try {
       final response = await dio.get('/notifications', queryParameters: {
-        'page': page,
+        'page': params.page,
         'pageSize': 20,
+        if (params.familyId != null) 'familyId': params.familyId,
       });
       final data = response.data as Map<String, dynamic>?;
       if (data == null) return [];
@@ -43,8 +45,11 @@ class _UnreadCountNotifier extends AsyncNotifier<int> {
 
   Future<int> _fetch() async {
     final dio = ref.read(dioProvider);
+    final familyId = ref.read(currentFamilyProvider)?.id;
     try {
-      final response = await dio.get('/notifications/unread-count');
+      final response = await dio.get('/notifications/unread-count', queryParameters: {
+        if (familyId != null) 'familyId': familyId,
+      });
       final data = response.data as Map<String, dynamic>?;
       // 兼容 {code:0, data:{count:1}} 和 {count:1} 两种格式
       final count = (data?['data'] as Map<String, dynamic>?)?['count']
@@ -73,8 +78,11 @@ class _UnreadCountNotifier extends AsyncNotifier<int> {
 /// 标记单条已读
 Future<void> markAsRead(WidgetRef ref, String notificationId) async {
   final dio = ref.read(dioProvider);
+  final familyId = ref.read(currentFamilyProvider)?.id;
   try {
-    await dio.put('/notifications/$notificationId/read');
+    await dio.put('/notifications/$notificationId/read', queryParameters: {
+      if (familyId != null) 'familyId': familyId,
+    });
     ref.read(unreadCountProvider.notifier).decrement();
   } catch (_) {}
 }
@@ -82,8 +90,11 @@ Future<void> markAsRead(WidgetRef ref, String notificationId) async {
 /// 全部已读
 Future<void> markAllAsRead(WidgetRef ref) async {
   final dio = ref.read(dioProvider);
+  final familyId = ref.read(currentFamilyProvider)?.id;
   try {
-    await dio.put('/notifications/read-all');
+    await dio.put('/notifications/read-all', queryParameters: {
+      if (familyId != null) 'familyId': familyId,
+    });
     ref.read(unreadCountProvider.notifier).setZero();
   } catch (_) {}
 }
@@ -91,8 +102,11 @@ Future<void> markAllAsRead(WidgetRef ref) async {
 /// 删除通知
 Future<void> deleteNotification(WidgetRef ref, String notificationId) async {
   final dio = ref.read(dioProvider);
+  final familyId = ref.read(currentFamilyProvider)?.id;
   try {
-    await dio.delete('/notifications/$notificationId');
+    await dio.delete('/notifications/$notificationId', queryParameters: {
+      if (familyId != null) 'familyId': familyId,
+    });
     ref.invalidate(unreadCountProvider);
   } catch (_) {}
 }

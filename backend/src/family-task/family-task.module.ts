@@ -6,9 +6,10 @@ import { FamilyTaskService } from './family-task.service';
 import { FamilyTaskController } from './family-task.controller';
 import { CommonModule } from '../common/services/common.module';
 import { FamilyMember } from '../family/entities/family-member.entity';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([FamilyTask, TaskCompletion, FamilyMember]), CommonModule],
+  imports: [TypeOrmModule.forFeature([FamilyTask, TaskCompletion, FamilyMember]), CommonModule, NotificationModule],
   controllers: [FamilyTaskController],
   providers: [FamilyTaskService],
   exports: [FamilyTaskService],

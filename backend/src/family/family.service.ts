@@ -6,6 +6,7 @@ import { FamilyMember, FamilyMemberRole } from './entities/family-member.entity'
 import { User } from '../user/entities/user.entity';
 import { SubscriptionService } from '../subscription/subscription.service';
 import { CreateFamilyDto, UpdateFamilyDto, JoinFamilyDto, UpdateMemberDto } from './dto/family.dto';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class FamilyService {
@@ -13,6 +14,7 @@ export class FamilyService {
     @InjectRepository(Family) private familyRepo: Repository<Family>,
     @InjectRepository(FamilyMember) private memberRepo: Repository<FamilyMember>,
     private subscriptionService: SubscriptionService,
+    private readonly notifSvc: NotificationService,
   ) {}
 
   private generateInviteCode(): string {
@@ -102,6 +104,15 @@ export class FamilyService {
     });
     await this.memberRepo.save(member);
 
+    // 通知其他成员
+    this.notifSvc.notifyMemberJoined(
+      family.id,
+      userId,
+      member.nickname,
+      member.role,
+      { familyId: family.id },
+    ).catch(() => {});
+
     return this.findById(family.id, userId);
   }
 
@@ -157,6 +168,21 @@ export class FamilyService {
     }
 
     await this.memberRepo.delete(target.id);
+
+    // 通知被移除的成员
+    if (target.userId) {
+      const family = await this.familyRepo.findOne({ where: { id: familyId } });
+      const operator = await this.memberRepo.findOne({ where: { familyId, userId } });
+      const operatorName = operator?.nickname || '管理员';
+      const familyName = family?.name || '家庭';
+      this.notifSvc.notifyMemberLeft(
+        target.userId,
+        familyName,
+        operatorName,
+        { familyId },
+      ).catch(() => {});
+    }
+
     return { message: '已移除成员' };
   }
 

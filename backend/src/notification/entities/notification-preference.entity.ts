@@ -47,6 +47,9 @@ export class NotificationPreference {
   memberJoined: boolean;
 
   @Column({ type: 'boolean', default: true })
+  taskAssigned: boolean;
+
+  @Column({ type: 'boolean', default: true })
   careLog: boolean;
 
   // 提醒提前时间

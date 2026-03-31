@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull, Not } from 'typeorm';
 import {
@@ -12,6 +12,7 @@ import { CreateNotificationDto, BroadcastNotificationDto } from './dto/notificat
 import { FamilyMember } from '../family/entities/family-member.entity';
 import { User } from '../user/entities/user.entity';
 import { NotificationPreferenceService } from './notification-preference.service';
+import { JPushService } from './jpush.service';
 
 @Injectable()
 export class NotificationService {
@@ -23,6 +24,8 @@ export class NotificationService {
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
     private readonly prefSvc: NotificationPreferenceService,
+    @Inject(forwardRef(() => JPushService))
+    private readonly jpushSvc: JPushService,
   ) {}
 
   /** 查询用户通知列表（分页） */
@@ -96,8 +99,8 @@ export class NotificationService {
     } as any);
     const saved = (await this.repo.save(n) as unknown) as Notification;
 
-    // TODO: 触发极光推送（生产环境）
-    // await this.pushToUser(userId, saved);
+    // 触发极光推送
+    this.pushToUser(userId, saved).catch(() => {});
 
     return saved;
   }
@@ -131,8 +134,8 @@ export class NotificationService {
       const saved = (await this.repo.save(n) as unknown) as Notification;
       results.push(saved);
 
-      // TODO: 触发极光推送
-      // await this.pushToUser(member.userId, n);
+      // 触发极光推送
+      this.pushToUser(member.userId, saved).catch(() => {});
     }
 
     return results;
@@ -173,18 +176,17 @@ export class NotificationService {
     await this.repo.save(notification);
   }
 
-  /** 极光推送（占位，生产环境接入） */
+  /** 极光推送 */
   private async pushToUser(userId: string, notification: Notification): Promise<void> {
-    // TODO: 接入极光 SDK
-    // const user = await this.userRepo.findOne({ where: { id: userId } });
-    // if (user?.pushToken) {
-    //   await jpushService.send({
-    //     registrationId: user.pushToken,
-    //     title: notification.title,
-    //     content: notification.body,
-    //     extras: notification.dataJson,
-    //   });
-    // }
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (user?.pushToken) {
+      await this.jpushSvc.pushToRegistration(
+        user.pushToken,
+        notification.title,
+        notification.body,
+        notification.dataJson || {},
+      );
+    }
     notification.status = NotificationStatus.SENT;
     notification.sentAt = new Date();
     await this.repo.save(notification);
@@ -279,6 +281,74 @@ export class NotificationService {
         : NotificationLevel.NORMAL,
       sourceType: 'daily_care_checkin',
       sourceId,
+      dataJson,
+    });
+  }
+
+  /** 任务被指派：通知被分配人 */
+  async notifyTaskAssigned(
+    assigneeId: string,
+    taskId: string,
+    taskTitle: string,
+    dueTime: string | null,
+    assignedByName: string,
+    dataJson?: Record<string, any>,
+  ) {
+    const timeLabel = dueTime ? `，请在 ${dueTime} 前完成` : '';
+    return this.create({
+      userId: assigneeId,
+      type: NotificationType.TASK_ASSIGNED,
+      title: '新任务已指派',
+      body: `${assignedByName} 给你指派了任务「${taskTitle}」${timeLabel}`,
+      level: NotificationLevel.NORMAL,
+      sourceType: 'family_task',
+      sourceId: taskId,
+      channel: NotificationChannel.APP,
+      dataJson,
+    });
+  }
+
+  /** 新成员加入：通知其他成员 */
+  async notifyMemberJoined(
+    familyId: string,
+    excludeUserId: string,
+    newMemberName: string,
+    role: string,
+    dataJson?: Record<string, any>,
+  ) {
+    const roleLabel: Record<string, string> = {
+      owner: '管理员',
+      coordinator: '协调人',
+      caregiver: '照护人',
+      guest: '访客',
+    };
+    return this.broadcast({
+      familyId,
+      excludeUserId,
+      type: NotificationType.MEMBER_JOINED,
+      title: '新成员加入',
+      body: `${newMemberName} 加入了家庭（${roleLabel[role] || role}）`,
+      level: NotificationLevel.NORMAL,
+      sourceType: 'family',
+      dataJson,
+    });
+  }
+
+  /** 成员离开/被移除：通知被移除人 */
+  async notifyMemberLeft(
+    removedUserId: string,
+    familyName: string,
+    removedByName: string,
+    dataJson?: Record<string, any>,
+  ) {
+    return this.create({
+      userId: removedUserId,
+      type: NotificationType.MEMBER_LEFT,
+      title: '已退出家庭',
+      body: `你已被 ${removedByName} 从「${familyName}」中移除`,
+      level: NotificationLevel.NORMAL,
+      sourceType: 'family',
+      channel: NotificationChannel.APP,
       dataJson,
     });
   }

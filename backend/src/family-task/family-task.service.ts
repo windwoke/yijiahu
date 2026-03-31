@@ -5,6 +5,7 @@ import { FamilyTask, TaskFrequency, TaskStatus } from './entities/family-task.en
 import { TaskCompletion } from './entities/task-completion.entity';
 import { CreateFamilyTaskDto, UpdateFamilyTaskDto, CompleteTaskDto } from './dto/family-task.dto';
 import { FamilyMember, FamilyMemberRole } from '../family/entities/family-member.entity';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class FamilyTaskService {
@@ -12,6 +13,7 @@ export class FamilyTaskService {
     @InjectRepository(FamilyTask) private taskRepo: Repository<FamilyTask>,
     @InjectRepository(TaskCompletion) private completionRepo: Repository<TaskCompletion>,
     @InjectRepository(FamilyMember) private memberRepo: Repository<FamilyMember>,
+    private readonly notifSvc: NotificationService,
   ) {}
 
   /** 按年月筛选任务：返回该月到期的任务 + 该月完成的任务（最多100条）
@@ -321,7 +323,30 @@ export class FamilyTaskService {
       status: TaskStatus.PENDING,
     });
 
-    return this.taskRepo.save(task);
+    const saved = await this.taskRepo.save(task);
+
+    // 通知被分配人
+    if (saved.assigneeId && saved.assigneeId !== userId) {
+      // 获取指派人昵称
+      const creator = await this.memberRepo.findOne({
+        where: { userId, familyId: saved.familyId },
+      });
+      const creatorName = creator?.nickname || '家庭成员';
+      // 格式化到期时间
+      const dueTime = dto.scheduledTime
+        ? `${dto.scheduledDate || '今日'} ${dto.scheduledTime}`
+        : dto.scheduledDate || null;
+      this.notifSvc.notifyTaskAssigned(
+        saved.assigneeId,
+        saved.id,
+        saved.title,
+        dueTime,
+        creatorName,
+        { familyId: saved.familyId },
+      ).catch(() => {});
+    }
+
+    return saved;
   }
 
   /** 更新任务 */

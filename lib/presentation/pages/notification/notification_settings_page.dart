@@ -17,7 +17,7 @@ class NotificationSettingsPage extends ConsumerStatefulWidget {
 class _NotificationSettingsPageState extends ConsumerState<NotificationSettingsPage> {
   bool _isLoading = true;
   late NotificationPreference _pref;
-  final Map<String, bool> _pendingChanges = {};
+  final Map<String, dynamic> _pendingChanges = {};
   bool _hasChanges = false;
 
   @override

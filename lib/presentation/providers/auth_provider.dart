@@ -4,13 +4,13 @@ library;
 import 'dart:async';
 import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/models/user.dart';
 import '../../data/models/models.dart' as models;
 import '../../core/network/api_client.dart';
+import '../../core/services/jpush_service.dart';
 import 'family_provider.dart';
 
 /// 认证状态
@@ -75,6 +75,8 @@ class AuthNotifier extends Notifier<AuthState> {
       state = state.copyWith(accessToken: token);
       await _fetchCurrentUser();
       await _loadCurrentFamily();
+      // 自动登录后关联 JPush
+      await _setupJPushAfterLogin();
     }
     debugPrint('[Auth] _loadFromStorage 结束');
   }
@@ -193,6 +195,7 @@ class AuthNotifier extends Notifier<AuthState> {
 
       // 登录成功后加载当前用户家庭
       await _loadCurrentFamily();
+      await _setupJPushAfterLogin();
     } on DioException catch (e) {
       try {
         state = state.copyWith(isLoading: false, error: handleDioError(e).message);
@@ -214,6 +217,7 @@ class AuthNotifier extends Notifier<AuthState> {
     ref.invalidate(careRecipientsProvider);
     ref.invalidate(familyMembersProvider);
     state = const AuthState();
+    JPushService().deleteAlias();
     debugPrint('[Auth] logout 完成');
   }
 
@@ -249,6 +253,14 @@ class AuthNotifier extends Notifier<AuthState> {
     return avatarUrl;
   }
 
+  Future<void> _setupJPushAfterLogin() async {
+    final userId = state.user?.id;
+    if (userId != null) {
+      JPushService().setAlias(userId);
+      await JPushService.registerToken(_dio!);
+    }
+  }
+
   /// 密码登录
   Future<void> loginWithPassword({required String phone, required String password}) async {
     state = state.copyWith(isLoading: true, error: null);
@@ -266,6 +278,7 @@ class AuthNotifier extends Notifier<AuthState> {
       state = AuthState(user: user, accessToken: token, isLoading: false);
       // 登录成功后加载当前用户家庭
       await _loadCurrentFamily();
+      await _setupJPushAfterLogin();
     } on DioException catch (e) {
       try {
         state = state.copyWith(isLoading: false, error: handleDioError(e).message);

@@ -9,6 +9,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'core/theme/app_theme.dart';
 import 'core/router/app_router.dart';
 import 'core/env/env_config.dart';
+import 'core/services/jpush_service.dart';
 
 Future<void> main() async {
   // 加载环境变量（找不到 .env 时使用默认值）
@@ -19,6 +20,9 @@ Future<void> main() async {
   debugPrint('📡 API: ${ApiConfig.baseUrl}');
 
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 初始化 JPush 推送
+  await JPushService().initialize();
 
   // 设置状态栏样式
   SystemChrome.setSystemUIOverlayStyle(

@@ -7,6 +7,7 @@ import { NotificationPreferenceService } from './notification-preference.service
 import { NotificationController } from './notification.controller';
 import { NotificationPreferenceController } from './notification-preference.controller';
 import { NotificationScheduler } from './notification.scheduler';
+import { JPushService } from './jpush.service';
 import { MedicationLog } from '../medication-log/entities/medication-log.entity';
 import { Medication } from '../medication/entities/medication.entity';
 import { CareRecipient } from '../care-recipient/entities/care-recipient.entity';
@@ -34,7 +35,7 @@ import { User } from '../user/entities/user.entity';
     ]),
   ],
   controllers: [NotificationController, NotificationPreferenceController],
-  providers: [NotificationService, NotificationPreferenceService, NotificationScheduler],
-  exports: [NotificationService, NotificationPreferenceService],
+  providers: [NotificationService, NotificationPreferenceService, NotificationScheduler, JPushService],
+  exports: [NotificationService, NotificationPreferenceService, JPushService],
 })
 export class NotificationModule {}

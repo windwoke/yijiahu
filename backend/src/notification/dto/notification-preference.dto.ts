@@ -20,6 +20,10 @@ export class UpdatePreferenceDto {
 
   @IsOptional()
   @IsBoolean()
+  taskAssigned?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
   dailyCheckin?: boolean;
 
   @IsOptional()

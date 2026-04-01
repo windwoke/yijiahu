@@ -38,8 +38,11 @@ class ApiConfig {
     return apiUrl;
   }
 
-  /// 静态资源根路径（去掉 /v1 前缀）
-  static String get staticRoot => baseUrl.replaceAll('/v1', '');
+  /// OSS 静态资源地址（不包含 /v1）
+  static String get staticRoot {
+    const oss = String.fromEnvironment('OSS_BASE_URL', defaultValue: '');
+    return oss.isNotEmpty ? oss : baseUrl.replaceAll('/v1', '');
+  }
 
   /// 根据相对路径构建完整头像 URL
   static String? avatarUrl(String? relativePath) {

@@ -4,10 +4,11 @@ import { FamilyMember } from '../../family/entities/family-member.entity';
 import { CareLogAttachment } from '../../care-log/entities/care-log-attachment.entity';
 import { PermissionService } from './permission.service';
 import { CleanupService } from './cleanup.service';
+import { OssService } from './oss.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([FamilyMember, CareLogAttachment])],
-  providers: [PermissionService, CleanupService],
-  exports: [PermissionService],
+  providers: [PermissionService, CleanupService, OssService],
+  exports: [PermissionService, OssService],
 })
 export class CommonModule {}

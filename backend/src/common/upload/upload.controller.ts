@@ -20,6 +20,7 @@ import { CareLogAttachment, AttachmentType } from '../../care-log/entities/care-
 import { CareRecipient } from '../../care-recipient/entities/care-recipient.entity';
 import { FamilyMemberRole } from '../../family/entities/family-member.entity';
 import { PermissionService } from '../services/permission.service';
+import { OssService } from '../services/oss.service';
 import { Request } from 'express';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -29,34 +30,23 @@ import * as fs from 'fs';
 @UseGuards(JwtAuthGuard)
 @Controller('upload')
 export class UploadController {
-  private readonly avatarDir = path.join(process.cwd(), 'uploads', 'avatars');
-  private readonly familiesDir = path.join(process.cwd(), 'uploads', 'families');
-
   constructor(
     @InjectRepository(CareLogAttachment)
     private readonly attachmentRepo: Repository<CareLogAttachment>,
     @InjectDataSource()
     private readonly dataSource: DataSource,
     private readonly permission: PermissionService,
+    private readonly oss: OssService,
   ) {
-    if (!fs.existsSync(this.avatarDir)) {
-      fs.mkdirSync(this.avatarDir, { recursive: true });
-    }
-    if (!fs.existsSync(this.familiesDir)) {
-      fs.mkdirSync(this.familiesDir, { recursive: true });
+    // 确保本地缓存目录存在（仅用于临时文件）
+    const tmpDir = path.join(process.cwd(), 'uploads', 'tmp');
+    if (!fs.existsSync(tmpDir)) {
+      fs.mkdirSync(tmpDir, { recursive: true });
     }
   }
 
-  private getFamilyDir(familyId: string): string {
-    const dir = path.join(this.familiesDir, familyId);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    return dir;
-  }
-
-  private getAttachmentDir(familyId: string, subdir: 'images' | 'videos'): string {
-    const dir = path.join(this.familiesDir, familyId, 'attachments', subdir);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    return dir;
+  private ossPath(familyId: string, ...parts: string[]): string {
+    return path.join('families', familyId, ...parts);
   }
 
   @Post('avatar')
@@ -73,28 +63,25 @@ export class UploadController {
     }),
   )
   @ApiOperation({ summary: '上传用户头像' })
-  uploadAvatar(
+  async uploadAvatar(
     @UploadedFile() file: Express.Multer.File,
     @Req() req: Request & { user: { id: string } },
   ) {
     if (!file) throw new BadRequestException('请选择要上传的头像');
 
-    const userDir = path.join(this.avatarDir, req.user.id);
-    if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, { recursive: true });
+    const ossPath = `avatars/${req.user.id}/avatar${path.extname(file.originalname).toLowerCase()}`;
 
-    // 删除旧头像
-    try {
-      const oldFiles = fs.readdirSync(userDir).filter(f => f.startsWith('avatar.'));
-      for (const oldFile of oldFiles) {
-        fs.unlinkSync(path.join(userDir, oldFile));
-      }
-    } catch (_) {}
+    // 上传到 OSS
+    await this.oss.put(ossPath, file.buffer);
 
-    const ext = path.extname(file.originalname).toLowerCase();
-    const filePath = path.join(userDir, `avatar${ext}`);
-    fs.writeFileSync(filePath, file.buffer);
+    // 删除旧头像（可选）
+    const oldExts = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+    for (const ext of oldExts) {
+      const oldPath = `avatars/${req.user.id}/avatar${ext}`;
+      await this.oss.delete(oldPath);
+    }
 
-    return { avatarUrl: `uploads/avatars/${req.user.id}/avatar${ext}` };
+    return { avatarUrl: ossPath };
   }
 
   @Post('family-avatar')
@@ -125,10 +112,10 @@ export class UploadController {
     ]);
 
     const ext = path.extname(file.originalname).toLowerCase();
-    const filePath = path.join(this.getFamilyDir(familyId), `avatar${ext}`);
-    fs.writeFileSync(filePath, file.buffer);
+    const ossPath = this.ossPath(familyId, `avatar${ext}`);
+    const url = await this.oss.put(ossPath, file.buffer);
 
-    return { avatarUrl: `uploads/families/${familyId}/avatar${ext}` };
+    return { avatarUrl: ossPath };
   }
 
   @Post('recipient-avatar')
@@ -160,19 +147,15 @@ export class UploadController {
       FamilyMemberRole.COORDINATOR,
     ]);
 
-    // 校验 recipient 属于该家庭
     const recipientRepo = this.dataSource.getRepository(CareRecipient);
     const r = await recipientRepo.findOne({ where: { id: recipientId, familyId } });
     if (!r) throw new BadRequestException('照护对象不存在或不属于该家庭');
 
-    const recipientDir = path.join(this.getFamilyDir(familyId), 'recipients', recipientId);
-    if (!fs.existsSync(recipientDir)) fs.mkdirSync(recipientDir, { recursive: true });
-
     const ext = path.extname(file.originalname).toLowerCase();
-    const filePath = path.join(recipientDir, `avatar${ext}`);
-    fs.writeFileSync(filePath, file.buffer);
+    const ossPath = this.ossPath(familyId, 'recipients', recipientId, `avatar${ext}`);
+    await this.oss.put(ossPath, file.buffer);
 
-    return { avatarUrl: `uploads/families/${familyId}/recipients/${recipientId}/avatar${ext}` };
+    return { avatarUrl: ossPath };
   }
 
   @Post('attachments')
@@ -205,22 +188,23 @@ export class UploadController {
       FamilyMemberRole.GUEST,
     ]);
 
-    const savedFiles = files.map(file => {
+    const savedFiles = await Promise.all(files.map(async file => {
       const isVideo = file.mimetype.startsWith('video/');
       const ext = path.extname(file.originalname);
       const filename = `${Date.now()}_${Math.random().toString(36).slice(2)}${ext}`;
       const subdir = isVideo ? 'videos' : 'images';
-      const fileDir = this.getAttachmentDir(familyId, subdir);
-      const filePath = path.join(fileDir, filename);
-      fs.writeFileSync(filePath, file.buffer);
+      const ossPath = this.ossPath(familyId, 'attachments', subdir, filename);
+
+      await this.oss.put(ossPath, file.buffer);
+
       return {
         type: isVideo ? AttachmentType.VIDEO : AttachmentType.IMAGE,
-        url: `uploads/families/${familyId}/attachments/${subdir}/${filename}`,
+        url: ossPath,
         filename: file.originalname,
         size: file.size,
         familyId,
       };
-    });
+    }));
 
     const attachmentEntities = await this.attachmentRepo.save(
       savedFiles.map(f => this.attachmentRepo.create({
@@ -261,16 +245,12 @@ export class UploadController {
       FamilyMemberRole.GUEST,
     ]);
 
-    // 只删除未绑定 careLogId 的附件
     const attachments = await this.attachmentRepo.findByIds(body.ids);
     const deletable = attachments.filter(a => !a.careLogId);
 
-    for (const a of deletable) {
-      const filePath = path.join(process.cwd(), a.url);
-      try { if (fs.existsSync(filePath)) fs.unlinkSync(filePath); } catch (_) {}
-    }
-
+    await Promise.all(deletable.map(a => this.oss.delete(a.url)));
     await this.attachmentRepo.delete(deletable.map(a => a.id));
+
     return { deleted: deletable.length };
   }
 }

@@ -146,6 +146,10 @@ jobs:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
           SERVER_USER: ${{ secrets.SERVER_USER }}
           DOMAIN: ${{ secrets.PRODUCTION_DOMAIN }}
+          OSS_KEY: ${{ secrets.ALIYUN_ACCESS_KEY_ID }}
+          OSS_SECRET: ${{ secrets.ALIYUN_ACCESS_KEY_SECRET }}
+          OSS_ENDPOINT: ${{ secrets.ALIYUN_OSS_ENDPOINT }}
+          OSS_BUCKET: ${{ secrets.ALIYUN_OSS_BUCKET }}
         run: |
           echo "打包代码..."
           tar --exclude='.git' \
@@ -174,6 +178,22 @@ jobs:
             # 解压新版本（tarball 包含 repo root，直接解压到 APP_DIR）
             mkdir -p "$APP_DIR"
             tar -xzf /tmp/yijiahu-backend.tar.gz -C "$APP_DIR/"
+
+            # 更新 OSS 配置
+            if [ -n "$OSS_KEY" ]; then
+              if grep -q "ALIYUN_ACCESS_KEY_ID" "$ENV_FILE" 2>/dev/null; then
+                sed -i "s|ALIYUN_ACCESS_KEY_ID=.*|ALIYUN_ACCESS_KEY_ID=$OSS_KEY|" "$ENV_FILE"
+                sed -i "s|ALIYUN_ACCESS_KEY_SECRET=.*|ALIYUN_ACCESS_KEY_SECRET=$OSS_SECRET|" "$ENV_FILE"
+                sed -i "s|ALIYUN_OSS_ENDPOINT=.*|ALIYUN_OSS_ENDPOINT=$OSS_ENDPOINT|" "$ENV_FILE"
+                sed -i "s|ALIYUN_OSS_BUCKET=.*|ALIYUN_OSS_BUCKET=$OSS_BUCKET|" "$ENV_FILE"
+              else
+                echo "" >> "$ENV_FILE"
+                echo "ALIYUN_ACCESS_KEY_ID=$OSS_KEY" >> "$ENV_FILE"
+                echo "ALIYUN_ACCESS_KEY_SECRET=$OSS_SECRET" >> "$ENV_FILE"
+                echo "ALIYUN_OSS_ENDPOINT=$OSS_ENDPOINT" >> "$ENV_FILE"
+                echo "ALIYUN_OSS_BUCKET=$OSS_BUCKET" >> "$ENV_FILE"
+              fi
+            fi
 
             cd "$APP_DIR/backend"
 

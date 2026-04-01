@@ -231,13 +231,15 @@ jobs:
                 echo "已添加 EnvironmentFile"
               fi
             fi
+            echo "=== systemd 服务文件内容 ==="
+            cat "$SYSTEMD_FILE"
 
-            # 停止现有服务，直接运行以捕获错误
+            # 停止现有服务，source env后直接测试
             systemctl stop yijiahu 2>/dev/null || true
             sleep 2
-            echo "=== 直接运行测试（捕获错误） ==="
-            timeout 10 node dist/main.js 2>&1 || true
-            echo "=== 测试运行结束 ==="
+            echo "=== source env后直接测试启动 ==="
+            set -a && . /opt/yijiahu/yijiahu/.env.prod && set +a && timeout 10 node dist/main.js 2>&1 || true
+            echo "=== 直接测试结束 ==="
 
             # 重新启动服务
             systemctl start yijiahu 2>&1

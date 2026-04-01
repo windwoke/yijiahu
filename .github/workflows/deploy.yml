@@ -181,18 +181,23 @@ jobs:
             tar -xzf /tmp/yijiahu-backend.tar.gz -C "$APP_DIR/"
 
             # 备份并更新 .env.prod（确保 OSS 凭证存在）
-            if [ -f "$ENV_FILE" ]; then
-              cp "$ENV_FILE" "$ENV_FILE.bak"
+            if [ -f "$ENV_FILE.bak" ]; then
+              cp "$ENV_FILE.bak" "$ENV_FILE"
+              echo "从备份恢复 .env.prod"
             fi
             if [ -n "$OSS_KEY" ]; then
-              printf "%s\n" "# === Aliyun OSS (CI updated) ===" \
+              # 追加 OSS 凭证（去重后追加）
+              for var in ALIYUN_ACCESS_KEY_ID ALIYUN_ACCESS_KEY_SECRET ALIYUN_OSS_ENDPOINT ALIYUN_OSS_BUCKET; do
+                sed -i "/^$var=/d" "$ENV_FILE" 2>/dev/null || true
+              done
+              printf "%s\n" "" "# === Aliyun OSS ===" \
                 "ALIYUN_ACCESS_KEY_ID=$OSS_KEY" \
                 "ALIYUN_ACCESS_KEY_SECRET=$OSS_SECRET" \
                 "ALIYUN_OSS_ENDPOINT=$OSS_ENDPOINT" \
                 "ALIYUN_OSS_BUCKET=$OSS_BUCKET" >> "$ENV_FILE"
               echo "OSS 配置已更新"
             fi
-            grep -E "ALIYUN" "$ENV_FILE" || echo "警告: OSS配置未写入"
+            grep -E "ALIYUN" "$ENV_FILE" || echo "警告: OSS配置未找到"
 
             # 安装依赖（跳过 build，dist 已预编译）
             cd "$APP_DIR/backend"

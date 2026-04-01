@@ -170,27 +170,18 @@ jobs:
             BACKUP_DIR="/opt/yijiahu/yijiahu_backup_$(date +%Y%m%d_%H%M%S)"
             ENV_FILE="$APP_DIR/backend/.env.prod"
 
-            # 备份当前版本（包括 .env.prod）
+            # 备份 dist（如果存在）
             if [ -d "$APP_DIR/backend/dist" ]; then
               mkdir -p "$BACKUP_DIR"
               cp -r "$APP_DIR/backend/dist" "$BACKUP_DIR/" 2>/dev/null || true
             fi
-            if [ -f "$ENV_FILE" ]; then
-              cp "$ENV_FILE" "$ENV_FILE.bak"
-              echo "已备份现有 .env.prod"
-            fi
 
-            # 解压新版本（tarball 包含 repo root + dist，直接解压到 APP_DIR）
+            # 解压新版本（tarball 包含 repo root + dist，.env* 被排除不打包）
             mkdir -p "$APP_DIR"
             tar -xzf /tmp/yijiahu-backend.tar.gz -C "$APP_DIR/"
 
-            # 恢复原有 .env.prod（保留 DB 等配置），再追加 OSS 凭证
-            if [ -f "$ENV_FILE.bak" ]; then
-              cp "$ENV_FILE.bak" "$ENV_FILE"
-              echo "已恢复原有 .env.prod"
-            fi
+            # 更新 OSS 凭证到 backend/.env.prod（不覆盖 DB 等原有配置）
             if [ -n "$OSS_KEY" ]; then
-              # 追加 OSS 凭证（去重后追加）
               for var in ALIYUN_ACCESS_KEY_ID ALIYUN_ACCESS_KEY_SECRET ALIYUN_OSS_ENDPOINT ALIYUN_OSS_BUCKET; do
                 sed -i "/^${var}=/d" "$ENV_FILE" 2>/dev/null || true
               done
@@ -202,19 +193,14 @@ jobs:
                 echo "ALIYUN_OSS_ENDPOINT=$OSS_ENDPOINT"
                 echo "ALIYUN_OSS_BUCKET=$OSS_BUCKET"
               } >> "$ENV_FILE"
-              echo "OSS 配置已追加"
+              echo "OSS 凭证已更新"
             fi
-            echo "=== env文件全部内容 ==="
-            cat "$ENV_FILE"
 
             # 安装依赖（跳过 build，dist 已预编译）
             cd "$APP_DIR/backend"
-            npm ci 2>&1 | tail -5
+            npm ci 2>&1 | tail -3
 
-            # 查看 Node.js 版本
-            node --version
-
-            # 检查并创建/修复 systemd 服务文件
+            # 检查并修复 systemd 服务文件
             SYSTEMD_FILE="/etc/systemd/system/yijiahu.service"
             if [ ! -f "$SYSTEMD_FILE" ]; then
               printf "%s\n" "[Unit]" "Description=Yijiahu Backend API" "After=network.target" "" \
@@ -228,23 +214,17 @@ jobs:
               systemctl daemon-reload
               echo "systemd 服务文件已创建"
             else
-              echo "systemd 服务文件已存在，检查 EnvironmentFile..."
               if ! grep -q "EnvironmentFile" "$SYSTEMD_FILE"; then
-                sed -i "/ExecStart=/a EnvironmentFile=/opt/yijiahu/yijiahu/backend/.env.prod" "$SYSTEMD_FILE"
-                sed -i "s|EnvironmentFile=/opt/yijiahu/yijiahu/.env.prod|EnvironmentFile=/opt/yijiahu/yijiahu/backend/.env.prod|" "$SYSTEMD_FILE" 2>/dev/null || true
-              systemctl daemon-reload
-                echo "已添加 EnvironmentFile"
+                sed -i "/ExecStart=/a EnvironmentFile=$ENV_FILE" "$SYSTEMD_FILE"
+                sed -i "s|EnvironmentFile=/opt/yijiahu/yijiahu/.env.prod|EnvironmentFile=$ENV_FILE|" "$SYSTEMD_FILE" 2>/dev/null || true
+                systemctl daemon-reload
               fi
             fi
-            echo "=== systemd 服务文件内容 ==="
-            cat "$SYSTEMD_FILE"
 
             # 停止现有服务，source env后直接测试
             systemctl stop yijiahu 2>/dev/null || true
             sleep 2
-            echo "=== source env后直接测试启动 ==="
-            set -a && . /opt/yijiahu/yijiahu/backend/.env.prod && set +a && timeout 10 node dist/main.js 2>&1 || true
-            echo "=== 直接测试结束 ==="
+            set -a && . "$ENV_FILE" && set +a && timeout 8 node dist/main.js 2>&1 || echo "启动测试完成"
 
             # 重新启动服务
             systemctl start yijiahu 2>&1

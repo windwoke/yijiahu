@@ -204,8 +204,8 @@ jobs:
               } >> "$ENV_FILE"
               echo "OSS 配置已追加"
             fi
-            echo "=== 验证关键配置 ==="
-            grep -E "^(DB_|ALIYUN)" "$ENV_FILE" || echo "警告: 关键配置缺失"
+            echo "=== env文件全部内容 ==="
+            cat "$ENV_FILE"
 
             # 安装依赖（跳过 build，dist 已预编译）
             cd "$APP_DIR/backend"

@@ -5,7 +5,6 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:jpush_flutter/jpush_flutter.dart';
 import 'package:jpush_flutter/jpush_interface.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class JPushService {
   static final JPushService _instance = JPushService._internal();
@@ -20,8 +19,8 @@ class JPushService {
   /// 通知点击回调（App运行时点击推送触发）
   void Function(Map<String, dynamic> extra)? onNotificationTap;
 
-  /// 从 .env 读取 JPush 配置
-  String get _jpushAppKey => dotenv.env['JPUSH_APP_KEY'] ?? '';
+  /// 从 --dart-define 读取 JPush 配置
+  String get _jpushAppKey => const String.fromEnvironment('JPUSH_APP_KEY', defaultValue: '');
 
   Future<void> initialize() async {
     if (_initialized) return;
@@ -61,9 +60,9 @@ class JPushService {
       // 初始化（同步调用）
       _jpush!.setup(
         appKey: _jpushAppKey,
-        production: dotenv.env['FLUTTER_ENV'] == 'prod',
-        channel: dotenv.env['FLUTTER_ENV'] == 'prod' ? 'production' : 'development',
-        debug: dotenv.env['FLUTTER_ENV'] != 'prod',
+        production: const String.fromEnvironment('FLUTTER_ENV', defaultValue: 'dev') == 'prod',
+        channel: const String.fromEnvironment('FLUTTER_ENV', defaultValue: 'dev') == 'prod' ? 'production' : 'development',
+        debug: const String.fromEnvironment('FLUTTER_ENV', defaultValue: 'dev') != 'prod',
       );
 
       // iOS 申请推送权限

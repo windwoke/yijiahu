@@ -1,5 +1,3 @@
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-
 /// 应用环境枚举
 enum AppEnv {
   dev,
@@ -7,7 +5,7 @@ enum AppEnv {
   prod;
 
   static AppEnv get current {
-    final env = dotenv.env['FLUTTER_ENV'] ?? 'dev';
+    const env = String.fromEnvironment('FLUTTER_ENV', defaultValue: 'dev');
     switch (env) {
       case 'test':
         return AppEnv.test;
@@ -34,8 +32,11 @@ enum AppEnv {
 
 /// API 配置
 class ApiConfig {
-  static String get baseUrl =>
-      dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000/v1';
+  static String get baseUrl {
+    const apiUrl =
+        String.fromEnvironment('API_BASE_URL', defaultValue: 'http://localhost:3000/v1');
+    return apiUrl;
+  }
 
   /// 静态资源根路径（去掉 /v1 前缀）
   static String get staticRoot => baseUrl.replaceAll('/v1', '');
@@ -54,15 +55,14 @@ class ApiConfig {
     return '$staticRoot/$relativePath';
   }
 
-  static Duration get connectTimeout =>
-      Duration(seconds: int.parse(dotenv.env['CONNECT_TIMEOUT'] ?? '30'));
-
-  static Duration get receiveTimeout =>
-      Duration(seconds: int.parse(dotenv.env['RECEIVE_TIMEOUT'] ?? '30'));
+  static Duration get connectTimeout => const Duration(seconds: 30);
+  static Duration get receiveTimeout => const Duration(seconds: 30);
 }
 
 /// App 配置
 class AppConfig {
-  static String get version => dotenv.env['APP_VERSION'] ?? '1.0.0';
-  static String get buildNumber => dotenv.env['BUILD_NUMBER'] ?? '1';
+  static String get version =>
+      const String.fromEnvironment('APP_VERSION', defaultValue: '1.0.0');
+  static String get buildNumber =>
+      const String.fromEnvironment('BUILD_NUMBER', defaultValue: '1');
 }

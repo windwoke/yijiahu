@@ -23,12 +23,10 @@ export class CleanupService {
       .andWhere('a."createdAt" < :cutoff', { cutoff })
       .getMany();
 
-    let deleted = 0;
-    for (const a of orphans) {
-      await this.oss.delete(a.url);
-      await this.attachmentRepo.delete(a.id);
-      deleted++;
-    }
+    await Promise.all(orphans.map((a) =>
+      this.oss.delete(a.url).then(() => this.attachmentRepo.delete(a.id)),
+    ));
+    const deleted = orphans.length;
 
     if (deleted > 0) {
       console.log(`[Cleanup] 清理了 ${deleted} 个孤立附件`);

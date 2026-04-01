@@ -238,28 +238,34 @@ class _DailyCarePageState extends ConsumerState<DailyCarePage> {
       ),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 28,
-            backgroundColor: AppColors.coral.withValues(alpha: 0.1),
-            child: (widget.recipient.avatarUrl != null && widget.recipient.avatarUrl!.isNotEmpty)
-                ? ClipOval(
-                    child: Image.network(
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: AppColors.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: (widget.recipient.avatarUrl != null && widget.recipient.avatarUrl!.isNotEmpty)
+                  ? Image.network(
                       ApiConfig.avatarUrl(widget.recipient.avatarUrl!) ?? '',
                       fit: BoxFit.cover,
                       width: 56,
                       height: 56,
-                      errorBuilder: (_, __, ___) => Text(
-                        widget.recipient.displayAvatar,
+                      errorBuilder: (_, __, ___) => Center(
+                        child: Text(widget.recipient.displayAvatar, style: const TextStyle(fontSize: 24)),
+                      ),
+                    )
+                  : Center(
+                      child: Text(
+                        widget.recipient.displayAvatar.isNotEmpty
+                            ? widget.recipient.displayAvatar
+                            : '👤',
                         style: const TextStyle(fontSize: 24),
                       ),
                     ),
-                  )
-                : widget.recipient.displayAvatar.isNotEmpty
-                    ? Text(
-                        widget.recipient.displayAvatar,
-                        style: const TextStyle(fontSize: 24),
-                      )
-                    : const Icon(Icons.person_rounded, color: AppColors.coral, size: 28),
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(

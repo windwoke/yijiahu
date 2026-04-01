@@ -101,11 +101,23 @@ jobs:
         working-directory: lib
 
       - name: Build iOS (Simulator)
-        run: flutter build ios --simulator --no-codesign
+        env:
+          OSS_BASE_URL: ${{ secrets.OSS_BASE_URL }}
+          API_BASE_URL: ${{ secrets.API_BASE_URL }}
+        run: |
+          flutter build ios --simulator --no-codesign \
+            --dart-define=OSS_BASE_URL="$OSS_BASE_URL" \
+            --dart-define=API_BASE_URL="$API_BASE_URL"
         working-directory: lib
 
       - name: Build Android APK
-        run: flutter build apk --debug
+        env:
+          OSS_BASE_URL: ${{ secrets.OSS_BASE_URL }}
+          API_BASE_URL: ${{ secrets.API_BASE_URL }}
+        run: |
+          flutter build apk --debug \
+            --dart-define=OSS_BASE_URL="$OSS_BASE_URL" \
+            --dart-define=API_BASE_URL="$API_BASE_URL"
         working-directory: lib
 
       - name: Upload Flutter artifact

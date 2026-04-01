@@ -10,10 +10,10 @@ import {
 import { Family } from '../../family/entities/family.entity';
 
 export enum SubscriptionStatus {
-  PENDING = 'pending',   // 支付中
-  ACTIVE = 'active',     // 生效中
+  PENDING = 'pending', // 支付中
+  ACTIVE = 'active', // 生效中
   CANCELLED = 'cancelled', // 已取消（取消但未到期）
-  EXPIRED = 'expired',   // 已过期
+  EXPIRED = 'expired', // 已过期
 }
 
 @Entity('subscriptions')

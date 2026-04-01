@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, Inject, forwardRef } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SosRecord, SosStatus } from './entities/sos-record.entity';
@@ -59,7 +64,12 @@ export class SosService {
     });
   }
 
-  async updateStatus(id: string, familyId: string, status: SosStatus, userId?: string): Promise<SosRecord> {
+  async updateStatus(
+    id: string,
+    familyId: string,
+    status: SosStatus,
+    userId?: string,
+  ): Promise<SosRecord> {
     const record = await this.repo.findOne({ where: { id, familyId } });
     if (!record) throw new NotFoundException('SOS记录不存在');
 
@@ -68,7 +78,9 @@ export class SosService {
       record.acknowledgedById = userId;
       record.acknowledgedAt = new Date();
       // 发送 SOS 已确认通知给同家庭成员（除确认者）
-      const acknowledger = await this.userRepo.findOne({ where: { id: userId } });
+      const acknowledger = await this.userRepo.findOne({
+        where: { id: userId },
+      });
       if (acknowledger && record.familyId) {
         await this.notificationSvc.notifySOSAcknowledged(
           record.familyId,

@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { MedicationService } from './medication.service';
@@ -34,7 +44,11 @@ export class MedicationController {
 
   @Patch(':id')
   @ApiOperation({ summary: '更新药品' })
-  update(@Param('id') id: string, @Query('familyId') familyId: string, @Body() dto: UpdateMedicationDto) {
+  update(
+    @Param('id') id: string,
+    @Query('familyId') familyId: string,
+    @Body() dto: UpdateMedicationDto,
+  ) {
     return this.service.update(id, familyId, dto);
   }
 

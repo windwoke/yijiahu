@@ -30,7 +30,8 @@ export default () => ({
   aliyun: {
     accessKeyId: process.env.ALIYUN_ACCESS_KEY_ID || '',
     accessKeySecret: process.env.ALIYUN_ACCESS_KEY_SECRET || '',
-    ossEndpoint: process.env.ALIYUN_OSS_ENDPOINT || 'oss-cn-hangzhou.aliyuncs.com',
+    ossEndpoint:
+      process.env.ALIYUN_OSS_ENDPOINT || 'oss-cn-hangzhou.aliyuncs.com',
     ossBucket: process.env.ALIYUN_OSS_BUCKET || 'yijiahu',
   },
 

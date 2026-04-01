@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { HealthRecord } from './entities/health-record.entity';
@@ -12,13 +16,20 @@ export class HealthRecordService {
   constructor(
     @InjectRepository(HealthRecord) private repo: Repository<HealthRecord>,
     @InjectRepository(User) private userRepo: Repository<User>,
-    @InjectRepository(CareRecipient) private recipientRepo: Repository<CareRecipient>,
-    @InjectRepository(FamilyMember) private memberRepo: Repository<FamilyMember>,
+    @InjectRepository(CareRecipient)
+    private recipientRepo: Repository<CareRecipient>,
+    @InjectRepository(FamilyMember)
+    private memberRepo: Repository<FamilyMember>,
   ) {}
 
   /** 验证照护对象属于指定家庭 */
-  private async validateRecipientInFamily(recipientId: string, familyId: string) {
-    const recipient = await this.recipientRepo.findOne({ where: { id: recipientId } });
+  private async validateRecipientInFamily(
+    recipientId: string,
+    familyId: string,
+  ) {
+    const recipient = await this.recipientRepo.findOne({
+      where: { id: recipientId },
+    });
     if (!recipient) throw new NotFoundException('照护对象不存在');
     if (recipient.familyId !== familyId) {
       throw new ForbiddenException('该照护对象不属于您的家庭');
@@ -37,7 +48,12 @@ export class HealthRecordService {
   }
 
   /** 获取最近健康记录用于时间线 */
-  async findRecent(recipientId?: string, days = 7, limit = 20, familyId?: string): Promise<any[]> {
+  async findRecent(
+    recipientId?: string,
+    days = 7,
+    limit = 20,
+    familyId?: string,
+  ): Promise<any[]> {
     const qb = this.repo
       .createQueryBuilder('hr')
       .leftJoin('hr.recipient', 'cr')
@@ -58,8 +74,11 @@ export class HealthRecordService {
     const records = await qb.getMany();
 
     // 通过 FamilyMember 查 nickname 和头像
-    const userIds = records.map(r => r.recordedById).filter(Boolean);
-    const memberMap = new Map<string, { nickname: string; avatarUrl: string | null }>();
+    const userIds = records.map((r) => r.recordedById).filter(Boolean);
+    const memberMap = new Map<
+      string,
+      { nickname: string; avatarUrl: string | null }
+    >();
     if (userIds.length > 0 && familyId) {
       const members = await this.memberRepo
         .createQueryBuilder('m')
@@ -68,11 +87,14 @@ export class HealthRecordService {
         .andWhere('m.familyId = :familyId', { familyId })
         .getMany();
       for (const m of members) {
-        memberMap.set(m.userId, { nickname: m.nickname, avatarUrl: m.avatarUrl || (m.user as any)?.avatar || null });
+        memberMap.set(m.userId, {
+          nickname: m.nickname,
+          avatarUrl: m.avatarUrl || (m.user as any)?.avatar || null,
+        });
       }
     }
 
-    return records.map(r => ({
+    return records.map((r) => ({
       id: r.id,
       recipientId: r.recipientId,
       recordType: r.recordType,
@@ -80,12 +102,17 @@ export class HealthRecordService {
       note: r.note,
       recordedAt: formatLocalTime(r.recordedAt),
       recordedById: r.recordedById,
-      authorName: memberMap.get(r.recordedById!)?.nickname || '家庭成员',
-      authorAvatar: memberMap.get(r.recordedById!)?.avatarUrl || null,
+      authorName: memberMap.get(r.recordedById)?.nickname || '家庭成员',
+      authorAvatar: memberMap.get(r.recordedById)?.avatarUrl || null,
     }));
   }
 
-  async findByRecipient(recipientId: string, familyId: string, recordType?: string, days = 7) {
+  async findByRecipient(
+    recipientId: string,
+    familyId: string,
+    recordType?: string,
+    days = 7,
+  ) {
     // 验证归属
     await this.validateRecipientInFamily(recipientId, familyId);
 
@@ -120,8 +147,8 @@ export class HealthRecordService {
       .orderBy('hr.recordedAt', 'DESC')
       .getMany();
 
-    const bp = records.filter(r => r.recordType === 'blood_pressure');
-    const glucose = records.filter(r => r.recordType === 'blood_glucose');
+    const bp = records.filter((r) => r.recordType === 'blood_pressure');
+    const glucose = records.filter((r) => r.recordType === 'blood_glucose');
 
     return { bloodPressure: bp, bloodGlucose: glucose };
   }

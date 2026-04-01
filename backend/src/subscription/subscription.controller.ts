@@ -1,7 +1,6 @@
 import { Controller, Get, Post, Body, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { SubscriptionService } from './subscription.service';
 import {
   CreateSubscriptionDto,
@@ -20,14 +19,16 @@ export class SubscriptionController {
   /** 查询指定家庭订阅状态 */
   @Get('status')
   @ApiOperation({ summary: '查询家庭订阅状态' })
-  async getStatus(@Query('familyId') familyId: string): Promise<SubscriptionStatusDto> {
+  async getStatus(
+    @Query('familyId') familyId: string,
+  ): Promise<SubscriptionStatusDto> {
     return this.service.getStatus(familyId);
   }
 
   /** Apple IAP 收据验证并激活订阅 */
   @Post('apple/verify')
   @ApiOperation({ summary: 'Apple IAP 收据验证' })
-  async verifyAppleReceipt(@Body() dto: AppleReceiptDto) {
+  async verifyAppleReceipt(@Body() __dto: AppleReceiptDto) {
     // TODO: 调用 Apple 收据验证接口（App Store Connect API）
     // 目前为占位实现
     return { success: false, message: 'Apple IAP 验证待接入' };
@@ -53,7 +54,10 @@ export class SubscriptionController {
   @Post('wechat/notify')
   @ApiOperation({ summary: '微信支付回调' })
   async wechatNotify(@Body() dto: WechatNotifyDto) {
-    const sub = await this.service.handleWechatNotify(dto.transaction_id, dto.out_trade_no);
+    const sub = await this.service.handleWechatNotify(
+      dto.transaction_id,
+      dto.out_trade_no,
+    );
     return { message: '回调处理成功', subscriptionId: sub.id };
   }
 }

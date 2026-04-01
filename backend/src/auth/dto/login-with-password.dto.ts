@@ -1,4 +1,4 @@
-import { IsString, IsPhoneNumber } from 'class-validator';
+import { IsString } from 'class-validator';
 
 export class LoginWithPasswordDto {
   @IsString()

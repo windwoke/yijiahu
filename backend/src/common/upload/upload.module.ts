@@ -6,7 +6,10 @@ import { CareRecipient } from '../../care-recipient/entities/care-recipient.enti
 import { CommonModule } from '../services/common.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([CareLogAttachment, CareRecipient]), CommonModule],
+  imports: [
+    TypeOrmModule.forFeature([CareLogAttachment, CareRecipient]),
+    CommonModule,
+  ],
   controllers: [UploadController],
 })
 export class UploadModule {}

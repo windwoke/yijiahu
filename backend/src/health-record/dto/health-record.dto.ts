@@ -1,4 +1,11 @@
-import { IsString, IsOptional, IsNumber, IsDateString, IsObject, MaxLength, IsUUID, IsNotEmpty } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsDateString,
+  IsObject,
+  IsUUID,
+  IsNotEmpty,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateHealthRecordDto {

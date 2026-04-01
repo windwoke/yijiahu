@@ -1,10 +1,24 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { PermissionService } from '../common/services/permission.service';
 import { FamilyTaskService } from './family-task.service';
-import { CreateFamilyTaskDto, UpdateFamilyTaskDto, CompleteTaskDto } from './dto/family-task.dto';
+import {
+  CreateFamilyTaskDto,
+  UpdateFamilyTaskDto,
+  CompleteTaskDto,
+} from './dto/family-task.dto';
 import { FamilyMemberRole } from '../family/entities/family-member.entity';
 
 @ApiTags('家庭任务')
@@ -50,7 +64,12 @@ export class FamilyTaskController {
     @Query('year') year: string,
     @Query('month') month: string,
   ) {
-    return this.service.findByMonth(familyId, userId, parseInt(year), parseInt(month));
+    return this.service.findByMonth(
+      familyId,
+      userId,
+      parseInt(year),
+      parseInt(month),
+    );
   }
 
   // ⚠️ 动态路由必须放在具体路由之后，否则 /calendar /upcoming 会被 :id 捕获
@@ -102,7 +121,11 @@ export class FamilyTaskController {
   ) {
     // caregiver 只能完成分配给自己的任务；如果未传 assigneeId，从数据库查
     const assigneeId = dto.assigneeId ?? (await this.service.getAssigneeId(id));
-    await this.permission.canCompleteTask(userId, familyId, assigneeId ?? userId);
+    await this.permission.canCompleteTask(
+      userId,
+      familyId,
+      assigneeId ?? userId,
+    );
     return this.service.complete(id, userId, dto, familyId);
   }
 

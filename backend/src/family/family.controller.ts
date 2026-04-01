@@ -1,9 +1,23 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { FamilyService } from './family.service';
-import { CreateFamilyDto, UpdateFamilyDto, JoinFamilyDto, UpdateMemberDto } from './dto/family.dto';
+import {
+  CreateFamilyDto,
+  UpdateFamilyDto,
+  JoinFamilyDto,
+  UpdateMemberDto,
+} from './dto/family.dto';
 
 @ApiTags('家庭')
 @ApiBearerAuth()

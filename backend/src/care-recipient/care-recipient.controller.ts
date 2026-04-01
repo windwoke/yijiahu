@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  BadRequestException,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -7,8 +18,14 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { PermissionService } from '../common/services/permission.service';
 import { CareRecipientService } from './care-recipient.service';
 import { SubscriptionService } from '../subscription/subscription.service';
-import { FamilyMember, FamilyMemberRole } from '../family/entities/family-member.entity';
-import { CreateCareRecipientDto, UpdateCareRecipientDto } from './dto/care-recipient.dto';
+import {
+  FamilyMember,
+  FamilyMemberRole,
+} from '../family/entities/family-member.entity';
+import {
+  CreateCareRecipientDto,
+  UpdateCareRecipientDto,
+} from './dto/care-recipient.dto';
 
 @ApiTags('照护对象')
 @ApiBearerAuth()
@@ -19,7 +36,8 @@ export class CareRecipientController {
     private readonly service: CareRecipientService,
     private readonly subscriptionService: SubscriptionService,
     private readonly permission: PermissionService,
-    @InjectRepository(FamilyMember) private memberRepo: Repository<FamilyMember>,
+    @InjectRepository(FamilyMember)
+    private memberRepo: Repository<FamilyMember>,
   ) {}
 
   @Post()

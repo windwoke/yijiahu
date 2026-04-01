@@ -16,7 +16,10 @@ import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { Repository, DataSource } from 'typeorm';
-import { CareLogAttachment, AttachmentType } from '../../care-log/entities/care-log-attachment.entity';
+import {
+  CareLogAttachment,
+  AttachmentType,
+} from '../../care-log/entities/care-log-attachment.entity';
 import { CareRecipient } from '../../care-recipient/entities/care-recipient.entity';
 import { FamilyMemberRole } from '../../family/entities/family-member.entity';
 import { PermissionService } from '../services/permission.service';
@@ -57,7 +60,10 @@ export class UploadController {
         if (/jpeg|jpg|png|gif|webp/.test(file.mimetype)) {
           callback(null, true);
         } else {
-          callback(new BadRequestException('只支持 jpeg/jpg/png/gif/webp 格式'), false);
+          callback(
+            new BadRequestException('只支持 jpeg/jpg/png/gif/webp 格式'),
+            false,
+          );
         }
       },
     }),
@@ -92,7 +98,10 @@ export class UploadController {
         if (/jpeg|jpg|png|gif|webp/.test(file.mimetype)) {
           callback(null, true);
         } else {
-          callback(new BadRequestException('只支持 jpeg/jpg/png/gif/webp 格式'), false);
+          callback(
+            new BadRequestException('只支持 jpeg/jpg/png/gif/webp 格式'),
+            false,
+          );
         }
       },
     }),
@@ -113,7 +122,7 @@ export class UploadController {
 
     const ext = path.extname(file.originalname).toLowerCase();
     const ossPath = this.ossPath(familyId, `avatar${ext}`);
-    const url = await this.oss.put(ossPath, file.buffer);
+    const _url = await this.oss.put(ossPath, file.buffer);
 
     return { avatarUrl: ossPath };
   }
@@ -126,7 +135,10 @@ export class UploadController {
         if (/jpeg|jpg|png|gif|webp/.test(file.mimetype)) {
           callback(null, true);
         } else {
-          callback(new BadRequestException('只支持 jpeg/jpg/png/gif/webp 格式'), false);
+          callback(
+            new BadRequestException('只支持 jpeg/jpg/png/gif/webp 格式'),
+            false,
+          );
         }
       },
     }),
@@ -148,11 +160,18 @@ export class UploadController {
     ]);
 
     const recipientRepo = this.dataSource.getRepository(CareRecipient);
-    const r = await recipientRepo.findOne({ where: { id: recipientId, familyId } });
+    const r = await recipientRepo.findOne({
+      where: { id: recipientId, familyId },
+    });
     if (!r) throw new BadRequestException('照护对象不存在或不属于该家庭');
 
     const ext = path.extname(file.originalname).toLowerCase();
-    const ossPath = this.ossPath(familyId, 'recipients', recipientId, `avatar${ext}`);
+    const ossPath = this.ossPath(
+      familyId,
+      'recipients',
+      recipientId,
+      `avatar${ext}`,
+    );
     await this.oss.put(ossPath, file.buffer);
 
     return { avatarUrl: ossPath };
@@ -164,10 +183,18 @@ export class UploadController {
       limits: { fileSize: 100 * 1024 * 1024 },
       fileFilter: (req, file, callback) => {
         const mime = file.mimetype;
-        if (/jpeg|jpg|png|gif|webp/.test(mime) || /mp4|quicktime|x-msvideo/.test(mime)) {
+        if (
+          /jpeg|jpg|png|gif|webp/.test(mime) ||
+          /mp4|quicktime|x-msvideo/.test(mime)
+        ) {
           callback(null, true);
         } else {
-          callback(new BadRequestException('只支持图片（jpeg/png/gif/webp）和视频（mp4/mov/avi）格式'), false);
+          callback(
+            new BadRequestException(
+              '只支持图片（jpeg/png/gif/webp）和视频（mp4/mov/avi）格式',
+            ),
+            false,
+          );
         }
       },
     }),
@@ -178,7 +205,8 @@ export class UploadController {
     @Query('familyId') familyId: string,
     @Req() req: Request & { user: { id: string } },
   ) {
-    if (!files || files.length === 0) throw new BadRequestException('请选择要上传的文件');
+    if (!files || files.length === 0)
+      throw new BadRequestException('请选择要上传的文件');
     if (!familyId) throw new BadRequestException('familyId 不能为空');
 
     await this.permission.requireRole(req.user.id, familyId, [
@@ -188,39 +216,46 @@ export class UploadController {
       FamilyMemberRole.GUEST,
     ]);
 
-    const savedFiles = await Promise.all(files.map(async file => {
-      const isVideo = file.mimetype.startsWith('video/');
-      const ext = path.extname(file.originalname);
-      const filename = `${Date.now()}_${Math.random().toString(36).slice(2)}${ext}`;
-      const subdir = isVideo ? 'videos' : 'images';
-      const ossPath = this.ossPath(familyId, 'attachments', subdir, filename);
+    const savedFiles = await Promise.all(
+      files.map(async (file) => {
+        const isVideo = file.mimetype.startsWith('video/');
+        const ext = path.extname(file.originalname);
+        const filename = `${Date.now()}_${Math.random().toString(36).slice(2)}${ext}`;
+        const subdir = isVideo ? 'videos' : 'images';
+        const ossPath = this.ossPath(familyId, 'attachments', subdir, filename);
 
-      await this.oss.put(ossPath, file.buffer);
+        await this.oss.put(ossPath, file.buffer);
 
-      return {
-        type: isVideo ? AttachmentType.VIDEO : AttachmentType.IMAGE,
-        url: ossPath,
-        filename: file.originalname,
-        size: file.size,
-        familyId,
-      };
-    }));
+        return {
+          type: isVideo ? AttachmentType.VIDEO : AttachmentType.IMAGE,
+          url: ossPath,
+          filename: file.originalname,
+          size: file.size,
+          familyId,
+        };
+      }),
+    );
 
     const attachmentEntities = await this.attachmentRepo.save(
-      savedFiles.map(f => this.attachmentRepo.create({
-        type: f.type,
-        url: f.url,
-        filename: f.filename,
-        size: f.size,
-        familyId: f.familyId,
-      })),
+      savedFiles.map((f) =>
+        this.attachmentRepo.create({
+          type: f.type,
+          url: f.url,
+          filename: f.filename,
+          size: f.size,
+          familyId: f.familyId,
+        }),
+      ),
     );
 
     const results = attachmentEntities.map((a, i) => ({
       id: a.id,
       filename: savedFiles[i].filename,
       url: savedFiles[i].url,
-      mimeType: savedFiles[i].type === AttachmentType.VIDEO ? 'video/mp4' : 'image/jpeg',
+      mimeType:
+        savedFiles[i].type === AttachmentType.VIDEO
+          ? 'video/mp4'
+          : 'image/jpeg',
       size: savedFiles[i].size,
       type: savedFiles[i].type === AttachmentType.VIDEO ? 'video' : 'image',
     }));
@@ -246,10 +281,10 @@ export class UploadController {
     ]);
 
     const attachments = await this.attachmentRepo.findByIds(body.ids);
-    const deletable = attachments.filter(a => !a.careLogId);
+    const deletable = attachments.filter((a) => !a.careLogId);
 
-    await Promise.all(deletable.map(a => this.oss.delete(a.url)));
-    await this.attachmentRepo.delete(deletable.map(a => a.id));
+    await Promise.all(deletable.map((a) => this.oss.delete(a.url)));
+    await this.attachmentRepo.delete(deletable.map((a) => a.id));
 
     return { deleted: deletable.length };
   }

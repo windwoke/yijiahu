@@ -1,7 +1,14 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Subscription, SubscriptionStatus } from './entities/subscription.entity';
+import {
+  Subscription,
+  SubscriptionStatus,
+} from './entities/subscription.entity';
 import { Family, SubscriptionPlan } from '../family/entities/family.entity';
 import { FamilyMember } from '../family/entities/family-member.entity';
 import { CareRecipient } from '../care-recipient/entities/care-recipient.entity';
@@ -41,7 +48,9 @@ export class SubscriptionService {
 
   /** 创建/激活订阅（支付成功后调用） */
   async activate(dto: CreateSubscriptionDto): Promise<Subscription> {
-    const family = await this.familyRepo.findOne({ where: { id: dto.familyId } });
+    const family = await this.familyRepo.findOne({
+      where: { id: dto.familyId },
+    });
     if (!family) throw new NotFoundException('家庭不存在');
 
     const now = new Date();
@@ -89,7 +98,9 @@ export class SubscriptionService {
     await this.subRepo.save(sub);
 
     // 更新家庭订阅字段
-    const family = await this.familyRepo.findOne({ where: { id: sub.familyId } });
+    const family = await this.familyRepo.findOne({
+      where: { id: sub.familyId },
+    });
     if (family) {
       family.subscriptionPlan = sub.plan as SubscriptionPlan;
       family.subscriptionExpiresAt = sub.expiresAt;
@@ -117,7 +128,10 @@ export class SubscriptionService {
   }
 
   /** 检查配额（加成员/照护对象时调用） */
-  async checkQuota(familyId: string, type: 'member' | 'recipient'): Promise<boolean> {
+  async checkQuota(
+    familyId: string,
+    type: 'member' | 'recipient',
+  ): Promise<boolean> {
     const family = await this.familyRepo.findOne({ where: { id: familyId } });
     if (!family) throw new NotFoundException('家庭不存在');
 
@@ -183,9 +197,9 @@ export class SubscriptionService {
   }
 
   private calcExpiresAt(plan: string, from: Date): Date {
-    const days = plan === 'annual' ? 365 : 30;
+    const _days = plan === 'annual' ? 365 : 30;
     const d = new Date(from);
-    d.setDate(d.getDate() + days);
+    d.setDate(d.getDate() + _days);
     return d;
   }
 }

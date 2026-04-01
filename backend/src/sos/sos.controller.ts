@@ -1,11 +1,20 @@
-import { Controller, Post, Get, Patch, Body, Param, Query, UseGuards, ParseUUIDPipe } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Patch,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  ParseUUIDPipe,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { SosService } from './sos.service';
 import { CreateSosDto } from './dto/create-sos.dto';
 import { UpdateSosDto } from './dto/update-sos.dto';
-import { SosStatus } from './entities/sos-record.entity';
 
 @ApiTags('SOS 紧急求助')
 @ApiBearerAuth()

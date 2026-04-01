@@ -22,7 +22,11 @@ export class CareLogService {
     private readonly attachmentService: CareLogAttachmentService,
   ) {}
 
-  async create(familyId: string, userId: string, dto: CreateCareLogDto): Promise<CareLog> {
+  async create(
+    familyId: string,
+    userId: string,
+    dto: CreateCareLogDto,
+  ): Promise<CareLog> {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     const authorName = user?.name || user?.phone || '家庭成员';
 
@@ -44,12 +48,15 @@ export class CareLogService {
     return saved;
   }
 
-  async findByFamily(familyId: string, options: {
-    recipientId?: string;
-    type?: string;
-    limit?: number;
-    before?: Date;  // 分页游标：只取 createdAt < before 的记录
-  } = {}): Promise<any[]> {
+  async findByFamily(
+    familyId: string,
+    options: {
+      recipientId?: string;
+      type?: string;
+      limit?: number;
+      before?: Date; // 分页游标：只取 createdAt < before 的记录
+    } = {},
+  ): Promise<any[]> {
     const qb = this.repo
       .createQueryBuilder('log')
       .leftJoinAndSelect('log.attachments', 'attachment')
@@ -57,7 +64,9 @@ export class CareLogService {
       .orderBy('log.createdAt', 'DESC');
 
     if (options.recipientId) {
-      qb.andWhere('log.recipientId = :recipientId', { recipientId: options.recipientId });
+      qb.andWhere('log.recipientId = :recipientId', {
+        recipientId: options.recipientId,
+      });
     }
     if (options.type) {
       qb.andWhere('log.type = :type', { type: options.type });
@@ -72,40 +81,50 @@ export class CareLogService {
     const logs = await qb.getMany();
 
     // 通过 FamilyMember 查 nickname 和头像
-    const authorIds = logs.map(l => l.authorId).filter(Boolean);
-    const members = authorIds.length > 0
-      ? await this.memberRepo
-          .createQueryBuilder('m')
-          .leftJoinAndSelect('m.user', 'user')
-          .where('m.familyId = :familyId', { familyId })
-          .andWhere('m.userId IN (:...authorIds)', { authorIds })
-          .getMany()
-      : [];
-    const memberMap = new Map<string, { nickname: string; avatarUrl: string | null }>();
+    const authorIds = logs.map((l) => l.authorId).filter(Boolean);
+    const members =
+      authorIds.length > 0
+        ? await this.memberRepo
+            .createQueryBuilder('m')
+            .leftJoinAndSelect('m.user', 'user')
+            .where('m.familyId = :familyId', { familyId })
+            .andWhere('m.userId IN (:...authorIds)', { authorIds })
+            .getMany()
+        : [];
+    const memberMap = new Map<
+      string,
+      { nickname: string; avatarUrl: string | null }
+    >();
     for (const m of members) {
-      memberMap.set(m.userId, { nickname: m.nickname, avatarUrl: m.avatarUrl || (m.user as any)?.avatar || null });
+      memberMap.set(m.userId, {
+        nickname: m.nickname,
+        avatarUrl: m.avatarUrl || (m.user as any)?.avatar || null,
+      });
     }
 
-    return logs.map(log => ({
+    return logs.map((log) => ({
       id: log.id,
       recipientId: log.recipientId,
       authorId: log.authorId,
-      authorName: memberMap.get(log.authorId)?.nickname || log.authorName || '家庭成员',
+      authorName:
+        memberMap.get(log.authorId)?.nickname || log.authorName || '家庭成员',
       authorAvatar: memberMap.get(log.authorId)?.avatarUrl || null,
       type: log.type,
       content: log.content,
       createdAt: formatLocalTime(log.createdAt),
-      attachments: ((log as any).attachments || []).map((a: CareLogAttachment) => ({
-        id: a.id,
-        type: a.type,
-        url: a.url,
-        thumbnailUrl: a.thumbnailUrl,
-        size: a.size,
-        duration: a.duration,
-        width: a.width,
-        height: a.height,
-        filename: a.filename,
-      })),
+      attachments: ((log as any).attachments || []).map(
+        (a: CareLogAttachment) => ({
+          id: a.id,
+          type: a.type,
+          url: a.url,
+          thumbnailUrl: a.thumbnailUrl,
+          size: a.size,
+          duration: a.duration,
+          width: a.width,
+          height: a.height,
+          filename: a.filename,
+        }),
+      ),
     }));
   }
 

@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, ForbiddenException, forwardRef, Inject } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  forwardRef,
+  Inject,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between } from 'typeorm';
 import { DailyCareCheckin } from './entities/daily-care-checkin.entity';
@@ -11,17 +17,26 @@ import { NotificationService } from '../notification/notification.service';
 @Injectable()
 export class DailyCareCheckinService {
   constructor(
-    @InjectRepository(DailyCareCheckin) private repo: Repository<DailyCareCheckin>,
-    @InjectRepository(MedicationLog) private medLogRepo: Repository<MedicationLog>,
-    @InjectRepository(CareRecipient) private recipientRepo: Repository<CareRecipient>,
-    @InjectRepository(FamilyMember) private memberRepo: Repository<FamilyMember>,
+    @InjectRepository(DailyCareCheckin)
+    private repo: Repository<DailyCareCheckin>,
+    @InjectRepository(MedicationLog)
+    private medLogRepo: Repository<MedicationLog>,
+    @InjectRepository(CareRecipient)
+    private recipientRepo: Repository<CareRecipient>,
+    @InjectRepository(FamilyMember)
+    private memberRepo: Repository<FamilyMember>,
     @Inject(forwardRef(() => NotificationService))
     private readonly notifSvc: NotificationService,
   ) {}
 
   /** 验证照护对象属于指定家庭 */
-  private async validateRecipientInFamily(recipientId: string, familyId: string): Promise<CareRecipient> {
-    const recipient = await this.recipientRepo.findOne({ where: { id: recipientId } });
+  private async validateRecipientInFamily(
+    recipientId: string,
+    familyId: string,
+  ): Promise<CareRecipient> {
+    const recipient = await this.recipientRepo.findOne({
+      where: { id: recipientId },
+    });
     if (!recipient) throw new NotFoundException('照护对象不存在');
     if (recipient.familyId !== familyId) {
       throw new ForbiddenException('该照护对象不属于您的家庭');
@@ -35,16 +50,22 @@ export class DailyCareCheckinService {
       .createQueryBuilder('c')
       .leftJoinAndSelect('c.checkedInBy', 'checkedInBy')
       .where('c.careRecipientId = :careRecipientId', { careRecipientId })
-      .andWhere('TO_CHAR(c.checkinDate, \'YYYY-MM-DD\') = :checkinDate', { checkinDate })
+      .andWhere("TO_CHAR(c.checkinDate, 'YYYY-MM-DD') = :checkinDate", {
+        checkinDate,
+      })
       .getOne();
   }
 
   /** 批量获取今日打卡（用于首页横幅）—— 传入家庭所有照护对象ID */
-  async findTodayByRecipients(recipientIds: string[], todayDate: string, familyId: string) {
+  async findTodayByRecipients(
+    recipientIds: string[],
+    todayDate: string,
+    familyId: string,
+  ) {
     if (recipientIds.length === 0) return [];
     // 验证所有recipientId都属于该家庭
     const recipients = await this.recipientRepo.findBy(
-      recipientIds.map(id => ({ id } as any)),
+      recipientIds.map((id) => ({ id }) as any),
     );
     for (const r of recipients) {
       if (r.familyId !== familyId) {
@@ -57,19 +78,28 @@ export class DailyCareCheckinService {
       .leftJoinAndSelect('c.checkedInBy', 'checkedInBy')
       .leftJoinAndSelect('c.careRecipient', 'recipient')
       .where('c.careRecipientId IN (:...ids)', { ids: recipientIds })
-      .andWhere('TO_CHAR(c.checkinDate, \'YYYY-MM-DD\') = :date', { date: todayDate })
+      .andWhere("TO_CHAR(c.checkinDate, 'YYYY-MM-DD') = :date", {
+        date: todayDate,
+      })
       .getMany();
   }
 
   /** 创建或更新打卡（upsert）*/
   async upsert(dto: CreateDailyCareCheckinDto, userId: string) {
     // 验证照护对象归属
-    const recipient = await this.validateRecipientInFamily(dto.careRecipientId, dto.familyId);
+    const recipient = await this.validateRecipientInFamily(
+      dto.careRecipientId,
+      dto.familyId,
+    );
     const recipientName = recipient.name;
     const existing = await this.repo
       .createQueryBuilder('c')
-      .where('c.careRecipientId = :careRecipientId', { careRecipientId: dto.careRecipientId })
-      .andWhere('TO_CHAR(c.checkinDate, \'YYYY-MM-DD\') = :checkinDate', { checkinDate: dto.checkinDate })
+      .where('c.careRecipientId = :careRecipientId', {
+        careRecipientId: dto.careRecipientId,
+      })
+      .andWhere("TO_CHAR(c.checkinDate, 'YYYY-MM-DD') = :checkinDate", {
+        checkinDate: dto.checkinDate,
+      })
       .getOne();
 
     // 自动计算今日用药完成情况（使用本地时区的日期范围）
@@ -107,17 +137,19 @@ export class DailyCareCheckinService {
     }
 
     // 通知所有家庭成员（异步，不阻塞响应）
-    this.notifSvc.notifyDailyCheckinCompleted(
-      dto.familyId,
-      userId,
-      recipientName,
-      dto.status,
-      saved.medicationCompleted,
-      saved.medicationTotal,
-      saved.specialNote,
-      saved.id,
-      { careRecipientId: dto.careRecipientId },
-    ).catch(() => {}); // fire-and-forget
+    this.notifSvc
+      .notifyDailyCheckinCompleted(
+        dto.familyId,
+        userId,
+        recipientName,
+        dto.status,
+        saved.medicationCompleted,
+        saved.medicationTotal,
+        saved.specialNote,
+        saved.id,
+        { careRecipientId: dto.careRecipientId },
+      )
+      .catch(() => {}); // fire-and-forget
 
     return saved;
   }
@@ -127,7 +159,11 @@ export class DailyCareCheckinService {
    * @param familyId - 可选，按家庭筛选（返回该家庭所有照护对象的打卡记录）
    * @param limit - 返回条数上限
    */
-  async findByRecipient(careRecipientId?: string, familyId?: string, limit = 30) {
+  async findByRecipient(
+    careRecipientId?: string,
+    familyId?: string,
+    limit = 30,
+  ) {
     const qb = this.repo
       .createQueryBuilder('c')
       .leftJoinAndSelect('c.checkedInBy', 'checkedInBy')
@@ -144,8 +180,11 @@ export class DailyCareCheckinService {
     const records = await qb.getMany();
 
     // 通过 FamilyMember 查 nickname 和头像
-    const userIds = records.map(r => r.checkedInById).filter(Boolean);
-    const memberMap = new Map<string, { nickname: string; avatarUrl: string | null }>();
+    const userIds = records.map((r) => r.checkedInById).filter(Boolean);
+    const memberMap = new Map<
+      string,
+      { nickname: string; avatarUrl: string | null }
+    >();
     if (userIds.length > 0 && familyId) {
       const members = await this.memberRepo
         .createQueryBuilder('m')
@@ -154,11 +193,14 @@ export class DailyCareCheckinService {
         .andWhere('m.familyId = :familyId', { familyId })
         .getMany();
       for (const m of members) {
-        memberMap.set(m.userId, { nickname: m.nickname, avatarUrl: m.avatarUrl || (m.user as any)?.avatar || null });
+        memberMap.set(m.userId, {
+          nickname: m.nickname,
+          avatarUrl: m.avatarUrl || (m.user as any)?.avatar || null,
+        });
       }
     }
 
-    return records.map(r => ({
+    return records.map((r) => ({
       id: r.id,
       careRecipientId: r.careRecipientId,
       checkinDate: r.checkinDate,
@@ -167,10 +209,11 @@ export class DailyCareCheckinService {
       medicationTotal: r.medicationTotal,
       specialNote: r.specialNote,
       checkedInById: r.checkedInById,
-      authorName: memberMap.get(r.checkedInById)?.nickname
-        || r.checkedInBy?.name
-        || r.checkedInBy?.phone
-        || '家庭成员',
+      authorName:
+        memberMap.get(r.checkedInById)?.nickname ||
+        r.checkedInBy?.name ||
+        r.checkedInBy?.phone ||
+        '家庭成员',
       authorAvatar: memberMap.get(r.checkedInById)?.avatarUrl || null,
       createdAt: formatLocalTime(r.createdAt),
     }));

@@ -41,7 +41,7 @@ export class CareLogController {
     @Query('recipientId') recipientId?: string,
     @Query('type') type?: string,
     @Query('limit') limit?: string,
-    @Query('before') before?: string,  // ISO 时间戳，用于分页游标
+    @Query('before') before?: string, // ISO 时间戳，用于分页游标
   ) {
     return this.service.findByFamily(familyId, {
       recipientId,

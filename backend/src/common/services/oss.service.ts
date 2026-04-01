@@ -8,7 +8,10 @@ export class OssService {
 
   constructor(private readonly config: ConfigService) {
     this.client = new OSS({
-      region: this.config.get('aliyun.ossEndpoint', '').replace('oss-cn-', '').replace('.aliyuncs.com', ''),
+      region: this.config
+        .get('aliyun.ossEndpoint', '')
+        .replace('oss-cn-', '')
+        .replace('.aliyuncs.com', ''),
       accessKeyId: this.config.get('aliyun.accessKeyId', ''),
       accessKeySecret: this.config.get('aliyun.accessKeySecret', ''),
       bucket: this.config.get('aliyun.ossBucket', ''),
@@ -17,7 +20,11 @@ export class OssService {
   }
 
   /** 上传 Buffer 到 OSS，返回公网 URL */
-  async put(path: string, buffer: Buffer, options?: OSS.PutStreamOptions): Promise<string> {
+  async put(
+    path: string,
+    buffer: Buffer,
+    options?: OSS.PutStreamOptions,
+  ): Promise<string> {
     await this.client.put(path, buffer, options);
     return `https://${this.config.get('aliyun.ossBucket', '')}.${this.config.get('aliyun.ossEndpoint', '').replace('http://', '')}/${path}`;
   }
@@ -26,6 +33,6 @@ export class OssService {
   async delete(path: string): Promise<void> {
     try {
       await this.client.delete(path);
-    } catch (_) {}
+    } catch {}
   }
 }

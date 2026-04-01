@@ -1,10 +1,24 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { PermissionService } from '../common/services/permission.service';
 import { AppointmentService } from './appointment.service';
-import { CreateAppointmentDto, UpdateAppointmentDto, UpdateAppointmentStatusDto } from './dto/appointment.dto';
+import {
+  CreateAppointmentDto,
+  UpdateAppointmentDto,
+  UpdateAppointmentStatusDto,
+} from './dto/appointment.dto';
 import { AppointmentStatus } from './entities/appointment.entity';
 import { FamilyMemberRole } from '../family/entities/family-member.entity';
 

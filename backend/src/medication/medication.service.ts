@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Medication } from './entities/medication.entity';
@@ -9,12 +13,18 @@ import { CreateMedicationDto, UpdateMedicationDto } from './dto/medication.dto';
 export class MedicationService {
   constructor(
     @InjectRepository(Medication) private repo: Repository<Medication>,
-    @InjectRepository(CareRecipient) private recipientRepo: Repository<CareRecipient>,
+    @InjectRepository(CareRecipient)
+    private recipientRepo: Repository<CareRecipient>,
   ) {}
 
   /** 验证照护对象属于指定家庭 */
-  private async validateRecipientInFamily(recipientId: string, familyId: string): Promise<CareRecipient> {
-    const recipient = await this.recipientRepo.findOne({ where: { id: recipientId } });
+  private async validateRecipientInFamily(
+    recipientId: string,
+    familyId: string,
+  ): Promise<CareRecipient> {
+    const recipient = await this.recipientRepo.findOne({
+      where: { id: recipientId },
+    });
     if (!recipient) throw new NotFoundException('照护对象不存在');
     if (recipient.familyId !== familyId) {
       throw new ForbiddenException('该照护对象不属于您的家庭');
@@ -53,7 +63,9 @@ export class MedicationService {
     }
     if (recipientId) {
       // 仅 recipientId：需要先查 recipient 归属哪个 family，再过滤
-      const recipient = await this.recipientRepo.findOne({ where: { id: recipientId } });
+      const recipient = await this.recipientRepo.findOne({
+        where: { id: recipientId },
+      });
       if (!recipient) return [];
       return this.repo
         .createQueryBuilder('m')

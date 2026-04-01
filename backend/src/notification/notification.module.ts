@@ -35,7 +35,12 @@ import { User } from '../user/entities/user.entity';
     ]),
   ],
   controllers: [NotificationController, NotificationPreferenceController],
-  providers: [NotificationService, NotificationPreferenceService, NotificationScheduler, JPushService],
+  providers: [
+    NotificationService,
+    NotificationPreferenceService,
+    NotificationScheduler,
+    JPushService,
+  ],
   exports: [NotificationService, NotificationPreferenceService, JPushService],
 })
 export class NotificationModule {}

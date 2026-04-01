@@ -9,7 +9,11 @@ import { FamilyMember } from '../family/entities/family-member.entity';
 import { NotificationModule } from '../notification/notification.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([FamilyTask, TaskCompletion, FamilyMember]), CommonModule, NotificationModule],
+  imports: [
+    TypeOrmModule.forFeature([FamilyTask, TaskCompletion, FamilyMember]),
+    CommonModule,
+    NotificationModule,
+  ],
   controllers: [FamilyTaskController],
   providers: [FamilyTaskService],
   exports: [FamilyTaskService],

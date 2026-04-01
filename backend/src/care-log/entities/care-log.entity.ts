@@ -46,6 +46,6 @@ export class CareLog {
   @CreateDateColumn()
   createdAt: Date;
 
-  @OneToMany(() => CareLogAttachment, a => a.careLog)
+  @OneToMany(() => CareLogAttachment, (a) => a.careLog)
   attachments: CareLogAttachment[];
 }

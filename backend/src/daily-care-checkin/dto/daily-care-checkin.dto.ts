@@ -1,5 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, IsUUID, IsInt, Min } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUUID,
+  IsInt,
+  Min,
+} from 'class-validator';
 import { CheckinStatus } from '../entities/daily-care-checkin.entity';
 
 export class CreateDailyCareCheckinDto {

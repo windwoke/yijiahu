@@ -15,31 +15,52 @@ export class NotificationPreferenceService {
   async getByUserId(userId: string): Promise<NotificationPreference> {
     let pref = await this.repo.findOne({ where: { userId } });
     if (!pref) {
-      pref = ((await this.repo.save(this.repo.create({ userId } as any))) as unknown) as NotificationPreference;
+      pref = (await this.repo.save(
+        this.repo.create({ userId } as any),
+      )) as unknown as NotificationPreference;
     }
     return pref;
   }
 
   /** 更新用户偏好（upsert）*/
-  async update(userId: string, dto: UpdatePreferenceDto): Promise<NotificationPreference> {
+  async update(
+    userId: string,
+    dto: UpdatePreferenceDto,
+  ): Promise<NotificationPreference> {
     let pref = await this.repo.findOne({ where: { userId } });
     if (!pref) {
-      pref = ((this.repo.create({ userId } as any)) as unknown) as NotificationPreference;
+      pref = this.repo.create({
+        userId,
+      } as any) as unknown as NotificationPreference;
     }
     const allowedFields: (keyof UpdatePreferenceDto)[] = [
-      'medicationReminder', 'missedDose', 'appointmentReminder',
-      'taskReminder', 'taskAssigned', 'dailyCheckin', 'dailyCheckinCompleted', 'healthAlert', 'sosEnabled',
-      'memberJoined', 'careLog',
-      'medicationLeadMinutes', 'appointmentLeadHours',
-      'dndEnabled', 'dndStart', 'dndEnd',
-      'soundEnabled', 'vibrationEnabled',
+      'medicationReminder',
+      'missedDose',
+      'appointmentReminder',
+      'taskReminder',
+      'taskAssigned',
+      'dailyCheckin',
+      'dailyCheckinCompleted',
+      'healthAlert',
+      'sosEnabled',
+      'memberJoined',
+      'careLog',
+      'medicationLeadMinutes',
+      'appointmentLeadHours',
+      'dndEnabled',
+      'dndStart',
+      'dndEnd',
+      'soundEnabled',
+      'vibrationEnabled',
     ];
     for (const field of allowedFields) {
       if ((dto as any)[field] !== undefined) {
         (pref as any)[field] = (dto as any)[field];
       }
     }
-    return ((await this.repo.save(pref as any)) as unknown) as NotificationPreference;
+    return (await this.repo.save(
+      pref as any,
+    )) as unknown as NotificationPreference;
   }
 
   /** 检查某个通知类型是否开启 */

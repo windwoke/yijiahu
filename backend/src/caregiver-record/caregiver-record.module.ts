@@ -7,7 +7,9 @@ import { CaregiverRecordService } from './caregiver-record.service';
 import { CaregiverRecordController } from './caregiver-record.controller';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([CaregiverRecord, CareRecipient, FamilyMember])],
+  imports: [
+    TypeOrmModule.forFeature([CaregiverRecord, CareRecipient, FamilyMember]),
+  ],
   controllers: [CaregiverRecordController],
   providers: [CaregiverRecordService],
   exports: [CaregiverRecordService],

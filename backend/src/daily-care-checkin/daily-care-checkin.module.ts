@@ -11,7 +11,12 @@ import { NotificationModule } from '../notification/notification.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([DailyCareCheckin, MedicationLog, CareRecipient, FamilyMember]),
+    TypeOrmModule.forFeature([
+      DailyCareCheckin,
+      MedicationLog,
+      CareRecipient,
+      FamilyMember,
+    ]),
     CommonModule,
     forwardRef(() => NotificationModule),
   ],

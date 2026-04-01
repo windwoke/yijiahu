@@ -1,4 +1,10 @@
-import { IsString, IsEnum, IsOptional, IsUUID, IsNotEmpty } from 'class-validator';
+import {
+  IsString,
+  IsEnum,
+  IsOptional,
+  IsUUID,
+  IsNotEmpty,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { MedicationLogStatus } from '../entities/medication-log.entity';
 

@@ -1,4 +1,13 @@
-import { IsString, IsArray, IsOptional, MaxLength, ArrayMaxSize, IsDateString, IsIn, IsUUID } from 'class-validator';
+import {
+  IsString,
+  IsArray,
+  IsOptional,
+  MaxLength,
+  ArrayMaxSize,
+  IsDateString,
+  IsIn,
+  IsUUID,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateMedicationDto {

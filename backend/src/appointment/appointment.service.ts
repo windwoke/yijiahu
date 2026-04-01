@@ -1,8 +1,15 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, MoreThanOrEqual, LessThan } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Appointment, AppointmentStatus } from './entities/appointment.entity';
-import { CreateAppointmentDto, UpdateAppointmentDto } from './dto/appointment.dto';
+import {
+  CreateAppointmentDto,
+  UpdateAppointmentDto,
+} from './dto/appointment.dto';
 import { FamilyMember } from '../family/entities/family-member.entity';
 import { CareRecipient } from '../care-recipient/entities/care-recipient.entity';
 
@@ -10,13 +17,21 @@ import { CareRecipient } from '../care-recipient/entities/care-recipient.entity'
 export class AppointmentService {
   constructor(
     @InjectRepository(Appointment) private repo: Repository<Appointment>,
-    @InjectRepository(FamilyMember) private memberRepo: Repository<FamilyMember>,
-    @InjectRepository(CareRecipient) private recipientRepo: Repository<CareRecipient>,
+    @InjectRepository(FamilyMember)
+    private memberRepo: Repository<FamilyMember>,
+    @InjectRepository(CareRecipient)
+    private recipientRepo: Repository<CareRecipient>,
   ) {}
 
   /** 按照护对象查询列表 */
-  async findByRecipient(recipientId: string, familyId: string, status?: AppointmentStatus) {
-    const recipient = await this.recipientRepo.findOne({ where: { id: recipientId } });
+  async findByRecipient(
+    recipientId: string,
+    familyId: string,
+    status?: AppointmentStatus,
+  ) {
+    const recipient = await this.recipientRepo.findOne({
+      where: { id: recipientId },
+    });
     if (!recipient) throw new NotFoundException('照护对象不存在');
     if (recipient.familyId !== familyId) {
       throw new ForbiddenException('该照护对象不属于您的家庭');
@@ -37,7 +52,7 @@ export class AppointmentService {
     const endDate = new Date(year, month, 0, 23, 59, 59);
 
     const recipients = await this.recipientRepo.find({ where: { familyId } });
-    const recipientIds = recipients.map(r => r.id);
+    const recipientIds = recipients.map((r) => r.id);
 
     if (recipientIds.length === 0) return [];
 
@@ -61,7 +76,8 @@ export class AppointmentService {
       where: { id: dto.recipientId },
     });
     if (!recipient) throw new NotFoundException('照护对象不存在');
-    if (recipient.familyId !== familyId) throw new ForbiddenException('无权为此照护对象添加复诊');
+    if (recipient.familyId !== familyId)
+      throw new ForbiddenException('无权为此照护对象添加复诊');
 
     const apt = this.repo.create({
       ...dto,
@@ -78,7 +94,8 @@ export class AppointmentService {
   async update(id: string, familyId: string, dto: UpdateAppointmentDto) {
     const apt = await this.repo.findOne({ where: { id } });
     if (!apt) throw new NotFoundException('复诊记录不存在');
-    if (apt.familyId !== familyId) throw new ForbiddenException('无权修改此记录');
+    if (apt.familyId !== familyId)
+      throw new ForbiddenException('无权修改此记录');
 
     if (dto.appointmentTime) {
       (dto as any).appointmentTime = new Date(dto.appointmentTime);
@@ -92,7 +109,8 @@ export class AppointmentService {
   async delete(id: string, familyId: string) {
     const apt = await this.repo.findOne({ where: { id } });
     if (!apt) throw new NotFoundException('复诊记录不存在');
-    if (apt.familyId !== familyId) throw new ForbiddenException('无权删除此记录');
+    if (apt.familyId !== familyId)
+      throw new ForbiddenException('无权删除此记录');
 
     return this.repo.softRemove(apt);
   }
@@ -101,7 +119,8 @@ export class AppointmentService {
   async updateStatus(id: string, familyId: string, status: AppointmentStatus) {
     const apt = await this.repo.findOne({ where: { id } });
     if (!apt) throw new NotFoundException('复诊记录不存在');
-    if (apt.familyId !== familyId) throw new ForbiddenException('无权修改此记录');
+    if (apt.familyId !== familyId)
+      throw new ForbiddenException('无权修改此记录');
 
     apt.status = status;
     return this.repo.save(apt);

@@ -9,7 +9,15 @@ import { MedicationLogService } from './medication-log.service';
 import { MedicationLogController } from './medication-log.controller';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([MedicationLog, Medication, FamilyMember, User, CareRecipient])],
+  imports: [
+    TypeOrmModule.forFeature([
+      MedicationLog,
+      Medication,
+      FamilyMember,
+      User,
+      CareRecipient,
+    ]),
+  ],
   controllers: [MedicationLogController],
   providers: [MedicationLogService],
   exports: [MedicationLogService],

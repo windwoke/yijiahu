@@ -1,4 +1,11 @@
-import { IsOptional, IsInt, Min, Max, IsBoolean, IsString, IsIn } from 'class-validator';
+import {
+  IsOptional,
+  IsInt,
+  Min,
+  Max,
+  IsBoolean,
+  IsString,
+} from 'class-validator';
 
 export class UpdatePreferenceDto {
   // 开关

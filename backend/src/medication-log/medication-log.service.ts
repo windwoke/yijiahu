@@ -1,7 +1,14 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between } from 'typeorm';
-import { MedicationLog, MedicationLogStatus } from './entities/medication-log.entity';
+import {
+  MedicationLog,
+  MedicationLogStatus,
+} from './entities/medication-log.entity';
 import { Medication } from '../medication/entities/medication.entity';
 import { FamilyMember } from '../family/entities/family-member.entity';
 import { User } from '../user/entities/user.entity';
@@ -13,14 +20,21 @@ export class MedicationLogService {
   constructor(
     @InjectRepository(MedicationLog) private logRepo: Repository<MedicationLog>,
     @InjectRepository(Medication) private medRepo: Repository<Medication>,
-    @InjectRepository(FamilyMember) private memberRepo: Repository<FamilyMember>,
+    @InjectRepository(FamilyMember)
+    private memberRepo: Repository<FamilyMember>,
     @InjectRepository(User) private userRepo: Repository<User>,
-    @InjectRepository(CareRecipient) private recipientRepo: Repository<CareRecipient>,
+    @InjectRepository(CareRecipient)
+    private recipientRepo: Repository<CareRecipient>,
   ) {}
 
   /** 验证照护对象属于指定家庭 */
-  private async validateRecipientInFamily(recipientId: string, familyId: string) {
-    const recipient = await this.recipientRepo.findOne({ where: { id: recipientId } });
+  private async validateRecipientInFamily(
+    recipientId: string,
+    familyId: string,
+  ) {
+    const recipient = await this.recipientRepo.findOne({
+      where: { id: recipientId },
+    });
     if (!recipient) throw new NotFoundException('照护对象不存在');
     if (recipient.familyId !== familyId) {
       throw new ForbiddenException('该照护对象不属于您的家庭');
@@ -61,7 +75,7 @@ export class MedicationLogService {
             scheduledTime: time,
             status: MedicationLogStatus.PENDING,
           });
-          logs.push(await this.logRepo.save(log) as MedicationLog);
+          logs.push(await this.logRepo.save(log));
         }
       }
     }
@@ -92,19 +106,25 @@ export class MedicationLogService {
 
     // 取出打卡人信息（用 FamilyMember.nickname）
     // takenBy 存的是 userId，通过 userId + familyId 匹配 FamilyMember 查 nickname
-    const userIds = logs.map(l => l.takenBy).filter(Boolean);
-    const members = userIds.length > 0
-      ? await this.memberRepo
-          .createQueryBuilder('m')
-          .leftJoinAndSelect('m.user', 'user')
-          .where('m.userId IN (:...userIds)', { userIds })
-          .andWhere('m.familyId = :familyId', { familyId })
-          .getMany()
-      : [];
-    const memberMap = new Map(members.map(m => [m.userId, {
-      nickname: m.nickname,
-      avatarUrl: m.avatarUrl || (m.user as any)?.avatar || null,
-    }]));
+    const userIds = logs.map((l) => l.takenBy).filter(Boolean);
+    const members =
+      userIds.length > 0
+        ? await this.memberRepo
+            .createQueryBuilder('m')
+            .leftJoinAndSelect('m.user', 'user')
+            .where('m.userId IN (:...userIds)', { userIds })
+            .andWhere('m.familyId = :familyId', { familyId })
+            .getMany()
+        : [];
+    const memberMap = new Map(
+      members.map((m) => [
+        m.userId,
+        {
+          nickname: m.nickname,
+          avatarUrl: m.avatarUrl || (m.user as any)?.avatar || null,
+        },
+      ]),
+    );
 
     const items = logs.map((log) => ({
       id: log.id,
@@ -114,15 +134,19 @@ export class MedicationLogService {
       status: log.status,
       canCheckIn: log.status === MedicationLogStatus.PENDING,
       actualTime: log.takenAt ? formatLocalTime(log.takenAt) : null,
-      takenBy: log.takenBy ? {
-        id: log.takenBy,
-        name: memberMap.get(log.takenBy)?.nickname || '家庭成员',
-        avatarUrl: memberMap.get(log.takenBy)?.avatarUrl || null,
-      } : null,
+      takenBy: log.takenBy
+        ? {
+            id: log.takenBy,
+            name: memberMap.get(log.takenBy)?.nickname || '家庭成员',
+            avatarUrl: memberMap.get(log.takenBy)?.avatarUrl || null,
+          }
+        : null,
     }));
 
     const completed = items.filter(
-      (i) => i.status === MedicationLogStatus.TAKEN || i.status === MedicationLogStatus.SKIPPED,
+      (i) =>
+        i.status === MedicationLogStatus.TAKEN ||
+        i.status === MedicationLogStatus.SKIPPED,
     ).length;
 
     return {
@@ -171,7 +195,13 @@ export class MedicationLogService {
   }
 
   /** 时间线用药记录（taken/skipped） */
-  async getTimeline(recipientId?: string, familyId?: string, medicationId?: string, days = 7, before?: Date): Promise<any[]> {
+  async getTimeline(
+    recipientId?: string,
+    familyId?: string,
+    medicationId?: string,
+    _days = 7,
+    before?: Date,
+  ): Promise<any[]> {
     const qb = this.logRepo
       .createQueryBuilder('log')
       .leftJoinAndSelect('log.medication', 'medication')
@@ -183,37 +213,53 @@ export class MedicationLogService {
       .take(50);
 
     if (before) qb.andWhere('log.takenAt < :before', { before });
-    if (recipientId) qb.andWhere('log.recipientId = :recipientId', { recipientId });
-    if (familyId) qb.andWhere('log.recipientId IN (SELECT cr.id FROM care_recipients cr WHERE cr."familyId" = :familyId)', { familyId });
-    if (medicationId) qb.andWhere('log.medicationId = :medicationId', { medicationId });
+    if (recipientId)
+      qb.andWhere('log.recipientId = :recipientId', { recipientId });
+    if (familyId)
+      qb.andWhere(
+        'log.recipientId IN (SELECT cr.id FROM care_recipients cr WHERE cr."familyId" = :familyId)',
+        { familyId },
+      );
+    if (medicationId)
+      qb.andWhere('log.medicationId = :medicationId', { medicationId });
 
     const logs = await qb.getMany();
 
     // takenBy 存的是 userId，通过 FamilyMember 表查 nickname（通过 userId 匹配）
-    const userIds = logs.map(l => l.takenBy).filter(Boolean);
-    const members = userIds.length > 0
-      ? await this.memberRepo
-          .createQueryBuilder('m')
-          .leftJoinAndSelect('m.user', 'user')
-          .where('m.userId IN (:...userIds)', { userIds })
-          .andWhere(familyId ? 'm."familyId" = :familyId' : '1=1', familyId ? { familyId } : {})
-          .getMany()
-      : [];
-    const memberMap = new Map<string, { nickname: string; avatarUrl: string | null }>();
+    const userIds = logs.map((l) => l.takenBy).filter(Boolean);
+    const members =
+      userIds.length > 0
+        ? await this.memberRepo
+            .createQueryBuilder('m')
+            .leftJoinAndSelect('m.user', 'user')
+            .where('m.userId IN (:...userIds)', { userIds })
+            .andWhere(
+              familyId ? 'm."familyId" = :familyId' : '1=1',
+              familyId ? { familyId } : {},
+            )
+            .getMany()
+        : [];
+    const memberMap = new Map<
+      string,
+      { nickname: string; avatarUrl: string | null }
+    >();
     for (const m of members) {
-      const info = { nickname: m.nickname, avatarUrl: m.avatarUrl || (m.user as any)?.avatar || null };
-      memberMap.set(m.userId, info);  // userId -> info
+      const info = {
+        nickname: m.nickname,
+        avatarUrl: m.avatarUrl || (m.user as any)?.avatar || null,
+      };
+      memberMap.set(m.userId, info); // userId -> info
     }
 
     return logs.map((log) => ({
       id: log.id,
       type: 'medication',
       content: `${log.medication?.name || ''} 已${log.status === MedicationLogStatus.TAKEN ? '服用' : '跳过'}${log.medication?.dosage ? ' · ' + log.medication.dosage : ''}`,
-      authorName: memberMap.get(log.takenBy!)?.nickname || '家庭成员',
-      authorAvatar: memberMap.get(log.takenBy!)?.avatarUrl || null,
+      authorName: memberMap.get(log.takenBy)?.nickname || '家庭成员',
+      authorAvatar: memberMap.get(log.takenBy)?.avatarUrl || null,
       authorId: log.takenBy,
       recipientId: log.recipientId,
-      time: formatLocalTime(log.takenAt!),
+      time: formatLocalTime(log.takenAt),
       status: log.status,
     }));
   }

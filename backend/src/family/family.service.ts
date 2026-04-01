@@ -1,18 +1,31 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Family, SubscriptionPlan } from './entities/family.entity';
-import { FamilyMember, FamilyMemberRole } from './entities/family-member.entity';
+import {
+  FamilyMember,
+  FamilyMemberRole,
+} from './entities/family-member.entity';
 import { User } from '../user/entities/user.entity';
 import { SubscriptionService } from '../subscription/subscription.service';
-import { CreateFamilyDto, UpdateFamilyDto, JoinFamilyDto, UpdateMemberDto } from './dto/family.dto';
+import {
+  CreateFamilyDto,
+  UpdateFamilyDto,
+  JoinFamilyDto,
+  UpdateMemberDto,
+} from './dto/family.dto';
 import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class FamilyService {
   constructor(
     @InjectRepository(Family) private familyRepo: Repository<Family>,
-    @InjectRepository(FamilyMember) private memberRepo: Repository<FamilyMember>,
+    @InjectRepository(FamilyMember)
+    private memberRepo: Repository<FamilyMember>,
     private subscriptionService: SubscriptionService,
     private readonly notifSvc: NotificationService,
   ) {}
@@ -23,9 +36,12 @@ export class FamilyService {
 
   private getMaxFamilies(family: Family): number {
     switch (family.subscriptionPlan) {
-      case SubscriptionPlan.PREMIUM: return 5;
-      case SubscriptionPlan.ANNUAL: return 10;
-      default: return 1;
+      case SubscriptionPlan.PREMIUM:
+        return 5;
+      case SubscriptionPlan.ANNUAL:
+        return 10;
+      default:
+        return 1;
     }
   }
 
@@ -34,10 +50,14 @@ export class FamilyService {
     const existingFamilies = await this.memberRepo.find({ where: { userId } });
     if (existingFamilies.length > 0) {
       // 查第一个家庭的配额信息
-      const firstFamily = await this.familyRepo.findOne({ where: { id: existingFamilies[0].familyId } });
+      const firstFamily = await this.familyRepo.findOne({
+        where: { id: existingFamilies[0].familyId },
+      });
       const maxFamilies = firstFamily ? this.getMaxFamilies(firstFamily) : 1;
       if (existingFamilies.length >= maxFamilies) {
-        throw new BadRequestException('基础版最多 1 个家庭，请升级会员创建更多家庭');
+        throw new BadRequestException(
+          '基础版最多 1 个家庭，请升级会员创建更多家庭',
+        );
       }
     }
 
@@ -50,7 +70,9 @@ export class FamilyService {
     await this.familyRepo.save(family);
 
     // 创建者自动成为 owner
-    const user = await this.memberRepo.manager.getRepository(User).findOne({ where: { id: userId } });
+    const user = await this.memberRepo.manager
+      .getRepository(User)
+      .findOne({ where: { id: userId } });
     const member = this.memberRepo.create({
       familyId: family.id,
       userId,
@@ -86,16 +108,22 @@ export class FamilyService {
   }
 
   async join(userId: string, dto: JoinFamilyDto) {
-    const family = await this.familyRepo.findOne({ where: { inviteCode: dto.inviteCode } });
+    const family = await this.familyRepo.findOne({
+      where: { inviteCode: dto.inviteCode },
+    });
     if (!family) throw new NotFoundException('邀请码无效');
 
-    const existing = await this.memberRepo.findOne({ where: { familyId: family.id, userId } });
+    const existing = await this.memberRepo.findOne({
+      where: { familyId: family.id, userId },
+    });
     if (existing) throw new BadRequestException('您已在该家庭中');
 
     // 检查成员配额
     await this.subscriptionService.checkQuota(family.id, 'member');
 
-    const user = await this.memberRepo.manager.getRepository(User).findOne({ where: { id: userId } });
+    const user = await this.memberRepo.manager
+      .getRepository(User)
+      .findOne({ where: { id: userId } });
     const member = this.memberRepo.create({
       familyId: family.id,
       userId,
@@ -105,19 +133,19 @@ export class FamilyService {
     await this.memberRepo.save(member);
 
     // 通知其他成员
-    this.notifSvc.notifyMemberJoined(
-      family.id,
-      userId,
-      member.nickname,
-      member.role,
-      { familyId: family.id },
-    ).catch(() => {});
+    this.notifSvc
+      .notifyMemberJoined(family.id, userId, member.nickname, member.role, {
+        familyId: family.id,
+      })
+      .catch(() => {});
 
     return this.findById(family.id, userId);
   }
 
   async leave(familyId: string, userId: string) {
-    const member = await this.memberRepo.findOne({ where: { familyId, userId } });
+    const member = await this.memberRepo.findOne({
+      where: { familyId, userId },
+    });
     if (!member) throw new NotFoundException('您不是该家庭成员');
     if (member.role === FamilyMemberRole.OWNER) {
       throw new BadRequestException('创建者不能退出家庭，请先转让管理员权限');
@@ -128,10 +156,15 @@ export class FamilyService {
         where: { familyId },
       });
       const elevated = others.filter(
-        (m) => m.id !== member.id && (m.role === FamilyMemberRole.OWNER || m.role === FamilyMemberRole.COORDINATOR),
+        (m) =>
+          m.id !== member.id &&
+          (m.role === FamilyMemberRole.OWNER ||
+            m.role === FamilyMemberRole.COORDINATOR),
       );
       if (elevated.length === 0) {
-        throw new BadRequestException('您是当前唯一管理员，无法退出。请先指定其他成员为管理员');
+        throw new BadRequestException(
+          '您是当前唯一管理员，无法退出。请先指定其他成员为管理员',
+        );
       }
     }
     await this.memberRepo.delete(member.id);
@@ -139,11 +172,16 @@ export class FamilyService {
   }
 
   async removeMember(familyId: string, memberId: string, userId: string) {
-    const target = await this.memberRepo.findOne({ where: { id: memberId, familyId } });
+    const target = await this.memberRepo.findOne({
+      where: { id: memberId, familyId },
+    });
     if (!target) throw new NotFoundException('成员不存在');
 
     // 只有 owner 或 coordinator 可以移除他人
-    await this.requireRole(familyId, userId, [FamilyMemberRole.OWNER, FamilyMemberRole.COORDINATOR]);
+    await this.requireRole(familyId, userId, [
+      FamilyMemberRole.OWNER,
+      FamilyMemberRole.COORDINATOR,
+    ]);
 
     // 不能移除 owner
     if (target.role === FamilyMemberRole.OWNER) {
@@ -156,14 +194,24 @@ export class FamilyService {
     }
 
     // coordinator 移除保护：不能移除最后一个 owner/coordinator
-    const myMember = await this.memberRepo.findOne({ where: { familyId, userId } });
-    if (myMember?.role === FamilyMemberRole.COORDINATOR && target.role === FamilyMemberRole.COORDINATOR) {
+    const myMember = await this.memberRepo.findOne({
+      where: { familyId, userId },
+    });
+    if (
+      myMember?.role === FamilyMemberRole.COORDINATOR &&
+      target.role === FamilyMemberRole.COORDINATOR
+    ) {
       const others = await this.memberRepo.find({ where: { familyId } });
       const elevated = others.filter(
-        (m) => m.id !== target.id && (m.role === FamilyMemberRole.OWNER || m.role === FamilyMemberRole.COORDINATOR),
+        (m) =>
+          m.id !== target.id &&
+          (m.role === FamilyMemberRole.OWNER ||
+            m.role === FamilyMemberRole.COORDINATOR),
       );
       if (elevated.length === 0) {
-        throw new BadRequestException('移除后家庭将没有管理员，请先指定其他成员为管理员');
+        throw new BadRequestException(
+          '移除后家庭将没有管理员，请先指定其他成员为管理员',
+        );
       }
     }
 
@@ -172,15 +220,14 @@ export class FamilyService {
     // 通知被移除的成员
     if (target.userId) {
       const family = await this.familyRepo.findOne({ where: { id: familyId } });
-      const operator = await this.memberRepo.findOne({ where: { familyId, userId } });
+      const operator = await this.memberRepo.findOne({
+        where: { familyId, userId },
+      });
       const operatorName = operator?.nickname || '管理员';
       const familyName = family?.name || '家庭';
-      this.notifSvc.notifyMemberLeft(
-        target.userId,
-        familyName,
-        operatorName,
-        { familyId },
-      ).catch(() => {});
+      this.notifSvc
+        .notifyMemberLeft(target.userId, familyName, operatorName, { familyId })
+        .catch(() => {});
     }
 
     return { message: '已移除成员' };
@@ -207,13 +254,22 @@ export class FamilyService {
     }));
   }
 
-  async updateMember(familyId: string, memberId: string, userId: string, dto: UpdateMemberDto) {
-    const target = await this.memberRepo.findOne({ where: { id: memberId, familyId } });
+  async updateMember(
+    familyId: string,
+    memberId: string,
+    userId: string,
+    dto: UpdateMemberDto,
+  ) {
+    const target = await this.memberRepo.findOne({
+      where: { id: memberId, familyId },
+    });
     if (!target) throw new NotFoundException('成员不存在');
 
     // 判断操作者身份
-    const myMember = await this.memberRepo.findOne({ where: { familyId, userId } });
-    const myRole = myMember?.role as FamilyMemberRole | undefined;
+    const myMember = await this.memberRepo.findOne({
+      where: { familyId, userId },
+    });
+    const _myRole = myMember?.role;
     const isSelfEdit = target.userId === userId;
 
     if (isSelfEdit) {
@@ -222,10 +278,17 @@ export class FamilyService {
       if (dto.avatarUrl !== undefined) target.avatarUrl = dto.avatarUrl;
     } else {
       // 其他人：需要 owner 或 coordinator 权限
-      await this.requireRole(familyId, userId, [FamilyMemberRole.OWNER, FamilyMemberRole.COORDINATOR]);
+      await this.requireRole(familyId, userId, [
+        FamilyMemberRole.OWNER,
+        FamilyMemberRole.COORDINATOR,
+      ]);
       Object.assign(target, dto);
       // 不能把自己的 owner 角色降级
-      if (target.role === FamilyMemberRole.OWNER && dto.role && dto.role !== FamilyMemberRole.OWNER) {
+      if (
+        target.role === FamilyMemberRole.OWNER &&
+        dto.role &&
+        dto.role !== FamilyMemberRole.OWNER
+      ) {
         throw new BadRequestException('不能修改管理员的身份');
       }
     }
@@ -236,9 +299,14 @@ export class FamilyService {
   private async requireRole(
     familyId: string,
     userId: string,
-    roles: FamilyMemberRole[] = [FamilyMemberRole.OWNER, FamilyMemberRole.COORDINATOR],
+    roles: FamilyMemberRole[] = [
+      FamilyMemberRole.OWNER,
+      FamilyMemberRole.COORDINATOR,
+    ],
   ) {
-    const member = await this.memberRepo.findOne({ where: { familyId, userId } });
+    const member = await this.memberRepo.findOne({
+      where: { familyId, userId },
+    });
     if (!member) throw new NotFoundException('您不是该家庭成员');
     if (!roles.includes(member.role)) {
       throw new BadRequestException('您没有权限执行此操作');

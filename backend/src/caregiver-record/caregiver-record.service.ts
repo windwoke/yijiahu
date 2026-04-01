@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
 import { CaregiverRecord } from './entities/caregiver-record.entity';
@@ -9,14 +13,22 @@ import { FamilyMember } from '../family/entities/family-member.entity';
 @Injectable()
 export class CaregiverRecordService {
   constructor(
-    @InjectRepository(CaregiverRecord) private repo: Repository<CaregiverRecord>,
-    @InjectRepository(CareRecipient) private recipientRepo: Repository<CareRecipient>,
-    @InjectRepository(FamilyMember) private memberRepo: Repository<FamilyMember>,
+    @InjectRepository(CaregiverRecord)
+    private repo: Repository<CaregiverRecord>,
+    @InjectRepository(CareRecipient)
+    private recipientRepo: Repository<CareRecipient>,
+    @InjectRepository(FamilyMember)
+    private memberRepo: Repository<FamilyMember>,
   ) {}
 
   /** 验证照护对象属于指定家庭 */
-  private async validateRecipientInFamily(recipientId: string, familyId: string) {
-    const recipient = await this.recipientRepo.findOne({ where: { id: recipientId } });
+  private async validateRecipientInFamily(
+    recipientId: string,
+    familyId: string,
+  ) {
+    const recipient = await this.recipientRepo.findOne({
+      where: { id: recipientId },
+    });
     if (!recipient) throw new NotFoundException('照护对象不存在');
     if (recipient.familyId !== familyId) {
       throw new ForbiddenException('该照护对象不属于您的家庭');
@@ -25,9 +37,12 @@ export class CaregiverRecordService {
   }
 
   /** 批量附加 FamilyMember.nickname */
-  private async enrichWithNicknames(records: CaregiverRecord[], familyId: string): Promise<any[]> {
+  private async enrichWithNicknames(
+    records: CaregiverRecord[],
+    familyId: string,
+  ): Promise<any[]> {
     if (records.length === 0) return [];
-    const caregiverIds = records.map(r => r.caregiverId);
+    const caregiverIds = records.map((r) => r.caregiverId);
     const found = await this.memberRepo
       .createQueryBuilder('m')
       .where('m.familyId = :familyId', { familyId })
@@ -37,7 +52,7 @@ export class CaregiverRecordService {
     for (const m of found) {
       memberMap.set(m.userId, m.nickname);
     }
-    return records.map(r => ({
+    return records.map((r) => ({
       ...r,
       caregiverNickname: memberMap.get(r.caregiverId) || null,
     }));
@@ -68,7 +83,9 @@ export class CaregiverRecordService {
 
   /** 创建并自动切换：旧记录 period_end = yesterday，新记录 period_start = today */
   async create(dto: CreateCaregiverRecordDto, userId: string) {
-    const recipient = await this.recipientRepo.findOne({ where: { id: dto.careRecipientId } });
+    const recipient = await this.recipientRepo.findOne({
+      where: { id: dto.careRecipientId },
+    });
     if (!recipient) throw new NotFoundException('照护对象不存在');
 
     // 关闭当前记录（用原始 entity，不走 enrich）
@@ -99,9 +116,12 @@ export class CaregiverRecordService {
       relations: ['careRecipient'],
     });
     if (!record) throw new NotFoundException('记录不存在');
-    const recipient = await this.recipientRepo.findOne({ where: { id: record.careRecipientId } });
+    const recipient = await this.recipientRepo.findOne({
+      where: { id: record.careRecipientId },
+    });
     if (!recipient) throw new NotFoundException('照护对象不存在');
-    if (recipient.familyId !== familyId) throw new ForbiddenException('无权删除此记录');
+    if (recipient.familyId !== familyId)
+      throw new ForbiddenException('无权删除此记录');
     return this.repo.softRemove(record);
   }
 }

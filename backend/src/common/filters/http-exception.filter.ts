@@ -38,12 +38,15 @@ export class HttpExceptionFilter implements ExceptionFilter {
       message = exception.message;
     }
 
-    const req = ctx.getRequest() as Record<string, unknown>;
+    const req = ctx.getRequest();
     response.status(status).json({
       code,
       message,
       errors,
-      request_id: (req['headers'] as Record<string, unknown> | undefined)?.['x-request-id'] || '',
+      request_id:
+        (req['headers'] as Record<string, unknown> | undefined)?.[
+          'x-request-id'
+        ] || '',
       timestamp: new Date().toISOString(),
     });
   }

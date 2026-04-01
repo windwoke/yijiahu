@@ -24,9 +24,11 @@ class UpdatePushTokenDto {
 export class UserController {
   constructor(
     private readonly userService: UserService,
-    @InjectRepository(FamilyMember) private memberRepo: Repository<FamilyMember>,
+    @InjectRepository(FamilyMember)
+    private memberRepo: Repository<FamilyMember>,
     @InjectRepository(Family) private familyRepo: Repository<Family>,
-    @InjectRepository(CareRecipient) private recipientRepo: Repository<CareRecipient>,
+    @InjectRepository(CareRecipient)
+    private recipientRepo: Repository<CareRecipient>,
     private readonly familyService: FamilyService,
   ) {}
 
@@ -47,7 +49,9 @@ export class UserController {
         where: { familyId: member.familyId },
       });
       if (hasRecipients > 0) {
-        const family = await this.familyRepo.findOne({ where: { id: member.familyId } });
+        const family = await this.familyRepo.findOne({
+          where: { id: member.familyId },
+        });
         if (family) return { family: { ...family, myRole: member.role } };
       }
     }
@@ -55,7 +59,9 @@ export class UserController {
     // 没有照护对象则返回第一个
     if (members.length > 0) {
       const firstMember = members[0];
-      const family = await this.familyRepo.findOne({ where: { id: firstMember.familyId } });
+      const family = await this.familyRepo.findOne({
+        where: { id: firstMember.familyId },
+      });
       if (family) return { family: { ...family, myRole: firstMember.role } };
     }
 
@@ -85,13 +91,19 @@ export class UserController {
 
   @Patch('me')
   @ApiOperation({ summary: '更新当前用户信息' })
-  updateMe(@CurrentUser('id') userId: string, @Body() body: Record<string, unknown>) {
+  updateMe(
+    @CurrentUser('id') userId: string,
+    @Body() body: Record<string, unknown>,
+  ) {
     return this.userService.update(userId, body);
   }
 
   @Patch('me/push-token')
   @ApiOperation({ summary: '更新极光推送 token' })
-  updatePushToken(@CurrentUser('id') userId: string, @Body() dto: UpdatePushTokenDto) {
+  updatePushToken(
+    @CurrentUser('id') userId: string,
+    @Body() dto: UpdatePushTokenDto,
+  ) {
     return this.userService.update(userId, { pushToken: dto.pushToken });
   }
 }

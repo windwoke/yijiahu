@@ -42,10 +42,7 @@ async function bootstrap() {
   SwaggerModule.setup('api-docs', app, document);
 
   // 静态文件服务（头像等上传文件）
-  (app as NestExpressApplication).useStaticAssets(
-    join(process.cwd(), 'uploads'),
-    { prefix: '/uploads/' },
-  );
+  app.useStaticAssets(join(process.cwd(), 'uploads'), { prefix: '/uploads/' });
 
   const port = process.env.PORT || 3000;
   void app.listen(port);

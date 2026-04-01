@@ -78,7 +78,11 @@ export class Notification {
   @Column({ type: 'text' })
   body: string;
 
-  @Column({ type: 'enum', enum: NotificationLevel, default: NotificationLevel.NORMAL })
+  @Column({
+    type: 'enum',
+    enum: NotificationLevel,
+    default: NotificationLevel.NORMAL,
+  })
   level: NotificationLevel;
 
   @Column({ nullable: true })
@@ -90,10 +94,18 @@ export class Notification {
   @Column({ nullable: true })
   sourceUserId: string;
 
-  @Column({ type: 'enum', enum: NotificationChannel, default: NotificationChannel.APP })
+  @Column({
+    type: 'enum',
+    enum: NotificationChannel,
+    default: NotificationChannel.APP,
+  })
   channel: NotificationChannel;
 
-  @Column({ type: 'enum', enum: NotificationStatus, default: NotificationStatus.PENDING })
+  @Column({
+    type: 'enum',
+    enum: NotificationStatus,
+    default: NotificationStatus.PENDING,
+  })
   status: NotificationStatus;
 
   @Column({ default: false })

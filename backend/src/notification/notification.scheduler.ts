@@ -2,12 +2,18 @@ import { Injectable, Logger, Inject } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull, Between } from 'typeorm';
-import { MedicationLog, MedicationLogStatus } from '../medication-log/entities/medication-log.entity';
+import {
+  MedicationLog,
+  MedicationLogStatus,
+} from '../medication-log/entities/medication-log.entity';
 import { Medication } from '../medication/entities/medication.entity';
 import { CareRecipient } from '../care-recipient/entities/care-recipient.entity';
 import { CaregiverRecord } from '../caregiver-record/entities/caregiver-record.entity';
 import { Appointment } from '../appointment/entities/appointment.entity';
-import { FamilyTask, TaskStatus } from '../family-task/entities/family-task.entity';
+import {
+  FamilyTask,
+  TaskStatus,
+} from '../family-task/entities/family-task.entity';
 import { DailyCareCheckin } from '../daily-care-checkin/entities/daily-care-checkin.entity';
 import { FamilyMember } from '../family/entities/family-member.entity';
 import {
@@ -83,10 +89,16 @@ export class NotificationScheduler {
         // 照护人偏好提前时间（分钟）
         const caregiver = await this.getCurrentCaregiver(log.recipientId);
         if (!caregiver) continue;
-        const leadMinutes = await this.prefSvc.getMedicationLeadMinutes(caregiver.caregiverId);
+        const leadMinutes = await this.prefSvc.getMedicationLeadMinutes(
+          caregiver.caregiverId,
+        );
 
         // 提醒窗口：服药时间前 leadMinutes 分钟内
-        if (schedMinutes - nowMinutes > leadMinutes || schedMinutes < nowMinutes) continue;
+        if (
+          schedMinutes - nowMinutes > leadMinutes ||
+          schedMinutes < nowMinutes
+        )
+          continue;
 
         // 检查是否已发送过提醒
         const alreadySent = await this.notificationRepo.findOne({
@@ -97,7 +109,9 @@ export class NotificationScheduler {
         });
         if (alreadySent) continue;
 
-        const recipient = await this.recipientRepo.findOne({ where: { id: log.recipientId } });
+        const recipient = await this.recipientRepo.findOne({
+          where: { id: log.recipientId },
+        });
 
         await this.notificationSvc.create({
           userId: caregiver.caregiverId,
@@ -116,7 +130,9 @@ export class NotificationScheduler {
           },
         });
 
-        this.logger.debug(`用药提醒已发送：${log.medication.name} → ${caregiver.caregiverId}（提前${leadMinutes}分钟）`);
+        this.logger.debug(
+          `用药提醒已发送：${log.medication.name} → ${caregiver.caregiverId}（提前${leadMinutes}分钟）`,
+        );
       }
     } catch (e) {
       this.logger.error('handleMedicationReminders 出错', e);
@@ -170,7 +186,9 @@ export class NotificationScheduler {
         const caregiver = await this.getCurrentCaregiver(log.recipientId);
         if (!caregiver) continue;
 
-        const recipient = await this.recipientRepo.findOne({ where: { id: log.recipientId } });
+        const recipient = await this.recipientRepo.findOne({
+          where: { id: log.recipientId },
+        });
 
         await this.notificationSvc.create({
           userId: caregiver.caregiverId,
@@ -189,7 +207,9 @@ export class NotificationScheduler {
           },
         });
 
-        this.logger.debug(`漏服提醒已发送：${log.medication.name} → ${caregiver.caregiverId}`);
+        this.logger.debug(
+          `漏服提醒已发送：${log.medication.name} → ${caregiver.caregiverId}`,
+        );
       }
     } catch (e) {
       this.logger.error('handleMissedDoses 出错', e);
@@ -233,7 +253,9 @@ export class NotificationScheduler {
           type: NotificationType.APPOINTMENT_REMINDER,
           title: '复诊提醒',
           body: `${appt.recipient.name}将于明天前往${appt.hospital}复诊${
-            appt.assignedDriver ? `（接送人：${appt.assignedDriver.name || '已分配'}）` : ''
+            appt.assignedDriver
+              ? `（接送人：${appt.assignedDriver.name || '已分配'}）`
+              : ''
           }`,
           level: NotificationLevel.HIGH,
           sourceType: 'appointment',
@@ -363,7 +385,9 @@ export class NotificationScheduler {
           },
         });
 
-        this.logger.debug(`打卡提醒已发送：${recipient.name} → ${caregiver.caregiverId}`);
+        this.logger.debug(
+          `打卡提醒已发送：${recipient.name} → ${caregiver.caregiverId}`,
+        );
       }
     } catch (e) {
       this.logger.error('handleDailyCheckinReminders 出错', e);
@@ -371,7 +395,9 @@ export class NotificationScheduler {
   }
 
   /** 获取当前照护人（period_end 为 null） */
-  private async getCurrentCaregiver(recipientId: string): Promise<CaregiverRecord | null> {
+  private async getCurrentCaregiver(
+    recipientId: string,
+  ): Promise<CaregiverRecord | null> {
     return this.caregiverRepo.findOne({
       where: { careRecipientId: recipientId, periodEnd: IsNull() },
       relations: ['caregiver'],

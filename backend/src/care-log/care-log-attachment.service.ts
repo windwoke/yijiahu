@@ -1,7 +1,14 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CareLogAttachment, AttachmentType } from './entities/care-log-attachment.entity';
+import {
+  CareLogAttachment,
+  AttachmentType,
+} from './entities/care-log-attachment.entity';
 import { CareLog } from './entities/care-log.entity';
 
 @Injectable()
@@ -28,18 +35,20 @@ export class CareLogAttachmentService {
     return this.repo.save(attachment);
   }
 
-  async createBatch(items: Array<{
-    careLogId?: string;
-    type: AttachmentType;
-    url: string;
-    thumbnailUrl?: string;
-    size?: number;
-    duration?: number;
-    width?: number;
-    height?: number;
-    filename: string;
-  }>): Promise<CareLogAttachment[]> {
-    const attachments = items.map(item => this.repo.create(item));
+  async createBatch(
+    items: Array<{
+      careLogId?: string;
+      type: AttachmentType;
+      url: string;
+      thumbnailUrl?: string;
+      size?: number;
+      duration?: number;
+      width?: number;
+      height?: number;
+      filename: string;
+    }>,
+  ): Promise<CareLogAttachment[]> {
+    const attachments = items.map((item) => this.repo.create(item));
     return this.repo.save(attachments);
   }
 
@@ -52,13 +61,20 @@ export class CareLogAttachmentService {
   }
 
   async updateCareLogId(ids: string[], careLogId: string): Promise<void> {
-    const careLog = await this.careLogRepo.findOne({ where: { id: careLogId } });
+    const careLog = await this.careLogRepo.findOne({
+      where: { id: careLogId },
+    });
     if (!careLog) throw new NotFoundException('日志不存在');
     await this.repo.update(ids, { careLogId, familyId: careLog.familyId });
   }
 
-  async findByCareLogId(careLogId: string, familyId?: string): Promise<CareLogAttachment[]> {
-    const careLog = await this.careLogRepo.findOne({ where: { id: careLogId } });
+  async findByCareLogId(
+    careLogId: string,
+    familyId?: string,
+  ): Promise<CareLogAttachment[]> {
+    const careLog = await this.careLogRepo.findOne({
+      where: { id: careLogId },
+    });
     if (!careLog) throw new NotFoundException('日志不存在');
     if (familyId && careLog.familyId !== familyId) {
       throw new ForbiddenException('无权访问此日志的附件');

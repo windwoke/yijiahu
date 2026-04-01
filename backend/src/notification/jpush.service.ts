@@ -16,14 +16,18 @@ export class JPushService implements OnModuleInit {
     const masterSecret = this.config.get<string>('jpush.masterSecret');
 
     if (!appKey || !masterSecret) {
-      this.logger.warn('JPush 未配置（jpush.appKey / jpush.masterSecret），推送已禁用');
+      this.logger.warn(
+        'JPush 未配置（jpush.appKey / jpush.masterSecret），推送已禁用',
+      );
       return;
     }
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       this.jpushLib = require('jpush-sdk');
-      this.client = this.jpushLib.buildClient({ appkey: appKey, secret: masterSecret });
+      this.client = this.jpushLib.buildClient({
+        appkey: appKey,
+        secret: masterSecret,
+      });
       this.enabled = true;
       this.logger.log('JPush 初始化成功');
     } catch (e) {
@@ -50,7 +54,8 @@ export class JPushService implements OnModuleInit {
     }
 
     return new Promise((resolve, reject) => {
-      this.client.push()
+      this.client
+        .push()
         .setPlatform('ios', 'android')
         .setAudience(this.jpushLib.Prepare.registrationId(registrationId))
         .setNotification({

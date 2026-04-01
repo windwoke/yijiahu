@@ -1,4 +1,11 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -36,7 +43,11 @@ export class AuthController {
     @CurrentUser('id') userId: string,
     @Body() dto: ChangePasswordDto,
   ) {
-    return this.authService.changePassword(userId, dto.oldPassword, dto.newPassword);
+    return this.authService.changePassword(
+      userId,
+      dto.oldPassword,
+      dto.newPassword,
+    );
   }
 
   @Post('login-password')

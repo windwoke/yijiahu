@@ -1,7 +1,10 @@
 import { Injectable, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { FamilyMember, FamilyMemberRole } from '../../family/entities/family-member.entity';
+import {
+  FamilyMember,
+  FamilyMemberRole,
+} from '../../family/entities/family-member.entity';
 
 @Injectable()
 export class PermissionService {
@@ -11,14 +14,21 @@ export class PermissionService {
   ) {}
 
   /** 获取用户在家庭中的角色（null 表示不是成员） */
-  async getMemberRole(userId: string, familyId: string): Promise<FamilyMemberRole | null> {
-    const member = await this.memberRepo.findOne({ where: { userId, familyId } });
+  async getMemberRole(
+    userId: string,
+    familyId: string,
+  ): Promise<FamilyMemberRole | null> {
+    const member = await this.memberRepo.findOne({
+      where: { userId, familyId },
+    });
     return member?.role ?? null;
   }
 
   /** 检查用户是否属于家庭 */
   async isMember(userId: string, familyId: string): Promise<boolean> {
-    const member = await this.memberRepo.findOne({ where: { userId, familyId } });
+    const member = await this.memberRepo.findOne({
+      where: { userId, familyId },
+    });
     return !!member;
   }
 
@@ -55,17 +65,32 @@ export class PermissionService {
 
   /** 检查用户是否能管理成员（owner + coordinator） */
   async canManageMembers(userId: string, familyId: string): Promise<boolean> {
-    return this.hasRole(userId, familyId, [FamilyMemberRole.OWNER, FamilyMemberRole.COORDINATOR]);
+    return this.hasRole(userId, familyId, [
+      FamilyMemberRole.OWNER,
+      FamilyMemberRole.COORDINATOR,
+    ]);
   }
 
   /** 检查用户是否能创建复诊（owner + coordinator） */
-  async canCreateAppointment(userId: string, familyId: string): Promise<boolean> {
-    return this.hasRole(userId, familyId, [FamilyMemberRole.OWNER, FamilyMemberRole.COORDINATOR]);
+  async canCreateAppointment(
+    userId: string,
+    familyId: string,
+  ): Promise<boolean> {
+    return this.hasRole(userId, familyId, [
+      FamilyMemberRole.OWNER,
+      FamilyMemberRole.COORDINATOR,
+    ]);
   }
 
   /** 检查用户是否能管理照护对象（owner + coordinator） */
-  async canManageRecipients(userId: string, familyId: string): Promise<boolean> {
-    return this.hasRole(userId, familyId, [FamilyMemberRole.OWNER, FamilyMemberRole.COORDINATOR]);
+  async canManageRecipients(
+    userId: string,
+    familyId: string,
+  ): Promise<boolean> {
+    return this.hasRole(userId, familyId, [
+      FamilyMemberRole.OWNER,
+      FamilyMemberRole.COORDINATOR,
+    ]);
   }
 
   /** 检查用户是否能完成任务
@@ -79,7 +104,8 @@ export class PermissionService {
   ): Promise<boolean> {
     const role = await this.getMemberRole(userId, familyId);
     if (!role) return false;
-    if ([FamilyMemberRole.OWNER, FamilyMemberRole.COORDINATOR].includes(role)) return true;
+    if ([FamilyMemberRole.OWNER, FamilyMemberRole.COORDINATOR].includes(role))
+      return true;
     if (role === FamilyMemberRole.CAREGIVER) return userId === assigneeId;
     return false;
   }

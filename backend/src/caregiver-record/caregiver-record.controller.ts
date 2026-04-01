@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Delete, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CaregiverRecordService } from './caregiver-record.service';
@@ -37,10 +47,7 @@ export class CaregiverRecordController {
 
   @Delete(':id')
   @ApiOperation({ summary: '删除照护记录' })
-  delete(
-    @Param('id') id: string,
-    @Query('familyId') familyId: string,
-  ) {
+  delete(@Param('id') id: string, @Query('familyId') familyId: string) {
     return this.service.delete(id, familyId);
   }
 }

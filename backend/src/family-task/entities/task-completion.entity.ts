@@ -37,4 +37,3 @@ export class TaskCompletion {
   @Column({ nullable: true })
   note: string;
 }
-

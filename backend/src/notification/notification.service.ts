@@ -1,6 +1,11 @@
-import { Injectable, NotFoundException, Inject, forwardRef } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, IsNull, Not } from 'typeorm';
+import { Repository, IsNull } from 'typeorm';
 import {
   Notification,
   NotificationType,
@@ -8,7 +13,10 @@ import {
   NotificationStatus,
   NotificationChannel,
 } from './entities/notification.entity';
-import { CreateNotificationDto, BroadcastNotificationDto } from './dto/notification.dto';
+import {
+  CreateNotificationDto,
+  BroadcastNotificationDto,
+} from './dto/notification.dto';
 import { FamilyMember } from '../family/entities/family-member.entity';
 import { User } from '../user/entities/user.entity';
 import { NotificationPreferenceService } from './notification-preference.service';
@@ -72,7 +80,9 @@ export class NotificationService {
     const userId = dto.userId;
 
     // SOS 强制推送，绕过所有限制
-    const isUrgent = dto.level === NotificationLevel.URGENT || dto.type === NotificationType.SOS;
+    const isUrgent =
+      dto.level === NotificationLevel.URGENT ||
+      dto.type === NotificationType.SOS;
 
     if (!isUrgent) {
       // 检查通知类型开关
@@ -99,7 +109,7 @@ export class NotificationService {
       status: NotificationStatus.SENT,
       sentAt: new Date(),
     } as any);
-    const saved = (await this.repo.save(n) as unknown) as Notification;
+    const saved = (await this.repo.save(n)) as unknown as Notification;
 
     // 触发极光推送
     this.pushToUser(userId, saved).catch(() => {});
@@ -133,7 +143,7 @@ export class NotificationService {
         status: NotificationStatus.SENT,
         sentAt: new Date(),
       } as any);
-      const saved = (await this.repo.save(n) as unknown) as Notification;
+      const saved = (await this.repo.save(n)) as unknown as Notification;
       results.push(saved);
 
       // 触发极光推送
@@ -144,7 +154,11 @@ export class NotificationService {
   }
 
   /** 标记单条已读 */
-  async markAsRead(id: string, userId: string, familyId?: string): Promise<Notification> {
+  async markAsRead(
+    id: string,
+    userId: string,
+    familyId?: string,
+  ): Promise<Notification> {
     const where: any = { id, userId };
     if (familyId) where.familyId = familyId;
     const n = await this.repo.findOne({ where });
@@ -173,7 +187,10 @@ export class NotificationService {
   }
 
   /** 推送通知给指定用户（WebSocket 实时推送占位） */
-  async pushViaWebSocket(userId: string, notification: Notification): Promise<void> {
+  async pushViaWebSocket(
+    userId: string,
+    notification: Notification,
+  ): Promise<void> {
     // WebSocket 推送逻辑由 NotificationGateway 处理
     // 此处仅记录 sent_at
     notification.status = NotificationStatus.SENT;
@@ -182,7 +199,10 @@ export class NotificationService {
   }
 
   /** 极光推送 */
-  private async pushToUser(userId: string, notification: Notification): Promise<void> {
+  private async pushToUser(
+    userId: string,
+    notification: Notification,
+  ): Promise<void> {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (user?.pushToken) {
       await this.jpushSvc.pushToRegistration(
@@ -268,9 +288,10 @@ export class NotificationService {
       critical: '危急',
     };
     const label = statusLabel[checkinStatus] || checkinStatus;
-    const medDesc = medicationTotal > 0
-      ? `用药 ${medicationCompleted}/${medicationTotal}`
-      : '今日无用药记录';
+    const medDesc =
+      medicationTotal > 0
+        ? `用药 ${medicationCompleted}/${medicationTotal}`
+        : '今日无用药记录';
     let body = `${recipientName} 护理打卡完成（${label}）${medDesc}`;
     if (specialNote) {
       body += `。备注：${specialNote}`;
@@ -281,9 +302,10 @@ export class NotificationService {
       type: NotificationType.DAILY_CHECKIN_COMPLETED,
       title: `${recipientName} 护理打卡`,
       body,
-      level: checkinStatus === 'critical' || checkinStatus === 'poor'
-        ? NotificationLevel.HIGH
-        : NotificationLevel.NORMAL,
+      level:
+        checkinStatus === 'critical' || checkinStatus === 'poor'
+          ? NotificationLevel.HIGH
+          : NotificationLevel.NORMAL,
       sourceType: 'daily_care_checkin',
       sourceId,
       dataJson,

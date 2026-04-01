@@ -1,5 +1,12 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, IsUUID, IsEnum, IsArray } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUUID,
+  IsEnum,
+  IsArray,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { TaskFrequency } from '../entities/family-task.entity';
 
@@ -57,7 +64,10 @@ export class CreateFamilyTaskDto {
 }
 
 export class UpdateFamilyTaskDto extends PartialType(CreateFamilyTaskDto) {
-  @ApiPropertyOptional({ description: '任务状态', enum: ['pending', 'completed', 'cancelled'] })
+  @ApiPropertyOptional({
+    description: '任务状态',
+    enum: ['pending', 'completed', 'cancelled'],
+  })
   @IsOptional()
   @IsString()
   status?: string;

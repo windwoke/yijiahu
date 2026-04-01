@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsIn, IsDateString } from 'class-validator';
+import { IsString, IsOptional, IsIn } from 'class-validator';
 
 /** 创建订阅（由服务端内部使用，支付成功后调用） */
 export class CreateSubscriptionDto {

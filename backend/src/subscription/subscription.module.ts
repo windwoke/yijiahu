@@ -8,7 +8,14 @@ import { FamilyMember } from '../family/entities/family-member.entity';
 import { CareRecipient } from '../care-recipient/entities/care-recipient.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Subscription, Family, FamilyMember, CareRecipient])],
+  imports: [
+    TypeOrmModule.forFeature([
+      Subscription,
+      Family,
+      FamilyMember,
+      CareRecipient,
+    ]),
+  ],
   controllers: [SubscriptionController],
   providers: [SubscriptionService],
   exports: [SubscriptionService, TypeOrmModule],

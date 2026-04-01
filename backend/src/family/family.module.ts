@@ -9,7 +9,11 @@ import { SubscriptionModule } from '../subscription/subscription.module';
 import { NotificationModule } from '../notification/notification.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Family, FamilyMember, User]), SubscriptionModule, NotificationModule],
+  imports: [
+    TypeOrmModule.forFeature([Family, FamilyMember, User]),
+    SubscriptionModule,
+    NotificationModule,
+  ],
   controllers: [FamilyController],
   providers: [FamilyService],
   exports: [FamilyService, TypeOrmModule],

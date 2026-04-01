@@ -894,16 +894,32 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
     String weightUnit = 'kg';
     // 附件
     final selectedAttachments = <XFile>[];
+    final pendingAttachmentIds = <String>[];
+    var saved = false;
+
+    Future<void> cleanupPendingAttachments() async {
+      if (saved || pendingAttachmentIds.isEmpty) return;
+      try {
+        final dio = ref.read(dioProvider);
+        await dio.delete('/upload/attachments', queryParameters: {'familyId': familyId}, data: {'ids': pendingAttachmentIds});
+      } catch (_) {}
+    }
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSheetState) {
-          final isHealth = selectedType == CareLogType.health;
+      builder: (ctx) => PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) async {
+          if (!didPop) return;
+          if (!saved) await cleanupPendingAttachments();
+        },
+        child: StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            final isHealth = selectedType == CareLogType.health;
 
-          return Container(
+            return Container(
             padding: EdgeInsets.fromLTRB(
               24, 24, 24,
               MediaQuery.of(ctx).viewInsets.bottom + 24,
@@ -1130,8 +1146,6 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
                           if (contentController.text.trim().isEmpty && selectedAttachments.isEmpty) return;
                         }
 
-                        Navigator.pop(ctx);
-
                         try {
                           final dio = ref.read(dioProvider);
 
@@ -1146,9 +1160,10 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
                                 MultipartFile.fromBytes(bytes, filename: file.name),
                               ));
                             }
-                            final uploadResp = await dio.post('/upload/attachments', data: filesFormData);
+                            final uploadResp = await dio.post('/upload/attachments', queryParameters: {'familyId': familyId}, data: filesFormData);
                             final attachments = uploadResp.data['attachments'] as List<dynamic>? ?? [];
                             attachmentIds = attachments.map<String>((a) => a['id'] as String).toList();
+                            pendingAttachmentIds.addAll(attachmentIds);
                           }
 
                           if (isHealth && selectedMetric != null) {
@@ -1183,6 +1198,8 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
 
                           final query = TimelineQuery(familyId: familyId, recipientId: _selectedRecipientId);
                           ref.read(timelineProvider(query).notifier).refresh();
+                          saved = true;
+                          if (ctx.mounted) Navigator.pop(ctx);
 
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -1222,10 +1239,12 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
               ),
             ),
           );
-        },
-      ),
+          },
+        ),
+        ),
     );
   }
+
 
   /// 健康数据输入表单
   Widget _buildHealthInput(

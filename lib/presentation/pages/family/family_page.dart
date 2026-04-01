@@ -1135,7 +1135,7 @@ class FamilyPage extends ConsumerWidget {
                                 final formData = FormData.fromMap({
                                   'file': await MultipartFile.fromFile(selectedAvatarFile!.path),
                                 });
-                                final resp = await dio.post('/upload/avatar', data: formData);
+                                final resp = await dio.post('/upload/family-avatar', queryParameters: {'familyId': family.id}, data: formData);
                                 newAvatarUrl = resp.data['avatarUrl'] as String;
                               }
 

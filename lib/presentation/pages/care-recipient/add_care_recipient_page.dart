@@ -83,6 +83,14 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
   }
 
   Future<void> _uploadAvatar() async {
+    // 新建时不允许上传照片，编辑时才能上传
+    if (!isEditing) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('创建后可上传真实头像'), duration: Duration(seconds: 2), behavior: SnackBarBehavior.floating),
+      );
+      return;
+    }
+
     final picker = ImagePicker();
     final image = await picker.pickImage(
       source: ImageSource.gallery,
@@ -92,13 +100,20 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
     );
     if (image == null) return;
 
+    final family = ref.read(currentFamilyProvider);
+    if (family == null) return;
+
     setState(() => _isUploadingAvatar = true);
     try {
       final dio = ref.read(dioProvider);
       final formData = FormData.fromMap({
         'file': await MultipartFile.fromFile(image.path),
       });
-      final resp = await dio.post('/upload/avatar', data: formData);
+      final resp = await dio.post(
+        '/upload/recipient-avatar',
+        queryParameters: {'familyId': family.id, 'recipientId': widget.recipient!.id},
+        data: formData,
+      );
       final url = resp.data['avatarUrl'] as String?;
       if (url != null) {
         setState(() {
@@ -109,7 +124,7 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('头像上传失败'), duration: Duration(seconds: 3)),
+          const SnackBar(content: Text('头像上传失败'), duration: Duration(seconds: 3), behavior: SnackBarBehavior.floating),
         );
       }
     } finally {

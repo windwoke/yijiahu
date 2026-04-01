@@ -18,6 +18,10 @@ export class CareLogAttachment {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  /** 所属家庭（上传时记录，方便按家庭查询） */
+  @Column()
+  familyId: string;
+
   @Column({ nullable: true })
   careLogId: string;
 

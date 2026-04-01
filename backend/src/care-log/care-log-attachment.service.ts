@@ -52,7 +52,9 @@ export class CareLogAttachmentService {
   }
 
   async updateCareLogId(ids: string[], careLogId: string): Promise<void> {
-    await this.repo.update(ids, { careLogId });
+    const careLog = await this.careLogRepo.findOne({ where: { id: careLogId } });
+    if (!careLog) throw new NotFoundException('日志不存在');
+    await this.repo.update(ids, { careLogId, familyId: careLog.familyId });
   }
 
   async findByCareLogId(careLogId: string, familyId?: string): Promise<CareLogAttachment[]> {

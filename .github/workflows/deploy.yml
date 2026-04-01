@@ -168,7 +168,7 @@ jobs:
             set -e
             APP_DIR="/opt/yijiahu/yijiahu"
             BACKUP_DIR="/opt/yijiahu/yijiahu_backup_$(date +%Y%m%d_%H%M%S)"
-            ENV_FILE="$APP_DIR/.env.prod"
+            ENV_FILE="$APP_DIR/backend/.env.prod"
 
             # 备份当前版本（包括 .env.prod）
             if [ -d "$APP_DIR/backend/dist" ]; then
@@ -220,17 +220,19 @@ jobs:
               printf "%s\n" "[Unit]" "Description=Yijiahu Backend API" "After=network.target" "" \
                 "[Service]" "Type=simple" "User=root" \
                 "WorkingDirectory=/opt/yijiahu/yijiahu/backend" \
-                "EnvironmentFile=/opt/yijiahu/yijiahu/.env.prod" \
+                "EnvironmentFile=/opt/yijiahu/yijiahu/backend/.env.prod" \
                 "ExecStart=/usr/bin/node dist/main.js" \
                 "Restart=always" "RestartSec=10" "" \
                 "[Install]" "WantedBy=multi-user.target" > "$SYSTEMD_FILE"
+              sed -i "s|EnvironmentFile=/opt/yijiahu/yijiahu/.env.prod|EnvironmentFile=/opt/yijiahu/yijiahu/backend/.env.prod|" "$SYSTEMD_FILE" 2>/dev/null || true
               systemctl daemon-reload
               echo "systemd 服务文件已创建"
             else
               echo "systemd 服务文件已存在，检查 EnvironmentFile..."
               if ! grep -q "EnvironmentFile" "$SYSTEMD_FILE"; then
-                sed -i "/ExecStart=/a EnvironmentFile=/opt/yijiahu/yijiahu/.env.prod" "$SYSTEMD_FILE"
-                systemctl daemon-reload
+                sed -i "/ExecStart=/a EnvironmentFile=/opt/yijiahu/yijiahu/backend/.env.prod" "$SYSTEMD_FILE"
+                sed -i "s|EnvironmentFile=/opt/yijiahu/yijiahu/.env.prod|EnvironmentFile=/opt/yijiahu/yijiahu/backend/.env.prod|" "$SYSTEMD_FILE" 2>/dev/null || true
+              systemctl daemon-reload
                 echo "已添加 EnvironmentFile"
               fi
             fi
@@ -241,7 +243,7 @@ jobs:
             systemctl stop yijiahu 2>/dev/null || true
             sleep 2
             echo "=== source env后直接测试启动 ==="
-            set -a && . /opt/yijiahu/yijiahu/.env.prod && set +a && timeout 10 node dist/main.js 2>&1 || true
+            set -a && . /opt/yijiahu/yijiahu/backend/.env.prod && set +a && timeout 10 node dist/main.js 2>&1 || true
             echo "=== 直接测试结束 ==="
 
             # 重新启动服务

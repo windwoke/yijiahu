@@ -170,23 +170,30 @@ jobs:
             BACKUP_DIR="/opt/yijiahu/yijiahu_backup_$(date +%Y%m%d_%H%M%S)"
             ENV_FILE="$APP_DIR/.env.prod"
 
-            # 备份当前版本
+            # 备份当前版本（包括 .env.prod）
             if [ -d "$APP_DIR/backend/dist" ]; then
               mkdir -p "$BACKUP_DIR"
               cp -r "$APP_DIR/backend/dist" "$BACKUP_DIR/" 2>/dev/null || true
+            fi
+            if [ -f "$ENV_FILE" ]; then
+              cp "$ENV_FILE" "$ENV_FILE.bak"
+              echo "已备份现有 .env.prod"
             fi
 
             # 解压新版本（tarball 包含 repo root + dist，直接解压到 APP_DIR）
             mkdir -p "$APP_DIR"
             tar -xzf /tmp/yijiahu-backend.tar.gz -C "$APP_DIR/"
 
-            # 只追加 OSS 凭证到现有 .env.prod（不覆盖原有 DB 等配置）
+            # 恢复原有 .env.prod（保留 DB 等配置），再追加 OSS 凭证
+            if [ -f "$ENV_FILE.bak" ]; then
+              cp "$ENV_FILE.bak" "$ENV_FILE"
+              echo "已恢复原有 .env.prod"
+            fi
             if [ -n "$OSS_KEY" ]; then
-              # 删除旧的 OSS 配置行（防止重复）
+              # 追加 OSS 凭证（去重后追加）
               for var in ALIYUN_ACCESS_KEY_ID ALIYUN_ACCESS_KEY_SECRET ALIYUN_OSS_ENDPOINT ALIYUN_OSS_BUCKET; do
                 sed -i "/^${var}=/d" "$ENV_FILE" 2>/dev/null || true
               done
-              # 追加 OSS 配置
               {
                 echo ""
                 echo "# Aliyun OSS"
@@ -197,7 +204,7 @@ jobs:
               } >> "$ENV_FILE"
               echo "OSS 配置已追加"
             fi
-            echo "=== env文件 DB 和 OSS 配置 ==="
+            echo "=== 验证关键配置 ==="
             grep -E "^(DB_|ALIYUN)" "$ENV_FILE" || echo "警告: 关键配置缺失"
 
             # 安装依赖（跳过 build，dist 已预编译）

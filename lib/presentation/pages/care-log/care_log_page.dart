@@ -1821,6 +1821,42 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
     final displayCount = count > 3 ? 3 : count;
     final extraCount = count > 3 ? count - 3 : 0;
 
+    // 单张图片：高度更大，完整显示（竖屏友好）
+    if (count == 1) {
+      final att = attachments.first;
+      final url = ApiConfig.attachmentUrl(att.thumbnailUrl ?? att.url);
+      return SizedBox(
+        height: 200,
+        child: GestureDetector(
+          onTap: () => _showAttachmentViewer(attachments, 0),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: att.isImage
+                ? Image.network(
+                    url ?? '',
+                    fit: BoxFit.contain,
+                    width: double.infinity,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: AppColors.surfaceContainerLow,
+                      child: const Icon(Icons.broken_image, color: AppColors.textTertiary),
+                    ),
+                  )
+                : Container(
+                    color: AppColors.surfaceContainerLow,
+                    child: Stack(
+                      children: [
+                        Image.network(url ?? '', fit: BoxFit.contain, width: double.infinity),
+                        const Center(
+                          child: Icon(Icons.videocam, color: Colors.white, size: 48),
+                        ),
+                      ],
+                    ),
+                  ),
+          ),
+        ),
+      );
+    }
+
     return SizedBox(
       height: 100,
       child: Row(

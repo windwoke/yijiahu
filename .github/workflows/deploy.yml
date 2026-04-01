@@ -180,20 +180,21 @@ jobs:
             mkdir -p "$APP_DIR"
             tar -xzf /tmp/yijiahu-backend.tar.gz -C "$APP_DIR/"
 
-            # 更新 OSS 配置（直接写入，确保覆盖旧值或新增）
+            # 备份并更新 .env.prod（确保 OSS 凭证存在）
+            if [ -f "$ENV_FILE" ]; then
+              cp "$ENV_FILE" "$ENV_FILE.bak"
+            fi
             if [ -n "$OSS_KEY" ]; then
-              # 追加 OSS 配置到文件末尾
               {
-                echo ""
-                echo "# === Aliyun OSS (updated by CI) ==="
+                echo "# === Aliyun OSS (CI updated) ==="
                 echo "ALIYUN_ACCESS_KEY_ID=$OSS_KEY"
                 echo "ALIYUN_ACCESS_KEY_SECRET=$OSS_SECRET"
                 echo "ALIYUN_OSS_ENDPOINT=$OSS_ENDPOINT"
                 echo "ALIYUN_OSS_BUCKET=$OSS_BUCKET"
               } >> "$ENV_FILE"
-              echo "OSS 配置已追加到 $ENV_FILE"
-              tail -5 "$ENV_FILE"
+              echo "OSS 配置已更新"
             fi
+            cat "$ENV_FILE" | grep -E "ALIYUN"
 
             # 安装依赖（跳过 build，dist 已预编译）
             cd "$APP_DIR/backend"
@@ -201,6 +202,34 @@ jobs:
 
             # 查看 Node.js 版本
             node --version
+
+            # 检查并创建 systemd 服务文件（确保加载 .env.prod）
+            SYSTEMD_FILE="/etc/systemd/system/yijiahu.service"
+            if [ ! -f "$SYSTEMD_FILE" ]; then
+              echo "创建 systemd 服务文件..."
+              cat > "$SYSTEMD_FILE" << 'SERVICE_EOF'
+[Unit]
+Description=Yijiahu Backend API
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/yijiahu/yijiahu/backend
+EnvironmentFile=/opt/yijiahu/yijiahu/.env.prod
+ExecStart=/usr/bin/node dist/main.js
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+SERVICE_EOF
+              systemctl daemon-reload
+              echo "systemd 服务文件已创建"
+            else
+              echo "systemd 服务文件已存在: $SYSTEMD_FILE"
+              grep "EnvironmentFile" "$SYSTEMD_FILE" || echo "警告: 服务文件没有 EnvironmentFile"
+            fi
 
             # 停止现有服务，直接运行以捕获错误
             systemctl stop yijiahu 2>/dev/null || true

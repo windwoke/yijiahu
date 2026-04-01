@@ -27,13 +27,14 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
         id: filter
-        filters:
-          flutter: |
-            lib/**
-            android/**
-            ios/**
-            pubspec.yaml
-            pubspec.lock
+        with:
+          filters: |
+            flutter: |
+              lib/**
+              android/**
+              ios/**
+              pubspec.yaml
+              pubspec.lock
 
   # ─── 1. 构建后端（NestJS）────────────────
   build-backend:
@@ -151,10 +152,9 @@ jobs:
           OSS_ENDPOINT: ${{ secrets.ALIYUN_OSS_ENDPOINT }}
           OSS_BUCKET: ${{ secrets.ALIYUN_OSS_BUCKET }}
         run: |
-          echo "打包代码..."
+          echo "打包代码（包含预编译的 dist）..."
           tar --exclude='.git' \
               --exclude='node_modules' \
-              --exclude='dist' \
               --exclude='.env*' \
               -czf /tmp/yijiahu-backend.tar.gz .
 
@@ -172,10 +172,11 @@ jobs:
 
             # 备份当前版本
             if [ -d "$APP_DIR/backend/dist" ]; then
-              cp -r "$APP_DIR/backend/dist" "$BACKUP_DIR/dist" 2>/dev/null || true
+              mkdir -p "$BACKUP_DIR"
+              cp -r "$APP_DIR/backend/dist" "$BACKUP_DIR/" 2>/dev/null || true
             fi
 
-            # 解压新版本（tarball 包含 repo root，直接解压到 APP_DIR）
+            # 解压新版本（tarball 包含 repo root + dist，直接解压到 APP_DIR）
             mkdir -p "$APP_DIR"
             tar -xzf /tmp/yijiahu-backend.tar.gz -C "$APP_DIR/"
 
@@ -195,13 +196,9 @@ jobs:
               fi
             fi
 
+            # 安装依赖（生产，跳过 build，dist 已预编译）
             cd "$APP_DIR/backend"
-
-            # 安装依赖（生产）
-            npm ci
-
-            # 构建（TypeORM 不需要迁移，synchronize 已关闭）
-            npm run build
+            npm ci --omit=dev 2>/dev/null || npm ci
 
             # 重启服务
             systemctl restart yijiahu

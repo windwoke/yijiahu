@@ -15,7 +15,7 @@ export default () => ({
     username: process.env.DB_USERNAME || 'postgres',
     password: process.env.DB_PASSWORD || 'postgres',
     name: process.env.DB_NAME || 'yijiahu',
-    synchronize: process.env.NODE_ENV !== 'production',
+    synchronize: false,
     logging: process.env.NODE_ENV !== 'production',
   },
 

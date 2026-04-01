@@ -7,25 +7,20 @@ export class OssService {
   private client: OSS;
 
   constructor(private readonly config: ConfigService) {
+    const ossEndpoint = this.config.get('aliyun.ossEndpoint', '');
     this.client = new OSS({
-      region: this.config
-        .get('aliyun.ossEndpoint', '')
-        .replace('oss-cn-', '')
-        .replace('.aliyuncs.com', ''),
+      region: ossEndpoint.replace('oss-cn-', '').replace('.aliyuncs.com', ''),
       accessKeyId: this.config.get('aliyun.accessKeyId', ''),
       accessKeySecret: this.config.get('aliyun.accessKeySecret', ''),
       bucket: this.config.get('aliyun.ossBucket', ''),
-      endpoint: this.config.get('aliyun.ossEndpoint', ''),
+      endpoint: ossEndpoint,
+      secure: true,
     });
   }
 
-  /** 上传 Buffer 到 OSS，返回公网 URL */
-  async put(
-    path: string,
-    buffer: Buffer,
-    options?: OSS.PutStreamOptions,
-  ): Promise<string> {
-    await this.client.put(path, buffer, options);
+  /** 上传文件到 OSS，支持 Buffer 或文件路径 */
+  async put(path: string, content: Buffer | string): Promise<string> {
+    await this.client.put(path, content);
     return `https://${this.config.get('aliyun.ossBucket', '')}.${this.config.get('aliyun.ossEndpoint', '').replace('http://', '')}/${path}`;
   }
 

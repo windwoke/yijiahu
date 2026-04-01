@@ -16,6 +16,8 @@ import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { Repository, DataSource } from 'typeorm';
+import { extname } from 'path';
+import * as fs from 'fs';
 import {
   CareLogAttachment,
   AttachmentType,
@@ -25,8 +27,8 @@ import { FamilyMemberRole } from '../../family/entities/family-member.entity';
 import { PermissionService } from '../services/permission.service';
 import { OssService } from '../services/oss.service';
 import { Request } from 'express';
-import * as path from 'path';
-import * as fs from 'fs';
+
+const TMP_DIR = `${process.cwd()}/uploads/tmp`;
 
 @ApiTags('上传')
 @ApiBearerAuth()
@@ -41,71 +43,37 @@ export class UploadController {
     private readonly permission: PermissionService,
     private readonly oss: OssService,
   ) {
-    // 确保本地缓存目录存在（仅用于临时文件）
-    const tmpDir = path.join(process.cwd(), 'uploads', 'tmp');
-    if (!fs.existsSync(tmpDir)) {
-      fs.mkdirSync(tmpDir, { recursive: true });
-    }
+    if (!fs.existsSync(TMP_DIR)) fs.mkdirSync(TMP_DIR, { recursive: true });
   }
 
   private ossPath(familyId: string, ...parts: string[]): string {
-    return path.join('families', familyId, ...parts);
+    return `families/${familyId}/${parts.join('/')}`;
+  }
+
+  /** 写 Buffer 到临时文件再读取回来，确保内存稳定 */
+  private bufferToFile(buf: Buffer): string {
+    const tmp = `${TMP_DIR}/upload_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    fs.writeFileSync(tmp, buf);
+    return tmp;
   }
 
   @Post('avatar')
-  @UseInterceptors(
-    FileInterceptor('file', {
-      limits: { fileSize: 5 * 1024 * 1024 },
-      fileFilter: (req, file, callback) => {
-        if (/jpeg|jpg|png|gif|webp/.test(file.mimetype)) {
-          callback(null, true);
-        } else {
-          callback(
-            new BadRequestException('只支持 jpeg/jpg/png/gif/webp 格式'),
-            false,
-          );
-        }
-      },
-    }),
-  )
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 5 * 1024 * 1024 } }))
   @ApiOperation({ summary: '上传用户头像' })
   async uploadAvatar(
     @UploadedFile() file: Express.Multer.File,
     @Req() req: Request & { user: { id: string } },
   ) {
     if (!file) throw new BadRequestException('请选择要上传的头像');
-
-    const ossPath = `avatars/${req.user.id}/avatar${path.extname(file.originalname).toLowerCase()}`;
-
-    // 上传到 OSS
-    await this.oss.put(ossPath, file.buffer);
-
-    // 删除旧头像（可选）
-    const oldExts = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
-    for (const ext of oldExts) {
-      const oldPath = `avatars/${req.user.id}/avatar${ext}`;
-      await this.oss.delete(oldPath);
-    }
-
+    const ossPath = `avatars/${req.user.id}/avatar${extname(file.originalname).toLowerCase()}`;
+    // 保留 buffer 引用防止 GC，传入 Buffer 而非文件路径
+    const buf = file.buffer;
+    await this.oss.put(ossPath, buf);
     return { avatarUrl: ossPath };
   }
 
   @Post('family-avatar')
-  @UseInterceptors(
-    FileInterceptor('file', {
-      limits: { fileSize: 5 * 1024 * 1024 },
-      fileFilter: (req, file, callback) => {
-        if (/jpeg|jpg|png|gif|webp/.test(file.mimetype)) {
-          callback(null, true);
-        } else {
-          callback(
-            new BadRequestException('只支持 jpeg/jpg/png/gif/webp 格式'),
-            false,
-          );
-        }
-      },
-    }),
-  )
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 5 * 1024 * 1024 } }))
   @ApiOperation({ summary: '上传家庭头像' })
   async uploadFamilyAvatar(
     @UploadedFile() file: Express.Multer.File,
@@ -114,35 +82,17 @@ export class UploadController {
   ) {
     if (!file) throw new BadRequestException('请选择要上传的头像');
     if (!familyId) throw new BadRequestException('familyId 不能为空');
-
-    await this.permission.requireRole(req.user.id, familyId, [
-      FamilyMemberRole.OWNER,
-      FamilyMemberRole.COORDINATOR,
-    ]);
-
-    const ext = path.extname(file.originalname).toLowerCase();
+    await this.permission.requireRole(req.user.id, familyId, [FamilyMemberRole.OWNER, FamilyMemberRole.COORDINATOR]);
+    const ext = extname(file.originalname).toLowerCase();
     const ossPath = this.ossPath(familyId, `avatar${ext}`);
-    const _url = await this.oss.put(ossPath, file.buffer);
-
+    const tmp = this.bufferToFile(Buffer.from(file.buffer));
+    await this.oss.put(ossPath, tmp);
+    fs.unlinkSync(tmp);
     return { avatarUrl: ossPath };
   }
 
   @Post('recipient-avatar')
-  @UseInterceptors(
-    FileInterceptor('file', {
-      limits: { fileSize: 5 * 1024 * 1024 },
-      fileFilter: (req, file, callback) => {
-        if (/jpeg|jpg|png|gif|webp/.test(file.mimetype)) {
-          callback(null, true);
-        } else {
-          callback(
-            new BadRequestException('只支持 jpeg/jpg/png/gif/webp 格式'),
-            false,
-          );
-        }
-      },
-    }),
-  )
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 5 * 1024 * 1024 } }))
   @ApiOperation({ summary: '上传照护对象头像' })
   async uploadRecipientAvatar(
     @UploadedFile() file: Express.Multer.File,
@@ -153,139 +103,61 @@ export class UploadController {
     if (!file) throw new BadRequestException('请选择要上传的头像');
     if (!familyId) throw new BadRequestException('familyId 不能为空');
     if (!recipientId) throw new BadRequestException('recipientId 不能为空');
-
-    await this.permission.requireRole(req.user.id, familyId, [
-      FamilyMemberRole.OWNER,
-      FamilyMemberRole.COORDINATOR,
-    ]);
-
+    await this.permission.requireRole(req.user.id, familyId, [FamilyMemberRole.OWNER, FamilyMemberRole.COORDINATOR]);
     const recipientRepo = this.dataSource.getRepository(CareRecipient);
-    const r = await recipientRepo.findOne({
-      where: { id: recipientId, familyId },
-    });
+    const r = await recipientRepo.findOne({ where: { id: recipientId, familyId } });
     if (!r) throw new BadRequestException('照护对象不存在或不属于该家庭');
-
-    const ext = path.extname(file.originalname).toLowerCase();
-    const ossPath = this.ossPath(
-      familyId,
-      'recipients',
-      recipientId,
-      `avatar${ext}`,
-    );
-    await this.oss.put(ossPath, file.buffer);
-
+    const ext = extname(file.originalname).toLowerCase();
+    const ossPath = this.ossPath(familyId, 'recipients', recipientId, `avatar${ext}`);
+    const tmp = this.bufferToFile(Buffer.from(file.buffer));
+    await this.oss.put(ossPath, tmp);
+    fs.unlinkSync(tmp);
     return { avatarUrl: ossPath };
   }
 
   @Post('attachments')
-  @UseInterceptors(
-    FilesInterceptor('files', 9, {
-      limits: { fileSize: 100 * 1024 * 1024 },
-      fileFilter: (req, file, callback) => {
-        const mime = file.mimetype;
-        if (
-          /jpeg|jpg|png|gif|webp/.test(mime) ||
-          /mp4|quicktime|x-msvideo/.test(mime)
-        ) {
-          callback(null, true);
-        } else {
-          callback(
-            new BadRequestException(
-              '只支持图片（jpeg/png/gif/webp）和视频（mp4/mov/avi）格式',
-            ),
-            false,
-          );
-        }
-      },
-    }),
-  )
+  @UseInterceptors(FilesInterceptor('files', 9, { limits: { fileSize: 100 * 1024 * 1024 } }))
   @ApiOperation({ summary: '批量上传日志附件（图片/视频）' })
   async uploadAttachments(
     @UploadedFiles() files: Express.Multer.File[],
     @Query('familyId') familyId: string,
     @Req() req: Request & { user: { id: string } },
   ) {
-    if (!files || files.length === 0)
-      throw new BadRequestException('请选择要上传的文件');
+    if (!files || files.length === 0) throw new BadRequestException('请选择要上传的文件');
     if (!familyId) throw new BadRequestException('familyId 不能为空');
-
     await this.permission.requireRole(req.user.id, familyId, [
-      FamilyMemberRole.OWNER,
-      FamilyMemberRole.COORDINATOR,
-      FamilyMemberRole.CAREGIVER,
-      FamilyMemberRole.GUEST,
+      FamilyMemberRole.OWNER, FamilyMemberRole.COORDINATOR, FamilyMemberRole.CAREGIVER, FamilyMemberRole.GUEST,
     ]);
-
-    const savedFiles = await Promise.all(
-      files.map(async (file) => {
-        const isVideo = file.mimetype.startsWith('video/');
-        const ext = path.extname(file.originalname);
-        const filename = `${Date.now()}_${Math.random().toString(36).slice(2)}${ext}`;
-        const subdir = isVideo ? 'videos' : 'images';
-        const ossPath = this.ossPath(familyId, 'attachments', subdir, filename);
-
-        await this.oss.put(ossPath, file.buffer);
-
-        return {
-          type: isVideo ? AttachmentType.VIDEO : AttachmentType.IMAGE,
-          url: ossPath,
-          filename: file.originalname,
-          size: file.size,
-          familyId,
-        };
-      }),
-    );
-
-    const attachmentEntities = await this.attachmentRepo.save(
-      savedFiles.map((f) =>
-        this.attachmentRepo.create({
-          type: f.type,
-          url: f.url,
-          filename: f.filename,
-          size: f.size,
-          familyId: f.familyId,
-        }),
-      ),
-    );
-
-    const results = attachmentEntities.map((a, i) => ({
-      id: a.id,
-      filename: savedFiles[i].filename,
-      url: savedFiles[i].url,
-      mimeType:
-        savedFiles[i].type === AttachmentType.VIDEO
-          ? 'video/mp4'
-          : 'image/jpeg',
-      size: savedFiles[i].size,
-      type: savedFiles[i].type === AttachmentType.VIDEO ? 'video' : 'image',
+    const savedFiles = await Promise.all(files.map(async (file) => {
+      const isVideo = file.mimetype.startsWith('video/');
+      const ext = extname(file.originalname);
+      const filename = `${Date.now()}_${Math.random().toString(36).slice(2)}${ext}`;
+      const ossPath = this.ossPath(familyId, 'attachments', isVideo ? 'videos' : 'images', filename);
+      const tmp = this.bufferToFile(Buffer.from(file.buffer));
+      await this.oss.put(ossPath, tmp);
+      fs.unlinkSync(tmp);
+      return { type: isVideo ? AttachmentType.VIDEO : AttachmentType.IMAGE, url: ossPath, filename: file.originalname, size: file.size, familyId };
     }));
-
-    return { attachments: results };
+    const attachmentEntities = await this.attachmentRepo.save(savedFiles.map(f =>
+      this.attachmentRepo.create({ type: f.type, url: f.url, filename: f.filename, size: f.size, familyId: f.familyId })
+    ));
+    return { attachments: attachmentEntities.map((a, i) => ({
+      id: a.id, filename: savedFiles[i].filename, url: savedFiles[i].url,
+      mimeType: savedFiles[i].type === AttachmentType.VIDEO ? 'video/mp4' : 'image/jpeg',
+      size: savedFiles[i].size, type: savedFiles[i].type === AttachmentType.VIDEO ? 'video' : 'image',
+    }))};
   }
 
   @Delete('attachments')
   @ApiOperation({ summary: '删除附件（取消日记时清理）' })
-  async deleteAttachments(
-    @Body() body: { ids: string[] },
-    @Query('familyId') familyId: string,
-    @Req() req: Request & { user: { id: string } },
-  ) {
+  async deleteAttachments(@Body() body: { ids: string[] }, @Query('familyId') familyId: string, @Req() req: Request & { user: { id: string } }) {
     if (!familyId) throw new BadRequestException('familyId 不能为空');
     if (!body.ids || body.ids.length === 0) return;
-
-    await this.permission.requireRole(req.user.id, familyId, [
-      FamilyMemberRole.OWNER,
-      FamilyMemberRole.COORDINATOR,
-      FamilyMemberRole.CAREGIVER,
-      FamilyMemberRole.GUEST,
-    ]);
-
+    await this.permission.requireRole(req.user.id, familyId, [FamilyMemberRole.OWNER, FamilyMemberRole.COORDINATOR, FamilyMemberRole.CAREGIVER, FamilyMemberRole.GUEST]);
     const attachments = await this.attachmentRepo.findByIds(body.ids);
     const deletable = attachments.filter((a) => !a.careLogId);
-
     await Promise.all(deletable.map((a) => this.oss.delete(a.url)));
     await this.attachmentRepo.delete(deletable.map((a) => a.id));
-
     return { deleted: deletable.length };
   }
 }

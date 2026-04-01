@@ -242,14 +242,16 @@ class _DailyCarePageState extends ConsumerState<DailyCarePage> {
             radius: 28,
             backgroundColor: AppColors.coral.withValues(alpha: 0.1),
             child: (widget.recipient.avatarUrl != null && widget.recipient.avatarUrl!.isNotEmpty)
-                ? Image.network(
-                    ApiConfig.avatarUrl(widget.recipient.avatarUrl!) ?? '',
-                    fit: BoxFit.cover,
-                    width: 56,
-                    height: 56,
-                    errorBuilder: (_, __, ___) => Text(
-                      widget.recipient.displayAvatar,
-                      style: const TextStyle(fontSize: 24),
+                ? ClipOval(
+                    child: Image.network(
+                      ApiConfig.avatarUrl(widget.recipient.avatarUrl!) ?? '',
+                      fit: BoxFit.cover,
+                      width: 56,
+                      height: 56,
+                      errorBuilder: (_, __, ___) => Text(
+                        widget.recipient.displayAvatar,
+                        style: const TextStyle(fontSize: 24),
+                      ),
                     ),
                   )
                 : widget.recipient.displayAvatar.isNotEmpty

@@ -200,17 +200,28 @@ jobs:
             cd "$APP_DIR/backend"
             npm ci 2>&1 | tail -5
 
-            # 重启服务
-            systemctl restart yijiahu 2>&1
+            # 查看 Node.js 版本
+            node --version
+
+            # 停止现有服务，直接运行以捕获错误
+            systemctl stop yijiahu 2>/dev/null || true
+            sleep 2
+            echo "=== 直接运行测试（捕获错误） ==="
+            timeout 10 node dist/main.js 2>&1 || true
+            echo "=== 测试运行结束 ==="
+
+            # 重新启动服务
+            systemctl start yijiahu 2>&1
             sleep 5
-            systemctl status yijiahu --no-pager || true
 
             if systemctl is-active --quiet yijiahu; then
               echo "部署成功！版本: $(git log -1 --oneline)"
               echo "API 健康检查: $(curl -s -o /dev/null -w '%{http_code}' http://localhost/v1/users/me || echo 'FAIL')"
             else
-              echo "=== 服务启动日志 ==="
-              journalctl -u yijiahu --no-pager -n 30 || true
+              echo "=== systemd 服务状态 ==="
+              systemctl status yijiahu --no-pager -l || true
+              echo "=== journalctl 应用日志 ==="
+              journalctl -u yijiahu --no-pager -n 50 --since "-1 minute" || true
               echo "=== 回滚中 ==="
               if [ -d "$BACKUP_DIR/dist" ]; then
                 cp -r "$BACKUP_DIR/dist" "$APP_DIR/backend/dist/"

@@ -180,20 +180,19 @@ jobs:
             mkdir -p "$APP_DIR"
             tar -xzf /tmp/yijiahu-backend.tar.gz -C "$APP_DIR/"
 
-            # 更新 OSS 配置
+            # 更新 OSS 配置（直接写入，确保覆盖旧值或新增）
             if [ -n "$OSS_KEY" ]; then
-              if grep -q "ALIYUN_ACCESS_KEY_ID" "$ENV_FILE" 2>/dev/null; then
-                sed -i "s|ALIYUN_ACCESS_KEY_ID=.*|ALIYUN_ACCESS_KEY_ID=$OSS_KEY|" "$ENV_FILE"
-                sed -i "s|ALIYUN_ACCESS_KEY_SECRET=.*|ALIYUN_ACCESS_KEY_SECRET=$OSS_SECRET|" "$ENV_FILE"
-                sed -i "s|ALIYUN_OSS_ENDPOINT=.*|ALIYUN_OSS_ENDPOINT=$OSS_ENDPOINT|" "$ENV_FILE"
-                sed -i "s|ALIYUN_OSS_BUCKET=.*|ALIYUN_OSS_BUCKET=$OSS_BUCKET|" "$ENV_FILE"
-              else
-                echo "" >> "$ENV_FILE"
-                echo "ALIYUN_ACCESS_KEY_ID=$OSS_KEY" >> "$ENV_FILE"
-                echo "ALIYUN_ACCESS_KEY_SECRET=$OSS_SECRET" >> "$ENV_FILE"
-                echo "ALIYUN_OSS_ENDPOINT=$OSS_ENDPOINT" >> "$ENV_FILE"
-                echo "ALIYUN_OSS_BUCKET=$OSS_BUCKET" >> "$ENV_FILE"
-              fi
+              # 追加 OSS 配置到文件末尾
+              {
+                echo ""
+                echo "# === Aliyun OSS (updated by CI) ==="
+                echo "ALIYUN_ACCESS_KEY_ID=$OSS_KEY"
+                echo "ALIYUN_ACCESS_KEY_SECRET=$OSS_SECRET"
+                echo "ALIYUN_OSS_ENDPOINT=$OSS_ENDPOINT"
+                echo "ALIYUN_OSS_BUCKET=$OSS_BUCKET"
+              } >> "$ENV_FILE"
+              echo "OSS 配置已追加到 $ENV_FILE"
+              tail -5 "$ENV_FILE"
             fi
 
             # 安装依赖（跳过 build，dist 已预编译）

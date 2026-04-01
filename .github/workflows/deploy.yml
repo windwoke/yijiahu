@@ -137,6 +137,8 @@ jobs:
     environment:
       name: production
       url: https://api.yijiahu.com
+    env:
+      SKIP_MIGRATE: ${{ github.event.inputs.skip_migrate }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -211,6 +213,15 @@ jobs:
             # 安装依赖（跳过 build，dist 已预编译）
             cd "$APP_DIR/backend"
             npm ci 2>&1 | tail -3
+
+            # ─── 数据库迁移 ───────────────────────
+            if [ "$SKIP_MIGRATE" != "true" ]; then
+              echo "执行数据库迁移..."
+              set -a && . "$ENV_FILE" && set +a
+              PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "${DB_PORT:-5432}" -U "$DB_USERNAME" -d "$DB_NAME" -f migrations/012_add_care_log_attachments_familyid.sql 2>&1 || echo "迁移完成或已有数据"
+            else
+              echo "跳过数据库迁移（skip_migrate=true）"
+            fi
 
             # 检查并修复 systemd 服务文件
             SYSTEMD_FILE="/etc/systemd/system/yijiahu.service"

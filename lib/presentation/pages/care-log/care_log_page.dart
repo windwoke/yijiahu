@@ -949,24 +949,6 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
     }
   }
 
-  /// 启动后台文件上传（立即执行，不阻塞 UI）
-  void _startBackgroundUpload(
-    _PendingAttachment att,
-    String familyId,
-    List<_PendingAttachment> list,
-    void Function(void Function()) setSheetState,
-  ) {
-    _doUpload(att, familyId, list, () {
-      setSheetState(() {});
-    }, () {
-      final idx = list.indexWhere((a) => a.id == att.id);
-      if (idx >= 0) {
-        list[idx] = list[idx].copyWith(isUploading: false);
-      }
-      setSheetState(() {});
-    });
-  }
-
   /// 添加日志底部弹窗
   void _showAddLogSheet(String familyId, String recipientId) {
     CareLogType selectedType = CareLogType.activity;
@@ -985,6 +967,7 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
     final pendingAttachments = <_PendingAttachment>[];
     var saved = false;
     var isSaving = false;
+    var hasUploading = false;
 
     Future<void> cleanupPendingAttachments() async {
       if (saved) return;
@@ -1015,7 +998,25 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
 
             /// 启动后台上传（触发后不等待完成）
             void startUpload(_PendingAttachment att) {
-              _startBackgroundUpload(att, familyId, pendingAttachments, setSheetState);
+              hasUploading = true;
+              _doUpload(att, familyId, pendingAttachments, () {
+                // 成功：更新状态后检查是否还有上传中的
+                setSheetState(() {
+                  if (!pendingAttachments.any((a) => a.isUploading)) {
+                    hasUploading = false;
+                  }
+                });
+              }, () {
+                // 失败：标记为非上传中
+                final idx = pendingAttachments.indexWhere((a) => a.id == att.id);
+                if (idx >= 0) {
+                  pendingAttachments[idx] = pendingAttachments[idx].copyWith(isUploading: false);
+                  if (!pendingAttachments.any((a) => a.isUploading)) {
+                    hasUploading = false;
+                  }
+                }
+                setSheetState(() {});
+              });
             }
 
             return Container(
@@ -1231,7 +1232,9 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
                   SizedBox(
                     height: 52,
                     child: ElevatedButton(
-                      onPressed: () async {
+                      onPressed: hasUploading
+                          ? null
+                          : () async {
                         // 健康类型验证
                         if (isHealth && selectedMetric != null) {
                           if (selectedMetric == HealthMetricType.bloodPressure) {
@@ -1321,19 +1324,28 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
                         elevation: 0,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
                       ),
-                      child: isSaving
+                      child: hasUploading
                           ? const Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(Colors.white))),
                                 SizedBox(width: 8),
-                                Text('保存中...', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                                Text('上传中...', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                               ],
                             )
-                          : Text(
-                              isHealth ? '记录健康数据' : '保存日志',
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                            ),
+                          : isSaving
+                              ? const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(Colors.white))),
+                                    SizedBox(width: 8),
+                                    Text('保存中...', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                                  ],
+                                )
+                              : Text(
+                                  isHealth ? '记录健康数据' : '保存日志',
+                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                                ),
                     ),
                   ),
                 ],

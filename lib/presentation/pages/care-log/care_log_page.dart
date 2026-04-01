@@ -1,10 +1,12 @@
 /// 照护日志页 - 温暖日记风时间线
 library;
 
+import 'dart:io' as io;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' hide Family;
 import 'package:image_picker/image_picker.dart';
 import 'package:dio/dio.dart';
+import 'package:video_thumbnail/video_thumbnail.dart' as vt;
 import '../../../core/constants/constants.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/env/env_config.dart';
@@ -15,6 +17,44 @@ import '../../widgets/empty_state.dart';
 
 /// 截断超长名称（用于显示）
 String _truncate4(String s) => s.length > 4 ? '${s.substring(0, 4)}…' : s;
+
+/// 待上传附件（选图后立即后台开始上传）
+class _PendingAttachment {
+  final XFile file;
+  final String id;
+  final bool isVideo;
+  final bool isUploaded;
+  final String? remoteId;
+  final bool isUploading;
+  final String? localThumbnailPath;
+  _PendingAttachment({
+    required this.file,
+    required this.id,
+    required this.isVideo,
+    this.isUploaded = false,
+    this.remoteId,
+    this.isUploading = false,
+    this.localThumbnailPath,
+  });
+  _PendingAttachment copyWith({
+    XFile? file,
+    String? id,
+    bool? isVideo,
+    bool? isUploaded,
+    String? remoteId,
+    bool? isUploading,
+    String? localThumbnailPath,
+  }) =>
+      _PendingAttachment(
+        file: file ?? this.file,
+        id: id ?? this.id,
+        isVideo: isVideo ?? this.isVideo,
+        isUploaded: isUploaded ?? this.isUploaded,
+        remoteId: remoteId ?? this.remoteId,
+        isUploading: isUploading ?? this.isUploading,
+        localThumbnailPath: localThumbnailPath ?? this.localThumbnailPath,
+      );
+}
 
 /// 照护日志页
 class CareLogPage extends ConsumerStatefulWidget {
@@ -878,6 +918,55 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
     );
   }
 
+  /// 后台上传单个附件（异步，不阻塞 UI）
+  Future<void> _doUpload(
+    _PendingAttachment att,
+    String familyId,
+    List<_PendingAttachment> list,
+    void Function() onSuccess,
+    void Function() onError,
+  ) async {
+    try {
+      final dio = ref.read(dioProvider);
+      final bytes = await att.file.readAsBytes();
+      final formData = FormData.fromMap({
+        'files': [MultipartFile.fromBytes(bytes, filename: att.file.name)],
+      });
+      final resp = await dio.post('/upload/attachments',
+        queryParameters: {'familyId': familyId},
+        data: formData,
+      );
+      final attachments = resp.data['attachments'] as List<dynamic>? ?? [];
+      if (attachments.isNotEmpty) {
+        final idx = list.indexWhere((a) => a.id == att.id);
+        if (idx >= 0) {
+          list[idx] = list[idx].copyWith(isUploaded: true, isUploading: false, remoteId: attachments.first['id'] as String?);
+        }
+        onSuccess();
+      }
+    } catch (_) {
+      onError();
+    }
+  }
+
+  /// 启动后台文件上传（立即执行，不阻塞 UI）
+  void _startBackgroundUpload(
+    _PendingAttachment att,
+    String familyId,
+    List<_PendingAttachment> list,
+    void Function(void Function()) setSheetState,
+  ) {
+    _doUpload(att, familyId, list, () {
+      setSheetState(() {});
+    }, () {
+      final idx = list.indexWhere((a) => a.id == att.id);
+      if (idx >= 0) {
+        list[idx] = list[idx].copyWith(isUploading: false);
+      }
+      setSheetState(() {});
+    });
+  }
+
   /// 添加日志底部弹窗
   void _showAddLogSheet(String familyId, String recipientId) {
     CareLogType selectedType = CareLogType.activity;
@@ -892,16 +981,21 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
     // 体重
     final weightController = TextEditingController();
     String weightUnit = 'kg';
-    // 附件
-    final selectedAttachments = <XFile>[];
-    final pendingAttachmentIds = <String>[];
+    // 附件（选图后立即后台开始上传）
+    final pendingAttachments = <_PendingAttachment>[];
     var saved = false;
+    var isSaving = false;
 
     Future<void> cleanupPendingAttachments() async {
-      if (saved || pendingAttachmentIds.isEmpty) return;
+      if (saved) return;
+      final notUploaded = pendingAttachments.where((a) => !a.isUploaded).toList();
+      if (notUploaded.isEmpty) return;
       try {
         final dio = ref.read(dioProvider);
-        await dio.delete('/upload/attachments', queryParameters: {'familyId': familyId}, data: {'ids': pendingAttachmentIds});
+        final ids = notUploaded.map((a) => a.remoteId).whereType<String>().toList();
+        if (ids.isNotEmpty) {
+          await dio.delete('/upload/attachments', queryParameters: {'familyId': familyId}, data: {'ids': ids});
+        }
       } catch (_) {}
     }
 
@@ -918,6 +1012,11 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
         child: StatefulBuilder(
           builder: (ctx, setSheetState) {
             final isHealth = selectedType == CareLogType.health;
+
+            /// 启动后台上传（触发后不等待完成）
+            void startUpload(_PendingAttachment att) {
+              _startBackgroundUpload(att, familyId, pendingAttachments, setSheetState);
+            }
 
             return Container(
             padding: EdgeInsets.fromLTRB(
@@ -1119,12 +1218,12 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
                     ),
                     const SizedBox(height: 16),
                     // 附件选择区
-                    _buildAttachmentPicker(selectedAttachments, setSheetState, () {
-                      _pickAttachments(setSheetState, selectedAttachments);
+                    _buildAttachmentPicker(pendingAttachments, setSheetState, () {
+                      _pickAttachments(setSheetState, pendingAttachments, familyId, startUpload);
                     }),
-                    if (selectedAttachments.isNotEmpty) ...[
+                    if (pendingAttachments.isNotEmpty) ...[
                       const SizedBox(height: 12),
-                      _buildAttachmentPreview(selectedAttachments, setSheetState),
+                      _buildAttachmentPreview(pendingAttachments, setSheetState),
                     ],
                   ],
                   const SizedBox(height: 24),
@@ -1143,28 +1242,19 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
                             if (weightController.text.isEmpty) return;
                           }
                         } else if (!isHealth) {
-                          if (contentController.text.trim().isEmpty && selectedAttachments.isEmpty) return;
+                          if (contentController.text.trim().isEmpty && pendingAttachments.isEmpty) return;
                         }
+
+                        setSheetState(() => isSaving = true);
 
                         try {
                           final dio = ref.read(dioProvider);
 
-                          // 先上传附件，获取附件ID列表
-                          List<String> attachmentIds = [];
-                          if (selectedAttachments.isNotEmpty) {
-                            final filesFormData = FormData();
-                            for (final file in selectedAttachments) {
-                              final bytes = await file.readAsBytes();
-                              filesFormData.files.add(MapEntry(
-                                'files',
-                                MultipartFile.fromBytes(bytes, filename: file.name),
-                              ));
-                            }
-                            final uploadResp = await dio.post('/upload/attachments', queryParameters: {'familyId': familyId}, data: filesFormData);
-                            final attachments = uploadResp.data['attachments'] as List<dynamic>? ?? [];
-                            attachmentIds = attachments.map<String>((a) => a['id'] as String).toList();
-                            pendingAttachmentIds.addAll(attachmentIds);
-                          }
+                          // 使用已在后台上传完成的附件 ID
+                          final attachmentIds = pendingAttachments
+                              .where((a) => a.isUploaded && a.remoteId != null)
+                              .map((a) => a.remoteId!)
+                              .toList();
 
                           if (isHealth && selectedMetric != null) {
                             // 发健康记录
@@ -1221,6 +1311,8 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
                               ),
                             );
                           }
+                        } finally {
+                          setSheetState(() => isSaving = false);
                         }
                       },
                       style: ElevatedButton.styleFrom(
@@ -1229,10 +1321,19 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
                         elevation: 0,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
                       ),
-                      child: Text(
-                        isHealth ? '记录健康数据' : '保存日志',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                      ),
+                      child: isSaving
+                          ? const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(Colors.white))),
+                                SizedBox(width: 8),
+                                Text('保存中...', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                              ],
+                            )
+                          : Text(
+                              isHealth ? '记录健康数据' : '保存日志',
+                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                            ),
                     ),
                   ),
                 ],
@@ -1417,7 +1518,7 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
   // ─── 附件相关方法 ───
 
   Widget _buildAttachmentPicker(
-    List<XFile> selectedAttachments,
+    List<_PendingAttachment> pendingAttachments,
     void Function(void Function()) setSheetState,
     VoidCallback onPick,
   ) {
@@ -1470,18 +1571,17 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
   }
 
   Widget _buildAttachmentPreview(
-    List<XFile> selectedAttachments,
+    List<_PendingAttachment> pendingAttachments,
     void Function(void Function()) setSheetState,
   ) {
     return SizedBox(
       height: 80,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: selectedAttachments.length,
+        itemCount: pendingAttachments.length,
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
-          final file = selectedAttachments[index];
-          final isVideo = file.mimeType?.startsWith('video/') ?? false;
+          final att = pendingAttachments[index];
           return SizedBox(
             width: 80,
             height: 80,
@@ -1490,17 +1590,36 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
                 Positioned.fill(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      color: AppColors.surfaceContainerLow,
-                      child: Icon(
-                        isVideo ? Icons.videocam : Icons.image,
-                        color: AppColors.textSecondary,
-                        size: 28,
-                      ),
-                    ),
+                    child: att.isVideo
+                        ? (att.localThumbnailPath != null
+                            ? Image.file(
+                                io.File(att.localThumbnailPath!),
+                                fit: BoxFit.cover,
+                                width: 80,
+                                height: 80,
+                                errorBuilder: (_, __, ___) => Container(
+                                  color: AppColors.surfaceContainerLow,
+                                  child: const Icon(Icons.videocam, color: AppColors.textSecondary, size: 28),
+                                ),
+                              )
+                            : Container(
+                                color: AppColors.surfaceContainerLow,
+                                child: const Icon(Icons.videocam, color: AppColors.textSecondary, size: 28),
+                              ))
+                        : Image.file(
+                            io.File(att.file.path),
+                            fit: BoxFit.cover,
+                            width: 80,
+                            height: 80,
+                            errorBuilder: (_, __, ___) => Container(
+                              color: AppColors.surfaceContainerLow,
+                              child: const Icon(Icons.image, color: AppColors.textSecondary, size: 28),
+                            ),
+                          ),
                   ),
                 ),
-                if (isVideo)
+                // 视频播放图标
+                if (att.isVideo)
                   Positioned(
                     left: 4,
                     bottom: 4,
@@ -1513,14 +1632,31 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
                       child: const Icon(Icons.play_arrow, color: Colors.white, size: 16),
                     ),
                   ),
+                // 上传中指示器
+                if (att.isUploading)
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.4),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Center(
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(Colors.white)),
+                        ),
+                      ),
+                    ),
+                  ),
+                // 删除按钮
                 Positioned(
                   top: 4,
                   right: 4,
                   child: GestureDetector(
                     onTap: () => setSheetState(() {
-                      // 用下标删除，避免列表在遍历中修改
-                      if (index < selectedAttachments.length) {
-                        selectedAttachments.removeAt(index);
+                      if (index < pendingAttachments.length) {
+                        pendingAttachments.removeAt(index);
                       }
                     }),
                     child: Container(
@@ -1544,11 +1680,13 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
 
   Future<void> _pickAttachments(
     void Function(void Function()) setSheetState,
-    List<XFile> selectedAttachments,
+    List<_PendingAttachment> pendingAttachments,
+    String familyId,
+    void Function(_PendingAttachment) startUpload,
   ) async {
     final picker = ImagePicker();
 
-    // 显示图片来源选择（暂时只提供相册，相机/视频功能在真机上需单独配置权限）
+    // 显示图片来源选择
     final source = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: Colors.transparent,
@@ -1590,13 +1728,44 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
     if (source == null) return;
 
     try {
-      // 统一使用相册选择，支持图片和视频
       final images = await picker.pickMultipleMedia();
       if (images.isNotEmpty) {
-        final remaining = 9 - selectedAttachments.length;
+        final remaining = 9 - pendingAttachments.length;
+        final toAdd = images.take(remaining > 0 ? remaining : 0).toList();
+        if (toAdd.isEmpty) return;
+
+        final newAttachments = <_PendingAttachment>[];
+        for (final file in toAdd) {
+          final isVideo = file.mimeType?.startsWith('video/') ?? false;
+          String? thumbPath;
+          if (isVideo) {
+            try {
+              thumbPath = await vt.VideoThumbnail.thumbnailFile(
+                video: file.path,
+                thumbnailPath: '',
+                imageFormat: vt.ImageFormat.JPEG,
+                maxWidth: 200,
+                quality: 75,
+              );
+            } catch (_) {}
+          }
+          newAttachments.add(_PendingAttachment(
+            file: file,
+            id: '${DateTime.now().millisecondsSinceEpoch}_${newAttachments.length}',
+            isVideo: isVideo,
+            isUploading: true,
+            localThumbnailPath: thumbPath,
+          ));
+        }
+
         setSheetState(() {
-          selectedAttachments.addAll(images.take(remaining > 0 ? remaining : 0));
+          pendingAttachments.addAll(newAttachments);
         });
+
+        // 立即启动后台上传
+        for (final att in newAttachments) {
+          startUpload(att);
+        }
       }
     } catch (e) {
       // ignore
@@ -1639,42 +1808,6 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
 
     final displayCount = count > 3 ? 3 : count;
     final extraCount = count > 3 ? count - 3 : 0;
-
-    // 单张图片：高度更大，完整显示（竖屏友好）
-    if (count == 1) {
-      final att = attachments.first;
-      final url = ApiConfig.attachmentUrl(att.thumbnailUrl ?? att.url);
-      return SizedBox(
-        height: 200,
-        child: GestureDetector(
-          onTap: () => _showAttachmentViewer(attachments, 0),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: att.isImage
-                ? Image.network(
-                    url ?? '',
-                    fit: BoxFit.contain,
-                    width: double.infinity,
-                    errorBuilder: (_, __, ___) => Container(
-                      color: AppColors.surfaceContainerLow,
-                      child: const Icon(Icons.broken_image, color: AppColors.textTertiary),
-                    ),
-                  )
-                : Container(
-                    color: AppColors.surfaceContainerLow,
-                    child: Stack(
-                      children: [
-                        Image.network(url ?? '', fit: BoxFit.contain, width: double.infinity),
-                        const Center(
-                          child: Icon(Icons.videocam, color: Colors.white, size: 48),
-                        ),
-                      ],
-                    ),
-                  ),
-          ),
-        ),
-      );
-    }
 
     return SizedBox(
       height: 100,

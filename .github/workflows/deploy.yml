@@ -196,22 +196,25 @@ jobs:
               fi
             fi
 
-            # 安装依赖（生产，跳过 build，dist 已预编译）
+            # 安装依赖（跳过 build，dist 已预编译）
             cd "$APP_DIR/backend"
-            npm ci --omit=dev 2>/dev/null || npm ci
+            npm ci 2>&1 | tail -5
 
             # 重启服务
-            systemctl restart yijiahu
-            sleep 3
+            systemctl restart yijiahu 2>&1
+            sleep 5
+            systemctl status yijiahu --no-pager || true
 
             if systemctl is-active --quiet yijiahu; then
               echo "部署成功！版本: $(git log -1 --oneline)"
               echo "API 健康检查: $(curl -s -o /dev/null -w '%{http_code}' http://localhost/v1/users/me || echo 'FAIL')"
             else
-              echo "部署失败，回滚中..."
+              echo "=== 服务启动日志 ==="
+              journalctl -u yijiahu --no-pager -n 30 || true
+              echo "=== 回滚中 ==="
               if [ -d "$BACKUP_DIR/dist" ]; then
                 cp -r "$BACKUP_DIR/dist" "$APP_DIR/backend/dist/"
-                systemctl restart yijiahu
+                systemctl restart yijiahu 2>&1
                 echo "已回滚到上一版本"
               fi
               exit 1

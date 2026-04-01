@@ -180,17 +180,13 @@ jobs:
             mkdir -p "$APP_DIR"
             tar -xzf /tmp/yijiahu-backend.tar.gz -C "$APP_DIR/"
 
-            # 备份并更新 .env.prod（确保 OSS 凭证存在）
-            if [ -f "$ENV_FILE.bak" ]; then
-              cp "$ENV_FILE.bak" "$ENV_FILE"
-              echo "从备份恢复 .env.prod"
-            fi
+            # 只追加 OSS 凭证到现有 .env.prod（不覆盖原有 DB 等配置）
             if [ -n "$OSS_KEY" ]; then
-              # 追加 OSS 凭证（先删除旧的）
+              # 删除旧的 OSS 配置行（防止重复）
               for var in ALIYUN_ACCESS_KEY_ID ALIYUN_ACCESS_KEY_SECRET ALIYUN_OSS_ENDPOINT ALIYUN_OSS_BUCKET; do
                 sed -i "/^${var}=/d" "$ENV_FILE" 2>/dev/null || true
               done
-              # 写入 OSS 配置（逐行echo，兼容特殊字符）
+              # 追加 OSS 配置
               {
                 echo ""
                 echo "# Aliyun OSS"
@@ -199,10 +195,10 @@ jobs:
                 echo "ALIYUN_OSS_ENDPOINT=$OSS_ENDPOINT"
                 echo "ALIYUN_OSS_BUCKET=$OSS_BUCKET"
               } >> "$ENV_FILE"
-              echo "OSS 配置已写入"
+              echo "OSS 配置已追加"
             fi
-            echo "=== env文件末尾5行 ==="
-            tail -5 "$ENV_FILE"
+            echo "=== env文件 DB 和 OSS 配置 ==="
+            grep -E "^(DB_|ALIYUN)" "$ENV_FILE" || echo "警告: 关键配置缺失"
 
             # 安装依赖（跳过 build，dist 已预编译）
             cd "$APP_DIR/backend"

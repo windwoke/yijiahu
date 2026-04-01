@@ -186,18 +186,23 @@ jobs:
               echo "从备份恢复 .env.prod"
             fi
             if [ -n "$OSS_KEY" ]; then
-              # 追加 OSS 凭证（去重后追加）
+              # 追加 OSS 凭证（先删除旧的）
               for var in ALIYUN_ACCESS_KEY_ID ALIYUN_ACCESS_KEY_SECRET ALIYUN_OSS_ENDPOINT ALIYUN_OSS_BUCKET; do
-                sed -i "/^$var=/d" "$ENV_FILE" 2>/dev/null || true
+                sed -i "/^${var}=/d" "$ENV_FILE" 2>/dev/null || true
               done
-              printf "%s\n" "" "# === Aliyun OSS ===" \
-                "ALIYUN_ACCESS_KEY_ID=$OSS_KEY" \
-                "ALIYUN_ACCESS_KEY_SECRET=$OSS_SECRET" \
-                "ALIYUN_OSS_ENDPOINT=$OSS_ENDPOINT" \
-                "ALIYUN_OSS_BUCKET=$OSS_BUCKET" >> "$ENV_FILE"
-              echo "OSS 配置已更新"
+              # 写入 OSS 配置（逐行echo，兼容特殊字符）
+              {
+                echo ""
+                echo "# Aliyun OSS"
+                echo "ALIYUN_ACCESS_KEY_ID=$OSS_KEY"
+                echo "ALIYUN_ACCESS_KEY_SECRET=$OSS_SECRET"
+                echo "ALIYUN_OSS_ENDPOINT=$OSS_ENDPOINT"
+                echo "ALIYUN_OSS_BUCKET=$OSS_BUCKET"
+              } >> "$ENV_FILE"
+              echo "OSS 配置已写入"
             fi
-            grep -E "ALIYUN" "$ENV_FILE" || echo "警告: OSS配置未找到"
+            echo "=== env文件末尾5行 ==="
+            tail -5 "$ENV_FILE"
 
             # 安装依赖（跳过 build，dist 已预编译）
             cd "$APP_DIR/backend"

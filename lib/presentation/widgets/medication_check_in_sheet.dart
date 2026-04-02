@@ -259,22 +259,13 @@ class _MedicationCheckInSheetState extends ConsumerState<MedicationCheckInSheet>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            const Text(
-              '用药记录',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              '近7天',
-              style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
-            ),
-          ],
+        const Text(
+          '用药记录',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
         ),
         const SizedBox(height: 12),
         if (_loadingHistory)
@@ -305,7 +296,7 @@ class _MedicationCheckInSheetState extends ConsumerState<MedicationCheckInSheet>
           )
         else
           Column(
-            children: _history.take(7).map(_buildHistoryItem).toList(),
+            children: _history.take(5).map(_buildHistoryItem).toList(),
           ),
       ],
     );

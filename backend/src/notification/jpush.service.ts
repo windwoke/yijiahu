@@ -25,13 +25,13 @@ export class JPushService implements OnModuleInit {
     try {
       this.jpushLib = require('jpush-sdk');
       this.client = this.jpushLib.buildClient({
-        appkey: appKey,
-        secret: masterSecret,
+        appKey: appKey,
+        masterSecret: masterSecret,
       });
       this.enabled = true;
       this.logger.log('JPush 初始化成功');
-    } catch (e) {
-      this.logger.error('JPush 初始化失败', e);
+    } catch (e: any) {
+      this.logger.error(`JPush 初始化失败: ${e?.message || e?.toString() || String(e)}`);
     }
   }
 

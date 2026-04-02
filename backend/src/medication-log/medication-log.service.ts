@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between } from 'typeorm';
@@ -165,9 +166,13 @@ export class MedicationLogService {
       relations: ['medication'],
     });
     if (!log) throw new NotFoundException('用药记录不存在');
-    // 验证该药品属于请求者的家庭
     if (!log.medication || log.medication.familyId !== dto.familyId) {
       throw new ForbiddenException('该用药记录不属于您的家庭');
+    }
+
+    // 禁止重复打卡：已完成或已跳过的不允许再次打卡
+    if (log.status !== MedicationLogStatus.PENDING && log.status !== MedicationLogStatus.MISSED) {
+      throw new BadRequestException('该用药已完成打卡，无需重复操作');
     }
 
     log.status = dto.status;

@@ -307,10 +307,12 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   Future<void> _onRefresh(List<CareRecipient> recipients) async {
-    // 刷新照护对象列表；todayMedicationProvider 在各 card 中通过 watch()
-    // 监听 careRecipientsProvider 变化自动重新加载，无需手动 invalidate
     ref.invalidate(careRecipientsProvider);
     await ref.read(careRecipientsProvider.future);
+    // 同时刷新每个照护对象的今日用药数据
+    for (final r in recipients) {
+      ref.invalidate(todayMedicationProvider(r.id));
+    }
   }
 
   Widget _buildScrollableContent(
@@ -327,20 +329,21 @@ class _HomePageState extends ConsumerState<HomePage> {
     return RefreshIndicator(
       color: AppColors.primary,
       onRefresh: () => _onRefresh(recipients),
-      child: SingleChildScrollView(
-        physics: const ClampingScrollPhysics(),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 12),
-              ...recipients.map((r) => _buildRecipientSection(context, r, checkinsAsync)),
-              _buildCalendarSummarySection(context),
-              const SizedBox(height: 32),
-            ],
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                const SizedBox(height: 12),
+                ...recipients.map((r) => _buildRecipientSection(context, r, checkinsAsync)),
+                _buildCalendarSummarySection(context),
+                const SizedBox(height: 32),
+              ]),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -513,9 +516,18 @@ class _HomePageState extends ConsumerState<HomePage> {
                 if (item.id == null) return;
                 final dio = ref.read(dioProvider);
                 final familyId = ref.read(currentFamilyProvider)?.id;
-                await dio.post('/medication-logs/${item.id}/check-in',
-                    data: {'familyId': familyId, 'status': 'taken'});
-                ref.invalidate(todayMedicationProvider(recipient.id));
+                try {
+                  await dio.post('/medication-logs/${item.id}/check-in',
+                      data: {'familyId': familyId, 'status': 'taken'});
+                  ref.invalidate(todayMedicationProvider(recipient.id));
+                } on DioException catch (e) {
+                  final msg = e.response?.data?['message'];
+                  if (msg != null && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(msg)),
+                    );
+                  }
+                }
               },
             ),
             loading: () => Container(

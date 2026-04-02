@@ -44,4 +44,10 @@ export default () => ({
     signName: process.env.SMS_SIGN_NAME || '一家护',
     loginTemplateCode: process.env.SMS_LOGIN_TEMPLATE || 'SMS_xxx',
   },
+
+  // 极光推送配置
+  jpush: {
+    appKey: process.env.JPUSH_APP_KEY || '',
+    masterSecret: process.env.JPUSH_MASTER_SECRET || '',
+  },
 });

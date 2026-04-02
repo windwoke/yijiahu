@@ -123,10 +123,11 @@ class _MedicationCheckInSheetState extends ConsumerState<MedicationCheckInSheet>
 
               // 稍后提醒 + 跳过 按钮行
               Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Expanded(child: _buildDelayButton()),
-                  const SizedBox(width: 12),
-                  Expanded(child: _buildSkipButton()),
+                  _buildDelayButton(),
+                  const SizedBox(width: 16),
+                  _buildSkipButton(),
                 ],
               ),
               const SizedBox(height: 24),
@@ -148,8 +149,8 @@ class _MedicationCheckInSheetState extends ConsumerState<MedicationCheckInSheet>
     return GestureDetector(
       onTap: _isDone || _loading ? null : () => _handleCheckIn(),
       child: Container(
-        width: 88,
-        height: 88,
+        width: 100,
+        height: 100,
         decoration: BoxDecoration(
           color: _isDone ? AppColors.grey200 : AppColors.primary,
           shape: BoxShape.circle,
@@ -178,14 +179,14 @@ class _MedicationCheckInSheetState extends ConsumerState<MedicationCheckInSheet>
             else
               Icon(
                 _isDone ? Icons.check : Icons.check,
-                size: 36,
+                size: 40,
                 color: _isDone ? AppColors.textSecondary : Colors.white,
               ),
             const SizedBox(height: 2),
             Text(
               _isDone ? '已完成' : '已服用',
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 15,
                 fontWeight: FontWeight.w700,
                 color: _isDone ? AppColors.textSecondary : Colors.white,
               ),
@@ -197,29 +198,59 @@ class _MedicationCheckInSheetState extends ConsumerState<MedicationCheckInSheet>
   }
 
   Widget _buildDelayButton() {
-    return OutlinedButton.icon(
-      onPressed: _isDone ? null : () => _handleDelay(),
-      icon: const Icon(Icons.access_time, size: 18),
-      label: const Text('稍后 15 分钟'),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.primary,
-        side: const BorderSide(color: AppColors.primary),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        padding: const EdgeInsets.symmetric(vertical: 12),
+    final disabled = _isDone;
+    return GestureDetector(
+      onTap: disabled ? null : () => _handleDelay(),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        decoration: BoxDecoration(
+          border: Border.all(color: disabled ? AppColors.grey200 : AppColors.primary),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.access_time, size: 16, color: disabled ? AppColors.grey300 : AppColors.primary),
+            const SizedBox(width: 6),
+            Text(
+              '稍后 15 分钟',
+              style: TextStyle(
+                fontSize: 13,
+                color: disabled ? AppColors.grey300 : AppColors.primary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildSkipButton() {
-    return OutlinedButton.icon(
-      onPressed: _isDone ? null : () => _showSkipReasonSheet(context),
-      icon: const Icon(Icons.skip_next, size: 18),
-      label: const Text('跳过'),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.textSecondary,
-        side: const BorderSide(color: AppColors.grey300),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        padding: const EdgeInsets.symmetric(vertical: 12),
+    final disabled = _isDone;
+    return GestureDetector(
+      onTap: disabled ? null : () => _showSkipReasonSheet(context),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        decoration: BoxDecoration(
+          border: Border.all(color: disabled ? AppColors.grey200 : AppColors.grey300),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.close, size: 16, color: disabled ? AppColors.grey300 : AppColors.textSecondary),
+            const SizedBox(width: 6),
+            Text(
+              '跳过',
+              style: TextStyle(
+                fontSize: 13,
+                color: disabled ? AppColors.grey300 : AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

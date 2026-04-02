@@ -5,18 +5,21 @@ import 'package:flutter/material.dart';
 import '../../core/constants/constants.dart';
 import '../../data/models/models.dart';
 import 'empty_state.dart';
+import 'medication_check_in_sheet.dart';
 
 /// 截断超长名称
 String _truncate4(String s) => s.length > 4 ? '${s.substring(0, 4)}…' : s;
 
 class MedicationCheckInCard extends StatelessWidget {
   final TodayMedicationSummary today;
-  final void Function(MedicationLogItem item) onCheckIn;
+  final Future<void> Function(MedicationLogItem item) onCheckIn;
+  final Future<void> Function(MedicationLogItem item, String reason) onSkip;
 
   const MedicationCheckInCard({
     super.key,
     required this.today,
     required this.onCheckIn,
+    required this.onSkip,
   });
 
   /// 将药品列表拆成多行，每行2个（奇数末尾留空位）
@@ -106,7 +109,6 @@ class MedicationCheckInCard extends StatelessWidget {
     final isTaken = item.status == MedicationLogStatus.taken;
     final isSkipped = item.status == MedicationLogStatus.skipped;
     final isDone = isTaken || isSkipped;
-    final canCheckIn = item.canCheckIn;
 
     return Container(
       decoration: BoxDecoration(
@@ -132,7 +134,7 @@ class MedicationCheckInCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
-          onTap: canCheckIn ? () => _showCheckInSheet(context, item) : null,
+          onTap: () => _showCheckInSheet(context, item),
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
@@ -186,7 +188,7 @@ class MedicationCheckInCard extends StatelessWidget {
                   height: 32,
                   child: isDone && item.takenBy != null
                       ? Align(alignment: Alignment.centerLeft, child: _buildDoneInfo(item, statusColor, isTaken))
-                      : canCheckIn
+                      : item.canCheckIn
                           ? Align(
                               alignment: Alignment.centerLeft,
                               child: ElevatedButton(
@@ -289,68 +291,12 @@ class MedicationCheckInCard extends StatelessWidget {
   void _showCheckInSheet(BuildContext context, MedicationLogItem item) {
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.fromLTRB(
-          24,
-          24,
-          24,
-          MediaQuery.of(ctx).viewInsets.bottom + 24,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              item.medicationName,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(
-              '${item.dosage} · ${item.scheduledTime}',
-              style: Theme.of(ctx).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 32),
-            SizedBox(
-              width: 120,
-              height: 120,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  shape: const CircleBorder(),
-                  padding: EdgeInsets.zero,
-                ),
-                onPressed: () {
-                  onCheckIn(item);
-                  Navigator.pop(ctx);
-                },
-                child: const Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.check, size: 40, color: Colors.white),
-                    SizedBox(height: 4),
-                    Text(
-                      AppTexts.taken,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text(AppTexts.delayReminder),
-            ),
-          ],
-        ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => MedicationCheckInSheet(
+        item: item,
+        onCheckIn: () => onCheckIn(item),
+        onSkip: (reason) => onSkip(item, reason),
       ),
     );
   }

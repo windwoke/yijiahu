@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:jpush_flutter/jpush_flutter.dart';
+import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:jpush_flutter/jpush_interface.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -15,6 +17,7 @@ class JPushService {
   final FlutterLocalNotificationsPlugin _localNotif = FlutterLocalNotificationsPlugin();
   bool _initialized = false;
   bool _supported = false;
+  bool _tzInitialized = false;
 
   /// 通知点击回调（App运行时点击推送触发）
   void Function(Map<String, dynamic> extra)? onNotificationTap;
@@ -25,6 +28,16 @@ class JPushService {
   Future<void> initialize() async {
     if (_initialized) return;
     _initialized = true;
+
+    // 初始化时区（用于 zonedSchedule）
+    if (!_tzInitialized) {
+      try {
+        tz_data.initializeTimeZones();
+        _tzInitialized = true;
+      } catch (e) {
+        debugPrint('[JPush] 时区初始化失败: $e');
+      }
+    }
 
     // 未配置 AppKey 时跳过
     if (_jpushAppKey.isEmpty) {
@@ -199,6 +212,67 @@ class JPushService {
 
     try {
       await _jpush!.setBadge(0);
+    } catch (_) {}
+  }
+
+  /// 北京时间 TZDateTime
+  tz.TZDateTime get _local =>
+      tz.TZDateTime.now(tz.local);
+
+  /// 安排本地提醒通知（稍后X分钟提醒服药）
+  Future<void> scheduleReminder({
+    required int minutes,
+    required String medicationName,
+    required String dosage,
+  }) async {
+    try {
+      // 取消已有的该药品提醒（避免重复）
+      await cancelReminder(medicationName);
+
+      const androidDetails = AndroidNotificationDetails(
+        'yijiahu_medication_reminder',
+        '用药提醒',
+        channelDescription: '用药打卡本地提醒',
+        importance: Importance.high,
+        priority: Priority.high,
+        showWhen: true,
+      );
+      const iosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      );
+      const details = NotificationDetails(android: androidDetails, iOS: iosDetails);
+
+      // 用药品名做 notificationId，保证唯一性
+      final notificationId = medicationName.hashCode.abs() % 100000;
+      final delay = Duration(minutes: minutes);
+
+      // 使用 zonedSchedule 安排定时通知（支持后台）
+      await _localNotif.zonedSchedule(
+        notificationId,
+        '⏰ 该服药了',
+        '$medicationName${dosage.isNotEmpty ? ' · $dosage' : ''}',
+        // 目标时间 = 现在 + delay
+        _local.add(delay),
+        details,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        payload: 'medication_reminder:$notificationId',
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+      );
+
+      debugPrint('[JPush] 已安排 ${minutes}分钟后提醒: $medicationName');
+    } catch (e) {
+      debugPrint('[JPush] 安排提醒失败: $e');
+    }
+  }
+
+  /// 取消指定药品的提醒
+  Future<void> cancelReminder(String medicationName) async {
+    try {
+      final notificationId = medicationName.hashCode.abs() % 100000;
+      await _localNotif.cancel(notificationId);
     } catch (_) {}
   }
 }

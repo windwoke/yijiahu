@@ -15,6 +15,7 @@ import '../../widgets/medication_check_in_card.dart';
 import '../../widgets/appointment_task_detail_sheets.dart';
 import '../../widgets/sos_button.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:dio/dio.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -520,6 +521,28 @@ class _HomePageState extends ConsumerState<HomePage> {
                   await dio.post('/medication-logs/${item.id}/check-in',
                       data: {'familyId': familyId, 'status': 'taken'});
                   ref.invalidate(todayMedicationProvider(recipient.id));
+                } on DioException catch (e) {
+                  final msg = e.response?.data?['message'];
+                  if (msg != null && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(msg)),
+                    );
+                  }
+                }
+              },
+              onSkip: (item, reason) async {
+                if (item.id == null) return;
+                final dio = ref.read(dioProvider);
+                final familyId = ref.read(currentFamilyProvider)?.id;
+                try {
+                  await dio.post('/medication-logs/${item.id}/check-in',
+                      data: {'familyId': familyId, 'status': 'skipped', 'note': reason});
+                  ref.invalidate(todayMedicationProvider(recipient.id));
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('已跳过: $reason'), backgroundColor: AppColors.success),
+                    );
+                  }
                 } on DioException catch (e) {
                   final msg = e.response?.data?['message'];
                   if (msg != null && context.mounted) {

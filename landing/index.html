@@ -71,10 +71,20 @@
 
     /* ── Mobile nav hamburger ── */
     .hamburger {
-      background: none; border: none;
-      cursor: pointer; padding: 8px;
-      flex-direction: column; gap: 5px;
       display: none;
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      background: rgba(247,249,247,0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(123,158,135,0.2);
+      border-radius: 10px;
+      cursor: pointer;
+      padding: 10px 12px;
+      flex-direction: column;
+      gap: 5px;
+      z-index: 200;
     }
     .hamburger span {
       display: block; width: 22px; height: 2px;
@@ -462,7 +472,6 @@
       .nav-links { display: none !important; }
       .hamburger { display: flex !important; }
       .nav-inner .btn-primary { display: none !important; }
-      .nav-drawer { display: block !important; }
       /* 让文字优先，手机模拟图缩小放底部 */
       .hero-inner { grid-template-columns: 1fr; text-align: center; }
       .hero-badges, .hero-actions { justify-content: center; }
@@ -514,11 +523,13 @@
       <li><a href="#download">下载</a></li>
     </ul>
     <button class="btn-primary" onclick="document.getElementById('download').scrollIntoView({behavior:'smooth'})">立即使用</button>
-    <button class="hamburger" id="hamburger" onclick="toggleMobileNav()">
-      <span></span><span></span><span></span>
-    </button>
   </div>
 </nav>
+
+<!-- Mobile hamburger (outside nav, as fixed element) -->
+<button class="hamburger" id="hamburger" onclick="toggleMobileNav()">
+  <span></span><span></span><span></span>
+</button>
 
 <!-- Mobile overlay -->
 <div class="nav-overlay" id="navOverlay" onclick="toggleMobileNav()"></div>

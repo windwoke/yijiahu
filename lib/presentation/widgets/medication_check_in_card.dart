@@ -54,7 +54,7 @@ class MedicationCheckInCard extends StatelessWidget {
           crossAxisCount: 2,
           crossAxisSpacing: 10,
           mainAxisSpacing: 10,
-          mainAxisExtent: 125,
+          mainAxisExtent: 160,
         ),
         itemCount: today.items.length,
         itemBuilder: (context, index) {

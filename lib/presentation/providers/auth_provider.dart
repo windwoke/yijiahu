@@ -131,12 +131,20 @@ class AuthNotifier extends Notifier<AuthState> {
     await sendCode(phone);
   }
 
-  /// 发送验证码
+  /// 发送验证码，返回 mockCode（仅开发模式）
+  String? _lastMockCode;
+
   Future<void> sendCode(String phone) async {
     try {
-      await _dio!.post('/auth/send-code', data: {'phone': phone});
+      final response = await _dio!.post('/auth/send-code', data: {'phone': phone});
       state = state.copyWith(error: null);
       _startCountdown();
+
+      // 开发模式：提取 mockCode 供 UI 显示
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        _lastMockCode = data['mockCode'] as String?;
+      }
     } on DioException catch (e) {
       try {
         throw Exception(handleDioError(e).message);
@@ -299,7 +307,8 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
-  /// 修改密码
+  /// 获取上次 mock 验证码（仅开发模式使用）
+  String? get lastMockCode => _lastMockCode;
   Future<void> changePassword(String oldPassword, String newPassword) async {
     try {
       await _dio!.post('/auth/change-password', data: {

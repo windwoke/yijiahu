@@ -64,7 +64,11 @@ export class AuthService {
     const codeKey = CODE_KEY(dto.phone);
     await this.redis.set(codeKey, code, CODE_TTL);
 
-    return { message: '验证码已发送', expiresIn: CODE_TTL };
+    return {
+      message: '验证码已发送',
+      expiresIn: CODE_TTL,
+      ...(this.smsMode === 'mock' ? { mockCode: code } : {}),
+    };
   }
 
   private async sendAliSms(phone: string, code: string): Promise<void> {

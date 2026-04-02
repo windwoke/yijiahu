@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/constants.dart';
+import '../../../core/env/env_config.dart';
 import '../../../core/router/app_router.dart';
 import '../../providers/auth_provider.dart';
 
@@ -250,7 +251,24 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       _showError('请输入正确的手机号');
       return;
     }
-    ref.read(authStateProvider.notifier).sendCode(phone).catchError((e) {
+    ref.read(authStateProvider.notifier).sendCode(phone).then((_) {
+      if (!mounted) return;
+      // 开发模式：显示 mock 验证码
+      if (AppEnv.isDebug) {
+        final mockCode = ref.read(authStateProvider.notifier).lastMockCode;
+        if (mockCode != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('开发模式 · 验证码：$mockCode'),
+              backgroundColor: AppColors.primary,
+              duration: const Duration(seconds: 5),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          );
+        }
+      }
+    }).catchError((e) {
       if (mounted) {
         _showError(e.toString().replaceFirst('Exception: ', ''));
       }

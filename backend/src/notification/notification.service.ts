@@ -260,8 +260,8 @@ export class NotificationService {
       familyId,
       excludeUserId,
       type: NotificationType.SOS,
-      title: '紧急求助',
-      body: `${recipientName} 触发了紧急求助！位置：${address || '未知'}`,
+      title: '🔔 紧急求助',
+      body: `${recipientName} 触发了紧急求助，请立即响应！${address ? '位置：' + address : ''}`,
       level: NotificationLevel.URGENT,
       sourceType: 'sos',
       sourceId: sosId,
@@ -274,6 +274,7 @@ export class NotificationService {
     familyId: string,
     excludeUserId: string,
     recipientName: string,
+    caregiverName: string,
     checkinStatus: string,
     medicationCompleted: number,
     medicationTotal: number,
@@ -290,9 +291,9 @@ export class NotificationService {
     const label = statusLabel[checkinStatus] || checkinStatus;
     const medDesc =
       medicationTotal > 0
-        ? `用药 ${medicationCompleted}/${medicationTotal}`
+        ? `用药 ${medicationCompleted}/${medicationTotal} 已完成`
         : '今日无用药记录';
-    let body = `${recipientName} 护理打卡完成（${label}）${medDesc}`;
+    let body = `${caregiverName} 刚为 ${recipientName} 完成护理打卡（${label}）${medDesc}`;
     if (specialNote) {
       body += `。备注：${specialNote}`;
     }
@@ -317,16 +318,42 @@ export class NotificationService {
     assigneeId: string,
     taskId: string,
     taskTitle: string,
+    recipientName: string | null,
     dueTime: string | null,
     assignedByName: string,
     dataJson?: Record<string, any>,
   ) {
     const timeLabel = dueTime ? `，请在 ${dueTime} 前完成` : '';
+    const forWho = recipientName ? `为${recipientName}` : '';
     return this.create({
       userId: assigneeId,
       type: NotificationType.TASK_ASSIGNED,
-      title: '新任务已指派',
-      body: `${assignedByName} 给你指派了任务「${taskTitle}」${timeLabel}`,
+      title: '📋 新任务',
+      body: `${assignedByName} 给你指派了任务${forWho}「${taskTitle}」${timeLabel}`,
+      level: NotificationLevel.NORMAL,
+      sourceType: 'family_task',
+      sourceId: taskId,
+      channel: NotificationChannel.APP,
+      dataJson,
+    });
+  }
+
+  /** 任务完成：通知任务创建人 */
+  async notifyTaskCompleted(
+    creatorId: string,
+    taskId: string,
+    taskTitle: string,
+    recipientName: string | null,
+    completedByName: string,
+    dataJson?: Record<string, any>,
+  ) {
+    if (!creatorId) return null;
+    const forWho = recipientName ? `为${recipientName}` : '';
+    return this.create({
+      userId: creatorId,
+      type: NotificationType.TASK_COMPLETED,
+      title: '✅ 任务已完成',
+      body: `${completedByName} 已完成${forWho}「${taskTitle}」`,
       level: NotificationLevel.NORMAL,
       sourceType: 'family_task',
       sourceId: taskId,
@@ -353,8 +380,8 @@ export class NotificationService {
       familyId,
       excludeUserId,
       type: NotificationType.MEMBER_JOINED,
-      title: '新成员加入',
-      body: `${newMemberName} 加入了家庭（${roleLabel[role] || role}）`,
+      title: '👋 新成员加入',
+      body: `${newMemberName} 加入了您的照护团队（${roleLabel[role] || role}）`,
       level: NotificationLevel.NORMAL,
       sourceType: 'family',
       dataJson,
@@ -371,8 +398,8 @@ export class NotificationService {
     return this.create({
       userId: removedUserId,
       type: NotificationType.MEMBER_LEFT,
-      title: '已退出家庭',
-      body: `你已被 ${removedByName} 从「${familyName}」中移除`,
+      title: '👤 家庭变更',
+      body: `${removedByName} 已将你从「${familyName}」中移除，如有问题请联系管理员`,
       level: NotificationLevel.NORMAL,
       sourceType: 'family',
       channel: NotificationChannel.APP,
@@ -385,6 +412,7 @@ export class NotificationService {
     familyId: string,
     excludeUserId: string,
     sosId: string,
+    recipientName: string,
     acknowledgerName: string,
     dataJson?: Record<string, any>,
   ) {
@@ -392,12 +420,99 @@ export class NotificationService {
       familyId,
       excludeUserId,
       type: NotificationType.SOS_ACKNOWLEDGED,
-      title: '求助已确认',
-      body: `${acknowledgerName} 已响应紧急求助，请保持联系`,
+      title: '🔔 求助已确认',
+      body: `${acknowledgerName} 已响应紧急求助，${recipientName}的情况已确认，请保持关注`,
       level: NotificationLevel.URGENT,
       sourceType: 'sos',
       sourceId: sosId,
       dataJson,
     });
+  }
+
+  /** 健康预警：记录异常健康数据时通知照护人和家属 */
+  async notifyHealthAlert(
+    familyId: string,
+    recipientName: string,
+    recordType: string,
+    value: string,
+    alertLevel: 'warning' | 'danger',
+    recordedByName: string | null,
+    sourceId: string,
+    dataJson?: Record<string, any>,
+  ) {
+    const level = alertLevel === 'danger' ? NotificationLevel.HIGH : NotificationLevel.NORMAL;
+    const label = alertLevel === 'danger' ? '⚠️' : '⚡';
+    return this.broadcast({
+      familyId,
+      excludeUserId: undefined,
+      type: NotificationType.HEALTH_ALERT,
+      title: `${label} 健康预警`,
+      body: `${recipientName}的${recordType}记录为${value}${alertLevel === 'danger' ? '，已超出正常范围，请关注！' : '，建议留意观察'}${
+        recordedByName ? `（${recordedByName}记录）` : ''
+      }`,
+      level,
+      sourceType: 'health_record',
+      sourceId,
+      dataJson,
+    });
+  }
+
+  /** 照护人变更：通知旧照护人和新照护人 */
+  async notifyCaregiverChanged(
+    familyId: string,
+    recipientName: string,
+    oldCaregiverName: string,
+    newCaregiverName: string,
+    changedByName: string,
+    sourceId: string,
+    dataJson?: Record<string, any>,
+  ) {
+    const results: Promise<any>[] = [];
+
+    // 通知旧照护人
+    if (oldCaregiverName) {
+      const oldMember = await this.memberRepo.findOne({
+        where: { familyId, nickname: oldCaregiverName },
+      });
+      if (oldMember) {
+        results.push(
+          this.create({
+            userId: oldMember.userId,
+            familyId,
+            type: NotificationType.CAREGIVER_CHANGED,
+            title: '🔄 照护对象已变更',
+            body: `${changedByName}已将${recipientName}的照护任务转交给${newCaregiverName}，感谢您的付出`,
+            level: NotificationLevel.NORMAL,
+            sourceType: 'caregiver_record',
+            sourceId,
+            channel: NotificationChannel.APP,
+            dataJson,
+          }),
+        );
+      }
+    }
+
+    // 通知新照护人
+    const newMember = await this.memberRepo.findOne({
+      where: { familyId, nickname: newCaregiverName },
+    });
+    if (newMember) {
+      results.push(
+        this.create({
+          userId: newMember.userId,
+          familyId,
+          type: NotificationType.CAREGIVER_CHANGED,
+          title: '📋 新照护对象',
+          body: `${changedByName}已将${recipientName}的照护任务转交给您，请留意照护安排`,
+          level: NotificationLevel.NORMAL,
+          sourceType: 'caregiver_record',
+          sourceId,
+          channel: NotificationChannel.APP,
+          dataJson,
+        }),
+      );
+    }
+
+    await Promise.all(results);
   }
 }

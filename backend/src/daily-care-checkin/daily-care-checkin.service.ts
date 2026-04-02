@@ -137,11 +137,17 @@ export class DailyCareCheckinService {
     }
 
     // 通知所有家庭成员（异步，不阻塞响应）
+    const member = await this.memberRepo.findOne({
+      where: { userId, familyId: dto.familyId },
+      relations: ['user'],
+    });
+    const caregiverName = member?.nickname || member?.user?.name || '照护人';
     this.notifSvc
       .notifyDailyCheckinCompleted(
         dto.familyId,
         userId,
         recipientName,
+        caregiverName,
         dto.status,
         saved.medicationCompleted,
         saved.medicationTotal,

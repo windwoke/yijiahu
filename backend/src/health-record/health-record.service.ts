@@ -2,6 +2,8 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -9,7 +11,10 @@ import { HealthRecord } from './entities/health-record.entity';
 import { User } from '../user/entities/user.entity';
 import { CareRecipient } from '../care-recipient/entities/care-recipient.entity';
 import { FamilyMember } from '../family/entities/family-member.entity';
+import { CaregiverRecord } from '../caregiver-record/entities/caregiver-record.entity';
 import { CreateHealthRecordDto } from './dto/health-record.dto';
+import { NotificationService } from '../notification/notification.service';
+import { NotificationType, NotificationLevel } from '../notification/entities/notification.entity';
 
 @Injectable()
 export class HealthRecordService {
@@ -20,6 +25,10 @@ export class HealthRecordService {
     private recipientRepo: Repository<CareRecipient>,
     @InjectRepository(FamilyMember)
     private memberRepo: Repository<FamilyMember>,
+    @InjectRepository(CaregiverRecord)
+    private caregiverRepo: Repository<CaregiverRecord>,
+    @Inject(forwardRef(() => NotificationService))
+    private readonly notifSvc: NotificationService,
   ) {}
 
   /** 验证照护对象属于指定家庭 */
@@ -37,14 +46,70 @@ export class HealthRecordService {
     return recipient;
   }
 
+  /** 判断健康数据是否异常并返回预警信息 */
+  private checkHealthAlert(
+    recordType: string,
+    value: any,
+  ): { alert: 'none' | 'warning' | 'danger'; label: string; displayValue: string } {
+    if (recordType === 'blood_pressure') {
+      const sys = value.systolic ?? 0;
+      const dia = value.diastolic ?? 0;
+      const displayValue = `${sys}/${dia} mmHg`;
+      if (sys >= 180 || dia >= 110) return { alert: 'danger', label: '血压', displayValue };
+      if (sys >= 140 || dia >= 90) return { alert: 'warning', label: '血压', displayValue };
+    }
+    if (recordType === 'blood_glucose') {
+      const v = value.value ?? 0;
+      const displayValue = `${v} mg/dL`;
+      if (v > 250 || v < 54) return { alert: 'danger', label: '血糖', displayValue };
+      if (v > 180 || v < 70) return { alert: 'warning', label: '血糖', displayValue };
+    }
+    if (recordType === 'heart_rate') {
+      const v = value.value ?? 0;
+      const displayValue = `${v} bpm`;
+      if (v > 150 || v < 50) return { alert: 'danger', label: '心率', displayValue };
+      if (v > 120 || v < 60) return { alert: 'warning', label: '心率', displayValue };
+    }
+    if (recordType === 'temperature') {
+      const v = value.value ?? 0;
+      const displayValue = `${v}℃`;
+      if (v >= 39.5 || v <= 35.0) return { alert: 'danger', label: '体温', displayValue };
+      if (v >= 38.5 || v <= 35.5) return { alert: 'warning', label: '体温', displayValue };
+    }
+    return { alert: 'none', label: '', displayValue: '' };
+  }
+
   async create(dto: CreateHealthRecordDto, recordedById?: string) {
-    await this.validateRecipientInFamily(dto.recipientId, dto.familyId);
+    const recipient = await this.validateRecipientInFamily(dto.recipientId, dto.familyId);
     const record = this.repo.create({
       ...dto,
       recordedById,
       recordedAt: dto.recordedAt ? new Date(dto.recordedAt) : new Date(),
     });
-    return this.repo.save(record);
+    const saved = await this.repo.save(record);
+
+    // 检查是否需要发送健康预警
+    const alert = this.checkHealthAlert(dto.recordType, dto.value);
+    if (alert.alert !== 'none') {
+      const recorder = recordedById
+        ? await this.memberRepo.findOne({ where: { userId: recordedById, familyId: dto.familyId } })
+        : null;
+      const recorderName = recorder?.nickname || null;
+      this.notifSvc
+        .notifyHealthAlert(
+          dto.familyId,
+          recipient.name,
+          alert.label,
+          alert.displayValue,
+          alert.alert,
+          recorderName,
+          saved.id,
+          { recipientId: dto.recipientId, recordType: dto.recordType },
+        )
+        .catch(() => {});
+    }
+
+    return saved;
   }
 
   /** 获取最近健康记录用于时间线 */

@@ -400,11 +400,19 @@ export class FamilyTaskService {
 
     // 通知被分配人
     if (saved.assigneeId && saved.assigneeId !== userId) {
-      // 获取指派人昵称
-      const creator = await this.memberRepo.findOne({
-        where: { userId, familyId: saved.familyId },
-      });
+      const [creator, taskWithRecipient] = await Promise.all([
+        this.memberRepo.findOne({ where: { userId, familyId: saved.familyId } }),
+        saved.recipientId
+          ? this.taskRepo.findOne({
+              where: { id: saved.id },
+              relations: ['recipient'],
+            })
+          : Promise.resolve(null),
+      ]);
       const creatorName = creator?.nickname || '家庭成员';
+      const recipientName = taskWithRecipient
+        ? (taskWithRecipient as any).recipient?.name || null
+        : null;
       // 格式化到期时间
       const dueTime = dto.scheduledTime
         ? `${dto.scheduledDate || '今日'} ${dto.scheduledTime}`
@@ -414,6 +422,7 @@ export class FamilyTaskService {
           saved.assigneeId,
           saved.id,
           saved.title,
+          recipientName,
           dueTime,
           creatorName,
           { familyId: saved.familyId },
@@ -442,7 +451,7 @@ export class FamilyTaskService {
     dto: CompleteTaskDto,
     familyId: string,
   ) {
-    const task = await this.taskRepo.findOne({ where: { id } });
+    const task = await this.taskRepo.findOne({ where: { id }, relations: ['recipient'] });
     if (!task) throw new NotFoundException('任务不存在');
     if (task.familyId !== familyId)
       throw new ForbiddenException('无权操作此任务');
@@ -467,6 +476,26 @@ export class FamilyTaskService {
     } else {
       task.status = TaskStatus.COMPLETED;
       await this.taskRepo.save(task);
+    }
+
+    // 通知任务创建人（如果创建者≠完成者）
+    if (task.createdById && task.createdById !== userId) {
+      const [creator, completer] = await Promise.all([
+        this.memberRepo.findOne({ where: { userId: task.createdById, familyId } }),
+        this.memberRepo.findOne({ where: { userId, familyId } }),
+      ]);
+      const completerName = completer?.nickname || completer?.user?.name || '家庭成员';
+      const taskWithRecipient = await this.taskRepo.findOne({ where: { id }, relations: ['recipient'] });
+      this.notifSvc
+        .notifyTaskCompleted(
+          task.createdById,
+          id,
+          task.title,
+          (taskWithRecipient as any)?.recipient?.name || null,
+          completerName,
+          { familyId },
+        )
+        .catch(() => {});
     }
 
     return task;

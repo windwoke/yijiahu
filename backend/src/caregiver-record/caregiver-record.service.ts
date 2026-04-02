@@ -2,6 +2,8 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
@@ -9,6 +11,7 @@ import { CaregiverRecord } from './entities/caregiver-record.entity';
 import { CreateCaregiverRecordDto } from './dto/caregiver-record.dto';
 import { CareRecipient } from '../care-recipient/entities/care-recipient.entity';
 import { FamilyMember } from '../family/entities/family-member.entity';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class CaregiverRecordService {
@@ -19,6 +22,8 @@ export class CaregiverRecordService {
     private recipientRepo: Repository<CareRecipient>,
     @InjectRepository(FamilyMember)
     private memberRepo: Repository<FamilyMember>,
+    @Inject(forwardRef(() => NotificationService))
+    private readonly notifSvc: NotificationService,
   ) {}
 
   /** 验证照护对象属于指定家庭 */
@@ -92,7 +97,14 @@ export class CaregiverRecordService {
     const currentEntity = await this.repo.findOne({
       where: { careRecipientId: dto.careRecipientId, periodEnd: IsNull() },
     });
+
+    // 获取旧照护人名称（用于通知）
+    let oldCaregiverName: string | null = null;
     if (currentEntity) {
+      const oldMember = await this.memberRepo.findOne({
+        where: { userId: currentEntity.caregiverId, familyId: recipient.familyId },
+      });
+      oldCaregiverName = oldMember?.nickname || null;
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
       currentEntity.periodEnd = yesterday;
@@ -106,7 +118,32 @@ export class CaregiverRecordService {
       note: dto.note,
       createdById: userId,
     });
-    return this.repo.save(record);
+    const saved = await this.repo.save(record);
+
+    // 通知照护人变更
+    if (currentEntity && dto.caregiverId !== currentEntity.caregiverId) {
+      const newMember = await this.memberRepo.findOne({
+        where: { userId: dto.caregiverId, familyId: recipient.familyId },
+      });
+      const newCaregiverName = newMember?.nickname || null;
+      const changerMember = await this.memberRepo.findOne({
+        where: { userId, familyId: recipient.familyId },
+      });
+      const changedByName = changerMember?.nickname || '管理员';
+      this.notifSvc
+        .notifyCaregiverChanged(
+          recipient.familyId,
+          recipient.name,
+          oldCaregiverName || '',
+          newCaregiverName || '新照护人',
+          changedByName,
+          saved.id,
+          { recipientId: dto.careRecipientId },
+        )
+        .catch(() => {});
+    }
+
+    return saved;
   }
 
   /** 删除记录（软删除） */

@@ -82,10 +82,15 @@ export class SosService {
         where: { id: userId },
       });
       if (acknowledger && record.familyId) {
+        const sosRecord = await this.repo.findOne({
+          where: { id },
+          relations: ['recipient'],
+        });
         await this.notificationSvc.notifySOSAcknowledged(
           record.familyId,
           userId,
           id,
+          (sosRecord as any)?.recipient?.name || '照护对象',
           acknowledger.name || acknowledger.phone || '家庭成员',
         );
       }

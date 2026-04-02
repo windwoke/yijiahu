@@ -90,6 +90,16 @@ export class NotificationPreferenceService {
     return pref.medicationLeadMinutes ?? 5;
   }
 
+  /** 批量获取所有用户偏好（keyed by userId），用于定时任务优化 */
+  async getAllPreferencesMap(): Promise<Record<string, NotificationPreference>> {
+    const all = await this.repo.find();
+    const map: Record<string, NotificationPreference> = {};
+    for (const pref of all) {
+      map[pref.userId] = pref;
+    }
+    return map;
+  }
+
   async getAppointmentLeadHours(userId: string): Promise<number> {
     const pref = await this.getByUserId(userId);
     return pref.appointmentLeadHours ?? 24;

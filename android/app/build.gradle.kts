@@ -32,7 +32,7 @@ android {
         multiDexEnabled = true
         manifestPlaceholders += mapOf(
             "JPUSH_CHANNEL" to "default_channel",
-            "JPUSH_APPKEY" to ""
+            "JPUSH_APPKEY" to (project.findProperty("JPUSH_APP_KEY") as String? ?: "9f2ad74d2df32f2c47bcb17a")
         )
     }
 

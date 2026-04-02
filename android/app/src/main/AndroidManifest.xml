@@ -8,7 +8,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
     <application
-        android:label="yijiahu"
+        android:label="一家护"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
 
@@ -36,6 +36,22 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!-- 极光推送 AppKey（通过 manifestPlaceholders 注入） -->
+        <meta-data
+            android:name="JPUSH_APPKEY"
+            android:value="${JPUSH_APPKEY}" />
+
+        <!-- 极光推送 Receiver -->
+        <receiver
+            android:name="cn.jiguang.jpush.JPushMessageReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="cn.jiguang.jpush.RECEIVE_MESSAGE" />
+                <category android:name="${applicationId}" />
+            </intent-filter>
+        </receiver>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

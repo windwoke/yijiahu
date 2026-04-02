@@ -63,12 +63,22 @@ export class NotificationScheduler {
     try {
       const now = new Date();
       const nowStr = now.toTimeString().substring(0, 5); // "HH:mm"
+      const [nowHour, nowMin] = nowStr.split(':').map(Number);
+      const nowMinutes = nowHour * 60 + nowMin;
+
+      // 获取所有照护人偏好（keyed by userId），避免循环查
+      const allPrefs = await this.prefSvc.getAllPreferencesMap();
+      const leadMinutesMap = new Map<string, number>();
+      for (const [uid, pref] of Object.entries(allPrefs)) {
+        leadMinutesMap.set(uid, (pref as any)?.medicationLeadMinutes ?? 5);
+      }
 
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
       const todayEnd = new Date();
       todayEnd.setHours(23, 59, 59, 999);
 
+      // 只查今日 pending 记录
       const pendingLogs = await this.logRepo.find({
         where: {
           status: MedicationLogStatus.PENDING,
@@ -77,48 +87,48 @@ export class NotificationScheduler {
         relations: ['medication'],
       });
 
+      // 批量获取照护人和照护对象，减少 N+1 查询
+      const recipientIds = [...new Set(pendingLogs.map((l) => l.recipientId))];
+      const [caregivers, recipients] = await Promise.all([
+        this.caregiverRepo.find({
+          where: recipientIds.map((rid) => ({ careRecipientId: rid, periodEnd: IsNull() as any })),
+          relations: ['caregiver'],
+        }),
+        this.recipientRepo.findByIds(recipientIds),
+      ]);
+      const caregiverMap = new Map(caregivers.map((c) => [c.careRecipientId, c]));
+      const recipientMap = new Map(recipients.map((r) => [r.id, r]));
+
+      // 批量检查已发送的提醒（用 sourceId IN [...]）
+      const logIds = pendingLogs.map((l) => l.id);
+      const sentNotifications = await this.notificationRepo
+        .createQueryBuilder('n')
+        .where('n.sourceId IN (:...ids)', { ids: logIds })
+        .andWhere('n.type = :type', { type: NotificationType.MEDICATION_REMINDER })
+        .getMany();
+      const sentSet = new Set(sentNotifications.map((n) => n.sourceId));
+
       for (const log of pendingLogs) {
-        if (!log.medication) continue;
+        if (!log.medication || sentSet.has(log.id)) continue;
 
-        const scheduledTime = log.scheduledTime;
-        const [schedHour, schedMin] = scheduledTime.split(':').map(Number);
-        const [nowHour, nowMin] = nowStr.split(':').map(Number);
+        const [schedHour, schedMin] = log.scheduledTime.split(':').map(Number);
         const schedMinutes = schedHour * 60 + schedMin;
-        const nowMinutes = nowHour * 60 + nowMin;
 
-        // 照护人偏好提前时间（分钟）
-        const caregiver = await this.getCurrentCaregiver(log.recipientId);
+        const caregiver = caregiverMap.get(log.recipientId);
         if (!caregiver) continue;
-        const leadMinutes = await this.prefSvc.getMedicationLeadMinutes(
-          caregiver.caregiverId,
-        );
+        const leadMinutes = leadMinutesMap.get(caregiver.caregiverId) ?? 5;
 
         // 提醒窗口：服药时间前 leadMinutes 分钟内
-        if (
-          schedMinutes - nowMinutes > leadMinutes ||
-          schedMinutes < nowMinutes
-        )
-          continue;
+        if (schedMinutes - nowMinutes > leadMinutes || schedMinutes < nowMinutes) continue;
 
-        // 检查是否已发送过提醒
-        const alreadySent = await this.notificationRepo.findOne({
-          where: {
-            sourceId: log.id,
-            type: NotificationType.MEDICATION_REMINDER,
-          },
-        });
-        if (alreadySent) continue;
-
-        const recipient = await this.recipientRepo.findOne({
-          where: { id: log.recipientId },
-        });
+        const recipient = recipientMap.get(log.recipientId);
 
         await this.notificationSvc.create({
           userId: caregiver.caregiverId,
           familyId: log.medication?.familyId,
           type: NotificationType.MEDICATION_REMINDER,
           title: '用药提醒',
-          body: `${recipient?.name || '照护对象'}该服用${log.medication.name}了（${scheduledTime}）`,
+          body: `${caregiver.caregiver?.name || '您'}，${recipient?.name || '照护对象'}该服用${log.medication.name}了（${log.scheduledTime}）`,
           level: NotificationLevel.NORMAL,
           sourceType: 'medication_log',
           sourceId: log.id,
@@ -126,7 +136,7 @@ export class NotificationScheduler {
           dataJson: {
             recipientId: log.recipientId,
             medicationId: log.medicationId,
-            scheduledTime,
+            scheduledTime: log.scheduledTime,
           },
         });
 
@@ -195,7 +205,7 @@ export class NotificationScheduler {
           familyId: log.medication?.familyId,
           type: NotificationType.MISSED_DOSE,
           title: '漏服提醒',
-          body: `${recipient?.name || '照护对象'}的${log.medication.name}尚未服用（计划${scheduledTime}）`,
+          body: `${caregiver.caregiver?.name || '您'}，${recipient?.name || '照护对象'}的${log.medication.name}超过30分钟未服用，请尽快确认（计划${scheduledTime}）`,
           level: NotificationLevel.HIGH,
           sourceType: 'medication_log',
           sourceId: log.id,
@@ -251,12 +261,26 @@ export class NotificationScheduler {
           familyId: appt.recipient.familyId,
           excludeUserId: undefined,
           type: NotificationType.APPOINTMENT_REMINDER,
-          title: '复诊提醒',
-          body: `${appt.recipient.name}将于明天前往${appt.hospital}复诊${
-            appt.assignedDriver
-              ? `（接送人：${appt.assignedDriver.name || '已分配'}）`
-              : ''
-          }`,
+          title: '🏥 复诊提醒',
+          body: (() => {
+            const apptTime = appt.appointmentTime instanceof Date
+              ? appt.appointmentTime
+              : new Date(appt.appointmentTime as any);
+            const nowMs = Date.now();
+            const diffMs = apptTime.getTime() - nowMs;
+            const diffHours = Math.round(diffMs / 3600000);
+            let timeLabel = '';
+            if (diffHours < 1) timeLabel = '即将开始';
+            else if (diffHours < 24) timeLabel = `${diffHours}小时后`;
+            else {
+              const diffDays = Math.round(diffHours / 24);
+              timeLabel = `明天 ${apptTime.getHours().toString().padStart(2,'0')}:${apptTime.getMinutes().toString().padStart(2,'0')}`;
+            }
+            const deptDoctor = [appt.department, appt.doctorName].filter(Boolean).join(' ');
+            return `${appt.recipient.name}将于${timeLabel}前往${appt.hospital}${deptDoctor ? '（' + deptDoctor + '）' : ''}复诊${
+              appt.assignedDriver ? `，接送人：${(appt.assignedDriver as any).name || '已分配'}` : ''
+            }`;
+          })(),
           level: NotificationLevel.HIGH,
           sourceType: 'appointment',
           sourceId: appt.id,
@@ -289,28 +313,35 @@ export class NotificationScheduler {
       const tasks = await this.taskRepo
         .createQueryBuilder('t')
         .leftJoinAndSelect('t.recipient', 'recipient')
+        .leftJoinAndSelect('t.assignee', 'assignee')
         .where('t.status = :pending', { pending: TaskStatus.PENDING })
         .andWhere('t.nextDueAt BETWEEN :now AND :in15min', { now, in15min })
         .getMany();
 
       for (const task of tasks) {
-        // 检查是否已发送提醒
-        const alreadySent = await this.notificationRepo.findOne({
+        // 检查是否已发送提醒（15分钟内不重复）
+        const recentSent = await this.notificationRepo.findOne({
           where: {
             sourceId: task.id,
             type: NotificationType.TASK_REMINDER,
+            createdAt: Between(new Date(now.getTime() - 15 * 60 * 1000), new Date()),
           },
         });
-        if (alreadySent) continue;
+        if (recentSent) continue;
+
+        // 计算距离到期的分钟数
+        const dueAt = task.nextDueAt instanceof Date ? task.nextDueAt : new Date(task.nextDueAt as any);
+        const minutesLeft = Math.round((dueAt.getTime() - now.getTime()) / 60000);
+        const timeLabel = minutesLeft <= 1 ? '即将到期' : `还有${minutesLeft}分钟`;
+        const assigneeName = (task as any).assignee?.name || '你';
+        const forWho = task.recipient ? `为 ${task.recipient.name}` : '';
 
         await this.notificationSvc.create({
           userId: task.assigneeId,
           familyId: task.familyId,
           type: NotificationType.TASK_REMINDER,
-          title: '任务提醒',
-          body: task.recipient
-            ? `${task.recipient.name}的任务「${task.title}」即将到期`
-            : `任务「${task.title}」即将到期`,
+          title: '📋 任务到期提醒',
+          body: `${assigneeName}，${forWho}「${task.title}」${timeLabel}`,
           level: NotificationLevel.NORMAL,
           sourceType: 'family_task',
           sourceId: task.id,
@@ -374,7 +405,7 @@ export class NotificationScheduler {
           familyId: recipient.familyId,
           type: NotificationType.DAILY_CHECKIN,
           title: '每日打卡提醒',
-          body: `${recipient.name}昨日（${yesterday.getMonth() + 1}/${yesterday.getDate()}）尚未提交护理打卡，请及时补录`,
+          body: `${caregiver.caregiver?.name || '您'}，${recipient.name}昨日（${yesterday.getMonth() + 1}/${yesterday.getDate()}）尚未提交护理打卡，请及时补录`,
           level: NotificationLevel.NORMAL,
           sourceType: 'daily_care_checkin',
           sourceId: recipient.id,

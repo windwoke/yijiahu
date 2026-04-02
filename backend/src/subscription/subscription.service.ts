@@ -138,18 +138,22 @@ export class SubscriptionService {
     const status = this.getEffectiveStatus(family);
     if (status === 'free') {
       if (type === 'member') {
-        const memberCount = await this.countMembers(familyId);
-        if (memberCount >= family.maxMembers) {
-          throw new BadRequestException(
-            `基础版最多添加 ${family.maxMembers} 位成员，请升级会员`,
-          );
+        if (family.maxMembers !== -1) {
+          const memberCount = await this.countMembers(familyId);
+          if (memberCount >= family.maxMembers) {
+            throw new BadRequestException(
+              `基础版最多添加 ${family.maxMembers} 位成员，请升级会员`,
+            );
+          }
         }
       } else {
-        const recipientCount = await this.countRecipients(familyId);
-        if (recipientCount >= family.maxRecipients) {
-          throw new BadRequestException(
-            `基础版最多添加 ${family.maxRecipients} 位照护对象，请升级会员`,
-          );
+        if (family.maxRecipients !== -1) {
+          const recipientCount = await this.countRecipients(familyId);
+          if (recipientCount >= family.maxRecipients) {
+            throw new BadRequestException(
+              `基础版最多添加 ${family.maxRecipients} 位照护对象，请升级会员`,
+            );
+          }
         }
       }
     }

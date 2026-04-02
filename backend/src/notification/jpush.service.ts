@@ -24,10 +24,7 @@ export class JPushService implements OnModuleInit {
 
     try {
       this.jpushLib = require('jpush-sdk');
-      this.client = this.jpushLib.buildClient({
-        appKey: appKey,
-        masterSecret: masterSecret,
-      });
+      this.client = this.jpushLib.buildClient(appKey, masterSecret);
       this.enabled = true;
       this.logger.log('JPush 初始化成功');
     } catch (e: any) {
@@ -57,22 +54,14 @@ export class JPushService implements OnModuleInit {
       this.client
         .push()
         .setPlatform('ios', 'android')
-        .setAudience(this.jpushLib.Prepare.registrationId(registrationId))
-        .setNotification({
-          android: {
-            title,
-            alert: body,
-            extras,
-          },
-          ios: {
-            alert: { title, body },
-            extras,
-            sound: 'default',
-          },
-        })
-        .setMessage({ msg_content: body, title, extras })
+        .setAudience(this.jpushLib.registration_id(registrationId))
+        .setNotification(
+          this.jpushLib.android(body, title, null, extras),
+          this.jpushLib.ios({ title, body }, 'default', '+1', null, extras),
+        )
+        .setMessage(body)
         .setOptions(null, 86400, null, true) // time_to_live: 24h
-        .execute((err: any) => {
+        .send((err: any) => {
           if (err) {
             this.logger.error(`JPush 推送失败 → ${registrationId}:`, err);
             reject(err);

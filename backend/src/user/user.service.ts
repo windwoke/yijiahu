@@ -8,7 +8,18 @@ export class UserService {
   constructor(@InjectRepository(User) private repo: Repository<User>) {}
 
   findById(id: string) {
-    return this.repo.findOne({ where: { id } });
+    return this.repo.findOne({ where: { id } }).then((user) => {
+      if (!user) return null;
+      // 只暴露必要字段，不返回 hashedPassword
+      return {
+        id: user.id,
+        phone: user.phone,
+        name: user.name,
+        avatar: user.avatar,
+        createdAt: user.createdAt,
+        hasPassword: !!user.hashedPassword,
+      };
+    });
   }
 
   findByPhone(phone: string) {
@@ -16,9 +27,10 @@ export class UserService {
   }
 
   async update(id: string, data: Partial<User>) {
-    const user = await this.findById(id);
+    const user = await this.repo.findOne({ where: { id } });
     if (!user) throw new NotFoundException('用户不存在');
     Object.assign(user, data);
-    return this.repo.save(user);
+    await this.repo.save(user);
+    return this.findById(id);
   }
 }

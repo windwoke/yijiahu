@@ -309,6 +309,16 @@ class AuthNotifier extends Notifier<AuthState> {
 
   /// 获取上次 mock 验证码（仅开发模式使用）
   String? get lastMockCode => _lastMockCode;
+
+  /// 更新本地 hasPassword 状态（设置密码成功后调用）
+  void updateLocalHasPassword(bool value) {
+    final user = state.user;
+    if (user != null) {
+      state = state.copyWith(
+        user: user.copyWith(hasPassword: value),
+      );
+    }
+  }
   Future<void> changePassword(String oldPassword, String newPassword) async {
     try {
       await _dio!.post('/auth/change-password', data: {

@@ -1,4 +1,4 @@
-/// 修改密码页面
+/// 修改密码页面（同时支持设置密码）
 library;
 
 import 'package:flutter/material.dart';
@@ -73,15 +73,20 @@ class _PasswordChangePageState extends ConsumerState<PasswordChangePage> {
       return;
     }
 
+    final hasPassword = ref.read(authStateProvider).user?.hasPassword ?? false;
     setState(() => _isLoading = true);
     try {
       await ref.read(authStateProvider.notifier).changePassword(
-            _oldPwdController.text,
+            hasPassword ? _oldPwdController.text : '',
             _newPwdController.text,
           );
       if (mounted) {
+        // 设置密码成功后更新本地状态
+        if (!hasPassword) {
+          ref.read(authStateProvider.notifier).updateLocalHasPassword(true);
+        }
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('密码修改成功'), duration: Duration(seconds: 10)),
+          const SnackBar(content: Text('密码设置成功'), duration: Duration(seconds: 10)),
         );
         Navigator.pop(context);
       }
@@ -98,10 +103,15 @@ class _PasswordChangePageState extends ConsumerState<PasswordChangePage> {
 
   @override
   Widget build(BuildContext context) {
+    final hasPassword = ref.watch(authStateProvider).user?.hasPassword ?? false;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('修改密码', style: TextStyle(fontWeight: FontWeight.w600)),
+        title: Text(
+          hasPassword ? '修改密码' : '设置密码',
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
         centerTitle: true,
         elevation: 0,
         backgroundColor: AppColors.background,
@@ -124,12 +134,14 @@ class _PasswordChangePageState extends ConsumerState<PasswordChangePage> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.info_outline, color: AppColors.primary, size: 20),
+                      const Icon(Icons.info_outline, color: AppColors.primary, size: 20),
                       const SizedBox(width: 10),
-                      const Expanded(
+                      Expanded(
                         child: Text(
-                          '为保障账户安全，请定期更换密码',
-                          style: TextStyle(fontSize: 13, color: AppColors.primary),
+                          hasPassword
+                              ? '为保障账户安全，请定期更换密码'
+                              : '设置登录密码，方便换手机时使用',
+                          style: const TextStyle(fontSize: 13, color: AppColors.primary),
                         ),
                       ),
                     ],
@@ -138,35 +150,37 @@ class _PasswordChangePageState extends ConsumerState<PasswordChangePage> {
                 const SizedBox(height: 24),
                 _buildInputCard(
                   children: [
-                    _buildTextField(
-                      controller: _oldPwdController,
-                      label: '旧密码',
-                      hint: '请输入旧密码',
-                      obscure: _obscureOld,
-                      onToggleObscure: () => setState(() => _obscureOld = !_obscureOld),
-                      validator: (v) => v == null || v.isEmpty ? '请输入旧密码' : null,
-                    ),
-                    _buildDivider(),
+                    if (hasPassword) ...[
+                      _buildTextField(
+                        controller: _oldPwdController,
+                        label: '旧密码',
+                        hint: '请输入旧密码',
+                        obscure: _obscureOld,
+                        onToggleObscure: () => setState(() => _obscureOld = !_obscureOld),
+                        validator: (v) => v == null || v.isEmpty ? '请输入旧密码' : null,
+                      ),
+                      _buildDivider(),
+                    ],
                     _buildTextField(
                       controller: _newPwdController,
-                      label: '新密码',
+                      label: hasPassword ? '新密码' : '密码',
                       hint: '6位以上',
                       obscure: _obscureNew,
                       onToggleObscure: () => setState(() => _obscureNew = !_obscureNew),
                       validator: (v) {
-                        if (v == null || v.isEmpty) return '请输入新密码';
-                        if (v.length < 6) return '新密码至少6位';
+                        if (v == null || v.isEmpty) return '请输入密码';
+                        if (v.length < 6) return '密码至少6位';
                         return null;
                       },
                     ),
                     _buildDivider(),
                     _buildTextField(
                       controller: _confirmPwdController,
-                      label: '确认新密码',
-                      hint: '再次输入新密码',
+                      label: '确认密码',
+                      hint: '再次输入密码',
                       obscure: _obscureConfirm,
                       onToggleObscure: () => setState(() => _obscureConfirm = !_obscureConfirm),
-                      validator: (v) => v == null || v.isEmpty ? '请确认新密码' : null,
+                      validator: (v) => v == null || v.isEmpty ? '请确认密码' : null,
                     ),
                   ],
                 ),

@@ -114,6 +114,7 @@ export class AuthService {
         phone: user.phone,
         name: user.name,
         avatar: user.avatar,
+        hasPassword: !!user.hashedPassword,
       },
     };
   }
@@ -173,6 +174,7 @@ export class AuthService {
         phone: user.phone,
         name: user.name,
         avatar: user.avatar,
+        hasPassword: true,
       },
     };
   }

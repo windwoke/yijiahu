@@ -10,6 +10,7 @@ class User extends Equatable {
   final String? avatarUrl;
   final String region;
   final DateTime createdAt;
+  final bool hasPassword;
 
   const User({
     required this.id,
@@ -18,6 +19,7 @@ class User extends Equatable {
     this.avatarUrl,
     this.region = 'CN',
     required this.createdAt,
+    this.hasPassword = false,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -28,6 +30,7 @@ class User extends Equatable {
       avatarUrl: json['avatarUrl'] as String? ?? json['avatar'] as String? ?? json['avatar_url'] as String?,
       region: json['region'] as String? ?? 'CN',
       createdAt: DateTime.tryParse(json['createdAt'] as String? ?? json['created_at'] as String? ?? '') ?? DateTime.now(),
+      hasPassword: json['hasPassword'] as bool? ?? false,
     );
   }
 
@@ -49,6 +52,7 @@ class User extends Equatable {
     String? avatarUrl,
     String? region,
     DateTime? createdAt,
+    bool? hasPassword,
   }) {
     return User(
       id: id ?? this.id,
@@ -57,9 +61,10 @@ class User extends Equatable {
       avatarUrl: avatarUrl ?? this.avatarUrl,
       region: region ?? this.region,
       createdAt: createdAt ?? this.createdAt,
+      hasPassword: hasPassword ?? this.hasPassword,
     );
   }
 
   @override
-  List<Object?> get props => [id, phone, name, avatarUrl, region, createdAt];
+  List<Object?> get props => [id, phone, name, avatarUrl, region, createdAt, hasPassword];
 }

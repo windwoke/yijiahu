@@ -28,6 +28,8 @@ enum AppEnv {
   }
 
   bool get isDebug => this == AppEnv.dev;
+
+  static bool get isDebug => AppEnv.current == AppEnv.dev;
 }
 
 /// API 配置

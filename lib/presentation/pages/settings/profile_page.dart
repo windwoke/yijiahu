@@ -284,7 +284,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             _buildDivider(),
             _buildSettingItem(
               icon: Icons.lock_outline_rounded,
-              title: '修改密码',
+              title: user?.hasPassword == true ? '修改密码' : '设置密码',
+              titleColor: user?.hasPassword == true ? null : AppColors.primary,
+              subtitle: user?.hasPassword == true ? null : '方便换手机时登录',
               onTap: () => context.push(AppRoutes.passwordChange),
             ),
           ]),
@@ -560,6 +562,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     required IconData icon,
     required String title,
     String? subtitle,
+    Color? titleColor,
     Widget? trailing,
     VoidCallback? onTap,
   }) {
@@ -581,7 +584,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             ),
             const SizedBox(width: 14),
             Expanded(
-              child: Text(title, style: const TextStyle(fontSize: 15, color: AppColors.textPrimary)),
+              child: Text(title, style: TextStyle(fontSize: 15, color: titleColor ?? AppColors.textPrimary)),
             ),
             if (subtitle != null)
               Text(subtitle, style: const TextStyle(fontSize: 14, color: AppColors.textTertiary)),

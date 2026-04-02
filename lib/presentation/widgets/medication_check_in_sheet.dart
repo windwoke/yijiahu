@@ -184,7 +184,7 @@ class _MedicationCheckInSheetState extends ConsumerState<MedicationCheckInSheet>
               ),
             const SizedBox(height: 2),
             Text(
-              _isDone ? '已完成' : '已服用',
+              _isDone ? '已完成' : '打卡',
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
@@ -414,47 +414,49 @@ class _MedicationCheckInSheetState extends ConsumerState<MedicationCheckInSheet>
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (subCtx) => Padding(
-        padding: EdgeInsets.fromLTRB(
-          24,
-          24,
-          24,
-          MediaQuery.of(subCtx).viewInsets.bottom + 24,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              '选择跳过原因',
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+      builder: (subCtx) => SingleChildScrollView(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            24,
+            24,
+            24,
+            MediaQuery.of(subCtx).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '选择跳过原因',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            ..._skipReasons.map((reason) => ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(
-                    reason,
-                    style: const TextStyle(fontSize: 15, color: AppColors.textPrimary),
-                  ),
-                  onTap: () async {
-                    Navigator.pop(subCtx); // 关闭原因选择
-                    Navigator.pop(ctx); // 关闭打卡弹窗
-                    await widget.onSkip(reason);
-                  },
-                )),
-            const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              child: TextButton(
-                onPressed: () => Navigator.pop(subCtx),
-                child: const Text(AppTexts.cancel),
+              const SizedBox(height: 16),
+              ..._skipReasons.map((reason) => ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(
+                      reason,
+                      style: const TextStyle(fontSize: 15, color: AppColors.textPrimary),
+                    ),
+                    onTap: () async {
+                      Navigator.pop(subCtx); // 关闭原因选择
+                      Navigator.pop(ctx); // 关闭打卡弹窗
+                      await widget.onSkip(reason);
+                    },
+                  )),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton(
+                  onPressed: () => Navigator.pop(subCtx),
+                  child: const Text(AppTexts.cancel),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

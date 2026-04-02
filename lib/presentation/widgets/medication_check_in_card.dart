@@ -19,20 +19,20 @@ class MedicationCheckInCard extends StatelessWidget {
     required this.onCheckIn,
   });
 
-  /// 将药品列表拆成多行，每行2个
+  /// 将药品列表拆成多行，每行2个（奇数末尾留空位）
   List<Widget> _buildRows(BuildContext context, List<MedicationLogItem> items) {
     final rows = <Widget>[];
     for (var i = 0; i < items.length; i += 2) {
-      final rowItems = <Widget>[_buildMedicationItem(context, items[i])];
-      if (i + 1 < items.length) rowItems.add(_buildMedicationItem(context, items[i + 1]));
-
       rows.add(
         Padding(
-          padding: EdgeInsets.only(bottom: i + 2 < items.length ? 10.0 : 0),
+          padding: EdgeInsets.only(bottom: i + 2 < items.length ? 10.0 : 0.0),
           child: Row(
-            children: rowItems.map((w) {
-              return Expanded(child: w);
-            }).toList(),
+            children: [
+              Expanded(child: _buildMedicationItem(context, items[i])),
+              if (i + 1 < items.length)
+                Expanded(child: _buildMedicationItem(context, items[i + 1])),
+              if (i + 1 >= items.length) const Expanded(child: SizedBox()),
+            ],
           ),
         ),
       );

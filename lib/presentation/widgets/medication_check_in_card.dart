@@ -181,31 +181,36 @@ class MedicationCheckInCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                // 底部：已打卡显示单行文字，未打卡显示按钮
-                if (isDone && item.takenBy != null)
-                  _buildDoneInfo(item, statusColor, isTaken)
-                else if (canCheckIn)
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () => _showCheckInSheet(context, item),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        padding: EdgeInsets.zero,
-                      ),
-                      child: const Text(
-                        AppTexts.checkIn,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                  ),
+                // 底部：统一最小高度，打卡/已打卡高度一致
+                SizedBox(
+                  height: 32,
+                  child: isDone && item.takenBy != null
+                      ? Align(alignment: Alignment.centerLeft, child: _buildDoneInfo(item, statusColor, isTaken))
+                      : canCheckIn
+                          ? Align(
+                              alignment: Alignment.centerLeft,
+                              child: ElevatedButton(
+                                onPressed: () => _showCheckInSheet(context, item),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  minimumSize: const Size(0, 32),
+                                ),
+                                child: const Text(
+                                  AppTexts.checkIn,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : const SizedBox(),
+                ),
               ],
             ),
           ),

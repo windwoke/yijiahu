@@ -318,18 +318,18 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
           const SizedBox(height: 16),
 
-          // 订阅
-          _buildSectionHeader('订阅'),
-          _buildSubscriptionCard(family?.id),
-          _buildCard([
-            _buildSettingItem(
-              icon: Icons.card_membership_outlined,
-              title: '订阅管理',
-              subtitle: '查看订阅详情',
-              trailing: const Icon(Icons.chevron_right, color: AppColors.textTertiary, size: 20),
-              onTap: () => _showSubscriptionSheet(),
-            ),
-          ]),
+          // 订阅（暂时隐藏，等接入支付后再开放）
+          // _buildSectionHeader('订阅'),
+          // _buildSubscriptionCard(family?.id),
+          // _buildCard([
+          //   _buildSettingItem(
+          //     icon: Icons.card_membership_outlined,
+          //     title: '订阅管理',
+          //     subtitle: '查看订阅详情',
+          //     trailing: const Icon(Icons.chevron_right, color: AppColors.textTertiary, size: 20),
+          //     onTap: () => _showSubscriptionSheet(),
+          //   ),
+          // ]),
 
           const SizedBox(height: 16),
 

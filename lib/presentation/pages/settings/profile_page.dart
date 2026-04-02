@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:dio/dio.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/env/env_config.dart';
 import '../../../core/constants/constants.dart';
@@ -271,12 +272,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           _buildSectionHeader('账号'),
           _buildCard([
             _buildSettingItem(
-              icon: Icons.phone_iphone_rounded,
-              title: '更换手机号',
-              onTap: () => _showToast('更换手机号'),
-            ),
-            _buildDivider(),
-            _buildSettingItem(
               icon: Icons.notifications_rounded,
               title: '通知设置',
               onTap: () => context.push(AppRoutes.notificationSettings),
@@ -339,19 +334,19 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             _buildSettingItem(
               icon: Icons.info_outline_rounded,
               title: '关于我们',
-              onTap: () => _showToast('关于我们'),
+              onTap: () => _launchUrl('http://8.163.69.199/'),
             ),
             _buildDivider(),
             _buildSettingItem(
               icon: Icons.description_outlined,
               title: '隐私政策',
-              onTap: () => _showToast('隐私政策'),
+              onTap: () => _launchUrl('http://8.163.69.199/privacy.html'),
             ),
             _buildDivider(),
             _buildSettingItem(
               icon: Icons.article_outlined,
               title: '用户协议',
-              onTap: () => _showToast('用户协议'),
+              onTap: () => _launchUrl('http://8.163.69.199/agreement.html'),
             ),
             _buildDivider(),
             _buildSettingItem(
@@ -653,6 +648,15 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
+  }
+
+  Future<void> _launchUrl(String url) async {
+    final uri = Uri.parse(url);
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    } catch (_) {}
   }
 
   void _showSnackBar(String message) {

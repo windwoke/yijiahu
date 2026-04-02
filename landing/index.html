@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>一家护 - 以家庭为单位的照护协调平台</title>
+  <meta name="description" content="一家护是一款以家庭为单位的照护协调平台，帮助家庭成员协作管理老人健康、用药、复诊等照护事务，让爱与关怀触手可及。" />
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --green: #7B9E87;
+      --green-dark: #5C7A65;
+      --green-light: #A8C5B0;
+      --bg: #F7F9F7;
+      --white: #FFFFFF;
+      --text: #2D3436;
+      --text-light: #636E72;
+      --radius: 16px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+    a { text-decoration: none; color: inherit; }
+
+    /* ── Nav ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      background: rgba(247,249,247,0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(123,158,135,0.12);
+      z-index: 100;
+      padding: 0 24px;
+    }
+    .nav-inner {
+      max-width: 1100px; margin: 0 auto;
+      height: 64px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 700; font-size: 20px; color: var(--green-dark);
+    }
+    .logo-icon {
+      width: 34px; height: 34px;
+      background: linear-gradient(135deg, var(--green) 0%, var(--green-dark) 100%);
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 14px; font-weight: 700;
+      box-shadow: 0 2px 8px rgba(123,158,135,0.3);
+    }
+    .nav-links { display: flex; gap: 28px; list-style: none; }
+    .nav-links a { font-size: 14px; color: var(--text-light); transition: color 0.2s; }
+    .nav-links a:hover { color: var(--green); }
+    .btn-primary {
+      background: var(--green); color: white;
+      border: none; border-radius: 24px;
+      padding: 10px 24px; font-size: 14px; font-weight: 500;
+      cursor: pointer; transition: background 0.2s, transform 0.15s;
+      font-family: inherit;
+    }
+    .btn-primary:hover { background: var(--green-dark); transform: translateY(-1px); }
+
+    /* ── Hero ── */
+    .hero {
+      min-height: 100vh;
+      display: flex; align-items: center;
+      background: linear-gradient(160deg, #EDF5F0 0%, #F7F9F7 60%, #F0F5F0 100%);
+      position: relative; overflow: hidden;
+      padding: 80px 24px 60px;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(123,158,135,0.15) 0%, transparent 70%);
+      top: -100px; right: -100px;
+      pointer-events: none;
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(168,197,176,0.12) 0%, transparent 70%);
+      bottom: -50px; left: -80px;
+      pointer-events: none;
+    }
+    .hero-inner {
+      max-width: 1100px; margin: 0 auto; width: 100%;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center;
+    }
+    .hero-text h1 {
+      font-size: clamp(32px, 5vw, 52px);
+      font-weight: 700; line-height: 1.2;
+      color: var(--text); margin-bottom: 20px;
+    }
+    .hero-text h1 span { color: var(--green); }
+    .hero-text p {
+      font-size: 18px; color: var(--text-light);
+      margin-bottom: 36px; line-height: 1.8;
+    }
+    .hero-badges { display: flex; gap: 12px; margin-bottom: 36px; flex-wrap: wrap; }
+    .badge {
+      background: white; border: 1px solid rgba(123,158,135,0.25);
+      border-radius: 20px; padding: 6px 14px;
+      font-size: 13px; color: var(--green-dark); font-weight: 500;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .badge::before { content: '✓'; color: var(--green); font-weight: 700; }
+    .hero-actions { display: flex; gap: 14px; flex-wrap: wrap; }
+    .btn-download {
+      background: var(--green); color: white;
+      border: none; border-radius: 14px;
+      padding: 14px 28px; font-size: 16px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s;
+      font-family: inherit;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .btn-download:hover { background: var(--green-dark); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(123,158,135,0.35); }
+    .btn-ghost {
+      background: transparent; color: var(--green-dark);
+      border: 2px solid rgba(123,158,135,0.35);
+      border-radius: 14px;
+      padding: 14px 28px; font-size: 16px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s;
+      font-family: inherit;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .btn-ghost:hover { background: white; border-color: var(--green); transform: translateY(-2px); }
+
+    /* ── Phone mockup ── */
+    .hero-visual {
+      display: flex; justify-content: center; align-items: center;
+      perspective: 1000px; position: relative;
+    }
+    .phone-wrapper {
+      position: relative;
+      transform: rotateY(-8deg) rotateX(3deg);
+      transition: transform 0.6s ease;
+    }
+    .phone-wrapper:hover { transform: rotateY(-2deg) rotateX(1deg); }
+    .phone-glow {
+      position: absolute; width: 320px; height: 540px;
+      background: radial-gradient(ellipse at center, rgba(123,158,135,0.2) 0%, transparent 70%);
+      top: -10px; left: 50%;
+      transform: translateX(-50%) translateZ(-20px);
+      pointer-events: none;
+    }
+    .phone-shadow {
+      position: absolute; width: 280px; height: 40px;
+      background: radial-gradient(ellipse, rgba(0,0,0,0.2) 0%, transparent 70%);
+      bottom: -30px; left: 50%;
+      transform: translateX(-50%); filter: blur(12px);
+    }
+    .phone-mockup {
+      width: 260px; height: 520px;
+      background: white; border-radius: 38px;
+      border: 2px solid rgba(0,0,0,0.06);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.04), 0 20px 40px rgba(0,0,0,0.1),
+        0 0 0 1px rgba(255,255,255,0.5) inset, -8px 8px 0 0 rgba(123,158,135,0.08);
+      overflow: hidden; position: relative;
+      display: flex; flex-direction: column;
+    }
+    .phone-notch {
+      width: 80px; height: 26px; background: #1a1a1a;
+      border-radius: 0 0 20px 20px;
+      margin: 0 auto; position: relative; z-index: 2; flex-shrink: 0;
+    }
+    .phone-notch::after {
+      content: ''; position: absolute;
+      width: 10px; height: 10px; background: #1a1a1a;
+      border-radius: 50%; top: 8px; left: 50%; transform: translateX(-50%);
+    }
+    .phone-screen {
+      flex: 1;
+      background: linear-gradient(165deg, #EDF5F0 0%, #E4EDE7 100%);
+      padding: 16px 14px; overflow: hidden;
+    }
+    .phone-topbar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .phone-avatar {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--green), var(--green-dark));
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 12px; font-weight: 700; flex-shrink: 0;
+    }
+    .phone-username { font-size: 13px; font-weight: 600; color: var(--text); }
+    .phone-date { font-size: 10px; color: var(--text-light); }
+    .phone-card {
+      background: white; border-radius: 12px;
+      padding: 10px 12px; margin-bottom: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+      border: 1px solid rgba(0,0,0,0.04);
+    }
+    .phone-card-label { font-size: 10px; color: var(--text-light); margin-bottom: 2px; display: flex; align-items: center; gap: 4px; }
+    .phone-card-value { font-size: 13px; font-weight: 600; color: var(--text); }
+    .phone-card.green { border-left: 3px solid var(--green); }
+    .phone-card.orange { border-left: 3px solid #F39C12; }
+    .phone-card.blue { border-left: 3px solid #3498DB; }
+    .phone-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); display: inline-block; }
+    .phone-dot.orange { background: #F39C12; }
+
+    /* ── Trust bar ── */
+    .trust-bar {
+      background: white;
+      border-top: 1px solid rgba(123,158,135,0.1);
+      border-bottom: 1px solid rgba(123,158,135,0.1);
+      padding: 28px 24px;
+    }
+    .trust-inner {
+      max-width: 900px; margin: 0 auto;
+      display: flex; justify-content: center; gap: 48px; flex-wrap: wrap;
+    }
+    .trust-item {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 14px; color: var(--text-light); font-weight: 500;
+    }
+    .trust-icon {
+      width: 36px; height: 36px;
+      background: rgba(123,158,135,0.1);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* ── Features ── */
+    .features { padding: 100px 24px; max-width: 1100px; margin: 0 auto; }
+    .section-label {
+      text-align: center; font-size: 13px; font-weight: 600;
+      color: var(--green); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px;
+    }
+    .section-title {
+      text-align: center;
+      font-size: clamp(26px, 4vw, 36px); font-weight: 700;
+      color: var(--text); margin-bottom: 16px;
+    }
+    .section-desc {
+      text-align: center; font-size: 16px; color: var(--text-light);
+      max-width: 560px; margin: 0 auto 60px;
+    }
+    .features-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 8px;
+    }
+    .feature-card { scroll-snap-align: start; }
+    .features-grid::-webkit-scrollbar { height: 4px; }
+    .features-grid::-webkit-scrollbar-track { background: transparent; }
+    .features-grid::-webkit-scrollbar-thumb { background: var(--green-light); border-radius: 2px; }
+    .feature-card {
+      background: white; border-radius: var(--radius);
+      padding: 32px 28px;
+      border: 1px solid rgba(123,158,135,0.1);
+      transition: transform 0.25s, box-shadow 0.25s;
+    }
+    .feature-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(123,158,135,0.12); }
+    .feature-icon {
+      width: 52px; height: 52px;
+      background: rgba(123,158,135,0.1);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 20px;
+    }
+    .feature-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 10px; color: var(--text); }
+    .feature-card p { font-size: 14px; color: var(--text-light); line-height: 1.7; }
+
+    /* ── Comparison ── */
+    .comparison {
+      background: white; padding: 100px 24px;
+    }
+    .comparison-inner { max-width: 900px; margin: 0 auto; }
+    .comparison-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 32px;
+      margin-top: 60px;
+    }
+    .compare-card {
+      border-radius: 20px; padding: 40px 36px;
+      border: 2px solid;
+    }
+    .compare-card.before {
+      background: #FDF2F2; border-color: rgba(231,76,60,0.15);
+    }
+    .compare-card.after {
+      background: #F0F7F2; border-color: rgba(123,158,135,0.2);
+    }
+    .compare-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .compare-card.before h3 { color: #C0392B; }
+    .compare-card.after h3 { color: var(--green-dark); }
+    .compare-card > p { font-size: 14px; color: var(--text-light); margin-bottom: 28px; }
+    .compare-item {
+      display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px;
+    }
+    .compare-icon { flex-shrink: 0; margin-top: 2px; }
+    .compare-icon.x { color: #E74C3C; }
+    .compare-icon.check { color: var(--green); }
+    .compare-item p { font-size: 14px; color: var(--text); line-height: 1.5; }
+
+    /* ── FAQ ── */
+    .faq { padding: 100px 24px; max-width: 760px; margin: 0 auto; }
+    .faq-list { margin-top: 48px; }
+    .faq-item { border-bottom: 1px solid rgba(123,158,135,0.12); }
+    .faq-q {
+      width: 100%; background: none; border: none;
+      padding: 20px 0; font-size: 16px; font-weight: 600;
+      color: var(--text); text-align: left;
+      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+      font-family: inherit;
+    }
+    .faq-q:hover { color: var(--green-dark); }
+    .faq-arrow { transition: transform 0.3s; flex-shrink: 0; }
+    .faq-item.open .faq-arrow { transform: rotate(180deg); }
+    .faq-a {
+      max-height: 0; overflow: hidden;
+      transition: max-height 0.3s ease, padding 0.3s ease;
+    }
+    .faq-item.open .faq-a { max-height: 200px; padding-bottom: 20px; }
+    .faq-a p { font-size: 15px; color: var(--text-light); line-height: 1.8; }
+
+    /* ── How it works ── */
+    .how { background: white; padding: 100px 24px; }
+    .how-inner { max-width: 900px; margin: 0 auto; text-align: center; }
+    .steps { display: flex; justify-content: center; gap: 40px; margin-top: 60px; flex-wrap: wrap; }
+    .step { flex: 1; min-width: 200px; max-width: 240px; }
+    .step-num {
+      width: 56px; height: 56px; background: var(--green); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 22px; font-weight: 700;
+      margin: 0 auto 16px;
+    }
+    .step h4 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    .step p { font-size: 14px; color: var(--text-light); }
+    .step-arrow { display: flex; align-items: center; font-size: 24px; color: var(--green-light); align-self: center; margin-bottom: 40px; }
+
+    /* ── CTA ── */
+    .cta {
+      padding: 100px 24px;
+      background: linear-gradient(135deg, #5C7A65 0%, #7B9E87 50%, #A8C5B0 100%);
+      text-align: center; position: relative; overflow: hidden;
+    }
+    .cta::before {
+      content: ''; position: absolute; inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='20'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .cta h2 { font-size: clamp(26px, 4vw, 40px); font-weight: 700; color: white; margin-bottom: 16px; position: relative; }
+    .cta > p { font-size: 18px; color: rgba(255,255,255,0.85); margin-bottom: 40px; position: relative; }
+    .cta-buttons { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; position: relative; margin-bottom: 40px; }
+    .btn-white {
+      background: white; color: var(--green-dark);
+      border: none; border-radius: 14px;
+      padding: 14px 32px; font-size: 16px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s;
+      font-family: inherit;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .btn-white:hover { background: rgba(255,255,255,0.88); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+    .btn-white.outline { background: rgba(255,255,255,0.15); color: white; border: 2px solid rgba(255,255,255,0.4); }
+    .btn-white.gray { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.65); border: 2px solid rgba(255,255,255,0.2); }
+    .cta-qr { display: flex; justify-content: center; position: relative; margin-bottom: 32px; }
+    .cta-qr.hidden { display: none; }
+    .qr-box {
+      background: white; border-radius: 16px; padding: 20px;
+      display: flex; align-items: center; gap: 20px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    }
+    .qr-placeholder {
+      width: 100px; height: 100px;
+      background: #F7F9F7; border: 2px dashed rgba(123,158,135,0.3);
+      border-radius: 12px; display: flex; align-items: center; justify-content: center; padding: 6px;
+    }
+    .qr-info p { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+    .qr-info p+p { font-size: 13px; color: var(--text-light); font-weight: 400; margin-bottom: 8px; }
+    .qr-tag { font-size: 12px; background: rgba(123,158,135,0.1); color: var(--green-dark); border-radius: 6px; padding: 4px 10px; display: inline-block; }
+    .cta-footer { font-size: 13px; color: rgba(255,255,255,0.65); position: relative; }
+
+    /* ── Contact ── */
+    .contact { padding: 80px 24px; background: var(--bg); }
+    .contact-inner { max-width: 600px; margin: 0 auto; text-align: center; }
+    .contact-inner h2 { font-size: clamp(22px, 3vw, 28px); font-weight: 700; margin-bottom: 12px; }
+    .contact-inner > p { font-size: 15px; color: var(--text-light); margin-bottom: 40px; }
+    .contact-list { display: flex; justify-content: center; gap: 32px; flex-wrap: wrap; }
+    .contact-item { display: flex; align-items: center; gap: 10px; font-size: 15px; color: var(--text); }
+    .contact-icon {
+      width: 40px; height: 40px;
+      background: white; border: 1px solid rgba(123,158,135,0.2);
+      border-radius: 12px; display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ── Footer ── */
+    footer { background: #2D3436; color: rgba(255,255,255,0.55); padding: 40px 24px; text-align: center; }
+    footer p { font-size: 14px; margin-bottom: 8px; }
+    footer p:first-child { font-size: 16px; color: rgba(255,255,255,0.75); margin-bottom: 8px; }
+    footer a { color: rgba(255,255,255,0.75); }
+    footer a:hover { color: var(--green-light); }
+
+    /* ── Mobile ── */
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      /* 让文字优先，手机模拟图缩小放底部 */
+      .hero-inner { grid-template-columns: 1fr; text-align: center; }
+      .hero-badges, .hero-actions { justify-content: center; }
+      .hero-visual { order: 1; margin-top: 40px; }
+      .phone-mockup { width: 160px; height: 320px; border-radius: 22px; }
+      .phone-wrapper { transform: none; }
+      .phone-glow, .phone-shadow, .phone-notch { display: none; }
+      .phone-screen { padding: 12px 10px; }
+      .phone-topbar { gap: 6px; margin-bottom: 8px; }
+      .phone-avatar { width: 24px; height: 24px; font-size: 10px; }
+      .phone-username { font-size: 11px; }
+      .phone-date { font-size: 9px; }
+      .phone-card { padding: 7px 9px; margin-bottom: 6px; }
+      .phone-card-label { font-size: 9px; }
+      .phone-card-value { font-size: 11px; }
+      .hero-text h1 { font-size: clamp(26px, 7vw, 36px); }
+      .hero-text p { font-size: 15px; }
+      .trust-inner { gap: 24px; }
+      .features-grid {
+        display: flex; gap: 16px;
+        overflow-x: auto; scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch; padding-bottom: 8px;
+      }
+      .feature-card { flex-shrink: 0; width: 72vw; max-width: 280px; }
+      .comparison-grid { grid-template-columns: 1fr; }
+      .step-arrow { display: none; }
+      .steps { gap: 32px; }
+      .cta-buttons { gap: 10px; }
+      .cta-buttons .btn-white { padding: 12px 20px; font-size: 14px; }
+      .qr-box { flex-direction: column; text-align: center; }
+      .contact-list { flex-direction: column; align-items: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <div class="nav-inner">
+    <div class="logo">
+      <div class="logo-icon">护</div>
+      <span>一家护</span>
+    </div>
+    <ul class="nav-links">
+      <li><a href="#features">功能介绍</a></li>
+      <li><a href="#comparison">效果对比</a></li>
+      <li><a href="#faq">常见问题</a></li>
+      <li><a href="#download">下载</a></li>
+    </ul>
+    <button class="btn-primary" onclick="document.getElementById('download').scrollIntoView({behavior:'smooth'})">立即使用</button>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-text">
+      <h1>让<span>照护</span>更有序<br/>让<span>家人</span>更安心</h1>
+      <p>一家护是以家庭为单位的照护协调平台，帮助家庭成员协作管理老人健康、用药提醒、复诊安排，让爱与关怀触手可及。</p>
+      <div class="hero-badges">
+        <span class="badge">用药提醒</span>
+        <span class="badge">健康记录</span>
+        <span class="badge">复诊管理</span>
+        <span class="badge">SOS 紧急呼叫</span>
+      </div>
+      <div class="hero-actions">
+        <button class="btn-download" onclick="document.getElementById('download').scrollIntoView({behavior:'smooth'})">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 4v12m0 0l-4-4m4 4l4-4M4 18v2a1 1 0 001 1h14a1 1 0 001-1v-2"/></svg>
+          免费下载 Android 版
+        </button>
+        <button class="btn-ghost" onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})">了解更多</button>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="phone-wrapper">
+        <div class="phone-glow"></div>
+        <div class="phone-shadow"></div>
+        <div class="phone-mockup">
+          <div class="phone-notch"></div>
+          <div class="phone-screen">
+            <div class="phone-topbar">
+              <div class="phone-avatar">张</div>
+              <div>
+                <div class="phone-username">张阿姨的照护</div>
+                <div class="phone-date">今天 09:32</div>
+              </div>
+            </div>
+            <div class="phone-card green">
+              <div class="phone-card-label"><span class="phone-dot"></span> 今日用药</div>
+              <div class="phone-card-value">3/4 已完成 ✓</div>
+            </div>
+            <div class="phone-card orange">
+              <div class="phone-card-label"><span class="phone-dot orange"></span> 血压记录</div>
+              <div class="phone-card-value">128/82 mmHg</div>
+            </div>
+            <div class="phone-card green">
+              <div class="phone-card-label"><span class="phone-dot"></span> 护理打卡</div>
+              <div class="phone-card-value">已完成 ✓</div>
+            </div>
+            <div class="phone-card blue">
+              <div class="phone-card-label">复诊提醒</div>
+              <div class="phone-card-value">本周六 10:00</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Trust bar -->
+<section class="trust-bar">
+  <div class="trust-inner">
+    <div class="trust-item">
+      <div class="trust-icon">
+        <svg width="18" height="18" fill="none" stroke="#7B9E87" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      家庭内部数据隔离，信息不外泄
+    </div>
+    <div class="trust-item">
+      <div class="trust-icon">
+        <svg width="18" height="18" fill="none" stroke="#7B9E87" stroke-width="2" viewBox="0 0 24 24"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      手机号独立注册，无需第三方账号
+    </div>
+    <div class="trust-item">
+      <div class="trust-icon">
+        <svg width="18" height="18" fill="none" stroke="#7B9E87" stroke-width="2" viewBox="0 0 24 24"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      推广期全功能免费，无限制
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section class="features" id="features">
+  <div class="section-label">核心功能</div>
+  <h2 class="section-title">一个平台，搞定照护大小事</h2>
+  <p class="section-desc">专为家庭照护场景设计，每一个功能都解决真实的照护痛点。</p>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg width="22" height="22" fill="none" stroke="#7B9E87" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h3>用药提醒与打卡</h3>
+      <p>自动提醒服药时间，记录用药情况，漏服一目了然，全家共享用药进度。</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg width="22" height="22" fill="none" stroke="#7B9E87" stroke-width="2" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h3>健康数据记录</h3>
+      <p>血压、血糖、心率、体温随时记录，趋势图表清晰展示，异常及时预警。</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg width="22" height="22" fill="none" stroke="#7B9E87" stroke-width="2" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h3>复诊管理</h3>
+      <p>提前安排复诊日程，设置提醒，支持接送人分工协作，不遗漏任何重要日期。</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg width="22" height="22" fill="none" stroke="#7B9E87" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h3>护理日志</h3>
+      <p>记录每日照护情况，拍照上传附件，形成完整的照护档案，随时回顾。</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg width="22" height="22" fill="none" stroke="#7B9E87" stroke-width="2" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h3>SOS 紧急呼叫</h3>
+      <p>长按 3 秒触发 SOS，家庭成员同时收到通知，第一时间响应紧急情况。</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg width="22" height="22" fill="none" stroke="#7B9E87" stroke-width="2" viewBox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h3>家庭协作</h3>
+      <p>邀请家人加入，统一管理照护任务，分工明确，全家参与，让爱不孤单。</p>
+    </div>
+  </div>
+</section>
+
+<!-- Comparison -->
+<section class="comparison" id="comparison">
+  <div class="comparison-inner">
+    <div class="section-label">效果对比</div>
+    <h2 class="section-title">有了一家护，照护从此不同</h2>
+    <div class="comparison-grid">
+      <div class="compare-card before">
+        <h3>没有一家护</h3>
+        <p>照护压力大，全靠一个人扛</p>
+        <div class="compare-item">
+          <div class="compare-icon x">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round"/></svg>
+          </div>
+          <p>记不住什么时候该吃什么药，容易漏服或重复服用</p>
+        </div>
+        <div class="compare-item">
+          <div class="compare-icon x">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round"/></svg>
+          </div>
+          <p>家人不知道彼此照顾情况，各干各的，信息不互通</p>
+        </div>
+        <div class="compare-item">
+          <div class="compare-icon x">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round"/></svg>
+          </div>
+          <p>复诊日期靠脑子记，容易忘，错过重要检查</p>
+        </div>
+        <div class="compare-item">
+          <div class="compare-icon x">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round"/></svg>
+          </div>
+          <p>紧急情况发生，家人不在身边时无法第一时间知道</p>
+        </div>
+      </div>
+      <div class="compare-card after">
+        <h3>使用一家护</h3>
+        <p>全家协作，轻松有序</p>
+        <div class="compare-item">
+          <div class="compare-icon check">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <p>按时推送用药提醒，全家共享打卡情况，再也不怕漏服</p>
+        </div>
+        <div class="compare-item">
+          <div class="compare-icon check">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <p>护理日志实时同步，家人互相了解情况，配合更默契</p>
+        </div>
+        <div class="compare-item">
+          <div class="compare-icon check">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <p>复诊提前提醒，接送人分工协作，重要日期一个不落</p>
+        </div>
+        <div class="compare-item">
+          <div class="compare-icon check">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <p>SOS 一键触发，全家同时收到通知，紧急响应快人一步</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq" id="faq">
+  <div class="section-label">常见问题</div>
+  <h2 class="section-title">还有疑问？</h2>
+  <div class="faq-list">
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <button class="faq-q">
+        老人不会用智能手机怎么办？
+        <svg class="faq-arrow" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="faq-a">
+        <p>老人不需要操作 App。子女在 App 内完成所有管理操作，老人只需配合用药即可。SOS 功能安装在子女手机上，老人遇到紧急情况时由子女触发通知家人。</p>
+      </div>
+    </div>
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <button class="faq-q">
+        家人不在同一个城市，能用吗？
+        <svg class="faq-arrow" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="faq-a">
+        <p>完全可以，这正是一家护的核心价值。通过邀请码加入同一个家庭后，无论身处何地都能实时了解照护情况、收到提醒通知、查看健康记录。</p>
+      </div>
+    </div>
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <button class="faq-q">
+        真的是免费的吗？会不会有隐藏收费？
+        <svg class="faq-arrow" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="faq-a">
+        <p>推广期全功能免费使用，无任何限制。后续如有付费计划，会提前通知。</p>
+      </div>
+    </div>
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <button class="faq-q">
+        数据安全吗？会不会泄露隐私？
+        <svg class="faq-arrow" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="faq-a">
+        <p>数据仅在家庭内部可见，不对外部展示。每个家庭独立存储，家人之间完全隔离。没有第三方账号登录，不存在关联数据泄露风险。</p>
+      </div>
+    </div>
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <button class="faq-q">
+        最多支持几个家庭成员？
+        <svg class="faq-arrow" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="faq-a">
+        <p>每个家庭支持添加多名成员，无人数限制。推广期不设任何上限。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- How it works -->
+<section class="how" id="how">
+  <div class="how-inner">
+    <div class="section-label">如何使用</div>
+    <h2 class="section-title">三步开启照护新体验</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h4>下载注册</h4>
+        <p>下载一家护 App，使用手机号快速注册</p>
+      </div>
+      <div class="step-arrow">→</div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h4>创建/加入家庭</h4>
+        <p>创建家庭或通过邀请码加入已有家庭</p>
+      </div>
+      <div class="step-arrow">→</div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h4>添加照护对象</h4>
+        <p>添加被照护人信息，开始享受智能照护</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta" id="download">
+  <h2>让爱常在，护佑一家</h2>
+  <p>推广期全功能免费，无任何限制</p>
+  <div class="cta-buttons">
+    <a href="http://8.163.69.199/download/yijiahu.apk" style="text-decoration:none;">
+      <button class="btn-white">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
+        Android 下载
+      </button>
+    </a>
+    <button class="btn-white outline" onclick="document.getElementById('ctaQr').style.display=document.getElementById('ctaQr').style.display?'':'none'">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8.69 6.95L6.04 8.79c-.47.33-.29 1 .27 1.01l5.79.18c.33 0 .64-.22.76-.56l1.24-4.14c.27-.91-.56-1.38-1.08-1.01l-3.88 1.8c-.4.19-.45.52-.45.67z"/><path d="M9.47 9.5c-.17.5-.67.78-1.16.6L5.1 9.2c-.67-.24-.69-.85-.04-1.09L7.8 6.95c.65-.25 1.35.18 1.28.89L8.7 9.26c-.06.55-.47.95-.98.9z"/><path d="M15.31 6.95l2.65 1.84c.47.33 .29 1-.27 1.01l-5.79.18c-.33 0-.64-.22-.76-.56l-1.24-4.14c-.27-.91.56-1.38 1.08-1.01l3.88 1.8c.4.19.45.52.45.67z"/><path d="M14.53 9.5c.17.5.67.78 1.16.6l3.21-.9c.67-.24.69-.85.04-1.09L16.2 6.95c-.65-.25-1.35.18-1.28.89l.38 1.42c.06.55.47.95.98.9z"/></svg>
+      微信小程序
+    </button>
+    <button class="btn-white gray">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+      iOS 即将上线
+    </button>
+  </div>
+  <div class="cta-qr" id="ctaQr" style="display:none;">
+    <div class="qr-box">
+      <div class="qr-placeholder">
+        <img src="/logo.png" width="88" height="88" style="border-radius:8px;" alt="小程序码" />
+      </div>
+      <div class="qr-info">
+        <p>微信扫码使用一家护</p>
+        <p>搜索：一家护 · 即将上线</p>
+        <span class="qr-tag">微信内直接使用，无需下载</span>
+      </div>
+    </div>
+  </div>
+  <p class="cta-footer">Android 版已开放下载 · iOS 即将上线 · 微信小程序即将上线</p>
+</section>
+
+<!-- Contact -->
+<section class="contact">
+  <div class="contact-inner">
+    <div class="section-label">联系我们</div>
+    <h2>有问题或建议？</h2>
+    <p>我们随时愿意倾听您的反馈</p>
+    <div class="contact-list">
+      <div class="contact-item">
+        <div class="contact-icon">
+          <svg width="18" height="18" fill="none" stroke="#7B9E87" stroke-width="2" viewBox="0 0 24 24"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        dev@yijiahu.cn
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <p>一家护 · 一家守护</p>
+  <p>让每个家庭都能安心</p>
+  <p style="margin-top: 16px;">© 2026 一家护 YiJiaHu. 保留所有权利.</p>
+</footer>
+
+<script>
+  function toggleFaq(el) {
+    el.classList.toggle('open');
+  }
+</script>
+
+</body>
+</html>

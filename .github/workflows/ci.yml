@@ -7,6 +7,25 @@ on:
     branches: [main]
 
 jobs:
+  # 检测 Flutter 代码是否变化
+  flutter-changes:
+    name: Detect Flutter Changes
+    runs-on: ubuntu-latest
+    outputs:
+      flutter: ${{ steps.filter.outputs.flutter }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3.0.2
+        id: filter
+        with:
+          filters: |
+            flutter:
+              - 'lib/**'
+              - 'android/**'
+              - 'ios/**'
+              - 'pubspec.yaml'
+              - 'pubspec.lock'
+
   # PR 和 push 到 main 都运行：代码分析 + 测试
   analyze:
     name: Analyze & Test
@@ -33,8 +52,8 @@ jobs:
   build-ios:
     name: Build iOS
     runs-on: macos-14
-    needs: analyze
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [analyze, flutter-changes]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.flutter-changes.outputs.flutter == 'true'
 
     steps:
       - uses: actions/checkout@v4
@@ -63,8 +82,8 @@ jobs:
   build-android:
     name: Build Android
     runs-on: ubuntu-latest
-    needs: analyze
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [analyze, flutter-changes]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.flutter-changes.outputs.flutter == 'true'
 
     steps:
       - uses: actions/checkout@v4

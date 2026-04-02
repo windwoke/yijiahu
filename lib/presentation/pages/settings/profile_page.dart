@@ -286,7 +286,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               icon: Icons.lock_outline_rounded,
               title: user?.hasPassword == true ? '修改密码' : '设置密码',
               titleColor: user?.hasPassword == true ? null : AppColors.primary,
-              subtitle: user?.hasPassword == true ? null : '方便换手机时登录',
+              subtitle: user?.hasPassword == true ? null : '保护账号安全',
               onTap: () => context.push(AppRoutes.passwordChange),
             ),
           ]),

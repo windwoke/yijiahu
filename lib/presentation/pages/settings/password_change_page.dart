@@ -140,7 +140,7 @@ class _PasswordChangePageState extends ConsumerState<PasswordChangePage> {
                         child: Text(
                           hasPassword
                               ? '为保障账户安全，请定期更换密码'
-                              : '设置登录密码，方便换手机时使用',
+                              : '设置登录密码，保护账号安全',
                           style: const TextStyle(fontSize: 13, color: AppColors.primary),
                         ),
                       ),

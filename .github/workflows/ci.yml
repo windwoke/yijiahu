@@ -29,18 +29,12 @@ jobs:
       - name: Test
         run: if [ -d "test" ]; then flutter test; fi
 
-  # push 到 main 且 Flutter 代码变化时构建 iOS（仅 macOS runner 可构建 iOS）
+  # push 到 main 时构建 iOS（仅 macOS runner 可构建 iOS）
   build-ios:
     name: Build iOS
     runs-on: macos-14
     needs: analyze
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    paths:
-      - 'lib/**'
-      - 'android/**'
-      - 'ios/**'
-      - 'pubspec.yaml'
-      - 'pubspec.lock'
 
     steps:
       - uses: actions/checkout@v4
@@ -65,18 +59,12 @@ jobs:
           path: build/ios/iphonesimulator/Runner.app
           retention-days: 7
 
-  # push 到 main 且 Flutter 代码变化时构建 Android
+  # push 到 main 时构建 Android
   build-android:
     name: Build Android
     runs-on: ubuntu-latest
     needs: analyze
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    paths:
-      - 'lib/**'
-      - 'android/**'
-      - 'ios/**'
-      - 'pubspec.yaml'
-      - 'pubspec.lock'
 
     steps:
       - uses: actions/checkout@v4

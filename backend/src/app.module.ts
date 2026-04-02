@@ -3,6 +3,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import configuration from './config/configuration';
+import { RedisModule } from './common/redis/redis.module';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { FamilyModule } from './family/family.module';
@@ -29,6 +30,7 @@ import { NotificationModule } from './notification/notification.module';
     }),
 
     // 数据库
+    RedisModule,
     ScheduleModule.forRoot(),
 
     TypeOrmModule.forRootAsync({

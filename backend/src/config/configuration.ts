@@ -37,6 +37,8 @@ export default () => ({
 
   // 短信配置（阿里云）
   sms: {
+    mode: process.env.SMS_MODE || 'mock', // mock | aliyun
+    codeOverride: process.env.SMS_CODE_OVERRIDE || '', // 开发固定验证码
     accessKeyId: process.env.ALIYUN_ACCESS_KEY_ID || '',
     accessKeySecret: process.env.ALIYUN_ACCESS_KEY_SECRET || '',
     signName: process.env.SMS_SIGN_NAME || '一家护',

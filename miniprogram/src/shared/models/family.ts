@@ -47,7 +47,8 @@ export interface Family {
   avatarUrl: string | null;
   description: string | null;
   inviteCode: string;
-  role: FamilyMemberRole;
+  /** 当前用户在家庭中的角色（后端返回 myRole） */
+  myRole: FamilyMemberRole;
   subscriptionPlan: string;
   subscriptionExpiresAt: string | null;
   memberCount: number;

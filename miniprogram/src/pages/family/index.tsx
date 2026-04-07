@@ -390,7 +390,7 @@ export default function FamilyPage() {
     ...recipients.map((r) => ({ kind: 'recipient' as const, data: r })),
   ];
 
-  const myRole: FamilyMemberRole = (family?.role ?? 'guest') as FamilyMemberRole;
+  const myRole: FamilyMemberRole = (family?.myRole ?? 'guest') as FamilyMemberRole;
   const showManageButtons = canManageMembers(myRole);
   const showEditFamily = canManageFamily(myRole);
   const currentMonth = new Date().getMonth() + 1;

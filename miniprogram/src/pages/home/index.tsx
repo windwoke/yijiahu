@@ -3,7 +3,7 @@
  * 玻璃态顶栏 + 照护对象用药打卡网格 + 每日护理打卡 + 复诊提醒 + 今日任务 + SOS
  */
 import { View, Text, ScrollView, Image } from '@tarojs/components';
-import Taro, { useDidShow } from '@tarojs/taro';
+import Taro from '@tarojs/taro';
 import { useState, useCallback, useEffect } from 'react';
 import { get, post } from '../../services/api';
 import { Storage } from '../../services/storage';
@@ -171,8 +171,10 @@ export default function HomePage() {
       // 1. 先获取家庭信息（从 /users/me/families 的第一条）
       const familyRes = await get<{ families: Array<{ family: Family }> }>('/users/me/families');
       const familyList = familyRes?.families ?? [];
-      const currentFamily = familyList[0]?.family;
-      const familyIdFromRes = familyList[0]?.family?.id || familyId;
+      // 用 Storage 中当前 familyId 精确查找，不用 [0]（后端排序不稳定）
+      const currentFamily = familyList.find((item) => item.family?.id === familyId)?.family
+        || familyList[0]?.family;
+      const familyIdFromRes = currentFamily?.id || familyId;
       const familyName = currentFamily?.name || '我的家庭';
       const familyAvatarUrl = currentFamily?.avatarUrl || null;
 
@@ -288,22 +290,17 @@ export default function HomePage() {
 
   // 订阅 Redux currentFamilyId 变化（切换家庭时触发）
   useEffect(() => {
-    let prevFamilyId = selectCurrentFamilyId(store.getState());
+    const currentFamilyIdRef = { current: selectCurrentFamilyId(store.getState()) };
     const unsubscribe = store.subscribe(() => {
-      const currentFamilyId = selectCurrentFamilyId(store.getState());
-      if (currentFamilyId !== prevFamilyId) {
-        prevFamilyId = currentFamilyId;
+      const newId = selectCurrentFamilyId(store.getState());
+      if (newId !== currentFamilyIdRef.current) {
+        currentFamilyIdRef.current = newId;
         loadDataInner();
       }
     });
     return unsubscribe;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // 每次页面显示时刷新（非 tab 页返回时触发）
-  useDidShow(() => {
-    loadDataInner();
-  });
 
   const onRefresh = useCallback(async () => {
     setIsRefreshing(true);

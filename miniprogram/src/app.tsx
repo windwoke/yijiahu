@@ -17,33 +17,38 @@ type Props = {
  */
 class App extends Component<Props> {
   async componentDidMount(): Promise<void> {
-    // 1. 从 Storage 恢复状态到 Redux
-    // 重置 401 跳转标志，防止上次异常退出后标志卡死
+    // 1. 重置 401 跳转标志，防止上次异常退出后标志卡死
     resetRedirectFlag();
+    // 2. 从 Storage 恢复状态到 Redux
     hydrateStore();
 
-    // 2. 检查是否有 token，有则验证是否有效
+    // 3. 检查是否有 token
     const token = Storage.getToken();
     if (token) {
       try {
-        // 验证 token：调用 /users/me
         const user = await get<any>('/users/me', undefined, { noToast: true });
         store.dispatch({ type: 'auth/setUser', payload: user });
-        console.log('[App] token 有效，用户:', user?.name);
-      } catch (err: any) {
-        // token 无效或过期，清除并跳转登录
-        console.warn('[App] token 无效，清除并跳转登录:', err.message);
+
+        // 检查是否有家庭，无则跳引导页
+        const res = await get<{ families: any[] }>('/users/me/families', undefined, { noToast: true });
+        const families = res?.families ?? [];
+        if (!families || families.length === 0) {
+          Taro.redirectTo({ url: '/pages/auth/onboarding/index' });
+        } else {
+          // 有家庭，切换到首页 tab
+          const familyId = families[0].family?.id;
+          if (familyId) Storage.setCurrentFamilyId(familyId);
+          Taro.switchTab({ url: '/pages/home/index' });
+        }
+      } catch {
         Storage.clearToken();
         Storage.remove('user_id');
         store.dispatch({ type: 'auth/clear' });
-        // 等 tabBar 页面渲染完再跳转，避免白屏
         setTimeout(() => {
           Taro.redirectTo({ url: '/pages/auth/login/index' });
         }, 100);
       }
     } else {
-      // 无 token，跳转登录页
-      console.log('[App] 无 token，跳转登录页');
       setTimeout(() => {
         Taro.redirectTo({ url: '/pages/auth/login/index' });
       }, 100);

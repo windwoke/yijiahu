@@ -17,18 +17,26 @@ import './index.scss';
    常量
    ============================ */
 
-const ROLE_LABELS: Record<FamilyMemberRole, string> = {
+const ROLE_LABELS: Record<string, string> = {
   owner: '管理员',
   coordinator: '协调管理员',
   caregiver: '照护人',
   guest: '访客',
 };
 
-const ROLE_COLORS: Record<FamilyMemberRole, string> = {
+const ROLE_COLORS: Record<string, string> = {
   owner: '#7B9E87',
   coordinator: '#4A90D9',
   caregiver: '#6B6B6B',
   guest: '#B0ADAD',
+};
+
+/** 角色功能描述 */
+const ROLE_DESCRIPTIONS: Record<string, string> = {
+  owner: '创建者，拥有最高权限',
+  coordinator: '协调管理员：可添加任务/复诊、管理成员和照护对象',
+  caregiver: '照护人：记录日志、完成分配的任务，不能新建任务',
+  guest: '访客：仅查看和记录日志',
 };
 
 const SELECTABLE_ROLES: Array<{ value: string; label: string }> = [
@@ -69,12 +77,21 @@ function formatDate(isoStr: string): string {
   return `${d.getMonth() + 1}月${d.getDate()}日`;
 }
 
+function maskPhone(phone: string): string {
+  if (!phone || phone.length <= 7) return phone;
+  return `${phone.substring(0, 3)}****${phone.substring(phone.length - 4)}`;
+}
+
 function canManageMembers(role: FamilyMemberRole): boolean {
   return role === 'owner' || role === 'coordinator';
 }
 
-function canEditFamily(role: FamilyMemberRole): boolean {
+function canManageFamily(role: FamilyMemberRole): boolean {
   return role === 'owner';
+}
+
+function isElevatedRole(role: FamilyMemberRole): boolean {
+  return role === 'owner' || role === 'coordinator';
 }
 
 /* ============================
@@ -107,6 +124,10 @@ export default function FamilyPage() {
 
   // 编辑家庭
   const [editFamilyName, setEditFamilyName] = useState('');
+
+  // 编辑成员表单
+  const [editMemberNickname, setEditMemberNickname] = useState('');
+  const [editMemberRole, setEditMemberRole] = useState<string>('caregiver');
 
   const familyId = Storage.getCurrentFamilyId();
   const currentUserId = Storage.getUserId();
@@ -259,19 +280,32 @@ export default function FamilyPage() {
     }
   };
 
-  /* ─── 修改成员角色 ─── */
-  const handleUpdateMemberRole = async (memberId: string, role: FamilyMemberRole) => {
-    if (!familyId) return;
+  /* ─── 保存成员编辑 ─── */
+  const handleSaveMember = async () => {
+    if (!familyId || !selectedMember) return;
     setSubmitting(true);
     try {
-      await put(`/families/${familyId}/members/${memberId}`, { role });
-      Taro.showToast({ title: '角色已更新', icon: 'success', duration: 1500 });
+      const data: Record<string, string> = {};
+      const trimmedNick = editMemberNickname.trim();
+      if (trimmedNick && trimmedNick !== selectedMember.nickname) {
+        data.nickname = trimmedNick;
+      }
+      if (editMemberRole !== selectedMember.role) {
+        data.role = editMemberRole;
+      }
+      if (Object.keys(data).length === 0) {
+        setActiveSheet(null);
+        setSelectedMember(null);
+        return;
+      }
+      await put(`/families/${familyId}/members/${selectedMember.id}`, data);
+      Taro.showToast({ title: '已保存', icon: 'success', duration: 1500 });
       setActiveSheet(null);
       setSelectedMember(null);
       await loadMembers();
     } catch (err) {
-      console.error('更新角色失败', err);
-      Taro.showToast({ title: '更新失败', icon: 'none', duration: 2000 });
+      console.error('保存成员失败', err);
+      Taro.showToast({ title: '保存失败', icon: 'none', duration: 2000 });
     } finally {
       setSubmitting(false);
     }
@@ -359,7 +393,7 @@ export default function FamilyPage() {
 
   const myRole: FamilyMemberRole = (family?.role ?? 'guest') as FamilyMemberRole;
   const showManageButtons = canManageMembers(myRole);
-  const showEditFamily = canEditFamily(myRole);
+  const showEditFamily = canManageFamily(myRole);
   const currentMonth = new Date().getMonth() + 1;
 
   /* ─── 贡献排行 ─── */
@@ -478,6 +512,8 @@ export default function FamilyPage() {
                       onClick={() => {
                         if (showManageButtons && !isMe) {
                           setSelectedMember(m);
+                          setEditMemberNickname(m.nickname || '');
+                          setEditMemberRole(m.role as string || 'caregiver');
                           setActiveSheet('editMember');
                         }
                       }}
@@ -509,16 +545,18 @@ export default function FamilyPage() {
                           </Text>
                           {isMe && <Text className="member-me-tag">（我）</Text>}
                           <View
-                            className="member-role-badge"
+                            className={`member-role-badge ${isElevatedRole(m.role as FamilyMemberRole) ? 'member-role-badge-elevated' : ''}`}
                             style={{ backgroundColor: `${roleColor}1A` }}
                           >
+                            {isElevatedRole(m.role as FamilyMemberRole) && (
+                              <Text className="member-role-star">★</Text>
+                            )}
                             <Text className="member-role-text" style={{ color: roleColor }}>
-                              {ROLE_LABELS[m.role as FamilyMemberRole] ?? m.role}
+                              {ROLE_LABELS[m.role as string] ?? m.role}
                             </Text>
                           </View>
                         </View>
-                        {m.phone && <Text className="member-phone">{m.phone}</Text>}
-                        <Text className="member-joined">加入于 {formatDate(m.joinedAt)}</Text>
+                        {m.phone && <Text className="member-phone">{maskPhone(m.phone)}</Text>}
                       </View>
 
                       {showManageButtons && !isMe && (
@@ -787,85 +825,141 @@ export default function FamilyPage() {
       )}
 
       {/* ─── Sheet: 成员管理 ─── */}
-      {activeSheet === 'editMember' && selectedMember && (
-        <View className="sheet-overlay" onClick={() => { setActiveSheet(null); setSelectedMember(null); }}>
-          <View className="sheet-container" onClick={(e) => e.stopPropagation()}>
-            <View className="sheet-handle" />
-            <View className="sheet-header">
-              <Text className="sheet-title">管理成员</Text>
-              <View
-                className="sheet-close-btn"
-                onClick={() => { setActiveSheet(null); setSelectedMember(null); }}
-              >
-                <Text className="sheet-close-text">关闭</Text>
-              </View>
-            </View>
+      {activeSheet === 'editMember' && selectedMember && (() => {
+        const isOwnCard = selectedMember.userId === currentUserId;
+        const canEdit = isOwnCard || showManageButtons;
+        const canChangeRole = showManageButtons && !isOwnCard && selectedMember.role !== 'owner';
+        const isElevated = isElevatedRole(selectedMember.role as FamilyMemberRole);
+        const roleColor = ROLE_COLORS[selectedMember.role as string] ?? '#B0ADAD';
 
-            <View className="sheet-body">
-              {/* 成员信息 */}
-              <View className="edit-member-info">
-                <View className="member-avatar-wrap">
-                  {selectedMember.avatarUrl ? (
-                    <Image className="member-avatar-img" src={getImageUrl(selectedMember.avatarUrl || '')} mode="aspectFill" />
-                  ) : (
-                    <View className="member-avatar-placeholder">
-                      <Text className="member-avatar-text">
-                        {selectedMember.nickname ? selectedMember.nickname.slice(0, 1) : (selectedMember.phone ? selectedMember.phone.slice(-4) : '?')}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-                <View>
-                  <Text className="edit-member-name">{selectedMember.nickname || '未命名'}</Text>
-                  {selectedMember.phone && <Text className="edit-member-phone">{selectedMember.phone}</Text>}
+        return (
+          <View className="sheet-overlay" onClick={() => { setActiveSheet(null); setSelectedMember(null); }}>
+            <View className="sheet-container" onClick={(e) => e.stopPropagation()}>
+              <View className="sheet-handle" />
+              <View className="sheet-header">
+                <Text className="sheet-title">{isOwnCard ? '编辑我的信息' : '编辑成员'}</Text>
+                <View
+                  className="sheet-close-btn"
+                  onClick={() => { setActiveSheet(null); setSelectedMember(null); }}
+                >
+                  <Text className="sheet-close-text">关闭</Text>
                 </View>
               </View>
 
-              {/* 修改角色 */}
-              <Text className="sheet-label">修改角色</Text>
-              <View className="role-select-list">
-                {SELECTABLE_ROLES.map((r) => (
-                  <View
-                    key={r.value}
-                    className={`role-select-item ${selectedMember.role === r.value ? 'selected' : ''}`}
-                    onClick={() => handleUpdateMemberRole(selectedMember.id, r.value as FamilyMemberRole)}
-                  >
-                    <View
-                      className="role-select-dot"
-                      style={{
-                        backgroundColor: selectedMember.role === r.value
-                          ? ROLE_COLORS[r.value as FamilyMemberRole]
-                          : '#E0E0E0',
-                      }}
-                    />
-                    <Text
-                      className={`role-select-label ${selectedMember.role === r.value ? 'selected' : ''}`}
-                      style={selectedMember.role === r.value ? { color: ROLE_COLORS[r.value as FamilyMemberRole] } : {}}
-                    >
-                      {r.label}
-                    </Text>
-                    {selectedMember.role === r.value && (
-                      <Text className="role-select-check">✓</Text>
+              <View className="sheet-body">
+                {/* 成员信息 */}
+                <View className="edit-member-info">
+                  <View className="member-avatar-wrap">
+                    {selectedMember.avatarUrl ? (
+                      <Image className="member-avatar-img" src={getImageUrl(selectedMember.avatarUrl || '')} mode="aspectFill" />
+                    ) : (
+                      <View className="member-avatar-placeholder">
+                        <Text className="member-avatar-text">
+                          {selectedMember.nickname ? selectedMember.nickname.slice(0, 1) : (selectedMember.phone ? selectedMember.phone.slice(-4) : '?')}
+                        </Text>
+                      </View>
                     )}
                   </View>
-                ))}
-              </View>
-
-              {/* 移除按钮 */}
-              {myRole === 'owner' && selectedMember.role !== 'owner' && (
-                <View
-                  className="remove-member-btn"
-                  onClick={() => handleRemoveMember(selectedMember.id)}
-                >
-                  <Text className="remove-member-btn-text">
-                    {submitting ? '移除中...' : '移除该成员'}
-                  </Text>
+                  <View>
+                    <Text className="edit-member-name">{selectedMember.nickname || '未命名'}</Text>
+                    <View className="edit-member-role-row">
+                      <View
+                        className={`member-role-badge ${isElevated ? 'member-role-badge-elevated' : ''}`}
+                        style={{ backgroundColor: `${roleColor}1A` }}
+                      >
+                        {isElevated && <Text className="member-role-star">★</Text>}
+                        <Text className="member-role-text" style={{ color: roleColor }}>
+                          {ROLE_LABELS[selectedMember.role as string] ?? selectedMember.role}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
                 </View>
-              )}
+
+                {/* 昵称修改 */}
+                {canEdit && (
+                  <>
+                    <Text className="sheet-label">家庭昵称</Text>
+                    <View className="sheet-input-wrap">
+                      <input
+                        className="sheet-input"
+                        placeholder="如 爸爸 大嫂"
+                        value={editMemberNickname}
+                        onInput={(e: any) => setEditMemberNickname(e.detail.value)}
+                        maxLength={20}
+                      />
+                    </View>
+                  </>
+                )}
+
+                {/* 角色变更 */}
+                {canChangeRole && (
+                  <>
+                    <Text className="sheet-label">成员角色</Text>
+                    <View className="role-select-list">
+                      {SELECTABLE_ROLES.map((r) => (
+                        <View
+                          key={r.value}
+                          className={`role-select-item ${editMemberRole === r.value ? 'selected' : ''}`}
+                          onClick={() => setEditMemberRole(r.value)}
+                        >
+                          <View
+                            className="role-select-dot"
+                            style={{
+                              backgroundColor: editMemberRole === r.value
+                                ? ROLE_COLORS[r.value]
+                                : '#E0E0E0',
+                            }}
+                          />
+                          <Text
+                            className={`role-select-label ${editMemberRole === r.value ? 'selected' : ''}`}
+                            style={editMemberRole === r.value ? { color: ROLE_COLORS[r.value] } : {}}
+                          >
+                            {r.label}
+                          </Text>
+                          {editMemberRole === r.value && (
+                            <Text className="role-select-check">✓</Text>
+                          )}
+                        </View>
+                      ))}
+                    </View>
+
+                    {/* 角色说明 */}
+                    {ROLE_DESCRIPTIONS[editMemberRole] && (
+                      <View className="role-desc-box">
+                        <Text className="role-desc-icon">ℹ</Text>
+                        <Text className="role-desc-text">{ROLE_DESCRIPTIONS[editMemberRole]}</Text>
+                      </View>
+                    )}
+                  </>
+                )}
+
+                {/* 保存按钮 */}
+                {canEdit && (
+                  <View
+                    className={`cg-save-btn ${submitting ? 'disabled' : ''}`}
+                    onClick={submitting ? undefined : handleSaveMember}
+                  >
+                    <Text className="cg-save-btn-text">{submitting ? '保存中...' : '保存'}</Text>
+                  </View>
+                )}
+
+                {/* 移除按钮 */}
+                {myRole === 'owner' && selectedMember.role !== 'owner' && !isOwnCard && (
+                  <View
+                    className="remove-member-btn"
+                    onClick={() => handleRemoveMember(selectedMember.id)}
+                  >
+                    <Text className="remove-member-btn-text">
+                      {submitting ? '移除中...' : '移除该成员'}
+                    </Text>
+                  </View>
+                )}
+              </View>
             </View>
           </View>
-        </View>
-      )}
+        );
+      })()}
 
       {/* ─── Sheet: 编辑家庭 ─── */}
       {activeSheet === 'editFamily' && (

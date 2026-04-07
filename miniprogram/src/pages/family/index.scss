@@ -852,3 +852,70 @@ $shadow-card: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
   font-weight: 600;
   color: #E07B5D;
 }
+
+// ─── 成员角色标签（带星星）──────────────────────────────────────────────────
+.member-role-badge-elevated {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4rpx;
+}
+
+.member-role-star {
+  font-size: 18rpx;
+  line-height: 1;
+}
+
+// ─── 编辑成员弹层 ───────────────────────────────────────────────────────────
+.edit-member-role-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-top: 8rpx;
+}
+
+// ─── 角色描述说明框 ─────────────────────────────────────────────────────────
+.role-desc-box {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 8rpx;
+  background-color: #F5F5F5;
+  border-radius: 12rpx;
+  padding: 12rpx 16rpx;
+  margin-top: 12rpx;
+}
+
+.role-desc-icon {
+  font-size: 24rpx;
+  line-height: 1.4;
+  flex-shrink: 0;
+}
+
+.role-desc-text {
+  font-size: 22rpx;
+  color: #6B6B6B;
+  flex: 1;
+  line-height: 1.5;
+}
+
+// ─── 保存按钮（与照护详情页一致）────────────────────────────────────────────
+.cg-save-btn {
+  background: linear-gradient(135deg, #7B9E87 0%, #5C8268 100%);
+  border-radius: 56rpx;
+  padding: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 24rpx;
+}
+
+.cg-save-btn.disabled {
+  opacity: 0.6;
+}
+
+.cg-save-btn-text {
+  font-size: 30rpx;
+  color: #ffffff;
+  font-weight: 600;
+}

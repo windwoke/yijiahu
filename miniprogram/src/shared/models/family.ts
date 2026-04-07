@@ -5,16 +5,16 @@
 
 /** 家庭成员角色 */
 export enum FamilyMemberRole {
-  OWNER = 'owner',       // 所有者
-  COORDINATOR = 'coordinator', // 协调者
-  CAREGIVER = 'caregiver',     // 照护者
-  GUEST = 'guest',           // 访客
+  OWNER = 'owner',
+  COORDINATOR = 'coordinator',
+  CAREGIVER = 'caregiver',
+  GUEST = 'guest',
 }
 
 export const FAMILY_ROLE_LABELS: Record<FamilyMemberRole, string> = {
-  [FamilyMemberRole.OWNER]: '所有者',
-  [FamilyMemberRole.COORDINATOR]: '协调者',
-  [FamilyMemberRole.CAREGIVER]: '照护者',
+  [FamilyMemberRole.OWNER]: '管理员',
+  [FamilyMemberRole.COORDINATOR]: '协调管理员',
+  [FamilyMemberRole.CAREGIVER]: '照护人',
   [FamilyMemberRole.GUEST]: '访客',
 };
 
@@ -22,13 +22,9 @@ export interface FamilyMember {
   id: string;
   userId: string;
   familyId: string;
+  nickname: string;
   role: FamilyMemberRole;
-  user: {
-    id: string;
-    name: string | null;
-    phone: string;
-    avatar: string | null;
-  };
+  avatarUrl?: string | null;
 }
 
 export interface SubscriptionFeatures {
@@ -61,12 +57,12 @@ export interface Family {
 
 export interface FamilyMemberDetail extends FamilyMember {
   joinedAt: string;
-  user: {
-    id: string;
-    name: string | null;
-    phone: string;
-    avatar: string | null;
-  };
+  /** 真实姓名（来自 User.name，与 nickname 不同时显示） */
+  userName?: string | null;
+  /** 手机号（来自 User.phone） */
+  phone?: string | null;
+  /** 头像（优先 FamilyMember.avatarUrl，否则 User.avatar） */
+  avatarUrl?: string | null;
   /** 成员是否在线（最近活跃） */
   isOnline?: boolean;
 }

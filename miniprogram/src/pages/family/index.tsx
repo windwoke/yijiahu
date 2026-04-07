@@ -18,9 +18,9 @@ import './index.scss';
    ============================ */
 
 const ROLE_LABELS: Record<FamilyMemberRole, string> = {
-  owner: '所有者',
-  coordinator: '协调者',
-  caregiver: '照护者',
+  owner: '管理员',
+  coordinator: '协调管理员',
+  caregiver: '照护人',
   guest: '访客',
 };
 
@@ -32,8 +32,8 @@ const ROLE_COLORS: Record<FamilyMemberRole, string> = {
 };
 
 const SELECTABLE_ROLES: Array<{ value: string; label: string }> = [
-  { value: 'coordinator', label: '协调者' },
-  { value: 'caregiver', label: '照护者' },
+  { value: 'coordinator', label: '协调管理员' },
+  { value: 'caregiver', label: '照护人' },
   { value: 'guest', label: '访客' },
 ];
 
@@ -484,16 +484,16 @@ export default function FamilyPage() {
                     >
                       {/* 头像 */}
                       <View className="member-avatar-wrap">
-                        {m.user.avatar ? (
+                        {m.avatarUrl ? (
                           <Image
                             className="member-avatar-img"
-                            src={getImageUrl(m.user.avatar || '')}
+                            src={getImageUrl(m.avatarUrl || '')}
                             mode="aspectFill"
                           />
                         ) : (
                           <View className="member-avatar-placeholder">
                             <Text className="member-avatar-text">
-                              {m.user.name ? m.user.name.slice(0, 1) : (m.user.phone ? m.user.phone.slice(-4) : '?')}
+                              {m.nickname ? m.nickname.slice(0, 1) : (m.phone ? m.phone.slice(-4) : '?')}
                             </Text>
                           </View>
                         )}
@@ -503,18 +503,21 @@ export default function FamilyPage() {
                       {/* 信息 */}
                       <View className="member-info">
                         <View className="member-name-row">
-                          <Text className="member-name">{m.user.name || '未命名'}</Text>
+                          <Text className="member-name">
+                            {m.nickname || '未命名'}
+                            {m.userName && m.userName !== m.nickname ? `（${m.userName}）` : ''}
+                          </Text>
                           {isMe && <Text className="member-me-tag">（我）</Text>}
                           <View
                             className="member-role-badge"
                             style={{ backgroundColor: `${roleColor}1A` }}
                           >
                             <Text className="member-role-text" style={{ color: roleColor }}>
-                              {ROLE_LABELS[m.role] ?? m.role}
+                              {ROLE_LABELS[m.role as FamilyMemberRole] ?? m.role}
                             </Text>
                           </View>
                         </View>
-                        <Text className="member-phone">{m.user.phone}</Text>
+                        {m.phone && <Text className="member-phone">{m.phone}</Text>}
                         <Text className="member-joined">加入于 {formatDate(m.joinedAt)}</Text>
                       </View>
 
@@ -802,19 +805,19 @@ export default function FamilyPage() {
               {/* 成员信息 */}
               <View className="edit-member-info">
                 <View className="member-avatar-wrap">
-                  {selectedMember.user.avatar ? (
-                    <Image className="member-avatar-img" src={getImageUrl(selectedMember.user.avatar || '')} mode="aspectFill" />
+                  {selectedMember.avatarUrl ? (
+                    <Image className="member-avatar-img" src={getImageUrl(selectedMember.avatarUrl || '')} mode="aspectFill" />
                   ) : (
                     <View className="member-avatar-placeholder">
                       <Text className="member-avatar-text">
-                        {selectedMember.user.name ? selectedMember.user.name.slice(0, 1) : '?'}
+                        {selectedMember.nickname ? selectedMember.nickname.slice(0, 1) : (selectedMember.phone ? selectedMember.phone.slice(-4) : '?')}
                       </Text>
                     </View>
                   )}
                 </View>
                 <View>
-                  <Text className="edit-member-name">{selectedMember.user.name || '未命名'}</Text>
-                  <Text className="edit-member-phone">{selectedMember.user.phone}</Text>
+                  <Text className="edit-member-name">{selectedMember.nickname || '未命名'}</Text>
+                  {selectedMember.phone && <Text className="edit-member-phone">{selectedMember.phone}</Text>}
                 </View>
               </View>
 

@@ -79,6 +79,7 @@ export class UserController {
     const families = await this.familyRepo
       .createQueryBuilder('family')
       .where('family.id IN (:...ids)', { ids: familyIds })
+      .orderBy('family.createdAt', 'DESC')
       .getMany();
 
     const result = families.map((f) => ({

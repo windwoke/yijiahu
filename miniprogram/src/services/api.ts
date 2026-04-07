@@ -52,8 +52,12 @@ export async function uploadFile(
 /** 请求超时 */
 const TIMEOUT = 30000;
 
-/** 防止重复重定向的标志 */
+/** 防止重复重定向的标志（每次 App 启动时重置） */
 let isRedirecting = false;
+
+export function resetRedirectFlag(): void {
+  isRedirecting = false;
+}
 
 /** 响应码 */
 export const API_CODE = {

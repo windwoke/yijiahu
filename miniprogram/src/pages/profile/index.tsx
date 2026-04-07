@@ -6,7 +6,7 @@
 import { View, Text, Image, Input, ScrollView } from '@tarojs/components';
 import Taro, { useDidShow } from '@tarojs/taro';
 import { useState, useEffect, useCallback } from 'react';
-import { get, post, put, uploadFile } from '../../services/api';
+import { get, post, uploadFile } from '../../services/api';
 import { Storage } from '../../services/storage';
 import { getImageUrl } from '../../shared/utils/image';
 import { store } from '../../store';

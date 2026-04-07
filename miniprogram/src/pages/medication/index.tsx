@@ -10,7 +10,7 @@
 import { View, Text, ScrollView, Input, Button, Image, Picker } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
 import { useEffect, useState } from 'react';
-import { get, post, put, del } from '../../services/api';
+import { get, post, patch, del } from '../../services/api';
 import { Storage } from '../../services/storage';
 import { MedicationLogStatus } from '../../shared/models/medication';
 import type { Medication } from '../../shared/models/medication';
@@ -441,7 +441,7 @@ export default function MedicationPage() {
           : '/pages/medication/index';
         setTimeout(() => Taro.redirectTo({ url: nextUrl }), 1500);
       } else {
-        await put(`/medications/${medicationId}?familyId=${familyId}`, payload);
+        await patch(`/medications/${medicationId}?familyId=${familyId}`, payload);
         Taro.showToast({ title: '保存成功', icon: 'success' });
         setTimeout(() => Taro.navigateBack(), 1500);
       }

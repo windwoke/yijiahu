@@ -17,6 +17,7 @@ import type { Appointment } from '../../shared/models/appointment';
 import type { FamilyTask } from '../../shared/models/family-task';
 import type { Family } from '../../shared/models/family';
 import type { CaregiverRecord } from '../../shared/models/caregiver-record';
+import { getImageUrl } from '../../shared/utils/image';
 import './index.scss';
 
 // ─── 常量 ───────────────────────────────────────────────────────────────────
@@ -409,9 +410,17 @@ export default function HomePage() {
                     >
                       {/* 头像 */}
                       <View className="recipient-avatar">
-                        <Text className="recipient-avatar-text">
-                          {recipient.avatarEmoji || '👤'}
-                        </Text>
+                        {recipient.avatarUrl ? (
+                          <Image
+                            className="recipient-avatar-img"
+                            src={getImageUrl(recipient.avatarUrl)}
+                            mode="aspectFill"
+                          />
+                        ) : (
+                          <Text className="recipient-avatar-text">
+                            {recipient.avatarEmoji || '👤'}
+                          </Text>
+                        )}
                       </View>
 
                       {/* 姓名 + 年龄 + 进度条 */}

@@ -251,6 +251,12 @@ $color-card-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
   line-height: 1;
 }
 
+.recipient-avatar-img {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 20rpx;
+}
+
 .recipient-info {
   flex: 1;
   display: flex;
@@ -829,7 +835,7 @@ $color-card-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 
 // ─── SOS 按钮（Flutter 设计：放在内容流中，紧贴 tabBar）──────────────────
 .sos-btn-wrap {
-  padding: 16rpx 32rpx calc(8rpx + env(safe-area-inset-bottom));
+  padding: 16rpx 32rpx 8rpx;
   animation: sosScaleAnim 2s ease-in-out infinite;
 }
 

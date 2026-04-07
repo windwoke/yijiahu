@@ -201,7 +201,15 @@ export default function CareRecipientDetailPage() {
         {/* 头部卡片 */}
         <View className="header-card">
           <View className="header-avatar">
-            <Text className="header-avatar-text">{recipient.avatarEmoji || '👤'}</Text>
+            {recipient.avatarUrl ? (
+              <Image
+                className="header-avatar-img"
+                src={getImageUrl(recipient.avatarUrl)}
+                mode="aspectFill"
+              />
+            ) : (
+              <Text className="header-avatar-text">{recipient.avatarEmoji || '👤'}</Text>
+            )}
           </View>
           <View className="header-info">
             <Text className="header-name">{recipient.name}</Text>

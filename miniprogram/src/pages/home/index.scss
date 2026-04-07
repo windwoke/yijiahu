@@ -824,12 +824,12 @@ $color-card-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 
 // ─── 底部留白 ───────────────────────────────────────────────────────────────
 .bottom-pad {
-  height: 48rpx;
+  height: 200rpx;
 }
 
 // ─── SOS 按钮（Flutter 设计：放在内容流中，紧贴 tabBar）──────────────────
 .sos-btn-wrap {
-  padding: 4rpx 32rpx calc(8rpx + env(safe-area-inset-bottom));
+  padding: 16rpx 32rpx calc(8rpx + env(safe-area-inset-bottom));
   animation: sosScaleAnim 2s ease-in-out infinite;
 }
 

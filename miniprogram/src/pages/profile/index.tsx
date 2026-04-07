@@ -229,7 +229,10 @@ export default function ProfilePage() {
       activeSheet: null,
       currentFamilyName: family?.name || '我的家庭',
     }));
-    Taro.showToast({ title: `已切换至「${family?.name}」`, icon: 'success', duration: 1500 });
+    Taro.showToast({ title: `已切换至「${family?.name}」`, icon: 'success', duration: 1200 });
+    setTimeout(() => {
+      Taro.switchTab({ url: '/pages/home/index' });
+    }, 1200);
   };
 
   // ─── 加入新家庭 ────────────────────────────────────────────────────────────
@@ -247,10 +250,18 @@ export default function ProfilePage() {
     }
     setSheetLoading(true);
     try {
-      await post<{ id: string }>('/families/join', { inviteCode: code });
+      const result = await post<{ id: string }>('/families/join', { inviteCode: code });
       await loadFamilies();
+      // 加入成功后自动切换到新家庭
+      const newFamilyId = result?.id;
+      if (newFamilyId) {
+        Storage.setCurrentFamilyId(newFamilyId);
+      }
       setState((s) => ({ ...s, activeSheet: null }));
-      Taro.showToast({ title: '加入成功', icon: 'success', duration: 1500 });
+      Taro.showToast({ title: '加入成功', icon: 'success', duration: 1200 });
+      setTimeout(() => {
+        Taro.switchTab({ url: '/pages/home/index' });
+      }, 1200);
     } catch (err: any) {
       Taro.showToast({ title: err.message || '邀请码无效', icon: 'none', duration: 2000 });
     } finally {
@@ -277,10 +288,18 @@ export default function ProfilePage() {
     }
     setSheetLoading(true);
     try {
-      await post<{ id: string }>('/families', { name });
+      const result = await post<{ id: string }>('/families', { name });
       await loadFamilies();
+      // 创建成功后自动切换到新家庭
+      const newFamilyId = result?.id;
+      if (newFamilyId) {
+        Storage.setCurrentFamilyId(newFamilyId);
+      }
       setState((s) => ({ ...s, activeSheet: null }));
-      Taro.showToast({ title: '家庭创建成功', icon: 'success', duration: 1500 });
+      Taro.showToast({ title: '家庭创建成功', icon: 'success', duration: 1200 });
+      setTimeout(() => {
+        Taro.switchTab({ url: '/pages/home/index' });
+      }, 1200);
     } catch (err: any) {
       Taro.showToast({ title: err.message || '创建失败', icon: 'none', duration: 2000 });
     } finally {

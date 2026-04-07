@@ -282,9 +282,10 @@ export default function HomePage() {
   // 初始加载
   useEffect(() => {
     loadDataInner();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 每次页面显示时刷新
+  // 每次页面显示时刷新（tab 切换或从其他页返回）
   useDidShow(() => {
     loadDataInner();
   });

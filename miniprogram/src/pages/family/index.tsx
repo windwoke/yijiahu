@@ -6,7 +6,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, Image } from '@tarojs/components';
 import Taro, { useDidShow } from '@tarojs/taro';
-import { get, post, put, del, uploadFile } from '../../services/api';
+import { get, post, patch, del, uploadFile } from '../../services/api';
 import { Storage } from '../../services/storage';
 import { getImageUrl } from '../../shared/utils/image';
 import type { Family, FamilyMemberDetail, FamilyMemberRole } from '../../shared/models/family';
@@ -451,7 +451,7 @@ export default function FamilyPage() {
           console.error('头像上传失败', e);
         }
       }
-      await put(`/families/${family.id}`, {
+      await patch(`/families/${family.id}`, {
         name: editFamilyName.trim(),
         ...(editFamilyDesc.trim() ? { description: editFamilyDesc.trim() } : {}),
         ...(newAvatarUrl ? { avatarUrl: newAvatarUrl } : {}),

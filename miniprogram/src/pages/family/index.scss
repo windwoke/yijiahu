@@ -1,0 +1,854 @@
+/**
+ * 家庭页样式 - 与 Flutter family_page.dart 完全对齐
+ */
+
+$color-primary: #7B9E87;
+$color-coral: #E07B5D;
+$color-blue: #4A90D9;
+$color-success: #6BA07E;
+$color-bg: #FAF9F7;
+$color-surface: #FFFFFF;
+$color-surface-lowest: #FFFFFF;
+$color-surface-low: #F5F5F3;
+$color-border: #EEECE8;
+$color-text-primary: #2C2C2C;
+$color-text-secondary: #6B6B6B;
+$color-text-tertiary: #B0ADAD;
+$shadow-soft: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+$shadow-card: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+
+// ─── 全屏容器 ───────────────────────────────────────────────────────────────
+.family-page {
+  min-height: 100vh;
+  height: 100vh;
+  background-color: $color-bg;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  box-sizing: border-box;
+}
+
+// ─── 顶部导航栏 ─────────────────────────────────────────────────────────────
+.family-navbar {
+  background-color: $color-bg;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16rpx 24rpx calc(16rpx + env(safe-area-inset-top));
+  padding-top: calc(16rpx + env(safe-area-inset-top));
+  flex-shrink: 0;
+  box-shadow: 0 1rpx 0 rgba(0, 0, 0, 0.04);
+  position: relative;
+  z-index: 10;
+}
+
+.navbar-back {
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.navbar-back-icon {
+  font-size: 36rpx;
+  line-height: 1;
+  color: $color-text-primary;
+}
+
+.navbar-title {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: $color-text-primary;
+  flex: 1;
+  text-align: center;
+}
+
+.navbar-edit {
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.navbar-edit-text {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: $color-primary;
+}
+
+// ─── 主滚动区 ───────────────────────────────────────────────────────────────
+.family-scroll {
+  flex: 1;
+  height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+// ─── 加载状态 ────────────────────────────────────────────────────────────────
+.loading-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80rpx 0;
+}
+
+.loading-text {
+  font-size: 28rpx;
+  color: $color-text-tertiary;
+}
+
+// ─── 无家庭空状态 ───────────────────────────────────────────────────────────
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 48rpx;
+  gap: 16rpx;
+}
+
+.empty-emoji {
+  font-size: 96rpx;
+  line-height: 1;
+  margin-bottom: 8rpx;
+}
+
+.empty-title {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: $color-text-primary;
+}
+
+.empty-desc {
+  font-size: 28rpx;
+  color: $color-text-tertiary;
+  text-align: center;
+}
+
+// ─── 家庭信息卡片（Flutter: border-radius 24, box shadows）───────────────────
+.family-card {
+  margin: 16rpx 24rpx 0;
+  background-color: $color-surface-lowest;
+  border-radius: 32rpx;
+  padding: 32rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06), 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+}
+
+.family-card-header {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  margin-bottom: 24rpx;
+}
+
+.family-avatar {
+  width: 80rpx;
+  height: 80rpx;
+  background-color: $color-surface-low;
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.family-avatar-img {
+  width: 80rpx;
+  height: 80rpx;
+  display: block;
+}
+
+.family-avatar-text {
+  font-size: 40rpx;
+  line-height: 1;
+}
+
+.family-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.family-name {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: $color-text-primary;
+}
+
+.family-desc {
+  font-size: 24rpx;
+  color: $color-text-secondary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 400rpx;
+}
+
+.family-member-badge {
+  display: inline-flex;
+  background-color: $color-surface-low;
+  border-radius: 12rpx;
+  padding: 4rpx 16rpx;
+  align-self: flex-start;
+}
+
+.family-member-badge-text {
+  font-size: 24rpx;
+  color: $color-text-secondary;
+  font-weight: 500;
+}
+
+// 分割线
+.family-divider {
+  height: 1rpx;
+  background-color: $color-border;
+  margin-bottom: 24rpx;
+}
+
+// ─── 邀请码区域 ─────────────────────────────────────────────────────────────
+.invite-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.invite-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.invite-label {
+  font-size: 24rpx;
+  color: $color-text-secondary;
+  font-weight: 500;
+}
+
+.invite-code {
+  font-size: 44rpx;
+  font-weight: 700;
+  color: $color-text-primary;
+  letter-spacing: 6rpx;
+}
+
+.copy-invite-btn {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8rpx;
+  background-color: rgba($color-primary, 0.1);
+  border-radius: 16rpx;
+  padding: 12rpx 20rpx;
+}
+
+.copy-invite-icon {
+  font-size: 24rpx;
+  line-height: 1;
+  color: $color-primary;
+}
+
+.copy-invite-text {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: $color-primary;
+}
+
+// ─── 成员列表区域（Flutter padding: fromLTRB 16, 24, 16, 16）────────────────
+.members-section {
+  padding: 24rpx 24rpx 16rpx;
+}
+
+.section-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+
+.section-title-text {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: $color-text-primary;
+}
+
+.section-count-text {
+  font-size: 24rpx;
+  color: $color-text-tertiary;
+}
+
+// ─── 成员卡片（Flutter: border-radius 20, card shadow, margin-bottom 12）────
+.member-card {
+  background-color: $color-surface-lowest;
+  border-radius: 24rpx;
+  padding: 24rpx;
+  margin-bottom: 16rpx;
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06), 0 1rpx 4rpx rgba(0, 0, 0, 0.04);
+  box-sizing: border-box;
+}
+
+.member-card:active {
+  opacity: 0.9;
+}
+
+.member-card-recipient {
+  background-color: rgba($color-coral, 0.04);
+}
+
+.member-avatar-wrap {
+  width: 72rpx;
+  height: 72rpx;
+  flex-shrink: 0;
+  border-radius: 20rpx;
+  overflow: hidden;
+  position: relative;
+}
+
+.member-avatar-img {
+  width: 72rpx;
+  height: 72rpx;
+  display: block;
+}
+
+.member-avatar-placeholder {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 20rpx;
+  background-color: rgba($color-primary, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.member-avatar-placeholder-recipient {
+  background-color: rgba($color-coral, 0.1);
+}
+
+.member-avatar-text {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: $color-primary;
+}
+
+.member-avatar-text-recipient {
+  color: $color-coral;
+  font-size: 32rpx;
+}
+
+.online-dot {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 8rpx;
+  background-color: $color-success;
+  border: 3rpx solid $color-surface-lowest;
+  box-sizing: border-box;
+}
+
+.member-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+  overflow: hidden;
+}
+
+.member-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  flex-wrap: wrap;
+}
+
+.member-name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: $color-text-primary;
+}
+
+.member-me-tag {
+  font-size: 24rpx;
+  color: $color-text-tertiary;
+  font-weight: 400;
+}
+
+.member-role-badge {
+  border-radius: 12rpx;
+  padding: 4rpx 12rpx;
+  flex-shrink: 0;
+}
+
+.member-role-text {
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.member-role-badge-recipient {
+  background-color: rgba($color-coral, 0.12);
+}
+
+.member-role-text-recipient {
+  color: $color-coral;
+}
+
+.member-phone {
+  font-size: 24rpx;
+  color: $color-text-secondary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.member-joined {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+}
+
+.recipient-emergency-row {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.recipient-emergency-icon {
+  font-size: 22rpx;
+  line-height: 1;
+}
+
+.recipient-emergency-phone {
+  font-size: 24rpx;
+  color: $color-coral;
+  font-weight: 500;
+}
+
+.member-arrow {
+  font-size: 40rpx;
+  color: $color-text-tertiary;
+  flex-shrink: 0;
+  font-weight: 300;
+}
+
+.empty-list {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx 0;
+}
+
+.empty-list-text {
+  font-size: 28rpx;
+  color: $color-text-tertiary;
+}
+
+// ─── 贡献统计卡片（Flutter: border-radius 24, padding 20, icon + title）─────
+.stats-card {
+  margin: 0 24rpx;
+  background-color: $color-surface-lowest;
+  border-radius: 32rpx;
+  padding: 32rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06), 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+}
+
+.stats-header {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 24rpx;
+}
+
+.stats-icon-wrap {
+  width: 44rpx;
+  height: 44rpx;
+  background-color: rgba($color-primary, 0.1);
+  border-radius: 12rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stats-icon {
+  font-size: 22rpx;
+  line-height: 1;
+}
+
+.stats-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: $color-text-primary;
+  flex: 1;
+}
+
+.stats-month-badge {
+  background-color: $color-surface-low;
+  border-radius: 12rpx;
+  padding: 4rpx 12rpx;
+}
+
+.stats-month-text {
+  font-size: 24rpx;
+  font-weight: 500;
+  color: $color-text-secondary;
+}
+
+.stats-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx 0;
+  gap: 8rpx;
+}
+
+.stats-loading-text {
+  font-size: 26rpx;
+  color: $color-text-tertiary;
+}
+
+.stats-empty-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20rpx 0;
+}
+
+.stats-empty-bar-wrap {
+  width: 72rpx;
+  height: 72rpx;
+  background-color: rgba($color-primary, 0.08);
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12rpx;
+}
+
+.stats-empty-bar-icon {
+  font-size: 36rpx;
+  line-height: 1;
+}
+
+.stats-empty-text {
+  font-size: 26rpx;
+  color: $color-text-secondary;
+  text-align: center;
+}
+
+.stats-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.stats-bar-row {
+  margin-bottom: 20rpx;
+}
+
+.stats-bar-row:last-child {
+  margin-bottom: 0;
+}
+
+.stats-bar-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8rpx;
+}
+
+.stats-bar-name {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: $color-text-primary;
+}
+
+.stats-bar-count {
+  font-size: 26rpx;
+  font-weight: 700;
+}
+
+.stats-bar-track {
+  width: 100%;
+  height: 12rpx;
+  background-color: $color-surface-low;
+  border-radius: 6rpx;
+  overflow: hidden;
+}
+
+.stats-bar-fill {
+  height: 12rpx;
+  border-radius: 6rpx;
+  transition: width 0.3s ease;
+}
+
+.stats-bar-sub {
+  font-size: 20rpx;
+  color: rgba($color-text-secondary, 0.6);
+  margin-top: 4rpx;
+}
+
+.stats-overflow {
+  font-size: 24rpx;
+  color: rgba($color-text-secondary, 0.6);
+  margin-top: 8rpx;
+}
+
+// ─── 底部操作区域 ────────────────────────────────────────────────────────────
+.action-section {
+  padding: 24rpx 24rpx calc(24rpx + env(safe-area-inset-bottom));
+}
+
+.action-divider {
+  height: 1rpx;
+  background-color: $color-border;
+  margin-bottom: 20rpx;
+}
+
+.action-btn-row {
+  display: flex;
+  gap: 16rpx;
+}
+
+.action-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  background-color: $color-surface;
+  border-radius: 24rpx;
+  padding: 24rpx 0;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+}
+
+.action-btn-recipient {
+  border: 2rpx solid rgba($color-coral, 0.3);
+}
+
+.action-btn-icon {
+  font-size: 28rpx;
+  line-height: 1;
+}
+
+.action-btn-text {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: $color-primary;
+}
+
+.action-btn-text-recipient {
+  color: $color-coral;
+}
+
+// ─── 底部 Sheet ─────────────────────────────────────────────────────────────
+.sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  animation: sheetFadeIn 0.2s ease;
+}
+
+@keyframes sheetFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.sheet-container {
+  width: 100%;
+  background-color: #ffffff;
+  border-radius: 32rpx 32rpx 0 0;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  animation: sheetSlideUp 0.25s ease;
+}
+
+@keyframes sheetSlideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.sheet-handle {
+  width: 80rpx;
+  height: 8rpx;
+  background-color: #E0E0E0;
+  border-radius: 4rpx;
+  align-self: center;
+  margin: 16rpx 0 0;
+  flex-shrink: 0;
+}
+
+.sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 32rpx 16rpx;
+  flex-shrink: 0;
+}
+
+.sheet-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #2C2C2C;
+}
+
+.sheet-confirm-btn {
+  background-color: #7B9E87;
+  border-radius: 20rpx;
+  padding: 10rpx 28rpx;
+  box-shadow: 0 4rpx 12rpx rgba(123, 158, 135, 0.3);
+}
+
+.sheet-confirm-btn.disabled {
+  background-color: #C8C8C8;
+  box-shadow: none;
+}
+
+.sheet-confirm-text {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.sheet-close-btn {
+  background-color: #F5F5F5;
+  border-radius: 20rpx;
+  padding: 10rpx 24rpx;
+}
+
+.sheet-close-text {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #6B6B6B;
+}
+
+.sheet-body {
+  padding: 8rpx 32rpx calc(32rpx + env(safe-area-inset-bottom));
+  overflow-y: auto;
+  flex: 1;
+}
+
+.sheet-label {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #6B6B6B;
+  display: block;
+  margin-top: 20rpx;
+  margin-bottom: 12rpx;
+}
+
+.sheet-input-wrap {
+  background-color: #F5F5F5;
+  border-radius: 16rpx;
+  overflow: hidden;
+}
+
+.sheet-input {
+  width: 100%;
+  line-height: 1 !important;
+  height: auto !important;
+  padding: 20rpx 24rpx;
+  font-size: 30rpx;
+  color: #2C2C2C;
+  box-sizing: border-box;
+  border: none;
+  outline: none;
+  background-color: transparent;
+  placeholder-color: #B0ADAD;
+}
+
+.role-select-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.role-select-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12rpx;
+  padding: 20rpx 24rpx;
+  border-radius: 16rpx;
+  background-color: #F5F5F5;
+  margin-bottom: 8rpx;
+}
+
+.role-select-item.selected {
+  background-color: rgba(123, 158, 135, 0.08);
+}
+
+.role-select-dot {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.role-select-label {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #6B6B6B;
+  flex: 1;
+}
+
+.role-select-label.selected {
+  font-weight: 600;
+}
+
+.role-select-check {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #7B9E87;
+}
+
+.edit-member-info {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 20rpx;
+  padding: 20rpx;
+  background-color: #F5F5F5;
+  border-radius: 20rpx;
+  margin-bottom: 8rpx;
+}
+
+.edit-member-name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #2C2C2C;
+  display: block;
+  margin-bottom: 4rpx;
+}
+
+.edit-member-phone {
+  font-size: 24rpx;
+  color: #6B6B6B;
+}
+
+.remove-member-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 32rpx;
+  padding: 20rpx;
+  border-radius: 20rpx;
+  border: 2rpx solid #E07B5D;
+  background-color: rgba(224, 123, 93, 0.06);
+}
+
+.remove-member-btn-text {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #E07B5D;
+}

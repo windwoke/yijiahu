@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Body,
+  Patch,
   HttpCode,
   HttpStatus,
   UseGuards,
@@ -14,6 +15,7 @@ import { SendCodeDto } from './dto/send-code.dto';
 import { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginWithPasswordDto } from './dto/login-with-password.dto';
+import { WechatLoginDto, WechatProfileDto } from './dto/wechat-login.dto';
 
 @ApiTags('认证')
 @Controller('auth')
@@ -55,5 +57,24 @@ export class AuthController {
   @ApiOperation({ summary: '密码登录' })
   loginWithPassword(@Body() dto: LoginWithPasswordDto) {
     return this.authService.loginWithPassword(dto.phone, dto.password);
+  }
+
+  @Post('wechat-login')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '微信小程序登录' })
+  wechatLogin(@Body() dto: WechatLoginDto) {
+    return this.authService.wechatLogin(dto);
+  }
+
+  @Patch('wechat-profile')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: '更新微信用户资料（昵称/头像）' })
+  updateWechatProfile(
+    @CurrentUser('id') userId: string,
+    @Body() dto: WechatProfileDto,
+  ) {
+    return this.authService.updateWechatProfile(userId, dto);
   }
 }

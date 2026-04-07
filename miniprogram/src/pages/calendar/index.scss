@@ -1,0 +1,725 @@
+/* 日历页样式 */
+/* 对应 Flutter calendar_page.dart，与首页风格对齐 */
+
+.calendar-page {
+  min-height: 100vh;
+  background-color: #FAF9F7;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ============================
+   固定添加按钮
+   ============================ */
+
+.fixed-add-btn {
+  position: fixed;
+  top: calc(12rpx + env(safe-area-inset-top));
+  right: 32rpx;
+  z-index: 100;
+  width: 64rpx;
+  height: 64rpx;
+  background-color: #7B9E87;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4rpx 16rpx rgba(123, 158, 135, 0.4);
+}
+
+.fixed-add-icon {
+  font-size: 36rpx;
+  color: #ffffff;
+  font-weight: 400;
+  line-height: 1;
+}
+
+/* ============================
+   月份切换头
+   ============================ */
+
+.month-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12rpx 24rpx;
+  background-color: #FAF9F7;
+}
+
+.month-arrow {
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.arrow-text {
+  font-size: 28rpx;
+  color: #6B6B6B;
+}
+
+.month-label {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #2C2C2C;
+}
+
+/* ============================
+   星期头
+   ============================ */
+
+.weekday-row {
+  display: flex;
+  flex-direction: row;
+  padding: 0 8rpx;
+  background-color: #FAF9F7;
+}
+
+.weekday-cell {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 48rpx;
+}
+
+.weekday-text {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #6B6B6B;
+}
+
+/* ============================
+   日历网格（6行 x 7列）
+   ============================ */
+
+.calendar-grid {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 0 8rpx 16rpx;
+  background-color: #FAF9F7;
+}
+
+.calendar-cell {
+  width: calc(100% / 7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 88rpx;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.cell-day {
+  font-size: 30rpx;
+  font-weight: 500;
+  color: #2C2C2C;
+  line-height: 1;
+}
+
+.cell-day-today {
+  color: #7B9E87;
+  font-weight: 600;
+}
+
+.cell-day-selected {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* 圆形背景 */
+.cell-today .cell-day {
+  position: relative;
+  z-index: 0;
+}
+
+.cell-today .cell-day::after {
+  content: '';
+  position: absolute;
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  background-color: rgba(123, 158, 135, 0.15);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: -1;
+}
+
+.cell-selected {
+  .cell-day {
+    position: relative;
+    z-index: 0;
+  }
+  .cell-day::after {
+    content: '';
+    position: absolute;
+    width: 64rpx;
+    height: 64rpx;
+    border-radius: 50%;
+    background-color: #7B9E87;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: -1;
+  }
+}
+
+.cell-other-month {
+  .cell-day {
+    color: #B0ADAD;
+    font-weight: 400;
+  }
+}
+
+/* 日历圆点标记 */
+.cell-dots {
+  display: flex;
+  flex-direction: row;
+  gap: 4rpx;
+  align-items: center;
+  margin-top: 4rpx;
+  height: 10rpx;
+}
+
+.dot {
+  width: 10rpx;
+  height: 10rpx;
+  border-radius: 50%;
+}
+
+.dot-appointment {
+  background-color: #E07B5D;
+}
+
+.dot-task {
+  background-color: #4A90D9;
+}
+
+/* ============================
+   分隔线
+   ============================ */
+
+.divider {
+  height: 1rpx;
+  background-color: #E8E6E2;
+  margin: 0 32rpx;
+}
+
+/* ============================
+   事件区域标签行
+   ============================ */
+
+.events-header {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 32rpx;
+  height: 72rpx;
+  gap: 16rpx;
+}
+
+.events-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #6B6B6B;
+}
+
+.events-legend {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  flex: 1;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.legend-dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+}
+
+.legend-appt {
+  background-color: #E07B5D;
+}
+
+.legend-task {
+  background-color: #4A90D9;
+}
+
+.legend-text {
+  font-size: 22rpx;
+  color: #B0ADAD;
+}
+
+/* 视图切换按钮 */
+.view-toggle {
+  display: flex;
+  gap: 4rpx;
+}
+
+.toggle-btn {
+  padding: 6rpx 16rpx;
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+}
+
+.toggle-active {
+  background-color: rgba(123, 158, 135, 0.1);
+}
+
+.toggle-text {
+  font-size: 24rpx;
+  color: #B0ADAD;
+}
+
+.toggle-text-active {
+  color: #7B9E87;
+  font-weight: 600;
+}
+
+/* 加载行 */
+.loading-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24rpx;
+}
+
+.loading-text {
+  font-size: 26rpx;
+  color: #B0ADAD;
+}
+
+/* ============================
+   事件滚动区域
+   ============================ */
+
+.events-scroll {
+  flex: 1;
+  height: calc(100vh - 560rpx);
+}
+
+/* ============================
+   当天事件 / 列表视图
+   ============================ */
+
+.day-events,
+.list-view {
+  padding: 0 32rpx;
+}
+
+.section-tag {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12rpx;
+  margin-top: 8rpx;
+}
+
+.section-bar {
+  width: 6rpx;
+  height: 28rpx;
+  border-radius: 3rpx;
+  margin-right: 10rpx;
+}
+
+.section-bar-appt {
+  background-color: #E07B5D;
+}
+
+.section-bar-task {
+  background-color: #4A90D9;
+}
+
+.section-label {
+  font-size: 26rpx;
+  font-weight: 600;
+}
+
+.section-label-appt {
+  color: #E07B5D;
+}
+
+.section-label-task {
+  color: #4A90D9;
+}
+
+.cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+}
+
+/* ============================
+   复诊卡片
+   ============================ */
+
+.appt-card {
+  background-color: #ffffff;
+  border-radius: 24rpx;
+  overflow: hidden;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+  border: 2rpx solid rgba(224, 123, 93, 0.15);
+}
+
+.appt-date-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16rpx 24rpx;
+  border-bottom: 1rpx solid #F0EEEB;
+}
+
+.appt-date {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #E07B5D;
+}
+
+.appt-time-badge {
+  background-color: rgba(224, 123, 93, 0.1);
+  border-radius: 12rpx;
+  padding: 4rpx 16rpx;
+}
+
+.appt-time {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #E07B5D;
+}
+
+.appt-body {
+  padding: 20rpx 24rpx;
+}
+
+.appt-recipient-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  margin-bottom: 12rpx;
+}
+
+.recipient-emoji {
+  font-size: 36rpx;
+  line-height: 1;
+}
+
+.recipient-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #2C2C2C;
+}
+
+.appt-type-badge {
+  background-color: rgba(123, 158, 135, 0.1);
+  border-radius: 8rpx;
+  padding: 2rpx 12rpx;
+  margin-left: 8rpx;
+}
+
+.appt-type-text {
+  font-size: 22rpx;
+  color: #7B9E87;
+  font-weight: 500;
+}
+
+.appt-info-row {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-bottom: 6rpx;
+}
+
+.appt-info-icon {
+  font-size: 24rpx;
+}
+
+.appt-info-text {
+  font-size: 26rpx;
+  color: #6B6B6B;
+  flex: 1;
+}
+
+.appt-actions {
+  display: flex;
+  gap: 12rpx;
+  margin-top: 16rpx;
+}
+
+.action-btn {
+  padding: 10rpx 24rpx;
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+}
+
+.action-btn-call {
+  background-color: rgba(123, 158, 135, 0.1);
+}
+
+.action-btn-nav {
+  background-color: rgba(74, 144, 217, 0.1);
+}
+
+.action-btn-text {
+  font-size: 26rpx;
+  font-weight: 500;
+}
+
+.action-btn-text-call {
+  color: #7B9E87;
+}
+
+.action-btn-text-nav {
+  color: #4A90D9;
+}
+
+/* ============================
+   任务卡片
+   ============================ */
+
+.task-card {
+  background-color: #ffffff;
+  border-radius: 24rpx;
+  overflow: hidden;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+}
+
+.task-bar {
+  width: 8rpx;
+  flex-shrink: 0;
+  border-radius: 4rpx 0 0 4rpx;
+}
+
+.task-body {
+  flex: 1;
+  padding: 20rpx;
+  min-width: 0;
+}
+
+.task-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-bottom: 6rpx;
+}
+
+.task-recipient-emoji {
+  font-size: 32rpx;
+  flex-shrink: 0;
+}
+
+.task-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-status-badge {
+  border-radius: 12rpx;
+  padding: 4rpx 14rpx;
+  flex-shrink: 0;
+}
+
+.task-status-text {
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.task-desc {
+  font-size: 24rpx;
+  color: #B0ADAD;
+  margin-bottom: 10rpx;
+  display: block;
+}
+
+.task-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  flex-wrap: wrap;
+  margin-top: 8rpx;
+}
+
+.task-tag {
+  border-radius: 8rpx;
+  padding: 2rpx 12rpx;
+}
+
+.task-tag-text {
+  font-size: 22rpx;
+  font-weight: 500;
+}
+
+.task-time,
+.task-due,
+.task-assignee {
+  font-size: 24rpx;
+  color: #6B6B6B;
+}
+
+/* 完成按钮 */
+.task-complete-btn {
+  width: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background-color: rgba(107, 160, 126, 0.08);
+}
+
+.task-complete-btn-loading {
+  opacity: 0.5;
+}
+
+.task-complete-icon {
+  font-size: 36rpx;
+  color: #6BA07E;
+  font-weight: 700;
+}
+
+/* ============================
+   列表视图分组
+   ============================ */
+
+.list-group {
+  margin-bottom: 24rpx;
+}
+
+.group-date {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #B0ADAD;
+  margin-bottom: 12rpx;
+  display: block;
+}
+
+/* ============================
+   空状态
+   ============================ */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 64rpx;
+  gap: 16rpx;
+}
+
+.empty-emoji {
+  font-size: 80rpx;
+}
+
+.empty-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #2C2C2C;
+  display: block;
+  margin-top: 8rpx;
+}
+
+.empty-sub {
+  font-size: 26rpx;
+  color: #B0ADAD;
+  display: block;
+  text-align: center;
+}
+
+/* ============================
+   添加弹层（底部弹出）
+   ============================ */
+
+.sheet-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+}
+
+.sheet-container {
+  width: 100%;
+  background-color: #ffffff;
+  border-radius: 32rpx 32rpx 0 0;
+  padding: 20rpx 40rpx 60rpx;
+  box-sizing: border-box;
+}
+
+.sheet-handle {
+  width: 72rpx;
+  height: 8rpx;
+  background-color: #E8E6E2;
+  border-radius: 4rpx;
+  margin: 0 auto 32rpx;
+}
+
+.sheet-title-row {
+  display: flex;
+  gap: 24rpx;
+}
+
+.add-option {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40rpx 24rpx;
+  border-radius: 32rpx;
+}
+
+.add-option-appt {
+  background-color: rgba(224, 123, 93, 0.08);
+  border: 2rpx solid rgba(224, 123, 93, 0.2);
+}
+
+.add-option-task {
+  background-color: rgba(74, 144, 217, 0.08);
+  border: 2rpx solid rgba(74, 144, 217, 0.2);
+}
+
+.option-emoji {
+  font-size: 56rpx;
+  margin-bottom: 12rpx;
+}
+
+.option-label {
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.option-label-appt {
+  color: #E07B5D;
+}
+
+.option-label-task {
+  color: #4A90D9;
+}
+
+/* ============================
+   底部留白
+   ============================ */
+
+.bottom-pad {
+  height: 200rpx;
+}

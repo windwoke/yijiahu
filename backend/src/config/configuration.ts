@@ -50,4 +50,32 @@ export default () => ({
     appKey: process.env.JPUSH_APP_KEY || '',
     masterSecret: process.env.JPUSH_MASTER_SECRET || '',
   },
+
+  // 微信小程序/服务号配置
+  wechat: {
+    // 小程序配置（用于微信登录）
+    miniApp: {
+      appId: process.env.WECHAT_MINI_APP_ID || '',
+      appSecret: process.env.WECHAT_MINI_APP_SECRET || '',
+    },
+    // 服务号配置（用于模板消息推送）
+    officialAccount: {
+      appId: process.env.WECHAT_OA_APP_ID || '',
+      appSecret: process.env.WECHAT_OA_APP_SECRET || '',
+    },
+    // 微信支付配置
+    payment: {
+      mchId: process.env.WECHAT_MCH_ID || '',
+      apiKey: process.env.WECHAT_API_KEY || '', // V2 签名密钥
+      certPath: process.env.WECHAT_CERT_PATH || '', // V2 退款证书路径
+    },
+    // 模板消息 ID
+    templates: {
+      medicationReminder:
+        process.env.WECHAT_TMPL_MEDICATION || 'TMPL_MEDICATION',
+      appointmentReminder:
+        process.env.WECHAT_TMPL_APPOINTMENT || 'TMPL_APPOINTMENT',
+      sos: process.env.WECHAT_TMPL_SOS || 'TMPL_SOS',
+    },
+  },
 });

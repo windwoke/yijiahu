@@ -1,0 +1,34 @@
+/*!
+ * 一家护全局样式
+ * 注意：WXSS 中不能混用 rpx 和 px，统一用 rpx（750rpx = 375px 设计稿）
+ * Taro 会将 px 自动转为 rpx，但 CSS 变量需要直接写 rpx 值
+ */
+
+/* 字体 */
+page {
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica,
+    Arial, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  font-size: 28rpx;
+  line-height: 1.5;
+  color: #2C2C2C;
+  background-color: #FAF9F7;
+}
+
+/* 清除默认样式 */
+view, text, image, button, input, textarea, navigator {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* input 组件重置 line-height（WeChat 原生 input 不支持继承的 line-height） */
+input, textarea {
+  line-height: normal;
+}
+
+/* Flex 工具类 */
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.flex-center { align-items: center; justify-content: center; }
+.flex-between { justify-content: space-between; }
+.flex-1 { flex: 1; }

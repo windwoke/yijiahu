@@ -1,0 +1,410 @@
+/* 照护对象详情页 */
+
+.detail-page {
+  min-height: 100vh;
+  background-color: #FAF9F7;
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-scroll {
+  flex: 1;
+  height: 0;
+}
+
+/* 导航栏 */
+.detail-navbar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16rpx 24rpx;
+  padding-top: calc(16rpx + env(safe-area-inset-top));
+  background-color: #ffffff;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
+  z-index: 100;
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  padding: 8rpx;
+}
+
+.navbar-back {
+  font-size: 56rpx;
+  color: #2C2C2C;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.navbar-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #2C2C2C;
+  flex: 1;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.navbar-right {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.navbar-edit {
+  font-size: 28rpx;
+  color: #7B9E87;
+  font-weight: 600;
+  padding: 8rpx 16rpx;
+  background-color: rgba(123, 158, 135, 0.1);
+  border-radius: 16rpx;
+}
+
+.navbar-delete {
+  font-size: 28rpx;
+  color: #E07B5D;
+  font-weight: 600;
+  padding: 8rpx 16rpx;
+  background-color: rgba(224, 123, 93, 0.1);
+  border-radius: 16rpx;
+}
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+
+.loading-text {
+  font-size: 28rpx;
+  color: #B0ADAD;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  gap: 16rpx;
+}
+
+.empty-emoji {
+  font-size: 96rpx;
+  line-height: 1;
+}
+
+.empty-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #2C2C2C;
+}
+
+/* 头部卡片 */
+.header-card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 24rpx;
+  padding: 32rpx;
+  background-color: #ffffff;
+  margin: 24rpx;
+  border-radius: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+}
+
+.header-avatar {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  background-color: rgba(123, 158, 135, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.header-avatar-text {
+  font-size: 64rpx;
+  line-height: 1;
+}
+
+.header-info {
+  flex: 1;
+}
+
+.header-name {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #2C2C2C;
+  margin-bottom: 12rpx;
+}
+
+.header-tags {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8rpx;
+}
+
+.tag {
+  padding: 6rpx 16rpx;
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 12rpx;
+}
+
+.tag-blood {
+  background-color: rgba(224, 123, 93, 0.1);
+}
+
+.tag-text {
+  font-size: 24rpx;
+  color: #6B6B6B;
+  line-height: 1;
+}
+
+/* 区块 */
+.section {
+  padding: 0 24rpx 24rpx;
+}
+
+.section-title-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+  padding: 0 8rpx;
+}
+
+.section-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #2C2C2C;
+  display: block;
+  margin-bottom: 16rpx;
+  padding: 0 8rpx;
+}
+
+/* 警示卡 */
+.alert-card {
+  background-color: #ffffff;
+  border-radius: 20rpx;
+  padding: 8rpx 0;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+}
+
+.alert-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 12rpx;
+  padding: 16rpx 24rpx;
+}
+
+.alert-row-warning {
+  background-color: rgba(224, 123, 93, 0.05);
+}
+
+.alert-icon {
+  font-size: 28rpx;
+  line-height: 1.5;
+  flex-shrink: 0;
+}
+
+.alert-label {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #6B6B6B;
+  flex-shrink: 0;
+  width: 80rpx;
+}
+
+.alert-value {
+  font-size: 26rpx;
+  color: #2C2C2C;
+  flex: 1;
+  line-height: 1.5;
+}
+
+/* 信息卡 */
+.info-card {
+  background-color: #ffffff;
+  border-radius: 20rpx;
+  padding: 8rpx 0;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+}
+
+.info-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 16rpx;
+  padding: 20rpx 24rpx;
+  border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.info-label {
+  font-size: 26rpx;
+  color: #6B6B6B;
+  flex-shrink: 0;
+  width: 140rpx;
+}
+
+.info-value {
+  font-size: 26rpx;
+  color: #2C2C2C;
+  flex: 1;
+  line-height: 1.5;
+}
+
+.info-value-link {
+  color: #7B9E87;
+}
+
+.info-empty {
+  font-size: 26rpx;
+  color: #B0ADAD;
+  padding: 24rpx;
+  text-align: center;
+}
+
+/* 药品管理 */
+.add-med-btn {
+  padding: 6rpx 20rpx;
+  background-color: rgba(123, 158, 135, 0.1);
+  border-radius: 16rpx;
+}
+
+.add-med-btn-text {
+  font-size: 24rpx;
+  color: #7B9E87;
+  font-weight: 600;
+}
+
+.med-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.med-card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #ffffff;
+  border-radius: 16rpx;
+  padding: 20rpx 24rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+}
+
+.med-card-left {
+  flex: 1;
+}
+
+.med-card-name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #2C2C2C;
+  display: block;
+  margin-bottom: 4rpx;
+}
+
+.med-card-dose {
+  font-size: 24rpx;
+  color: #6B6B6B;
+}
+
+.med-card-right {
+  flex-shrink: 0;
+}
+
+.med-card-freq {
+  font-size: 24rpx;
+  color: #7B9E87;
+  font-weight: 500;
+  background-color: rgba(123, 158, 135, 0.1);
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+}
+
+.empty-card {
+  background-color: #ffffff;
+  border-radius: 16rpx;
+  padding: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-card-text {
+  font-size: 26rpx;
+  color: #B0ADAD;
+}
+
+/* 删除按钮 */
+.delete-btn {
+  background-color: #ffffff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2rpx solid rgba(224, 123, 93, 0.3);
+}
+
+.delete-btn-text {
+  font-size: 28rpx;
+  color: #E07B5D;
+  font-weight: 500;
+}
+
+.bottom-pad {
+  height: 80rpx;
+}
+
+.bottom-pad-for-fab {
+  height: 180rpx;
+}
+
+/* FAB 添加药品按钮 */
+.fab-add-med {
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom) + 32rpx);
+  right: 32rpx;
+  z-index: 100;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8rpx;
+  background: linear-gradient(135deg, #7B9E87 0%, #5C8268 100%);
+  border-radius: 56rpx;
+  padding: 16rpx 28rpx;
+  box-shadow: 0 8rpx 24rpx rgba(123, 158, 135, 0.4);
+}
+
+.fab-add-med-icon {
+  font-size: 36rpx;
+  color: #ffffff;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.fab-add-med-label {
+  font-size: 26rpx;
+  color: #ffffff;
+  font-weight: 600;
+  white-space: nowrap;
+}

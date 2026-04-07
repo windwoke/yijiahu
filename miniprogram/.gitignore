@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Compiled output (Taro build)
+dist/
+
+# Taro / SWC cache
+.swc/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# WeChat private config (contains appid/secret)
+project.private.config.json
+
+# OS
+.DS_Store
+Thumbs.db

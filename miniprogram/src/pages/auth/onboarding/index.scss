@@ -1,0 +1,308 @@
+/**
+ * 家庭引导页样式
+ * 与 Flutter family_onboarding.dart 完全对齐
+ */
+
+// ─── 全屏遮罩容器 ──────────────────────────────────────────────────────
+.onboarding-page {
+  width: 100%;
+  min-height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  position: relative;
+  box-sizing: border-box;
+}
+
+.onboard-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-left: 32rpx;
+  padding-right: 32rpx;
+  box-sizing: border-box;
+}
+
+// ─── 居中卡片 ──────────────────────────────────────────────────────────
+.onboard-card {
+  width: 100%;
+  background-color: #FFFFFF;
+  border-radius: 24rpx;
+  padding: 48rpx 40rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.12);
+  box-sizing: border-box;
+}
+
+// ─── 图标 ────────────────────────────────────────────────────────────────
+.onboard-icon-wrap {
+  width: 128rpx;
+  height: 128rpx;
+  background-color: rgba(123, 158, 135, 0.1);
+  border-radius: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 32rpx;
+  box-sizing: border-box;
+}
+
+.onboard-icon {
+  font-size: 64rpx;
+  line-height: 1;
+}
+
+// ─── 标题 ────────────────────────────────────────────────────────────────
+.onboard-title {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #2C2C2C;
+  margin-bottom: 12rpx;
+}
+
+.onboard-subtitle {
+  font-size: 28rpx;
+  color: #6B6B6B;
+  margin-bottom: 40rpx;
+}
+
+// ─── 一行两按钮 ─────────────────────────────────────────────────────────
+.onboard-actions {
+  width: 100%;
+  display: flex;
+  gap: 24rpx;
+  box-sizing: border-box;
+}
+
+.onboard-action-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 36rpx;
+  padding-bottom: 36rpx;
+  border-radius: 24rpx;
+  box-sizing: border-box;
+}
+
+.onboard-action-create {
+  background-color: rgba(123, 158, 135, 0.08);
+  border-width: 2rpx;
+  border-color: rgba(123, 158, 135, 0.2);
+  border-style: solid;
+}
+
+.onboard-action-join {
+  background-color: rgba(74, 144, 217, 0.08);
+  border-width: 2rpx;
+  border-color: rgba(74, 144, 217, 0.2);
+  border-style: solid;
+}
+
+.onboard-action-emoji {
+  font-size: 56rpx;
+  margin-bottom: 16rpx;
+  line-height: 1;
+}
+
+.onboard-action-label {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #7B9E87;
+}
+
+.onboard-action-join .onboard-action-label {
+  color: #4A90D9;
+}
+
+// ─── 加入视图 ───────────────────────────────────────────────────────────
+.onboard-input {
+  width: 100%;
+  background-color: #FAF9F7;
+  border-radius: 24rpx;
+  padding: 24rpx 32rpx;
+  font-size: 30rpx;
+  color: #2C2C2C;
+  box-sizing: border-box;
+  border: 2rpx solid transparent;
+  letter-spacing: 4rpx;
+  line-height: 1 !important;
+  height: auto !important;
+}
+
+.onboard-input-error {
+  border-color: #E07B5D;
+}
+
+.onboard-placeholder {
+  color: #B0ADAD;
+  letter-spacing: 0;
+}
+
+.onboard-error {
+  font-size: 24rpx;
+  color: #E07B5D;
+  margin-top: 16rpx;
+  align-self: flex-start;
+}
+
+.onboard-join-actions {
+  width: 100%;
+  display: flex;
+  gap: 24rpx;
+  margin-top: 32rpx;
+  box-sizing: border-box;
+}
+
+.onboard-btn-cancel {
+  flex: 1;
+  height: 96rpx;
+  background-color: #FAF9F7;
+  border-radius: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-width: 2rpx;
+  border-color: #E8E6E2;
+  border-style: solid;
+  box-sizing: border-box;
+}
+
+.onboard-btn-cancel-text {
+  font-size: 30rpx;
+  font-weight: 500;
+  color: #6B6B6B;
+}
+
+.onboard-btn-confirm {
+  flex: 1;
+  height: 96rpx;
+  background-color: #4A90D9;
+  border-radius: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.onboard-btn-disabled {
+  opacity: 0.6;
+}
+
+.onboard-btn-confirm-text {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #FFFFFF;
+}
+
+// ─── 加载状态 ───────────────────────────────────────────────────────────
+.onboard-loading-text {
+  font-size: 28rpx;
+  color: #6B6B6B;
+  padding-top: 40rpx;
+  padding-bottom: 40rpx;
+}
+
+// ─── 创建家庭 Sheet（居中弹窗）──────────────────────────────────────
+.create-sheet-overlay {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 48rpx;
+  box-sizing: border-box;
+}
+
+.create-sheet {
+  width: 100%;
+  background-color: #FFFFFF;
+  border-radius: 32rpx;
+  padding: 40rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.15);
+}
+
+.create-sheet-handle {
+  display: none; /* 居中弹窗不需要拖动条 */
+}
+
+.create-sheet-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #2C2C2C;
+  margin-bottom: 12rpx;
+}
+
+.create-sheet-subtitle {
+  font-size: 28rpx;
+  color: #6B6B6B;
+  margin-bottom: 32rpx;
+}
+
+.create-sheet-input {
+  width: 100%;
+  background-color: #FAF9F7;
+  border-radius: 24rpx;
+  padding: 24rpx 32rpx;
+  font-size: 30rpx;
+  color: #2C2C2C;
+  box-sizing: border-box;
+  border: 2rpx solid transparent;
+  line-height: 1 !important;
+  height: auto !important;
+}
+
+.create-sheet-input-error {
+  border-color: #E07B5D;
+}
+
+.create-sheet-placeholder {
+  color: #B0ADAD;
+}
+
+.create-sheet-error {
+  font-size: 24rpx;
+  color: #E07B5D;
+  margin-top: 16rpx;
+  align-self: flex-start;
+}
+
+.create-sheet-btn {
+  width: 100%;
+  background-color: #7B9E87;
+  border-radius: 48rpx;
+  padding: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 32rpx;
+  box-sizing: border-box;
+}
+
+.create-sheet-btn-disabled {
+  opacity: 0.6;
+}
+
+.create-sheet-btn-text {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #FFFFFF;
+}
+
+.create-sheet-cancel {
+  font-size: 28rpx;
+  color: #6B6B6B;
+  margin-top: 16rpx;
+  padding: 16rpx;
+}

@@ -1,0 +1,876 @@
+/* 照护日志页 - 与 Flutter 参考设计对齐 */
+
+/* 主容器 */
+.care-log-page {
+  min-height: 100vh;
+  background-color: #FAF9F7;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* 状态栏占位 */
+.status-bar {
+  height: 44rpx;
+  background-color: #FAF9F7;
+}
+
+/* 页面标题 */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16rpx 32rpx 8rpx;
+}
+
+.page-title {
+  font-size: 44rpx;
+  font-weight: 700;
+  color: #2C2C2C;
+  letter-spacing: 1rpx;
+}
+
+.timeline-badge {
+  display: flex;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 20rpx;
+  padding: 8rpx 20rpx;
+}
+
+.timeline-badge-text {
+  font-size: 24rpx;
+  color: #6B6B6B;
+}
+
+/* 照护对象切换器 */
+.recipient-switcher {
+  height: 80rpx;
+  padding: 0 24rpx;
+}
+
+.recipient-chips {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12rpx;
+  padding: 4rpx 0;
+  white-space: nowrap;
+}
+
+.recipient-chip {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8rpx;
+  padding: 12rpx 20rpx;
+  background-color: #ffffff;
+  border-radius: 24rpx;
+  border: 2rpx solid #E8E8E8;
+  flex-shrink: 0;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+}
+
+.recipient-chip.selected {
+  background-color: #7B9E87;
+  border-color: #7B9E87;
+  box-shadow: 0 4rpx 16rpx rgba(123, 158, 135, 0.3);
+}
+
+.chip-emoji {
+  font-size: 28rpx;
+  line-height: 1;
+}
+
+.chip-name {
+  font-size: 26rpx;
+  font-weight: 500;
+  color: #6B6B6B;
+  white-space: nowrap;
+}
+
+.chip-name.selected {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* 类型筛选行 */
+.type-filter-row {
+  height: 72rpx;
+  padding: 0 24rpx;
+}
+
+.type-chips {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12rpx;
+  padding: 4rpx 0;
+  white-space: nowrap;
+}
+
+.type-chip {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6rpx;
+  padding: 10rpx 20rpx;
+  background-color: #ffffff;
+  border-radius: 20rpx;
+  border: 2rpx solid #E8E8E8;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.type-chip.active {
+  border-color: transparent;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+}
+
+.type-chip-emoji {
+  font-size: 26rpx;
+  line-height: 1;
+}
+
+.type-chip-icon {
+  width: 28rpx;
+  height: 28rpx;
+  flex-shrink: 0;
+}
+
+.type-chip-label {
+  font-size: 26rpx;
+  font-weight: 500;
+  color: #6B6B6B;
+}
+
+.type-chip-label.active {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* 时间线滚动区 */
+.timeline-scroll {
+  flex: 1;
+  height: calc(100vh - 240rpx);
+  padding: 0 24rpx;
+}
+
+/* 日期分组 */
+.day-group {
+  margin-bottom: 16rpx;
+  padding-right: 24rpx;
+  box-sizing: border-box;
+}
+
+/* 日期头：pill 标签 + 横向分隔线 */
+.date-header {
+  display: flex;
+  align-items: center;
+  margin: 24rpx 0 16rpx;
+  gap: 16rpx;
+}
+
+/* 日志条目：左侧 emoji 圆形指示器 + 右侧卡片 */
+.log-item-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  margin-bottom: 16rpx;
+  gap: 12rpx;
+}
+
+/* 左侧指示器：52rpx 宽列，圆形 emoji */
+.log-indicator {
+  width: 52rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  padding-top: 20rpx; /* 对齐卡片内文字行 */
+}
+
+.log-indicator-circle {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  border-width: 3rpx;
+  border-style: solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.log-indicator-emoji {
+  font-size: 24rpx;
+  line-height: 1;
+}
+
+/* 右侧卡片 */
+.log-card {
+  flex: 1;
+  background-color: #ffffff;
+  border-radius: 24rpx;
+  padding: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+}
+
+.date-label-wrap {
+  flex-shrink: 0;
+  border-radius: 16rpx;
+  padding: 6rpx 20rpx;
+}
+
+.date-label-wrap.today {
+  background-color: #7B9E87;
+}
+
+.date-label-wrap.yesterday {
+  background-color: #E07B5D;
+}
+
+.date-label-wrap.past {
+  background-color: rgba(0, 0, 0, 0.06);
+}
+
+.date-label {
+  font-size: 26rpx;
+  font-weight: 600;
+}
+
+.date-label.today,
+.date-label.yesterday {
+  color: #ffffff;
+}
+
+.date-label.past {
+  color: #6B6B6B;
+}
+
+.date-line {
+  flex: 1;
+  height: 1rpx;
+  background-color: rgba(0, 0, 0, 0.08);
+}
+
+
+/* 卡片顶部行：时间 + 类型标签 + Spacer + 头像 + 名字 */
+.log-card-top-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: 10rpx;
+  gap: 10rpx;
+}
+
+.log-time {
+  font-size: 24rpx;
+  color: #B0ADAD;
+  flex-shrink: 0;
+}
+
+.log-type-badge {
+  padding: 4rpx 12rpx;
+  border-radius: 12rpx;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4rpx;
+}
+
+.log-type-badge-emoji {
+  font-size: 22rpx;
+  line-height: 1;
+}
+
+.log-type-badge-text {
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+/* 卡片右上角：头像 + 名字 */
+.log-card-top-right {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6rpx;
+  margin-left: auto;
+  flex-shrink: 0;
+  max-width: 50%;
+}
+
+.log-author-avatar {
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.log-author-avatar-placeholder {
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  background-color: #7B9E87;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.log-author-avatar-text {
+  font-size: 20rpx;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.log-author-name {
+  font-size: 24rpx;
+  color: #6B6B6B;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 日志内容 */
+.log-content {
+  font-size: 30rpx;
+  color: #2C2C2C;
+  line-height: 1.6;
+  display: block;
+  word-break: break-all;
+}
+
+/* 操作按钮行 */
+.log-actions-row {
+  display: flex;
+  flex-direction: row;
+  gap: 20rpx;
+  margin-top: 12rpx;
+}
+
+.log-action-btn {
+  font-size: 24rpx;
+  color: #7B9E87;
+  padding: 4rpx 8rpx;
+  border-radius: 8rpx;
+}
+
+.log-action-btn.log-action-delete {
+  color: #E07B5D;
+}
+
+/* ─── 日志编辑表单 ─────────────────────────────────────────────────── */
+.log-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.log-edit-type-row {
+  display: flex;
+  flex-direction: row;
+  gap: 8rpx;
+  flex-wrap: wrap;
+}
+
+.log-edit-type-chip {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  background-color: #F0EEEB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &.active {
+    box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.15);
+  }
+}
+
+.log-edit-type-icon {
+  width: 28rpx;
+  height: 28rpx;
+}
+
+.log-edit-input {
+  width: 100%;
+  min-height: 120rpx;
+  background-color: #F5F5F5;
+  border-radius: 16rpx;
+  padding: 16rpx;
+  font-size: 30rpx;
+  color: #2C2C2C;
+  line-height: 1.6;
+  box-sizing: border-box;
+  border: none;
+}
+
+.log-edit-actions {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  gap: 16rpx;
+}
+
+.log-edit-cancel {
+  font-size: 28rpx;
+  color: #6B6B6B;
+  padding: 8rpx 16rpx;
+}
+
+.log-edit-save {
+  font-size: 28rpx;
+  color: #7B9E87;
+  font-weight: 600;
+  padding: 8rpx 16rpx;
+
+  &.disabled {
+    color: #B0ADAD;
+  }
+}
+
+/* ─── 附件 ────────────────────────────────────────────────────────── */
+.attach-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  padding: 8rpx 0;
+}
+
+.attach-thumb {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 12rpx;
+  overflow: hidden;
+  position: relative;
+}
+
+.attach-img {
+  width: 100%;
+  height: 100%;
+}
+
+.attach-uploading {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.attach-uploading-text {
+  font-size: 20rpx;
+  color: #ffffff;
+}
+
+.attach-failed {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(224,123,93,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.attach-failed-text {
+  font-size: 20rpx;
+  color: #ffffff;
+}
+
+.attach-remove {
+  position: absolute;
+  top: 4rpx;
+  right: 4rpx;
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  background-color: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.attach-remove-icon {
+  width: 20rpx;
+  height: 20rpx;
+}
+
+.attach-add-btn {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 12rpx;
+  border: 2rpx dashed #E8E6E2;
+  background-color: #FAF9F7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.attach-add-icon-img {
+  width: 40rpx;
+  height: 40rpx;
+}
+
+/* 附件网格 */
+.attachment-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8rpx;
+  margin-top: 16rpx;
+}
+
+.attachment-item {
+  position: relative;
+  border-radius: 12rpx;
+  overflow: hidden;
+  aspect-ratio: 1;
+}
+
+.attachment-item.single {
+  grid-column: span 2;
+  max-width: 400rpx;
+  aspect-ratio: 16/9;
+}
+
+.attachment-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.attachment-more {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12rpx;
+}
+
+.attachment-more-text {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+/* 加载更多 */
+.loading-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32rpx;
+}
+
+.loading-text {
+  font-size: 26rpx;
+  color: #B0ADAD;
+}
+
+/* 到底提示 */
+.end-tip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32rpx;
+}
+
+.end-tip-text {
+  font-size: 24rpx;
+  color: #B0ADAD;
+}
+
+/* 底部留白 */
+.bottom-pad {
+  height: 160rpx;
+}
+
+/* 空状态 */
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80rpx 48rpx;
+  gap: 16rpx;
+}
+
+.empty-icon-img {
+  width: 120rpx;
+  height: 120rpx;
+  margin-bottom: 8rpx;
+}
+
+.empty-title {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #2C2C2C;
+}
+
+.empty-desc {
+  font-size: 28rpx;
+  color: #B0ADAD;
+  text-align: center;
+}
+
+/* FAB 记一笔 — 使用图标 */
+.fab {
+  position: fixed;
+  right: 32rpx;
+  bottom: 120rpx;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8rpx;
+  background: linear-gradient(135deg, #7B9E87 0%, #5C8268 100%);
+  border-radius: 48rpx;
+  padding: 20rpx 36rpx;
+  box-shadow: 0 8rpx 24rpx rgba(123, 158, 135, 0.45);
+  z-index: 100;
+}
+
+.fab-icon {
+  width: 28rpx;
+  height: 28rpx;
+  flex-shrink: 0;
+}
+
+.fab-label {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+/* 底部弹窗遮罩 */
+.sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* 添加日志弹窗 */
+.add-sheet {
+  width: 100%;
+  background-color: #ffffff;
+  border-radius: 32rpx 32rpx 0 0;
+  padding: 0 0 env(safe-area-inset-bottom);
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.25s ease;
+  overflow-y: auto;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+/* 拖拽条 */
+.sheet-handle {
+  width: 80rpx;
+  height: 8rpx;
+  background-color: #E0E0E0;
+  border-radius: 4rpx;
+  align-self: center;
+  margin: 16rpx 0 0;
+  flex-shrink: 0;
+}
+
+/* 头部 */
+.sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx 32rpx 12rpx;
+  flex-shrink: 0;
+}
+
+.sheet-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #2C2C2C;
+}
+
+.sheet-close-btn {
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sheet-close-icon {
+  width: 40rpx;
+  height: 40rpx;
+}
+
+/* 弹窗内分区 */
+.sheet-section {
+  padding: 12rpx 32rpx 8rpx;
+  flex-shrink: 0;
+}
+
+.attach-section {
+  padding-bottom: calc(32rpx + env(safe-area-inset-bottom));
+}
+
+.sheet-label {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #6B6B6B;
+  display: block;
+  margin-bottom: 12rpx;
+}
+
+/* 弹窗照护对象选择 */
+.sheet-recipients {
+  height: 80rpx;
+}
+
+.sheet-recipient-chips {
+  display: flex;
+  flex-direction: row;
+  gap: 12rpx;
+  align-items: center;
+  padding: 4rpx 0;
+}
+
+.sheet-recipient-chip {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8rpx;
+  padding: 10rpx 20rpx;
+  background-color: #F5F5F5;
+  border-radius: 20rpx;
+  border: 2rpx solid transparent;
+  flex-shrink: 0;
+}
+
+.sheet-recipient-chip.selected {
+  background-color: rgba(123, 158, 135, 0.1);
+  border-color: #7B9E87;
+}
+
+.sheet-recipient-chip .chip-name {
+  font-size: 26rpx;
+  color: #6B6B6B;
+  font-weight: 500;
+}
+
+.sheet-recipient-chip.selected .chip-name {
+  color: #7B9E87;
+  font-weight: 600;
+}
+
+/* 弹窗类型选择：Wrap 排列 */
+.sheet-type-row {
+  // no longer used, replaced by wrap
+}
+
+.sheet-type-chips-wrap {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  align-items: center;
+}
+
+.sheet-type-chip {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6rpx;
+  padding: 10rpx 20rpx;
+  background-color: #F5F5F5;
+  border-radius: 20rpx;
+  border: 2rpx solid transparent;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.sheet-type-chip.active {
+  border-color: transparent;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+}
+
+.sheet-type-icon {
+  width: 28rpx;
+  height: 28rpx;
+  flex-shrink: 0;
+}
+
+.sheet-type-label {
+  font-size: 26rpx;
+  font-weight: 500;
+  color: #6B6B6B;
+}
+
+.sheet-type-label.active {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* 内容输入框 */
+.content-input-wrap {
+  border-radius: 20rpx;
+  overflow: hidden;
+}
+
+.content-input {
+  width: 100%;
+  min-height: 200rpx;
+  background-color: #F5F5F5;
+  border-radius: 20rpx;
+  padding: 24rpx;
+  font-size: 30rpx;
+  color: #2C2C2C;
+  line-height: 1.6;
+  box-sizing: border-box;
+  border: none;
+  outline: none;
+  placeholder-color: #B0ADAD;
+}
+
+/* 底部发送按钮 */
+.sheet-footer {
+  padding: 12rpx 32rpx 16rpx;
+  flex-shrink: 0;
+}
+
+.send-btn {
+  width: 100%;
+  background-color: #7B9E87;
+  border-radius: 24rpx;
+  padding: 24rpx;
+  box-shadow: 0 4rpx 12rpx rgba(123, 158, 135, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.send-btn.disabled {
+  background-color: #C8C8C8;
+  box-shadow: none;
+}
+
+.send-btn-text {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #ffffff;
+}

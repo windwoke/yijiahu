@@ -1,0 +1,25 @@
+/*!
+ * 一家护品牌色 CSS 变量
+ * 对应 Flutter AppColors.ts
+ * 注意：WXSS 中 CSS 变量用于单独属性，不用于 shorthand
+ */
+
+page {
+  --color-primary: #7B9E87;
+  --color-primary-light: #A3BDA6;
+  --color-primary-dark: #5C8268;
+  --color-coral: #E07B5D;
+  --color-coral-light: #F09A7E;
+  --color-blue: #4A90D9;
+  --color-background: #FAF9F7;
+  --color-surface: #FFFFFF;
+  --color-surface-gray: #F5F5F5;
+  --color-text-primary: #2C2C2C;
+  --color-text-secondary: #6B6B6B;
+  --color-text-tertiary: #B0ADAD;
+  --color-success: #6BA07E;
+  --color-warning: #D4A855;
+  --color-error: #E07B5D;
+  --color-info: #4A90D9;
+  --color-border: #E8E6E2;
+}

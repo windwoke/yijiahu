@@ -5,6 +5,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { PlatformInterceptor } from './common/interceptors/platform.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -23,6 +24,9 @@ async function bootstrap() {
 
   // 全局过滤器 - 统一响应格式
   app.useGlobalFilters(new HttpExceptionFilter());
+
+  // 全局拦截器 - X-Platform 平台识别
+  app.useGlobalInterceptors(new PlatformInterceptor());
 
   // CORS
   app.enableCors({

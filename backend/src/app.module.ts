@@ -20,6 +20,7 @@ import { CaregiverRecordModule } from './caregiver-record/caregiver-record.modul
 import { DailyCareCheckinModule } from './daily-care-checkin/daily-care-checkin.module';
 import { SosModule } from './sos/sos.module';
 import { NotificationModule } from './notification/notification.module';
+import { WechatModule } from './wechat/wechat.module';
 
 @Module({
   imports: [
@@ -66,6 +67,7 @@ import { NotificationModule } from './notification/notification.module';
     DailyCareCheckinModule,
     SosModule,
     NotificationModule,
+    WechatModule,
   ],
 })
 export class AppModule {}

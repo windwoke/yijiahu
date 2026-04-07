@@ -81,3 +81,14 @@ coverage/
 *.aab
 *.app
 *.ipa
+
+# WeChat Miniprogram (Taro)
+miniprogram/node_modules/
+miniprogram/dist/
+miniprogram/.swc/
+
+# Shared (TypeScript models/utils — NOT the source itself)
+# shared/ is committed as part of migration
+
+# Landing page
+landing/node_modules/

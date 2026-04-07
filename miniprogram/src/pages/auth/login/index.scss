@@ -1,0 +1,269 @@
+/* 登录页 - 与 Flutter login_page.dart 风格对齐 */
+/* 设计稿 375px，所有值用 rpx（750rpx = 375px） */
+
+/* 全屏容器 */
+.login-page {
+  min-height: 100vh;
+  background-color: #FAF9F7;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 浅渐变背景 */
+.bg-gradient {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 600rpx;
+  background: linear-gradient(180deg, #EFF5F2 0%, #FAF9F7 100%);
+  z-index: 0;
+}
+
+/* 右上角装饰圆 */
+.bg-circle-top {
+  position: absolute;
+  top: -100rpx;
+  right: -100rpx;
+  width: 360rpx;
+  height: 360rpx;
+  background-color: rgba(123, 158, 135, 0.06);
+  border-radius: 50%;
+  z-index: 0;
+}
+
+/* 左下角装饰圆 */
+.bg-circle-bottom {
+  position: absolute;
+  bottom: 180rpx;
+  left: -120rpx;
+  width: 280rpx;
+  height: 280rpx;
+  background-color: rgba(224, 123, 93, 0.05);
+  border-radius: 50%;
+  z-index: 0;
+}
+
+/* 内容区 */
+.login-content {
+  position: relative;
+  z-index: 1;
+  padding: 0 48rpx;
+  padding-top: 120rpx;
+}
+
+/* Logo 区域 */
+.logo-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 80rpx;
+}
+
+.logo-icon-wrap {
+  width: 144rpx;
+  height: 144rpx;
+  background: linear-gradient(135deg, #7B9E87 0%, #A3BDA6 100%);
+  border-radius: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 40rpx rgba(123, 158, 135, 0.3);
+  margin-bottom: 32rpx;
+}
+
+.logo-heart {
+  width: 64rpx;
+  height: 64rpx;
+}
+
+.logo-name {
+  font-size: 52rpx;
+  font-weight: 800;
+  color: #2C2C2C;
+  letter-spacing: 2rpx;
+  margin-bottom: 12rpx;
+}
+
+.logo-slogan {
+  font-size: 28rpx;
+  color: #6B6B6B;
+}
+
+/* 面板容器 */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+/* 字段行（图标 + 输入框） */
+.field-row {
+  display: flex;
+  align-items: center;
+  background-color: #ffffff;
+  border: 2rpx solid #E8E6E2;
+  border-radius: 28rpx;
+  padding: 0 32rpx;
+  height: 100rpx;
+}
+
+.field-row:focus-within {
+  border-color: #7B9E87;
+}
+
+/* PNG 图标（对应 Flutter prefixIcon） */
+.field-icon-img {
+  width: 48rpx;
+  height: 48rpx;
+  flex-shrink: 0;
+  margin-right: 16rpx;
+}
+
+.field-input {
+  flex: 1;
+  height: 100rpx;
+  font-size: 30rpx;
+  color: #2C2C2C;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.field-error {
+  border-color: #E07B5D !important;
+}
+
+.field-error-msg {
+  font-size: 24rpx;
+  color: #E07B5D;
+  padding-left: 16rpx;
+  margin-top: 8rpx;
+}
+
+.field-placeholder {
+  color: #B0ADAD;
+  font-size: 28rpx;
+}
+
+/* 验证码行 */
+.code-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.code-field {
+  flex: 1;
+  min-width: 0;
+}
+
+.btn-code {
+  width: 220rpx;
+  height: 100rpx;
+  background-color: #7B9E87;
+  color: #ffffff;
+  border-radius: 28rpx;
+  font-size: 26rpx;
+  font-weight: 500;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.btn-code::after {
+  border: none;
+}
+
+.btn-code-disabled {
+  background-color: #E8E6E2;
+  color: #B0ADAD;
+}
+
+/* 微信主按钮 */
+.btn-wechat-primary {
+  height: 100rpx;
+  background-color: #07c160;
+  color: #ffffff;
+  border-radius: 28rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.btn-wechat-primary::after {
+  border: none;
+}
+
+.btn-wechat-text {
+  font-size: 32rpx;
+  font-weight: 600;
+}
+
+/* 主按钮（绿色） */
+.btn-primary {
+  height: 100rpx;
+  background-color: #7B9E87;
+  color: #ffffff;
+  border-radius: 28rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.btn-primary::after {
+  border: none;
+}
+
+.btn-disabled {
+  opacity: 0.6;
+}
+
+/* 幽灵按钮 */
+.btn-ghost {
+  background: transparent;
+  border: none;
+  color: #7B9E87;
+  font-size: 28rpx;
+  font-weight: 500;
+  padding: 16rpx 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-ghost::after {
+  border: none;
+}
+
+/* 免责声明（水平居中） */
+.disclaimer-wrap {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  margin-top: 48rpx;
+  gap: 0;
+}
+
+.disclaimer {
+  font-size: 22rpx;
+  color: #B0ADAD;
+  line-height: 1.6;
+}
+
+.link {
+  font-size: 22rpx;
+  color: #7B9E87;
+}

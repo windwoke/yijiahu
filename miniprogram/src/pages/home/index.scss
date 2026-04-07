@@ -1,0 +1,858 @@
+/**
+ * 首页样式 - 与 Flutter home_page.dart 完全对齐
+ * 设计稿 375px，所有值用 rpx（750rpx = 375px）
+ */
+
+// ─── 全局变量 ────────────────────────────────────────────────────────────────
+$color-primary: #7B9E87;      // 鼠尾草绿
+$color-coral: #E07B5D;        // 珊瑚色
+$color-blue: #4A90D9;          // 蓝色
+$color-success: #6BA07E;      // 绿色
+$color-warning: #F5A623;       // 警告色
+$color-bg: #FAF9F7;            // 背景色
+$color-surface: #FFFFFF;        // 卡片背景
+$color-text-primary: #2C2C2C;  // 主文字
+$color-text-secondary: #6B6B6B;// 次文字
+$color-text-tertiary: #B0ADAD; // 弱文字
+$color-shadow: rgba(0,0,0,0.06);
+$color-shadow-soft: rgba(0,0,0,0.04);
+$color-card-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+
+// ─── 全屏容器 ────────────────────────────────────────────────────────────────
+.home-page {
+  min-height: 100vh;
+  height: 100vh;
+  background-color: $color-bg;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  box-sizing: border-box;
+}
+
+// ─── 玻璃态顶栏 ─────────────────────────────────────────────────────────────
+.glass-bar {
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20rpx);
+  -webkit-backdrop-filter: blur(20rpx);
+  border-radius: 40rpx;
+  margin: 16rpx;
+  box-shadow: 0 2rpx 16rpx $color-shadow;
+  border: 1rpx solid rgba(0, 0, 0, 0.04);
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.glass-bar-inner {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 32rpx;
+  height: 112rpx;
+  box-sizing: border-box;
+}
+
+.family-avatar {
+  width: 72rpx;
+  height: 72rpx;
+  background-color: #F0F0F0;
+  border-radius: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.avatar-icon {
+  width: 36rpx;
+  height: 36rpx;
+}
+
+.family-info {
+  flex: 1;
+  margin-left: 20rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+  overflow: hidden;
+}
+
+.family-name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: $color-text-primary;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.member-row {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.member-icon {
+  width: 24rpx;
+  height: 24rpx;
+}
+
+.member-count {
+  font-size: 24rpx;
+  color: $color-text-secondary;
+  font-weight: 500;
+}
+
+.bell-btn {
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.bell-icon {
+  width: 44rpx;
+  height: 44rpx;
+}
+
+.bell-badge {
+  position: absolute;
+  top: 8rpx;
+  right: 8rpx;
+  min-width: 32rpx;
+  height: 32rpx;
+  background-color: $color-coral;
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6rpx;
+  box-sizing: border-box;
+}
+
+.bell-badge-text {
+  font-size: 18rpx;
+  font-weight: 700;
+  color: #FFFFFF;
+  line-height: 1;
+}
+
+// ─── 可滚动区域 ──────────────────────────────────────────────────────────────
+.home-scroll {
+  flex: 1;
+  height: 0; // flex:1 + 0 分配剩余空间
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+// ─── 加载状态 ────────────────────────────────────────────────────────────────
+.loading-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 80rpx 0;
+}
+
+.loading-text {
+  font-size: 28rpx;
+  color: $color-text-secondary;
+}
+
+// ─── 无照护对象空状态卡片 ───────────────────────────────────────────────────
+.empty-state-card {
+  margin: 32rpx;
+  padding: 64rpx 32rpx;
+  background-color: $color-surface;
+  border-radius: 32rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 4rpx 24rpx $color-shadow-soft, 0 2rpx 8rpx rgba(0,0,0,0.04);
+}
+
+.empty-emoji-img {
+  width: 128rpx;
+  height: 128rpx;
+  margin-bottom: 32rpx;
+}
+
+.empty-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: $color-text-primary;
+  margin-bottom: 12rpx;
+  text-align: center;
+}
+
+.empty-subtitle {
+  font-size: 28rpx;
+  color: $color-text-secondary;
+  text-align: center;
+  line-height: 1.5;
+  margin-bottom: 32rpx;
+}
+
+.empty-add-btn {
+  padding: 20rpx 48rpx;
+  background-color: #7B9E87;
+  border-radius: 48rpx;
+  box-shadow: 0 4rpx 16rpx rgba(123, 158, 135, 0.4);
+}
+
+.empty-add-btn-text {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+// ─── 照护对象 Section ───────────────────────────────────────────────────────
+.recipient-section {
+  padding: 0 32rpx;
+  margin-bottom: 24rpx;
+}
+
+// ─── 照护对象头部卡片 ────────────────────────────────────────────────────────
+.recipient-header-card {
+  background-color: $color-surface;
+  border-radius: 24rpx;
+  box-shadow: 0 4rpx 16rpx $color-shadow-soft, 0 2rpx 8rpx rgba(0,0,0,0.04);
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+  margin-bottom: 16rpx;
+}
+
+.recipient-left {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 24rpx;
+  gap: 16rpx;
+}
+
+.recipient-avatar {
+  width: 80rpx;
+  height: 80rpx;
+  background-color: #F5F5F5;
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.recipient-avatar-text {
+  font-size: 40rpx;
+  line-height: 1;
+}
+
+.recipient-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  overflow: hidden;
+}
+
+.recipient-name-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.recipient-name {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: $color-text-primary;
+}
+
+.age-badge {
+  background-color: #F5F5F5;
+  border-radius: 8rpx;
+  padding: 2rpx 12rpx;
+}
+
+.age-text {
+  font-size: 22rpx;
+  color: $color-text-secondary;
+}
+
+.recipient-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.progress-bar-mini {
+  flex: 1;
+  height: 8rpx;
+  background-color: #F0F0F0;
+  border-radius: 4rpx;
+  overflow: hidden;
+}
+
+.progress-fill-mini {
+  height: 100%;
+  border-radius: 4rpx;
+  transition: width 0.3s ease;
+}
+
+.progress-text-mini {
+  font-size: 24rpx;
+  font-weight: 600;
+  min-width: 80rpx;
+  text-align: right;
+}
+
+// ─── 右侧每日护理打卡入口 ────────────────────────────────────────────────────
+.checkin-entry {
+  width: 200rpx;
+  padding: 24rpx 16rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6rpx;
+  box-sizing: border-box;
+}
+
+.checkin-status-icon {
+  font-size: 28rpx;
+  line-height: 1;
+}
+
+.checkin-status-label {
+  font-size: 24rpx;
+  font-weight: 600;
+  text-align: center;
+}
+
+.checkin-btn {
+  border-radius: 12rpx;
+  padding: 6rpx 16rpx;
+  margin-top: 4rpx;
+}
+
+.checkin-btn-text {
+  font-size: 22rpx;
+  font-weight: 700;
+  text-align: center;
+}
+
+// ─── 药品打卡网格（2列） ────────────────────────────────────────────────────
+.med-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.med-card {
+  width: calc(50% - 8rpx);
+  background-color: $color-surface;
+  border-radius: 20rpx;
+  border-left: 6rpx solid;
+  padding: 20rpx;
+  box-shadow: 0 2rpx 12rpx $color-card-shadow, 0 1rpx 4rpx rgba(0,0,0,0.04);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.med-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.med-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: $color-text-primary;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.med-check-icon {
+  font-size: 24rpx;
+  flex-shrink: 0;
+  margin-left: 8rpx;
+}
+
+.med-dosage {
+  font-size: 22rpx;
+  color: $color-text-secondary;
+}
+
+.med-time {
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+// 已完成信息
+.med-done-info {
+  margin-top: 4rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 2rpx;
+}
+
+.med-done-time {
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.med-done-label {
+  font-size: 22rpx;
+  color: $color-text-secondary;
+}
+
+.med-done-by {
+  font-size: 20rpx;
+  color: $color-text-tertiary;
+}
+
+// 打卡按钮
+.med-action-btn {
+  margin-top: 4rpx;
+  background-color: $color-primary;
+  border-radius: 12rpx;
+  padding: 10rpx 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.med-action-text {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #FFFFFF;
+}
+
+// 药品空状态
+.med-empty {
+  width: 100%;
+  padding: 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.med-empty-text {
+  font-size: 26rpx;
+  color: $color-text-tertiary;
+}
+
+// ─── 今日用药总进度卡片 ─────────────────────────────────────────────────────
+.med-progress-card {
+  margin: 0 32rpx 32rpx;
+  background: linear-gradient(135deg, $color-primary 0%, #5C8268 100%);
+  border-radius: 32rpx;
+  padding: 32rpx;
+  box-shadow: 0 8rpx 24rpx rgba(123, 158, 135, 0.3);
+}
+
+.med-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+
+.med-progress-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #FFFFFF;
+}
+
+.med-progress-sub {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.med-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-bottom: 24rpx;
+}
+
+.med-progress-bar {
+  flex: 1;
+  height: 16rpx;
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 8rpx;
+  overflow: hidden;
+}
+
+.med-progress-fill {
+  height: 100%;
+  background-color: #FFFFFF;
+  border-radius: 8rpx;
+  transition: width 0.5s ease;
+}
+
+.med-progress-percent {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #FFFFFF;
+  min-width: 80rpx;
+  text-align: right;
+}
+
+.med-progress-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 4rpx;
+}
+
+.med-progress-done {
+  font-size: 64rpx;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+.med-progress-slash {
+  font-size: 48rpx;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.med-progress-total {
+  font-size: 40rpx;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.med-progress-label {
+  font-size: 28rpx;
+  color: rgba(255, 255, 255, 0.8);
+  margin-left: 8rpx;
+}
+
+// ─── Section 通用 ────────────────────────────────────────────────────────────
+.section {
+  padding: 0 32rpx;
+  margin-bottom: 24rpx;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16rpx;
+  gap: 12rpx;
+}
+
+.section-icon-wrap {
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 10rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.section-icon-img {
+  width: 36rpx;
+  height: 36rpx;
+}
+
+.section-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: $color-text-primary;
+}
+
+.section-spacer {
+  flex: 1;
+}
+
+.see-all-btn {
+  display: flex;
+  align-items: center;
+  gap: 2rpx;
+  padding: 4rpx 8rpx;
+}
+
+.see-all-text {
+  font-size: 24rpx;
+  font-weight: 500;
+}
+
+.see-all-arrow {
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+// ─── 复诊卡片 ────────────────────────────────────────────────────────────────
+.apt-card {
+  background-color: $color-surface;
+  border-radius: 24rpx;
+  padding: 24rpx;
+  margin-bottom: 16rpx;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 2rpx 12rpx $color-card-shadow;
+  box-sizing: border-box;
+  border: 1rpx solid rgba($color-coral, 0.12);
+}
+
+.apt-left-bar {
+  width: 8rpx;
+  height: 88rpx;
+  border-radius: 4rpx;
+  flex-shrink: 0;
+  margin-right: 24rpx;
+}
+
+.apt-content {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.apt-top-row {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.apt-emoji {
+  font-size: 28rpx;
+  line-height: 1;
+}
+
+.apt-recipient-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: $color-text-primary;
+}
+
+.apt-info-row {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  flex-wrap: wrap;
+}
+
+.apt-hospital {
+  font-size: 26rpx;
+  color: $color-text-secondary;
+}
+
+.apt-dept {
+  font-size: 24rpx;
+  color: $color-text-tertiary;
+}
+
+.apt-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6rpx;
+  flex-shrink: 0;
+  margin-left: 16rpx;
+}
+
+.apt-date {
+  font-size: 24rpx;
+  font-weight: 600;
+}
+
+.apt-time-badge {
+  background-color: rgba($color-coral, 0.1);
+  border-radius: 8rpx;
+  padding: 4rpx 12rpx;
+}
+
+.apt-time {
+  font-size: 24rpx;
+  font-weight: 600;
+}
+
+.apt-phone-btn {
+  background-color: rgba($color-coral, 0.1);
+  border-radius: 8rpx;
+  padding: 8rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.apt-phone-icon-img {
+  width: 28rpx;
+  height: 28rpx;
+}
+
+// ─── 任务卡片 ────────────────────────────────────────────────────────────────
+.task-card {
+  background-color: $color-surface;
+  border-radius: 24rpx;
+  padding: 24rpx;
+  margin-bottom: 16rpx;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 2rpx 12rpx $color-card-shadow;
+  box-sizing: border-box;
+  border: 1rpx solid rgba($color-blue, 0.12);
+}
+
+.task-left-bar {
+  width: 8rpx;
+  height: 88rpx;
+  border-radius: 4rpx;
+  flex-shrink: 0;
+  margin-right: 24rpx;
+}
+
+.task-content {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.task-top-row {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.task-emoji {
+  font-size: 28rpx;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.task-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: $color-text-primary;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-desc {
+  font-size: 24rpx;
+  color: $color-text-tertiary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  flex-wrap: wrap;
+}
+
+.task-freq-badge {
+  background-color: rgba($color-blue, 0.1);
+  border-radius: 6rpx;
+  padding: 2rpx 10rpx;
+}
+
+.task-freq-text {
+  font-size: 22rpx;
+  color: $color-blue;
+  font-weight: 500;
+}
+
+.task-time {
+  font-size: 24rpx;
+  color: $color-text-secondary;
+}
+
+.task-assignee-icon {
+  font-size: 22rpx;
+  line-height: 1;
+}
+
+.task-assignee-name {
+  font-size: 24rpx;
+  color: $color-text-secondary;
+}
+
+.task-complete-btn {
+  width: 64rpx;
+  height: 64rpx;
+  background-color: rgba($color-success, 0.1);
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-left: 16rpx;
+}
+
+.task-complete-icon {
+  font-size: 32rpx;
+  color: $color-success;
+  font-weight: 700;
+}
+
+// ─── 底部留白 ───────────────────────────────────────────────────────────────
+.bottom-pad {
+  height: 200rpx;
+}
+
+// ─── SOS 按钮（Flutter 设计：放在内容流中，紧贴 tabBar）──────────────────
+.sos-btn-wrap {
+  padding: 16rpx 32rpx calc(8rpx + env(safe-area-inset-bottom));
+  animation: sosScaleAnim 2s ease-in-out infinite;
+}
+
+.sos-btn-wrap:active {
+  animation: none;
+}
+
+.sos-inner {
+  width: 100%;
+  height: 112rpx; // 56px = 112rpx
+  background-color: $color-coral;
+  border-radius: 56rpx; // pill shape
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4rpx 24rpx rgba($color-coral, 0.4);
+  position: relative;
+  z-index: 2;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sos-btn-wrap:active .sos-inner {
+  transform: scale(0.96);
+  box-shadow: 0 2rpx 12rpx rgba($color-coral, 0.3);
+}
+
+.sos-icon-img {
+  width: 48rpx;
+  height: 48rpx;
+  margin-right: 16rpx;
+}
+
+.sos-label {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #FFFFFF;
+  letter-spacing: 2rpx;
+}
+
+@keyframes sosScaleAnim {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+

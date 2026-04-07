@@ -11,7 +11,9 @@ import * as bcrypt from 'bcryptjs';
 import { User } from '../user/entities/user.entity';
 import { SendCodeDto } from './dto/send-code.dto';
 import { LoginDto } from './dto/login.dto';
+import { WechatLoginDto } from './dto/wechat-login.dto';
 import { RedisService } from '../common/redis/redis.service';
+import { WechatService } from '../wechat/wechat.service';
 
 const CODE_KEY = (phone: string) => `verify:code:${phone}`;
 const RATE_KEY = (phone: string) => `verify:rate:${phone}`;
@@ -26,6 +28,7 @@ export class AuthService {
     private jwtService: JwtService,
     private config: ConfigService,
     private redis: RedisService,
+    private wechatService: WechatService,
   ) {}
 
   private get smsMode() {
@@ -117,6 +120,96 @@ export class AuthService {
         hasPassword: !!user.hashedPassword,
       },
     };
+  }
+
+  /**
+   * 微信小程序登录
+   * 流程：code → openId → 创建/查找用户 → 返回 JWT
+   */
+  async wechatLogin(dto: WechatLoginDto): Promise<{
+    accessToken: string;
+    tokenType: string;
+    isNewUser: boolean;
+    user: {
+      id: string;
+      phone: string | null;
+      name: string | null;
+      avatar: string | null;
+      hasPassword: boolean;
+      isBound: boolean; // 是否已绑定手机号
+    };
+  }> {
+    // 1. 用 code 换取 openId
+    const { openId, unionId } = await this.wechatService.code2Session(dto.code);
+
+    // 2. 用 openId 查找用户
+    let user = await this.userRepo.findOne({ where: { openId } });
+
+    const isNewUser = !user;
+
+    if (isNewUser) {
+      // 新用户：自动创建账户（手机号可为空）
+      user = this.userRepo.create({
+        openId,
+        wechatUnionId: unionId,
+        // name 和 avatar 后续通过 profile 更新
+        name: `微信用户${openId.slice(-4)}`,
+      });
+      await this.userRepo.save(user!);
+    } else {
+      // 老用户：更新登录时间
+      user!.lastLoginAt = new Date();
+      await this.userRepo.save(user!);
+    }
+
+    // 确保 user 非 null（TypeScript 流分析需要）
+    const currentUser = user!;
+
+    // 3. 生成 JWT（payload 包含平台标识）
+    const payload = {
+      sub: currentUser.id,
+      phone: currentUser.phone || '',
+      platform: 'wechat',
+    };
+    const token = this.jwtService.sign(payload);
+
+    return {
+      accessToken: token,
+      tokenType: 'Bearer',
+      isNewUser,
+      user: {
+        id: currentUser.id,
+        phone: currentUser.phone,
+        name: currentUser.name,
+        avatar: currentUser.avatar,
+        hasPassword: !!currentUser.hashedPassword,
+        isBound: !!currentUser.phone, // 是否已绑定手机号
+      },
+    };
+  }
+
+  /**
+   * 更新微信用户的昵称和头像
+   */
+  async updateWechatProfile(
+    userId: string,
+    profile: { nickname?: string; avatarUrl?: string },
+  ) {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) throw new UnauthorizedException('用户不存在');
+
+    if (profile.nickname) user.wechatNickname = profile.nickname;
+    if (profile.avatarUrl) user.wechatAvatar = profile.avatarUrl;
+    // 同步更新 name（如果用户没有设置过）
+    if (!user.name || user.name.startsWith('微信用户')) {
+      user.name = profile.nickname || user.name;
+    }
+    if (!user.avatar) {
+      user.avatar = profile.avatarUrl || user.avatar;
+    }
+
+    await this.userRepo.save(user);
+    return { success: true };
   }
 
   async refreshToken(userId: string) {

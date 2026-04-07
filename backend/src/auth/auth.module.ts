@@ -8,10 +8,12 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { User } from '../user/entities/user.entity';
 import { RedisModule } from '../common/redis/redis.module';
+import { WechatModule } from '../wechat/wechat.module';
 
 @Module({
   imports: [
     RedisModule,
+    WechatModule,
     TypeOrmModule.forFeature([User]),
     PassportModule,
     JwtModule.registerAsync({

@@ -1,0 +1,449 @@
+/**
+ * 个人设置页样式
+ * 与 Flutter profile_page.dart 布局对齐
+ * 设计稿 375px，所有值用 rpx（750rpx = 375px）
+ */
+
+// ─── 颜色变量 ────────────────────────────────────────────────────────────────
+$color-primary: #7B9E87;
+$color-coral: #E07B5D;
+$color-blue: #4A90D9;
+$color-success: #6BA07E;
+$color-bg: #FAF9F7;
+$color-surface: #FFFFFF;
+$color-text-primary: #2C2C2C;
+$color-text-secondary: #6B6B6B;
+$color-text-tertiary: #B0ADAD;
+$color-border: #E8E6E2;
+$color-shadow-soft: rgba(0, 0, 0, 0.04);
+$color-shadow: rgba(0, 0, 0, 0.06);
+
+// ─── 全屏容器 ────────────────────────────────────────────────────────────────
+.profile-page {
+  height: 100%;
+  background-color: $color-bg;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  box-sizing: border-box;
+}
+
+// ─── 滚动区域 ────────────────────────────────────────────────────────────────
+.profile-scroll {
+  flex: 1;
+  height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+// ─── 用户卡片 ────────────────────────────────────────────────────────────────
+.user-card {
+  background-color: $color-surface;
+  margin: 32rpx;
+  margin-bottom: 16rpx;
+  border-radius: 32rpx;
+  padding: 40rpx 32rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 4rpx 24rpx $color-shadow-soft, 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+  box-sizing: border-box;
+}
+
+.avatar-wrap {
+  width: 128rpx;
+  height: 128rpx;
+  position: relative;
+  margin-bottom: 20rpx;
+}
+
+.avatar-img {
+  width: 128rpx;
+  height: 128rpx;
+  border-radius: 64rpx;
+  background-color: #F0F0F0;
+  overflow: hidden;
+}
+
+.avatar-placeholder {
+  width: 128rpx;
+  height: 128rpx;
+  border-radius: 64rpx;
+  background-color: $color-primary;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.avatar-initial {
+  font-size: 56rpx;
+  font-weight: 700;
+  color: #FFFFFF;
+  line-height: 1;
+}
+
+.avatar-edit-badge {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 40rpx;
+  height: 40rpx;
+  background-color: $color-primary;
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 4rpx solid $color-surface;
+  box-sizing: border-box;
+}
+
+.avatar-edit-icon {
+  font-size: 20rpx;
+  color: #FFFFFF;
+  line-height: 1;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+  margin-bottom: 16rpx;
+}
+
+.user-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.user-name {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: $color-text-primary;
+}
+
+.user-name-edit-hint {
+  font-size: 24rpx;
+  color: $color-text-tertiary;
+}
+
+.user-phone {
+  font-size: 28rpx;
+  color: $color-text-secondary;
+}
+
+.avatar-hint {
+  margin-top: 4rpx;
+  padding: 8rpx 24rpx;
+}
+
+.avatar-hint-text {
+  font-size: 24rpx;
+  color: $color-text-tertiary;
+}
+
+// ─── 区块标题 ────────────────────────────────────────────────────────────────
+.section-title {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: $color-text-secondary;
+  margin-left: 48rpx;
+  margin-top: 32rpx;
+  margin-bottom: 12rpx;
+  letter-spacing: 1rpx;
+}
+
+// ─── 设置项卡片 ─────────────────────────────────────────────────────────────
+.section-card {
+  background-color: $color-surface;
+  margin: 0 32rpx;
+  border-radius: 24rpx;
+  overflow: hidden;
+  box-shadow: 0 2rpx 12rpx $color-shadow-soft, 0 1rpx 4rpx rgba(0, 0, 0, 0.04);
+  box-sizing: border-box;
+}
+
+.setting-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28rpx 32rpx;
+  box-sizing: border-box;
+}
+
+.setting-left {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  flex: 1;
+}
+
+.setting-icon {
+  width: 40rpx;
+  height: 40rpx;
+  flex-shrink: 0;
+}
+
+.setting-text-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2rpx;
+}
+
+.setting-label {
+  font-size: 30rpx;
+  font-weight: 500;
+  color: $color-text-primary;
+}
+
+.setting-sublabel {
+  font-size: 24rpx;
+  color: $color-text-secondary;
+}
+
+.setting-right {
+  flex-shrink: 0;
+  margin-left: 16rpx;
+}
+
+.setting-chevron {
+  font-size: 36rpx;
+  font-weight: 300;
+  color: $color-text-tertiary;
+}
+
+.setting-divider {
+  height: 1rpx;
+  background-color: $color-border;
+  margin-left: 88rpx;
+}
+
+// ─── 底部留白 ────────────────────────────────────────────────────────────────
+.bottom-pad {
+  height: 200rpx;
+}
+
+// ─── 退出登录 ────────────────────────────────────────────────────────────────
+.logout-bar {
+  background-color: $color-bg;
+  padding-top: 16rpx;
+  padding-bottom: 16rpx;
+  padding-left: 32rpx;
+  padding-right: 32rpx;
+  box-sizing: border-box;
+}
+
+.logout-btn {
+  background-color: $color-coral;
+  border-radius: 48rpx;
+  padding-top: 26rpx;
+  padding-bottom: 26rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logout-text {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #FFFFFF;
+}
+
+// ─── 底部 Sheet ──────────────────────────────────────────────────────────────
+.sheet-overlay {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.sheet-container {
+  width: 100%;
+  max-height: 80vh;
+  background-color: $color-surface;
+  border-radius: 32rpx 32rpx 0 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.sheet-content {
+  width: 100%;
+}
+
+.sheet-header {
+  padding-top: 32rpx;
+  padding-bottom: 24rpx;
+  padding-left: 32rpx;
+  padding-right: 32rpx;
+  border-bottom-width: 1rpx;
+  border-bottom-color: $color-border;
+  border-bottom-style: solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sheet-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: $color-text-primary;
+}
+
+.sheet-body {
+  padding: 32rpx;
+  overflow-y: auto;
+  max-height: 60vh;
+  box-sizing: border-box;
+}
+
+.field-row {
+  margin-bottom: 24rpx;
+}
+
+.sheet-input {
+  width: 100%;
+  height: 96rpx;
+  background-color: $color-bg;
+  border-radius: 20rpx;
+  padding-left: 24rpx;
+  padding-right: 24rpx;
+  padding-top: 0;
+  padding-bottom: 0;
+  font-size: 30rpx;
+  color: $color-text-primary;
+  box-sizing: border-box;
+  border-width: 2rpx;
+  border-color: transparent;
+  border-style: solid;
+}
+
+.sheet-input-error {
+  border-color: $color-coral;
+}
+
+.sheet-placeholder {
+  color: $color-text-tertiary;
+  font-size: 30rpx;
+}
+
+.sheet-error {
+  font-size: 24rpx;
+  color: $color-coral;
+  margin-bottom: 16rpx;
+  display: block;
+}
+
+.sheet-actions {
+  display: flex;
+  gap: 24rpx;
+  margin-top: 8rpx;
+}
+
+.sheet-btn-cancel {
+  flex: 1;
+  height: 96rpx;
+  background-color: $color-bg;
+  border-radius: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sheet-btn-cancel-text {
+  font-size: 30rpx;
+  font-weight: 500;
+  color: $color-text-secondary;
+}
+
+.sheet-btn-confirm {
+  flex: 1;
+  height: 96rpx;
+  background-color: $color-primary;
+  border-radius: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sheet-btn-confirm-text {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #FFFFFF;
+}
+
+.sheet-btn-disabled {
+  opacity: 0.6;
+}
+
+// ─── 家庭选项列表 ────────────────────────────────────────────────────────────
+.family-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 32rpx;
+  background-color: $color-bg;
+  border-radius: 20rpx;
+  margin-bottom: 16rpx;
+  box-sizing: border-box;
+}
+
+.family-option-selected {
+  background-color: rgba($color-primary, 0.1);
+  border-width: 2rpx;
+  border-color: $color-primary;
+  border-style: solid;
+}
+
+.family-option-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.family-option-name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: $color-text-primary;
+}
+
+.family-option-count {
+  font-size: 24rpx;
+  color: $color-text-secondary;
+}
+
+.family-option-check {
+  width: 40rpx;
+  height: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.family-option-check-text {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: $color-primary;
+}
+
+// ─── 空状态 ─────────────────────────────────────────────────────────────────
+.sheet-empty {
+  padding: 40rpx 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sheet-empty-text {
+  font-size: 28rpx;
+  color: $color-text-tertiary;
+}

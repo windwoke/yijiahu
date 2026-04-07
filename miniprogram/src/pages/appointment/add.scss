@@ -1,0 +1,273 @@
+/* 添加复诊页 */
+
+.appt-add-page {
+  height: 100vh;
+  background-color: #FAF9F7;
+  display: flex;
+  flex-direction: column;
+}
+
+.appt-add-scroll {
+  flex: 1;
+  height: 0;
+}
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+
+.loading-text {
+  font-size: 28rpx;
+  color: #B0ADAD;
+}
+
+/* 空状态 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  gap: 16rpx;
+}
+
+.empty-emoji {
+  font-size: 96rpx;
+  line-height: 1;
+}
+
+.empty-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #2C2C2C;
+}
+
+.empty-action {
+  margin-top: 16rpx;
+  padding: 16rpx 40rpx;
+  background-color: #7B9E87;
+  border-radius: 24rpx;
+}
+
+.empty-action-text {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+/* 区块 */
+.section {
+  padding: 32rpx 32rpx 0;
+}
+
+.section-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #2C2C2C;
+  margin-bottom: 20rpx;
+  display: block;
+}
+
+/* 字段 */
+.field {
+  margin-bottom: 24rpx;
+}
+
+.field-label {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #6B6B6B;
+  display: block;
+  margin-bottom: 12rpx;
+}
+
+.field-input {
+  width: 100%;
+  background-color: #ffffff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  font-size: 30rpx;
+  color: #2C2C2C;
+  box-sizing: border-box;
+  border: 2rpx solid #E8E8E8;
+  placeholder-color: #B0ADAD;
+  line-height: 1 !important;
+  height: auto !important;
+}
+
+.field-picker {
+  width: 100%;
+  background-color: #ffffff;
+  border-radius: 16rpx;
+  padding: 20rpx 24rpx;
+  box-sizing: border-box;
+  border: 2rpx solid #E8E8E8;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.field-picker-text {
+  font-size: 30rpx;
+  color: #2C2C2C;
+}
+
+.field-picker-placeholder {
+  font-size: 30rpx;
+  color: #B0ADAD;
+}
+
+.field-picker-arrow {
+  font-size: 32rpx;
+  color: #B0ADAD;
+}
+
+/* 日期时间行 */
+.date-time-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.date-time-picker {
+  flex: 1;
+}
+
+.date-time-sep {
+  font-size: 28rpx;
+  color: #B0ADAD;
+  flex-shrink: 0;
+}
+
+.date-picker-text {
+  font-weight: 600;
+  color: #E07B5D;
+}
+
+/* 芯片选择行 */
+.chip-select-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.chip-select-item {
+  padding: 10rpx 20rpx;
+  background-color: #ffffff;
+  border-radius: 20rpx;
+  border: 2rpx solid #E8E8E8;
+  transition: all 0.2s ease;
+
+  &.selected {
+    background-color: rgba(123, 158, 135, 0.1);
+    border-color: #7B9E87;
+  }
+}
+
+.chip-select-text {
+  font-size: 26rpx;
+  font-weight: 500;
+  color: #6B6B6B;
+  white-space: nowrap;
+
+  &.selected {
+    color: #7B9E87;
+    font-weight: 600;
+  }
+}
+
+/* 提醒设置 */
+.reminder-row {
+  display: flex;
+  flex-direction: row;
+  gap: 16rpx;
+}
+
+.reminder-chip {
+  flex: 1;
+  padding: 20rpx;
+  background-color: #ffffff;
+  border-radius: 16rpx;
+  border: 2rpx solid #E8E8E8;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  transition: all 0.2s ease;
+
+  &.active {
+    background-color: rgba(224, 123, 93, 0.08);
+    border-color: #E07B5D;
+  }
+}
+
+.reminder-chip-icon {
+  font-size: 26rpx;
+  line-height: 1;
+  opacity: 0.5;
+
+  &.active {
+    opacity: 1;
+  }
+}
+
+.reminder-chip-text {
+  font-size: 26rpx;
+  font-weight: 500;
+  color: #6B6B6B;
+
+  &.active {
+    color: #E07B5D;
+    font-weight: 600;
+  }
+}
+
+/* 提示文字 */
+.hint-text {
+  font-size: 26rpx;
+  color: #B0ADAD;
+}
+
+/* 底部 */
+.bottom-pad {
+  height: 160rpx;
+}
+
+.appt-add-submit-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20rpx 32rpx calc(20rpx + env(safe-area-inset-bottom));
+  background-color: #ffffff;
+  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.06);
+  z-index: 100;
+}
+
+.appt-add-submit-btn {
+  background-color: #7B9E87;
+  border-radius: 24rpx;
+  padding: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4rpx 16rpx rgba(123, 158, 135, 0.35);
+
+  &.loading {
+    background-color: #C8C8C8;
+    box-shadow: none;
+  }
+}
+
+.appt-add-submit-text {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #ffffff;
+}

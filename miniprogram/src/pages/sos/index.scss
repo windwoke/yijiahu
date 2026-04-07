@@ -1,0 +1,503 @@
+/**
+ * SOS 紧急求助页样式
+ * 与 Flutter sos_page.dart 完全对齐
+ */
+
+$color-coral: #E07B5D;
+$color-primary: #7B9E87;
+$color-success: #6BA07E;
+$color-warning: #F5A623;
+$color-bg: #FAF9F7;
+$color-text-primary: #2C2C2C;
+$color-text-secondary: #6B6B6B;
+$color-card-bg: #F5EDD8;
+$color-card-border: #E0C89A;
+$color-avatar-bg: #E8D8C0;
+
+// ─── 全局容器 ────────────────────────────────────────────────────────────────
+.sos-page {
+  min-height: 100vh;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+// ─── 加载中 ────────────────────────────────────────────────────────────────
+.sos-loading {
+  background-color: $color-coral;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-ring {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 4px solid rgba(255,255,255,0.3);
+  border-top-color: #ffffff;
+  animation: sosSpin 1s linear infinite;
+}
+
+@keyframes sosSpin {
+  to { transform: rotate(360deg); }
+}
+
+// ─── 触发前视图（珊瑚色背景）──────────────────────────────────────────────
+.sos-pre {
+  background-color: $color-coral;
+  display: flex;
+  flex-direction: column;
+}
+
+.sos-pre-header {
+  display: flex;
+  justify-content: flex-end;
+  padding: 24rpx 32rpx 0;
+}
+
+.sos-close-btn {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  background-color: rgba(255,255,255,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sos-close-icon {
+  color: #ffffff;
+  font-size: 32rpx;
+  line-height: 1;
+}
+
+.sos-pre-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 48rpx;
+}
+
+.sos-pre-icon {
+  font-size: 80rpx;
+  line-height: 1;
+  margin-bottom: 24rpx;
+}
+
+.sos-pre-title {
+  font-size: 56rpx;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 4rpx;
+  margin-bottom: 16rpx;
+}
+
+.sos-pre-desc {
+  font-size: 30rpx;
+  color: rgba(255,255,255,0.7);
+  text-align: center;
+  line-height: 1.6;
+  margin-bottom: 64rpx;
+}
+
+// ─── SOS 圆形按钮 ──────────────────────────────────────────────────────────
+.sos-circle-btn {
+  width: 280rpx;
+  height: 280rpx;
+  border-radius: 50%;
+  background-color: $color-coral;
+  border: 6rpx solid #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  margin-bottom: 40rpx;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  box-shadow: 0 8rpx 32rpx rgba(0,0,0,0.15);
+
+  &.pressing {
+    background-color: #ffffff;
+    transform: scale(1.06);
+    box-shadow: 0 12rpx 48rpx rgba(0,0,0,0.2);
+  }
+}
+
+.sos-circle-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.sos-circle-text {
+  font-size: 72rpx;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 4rpx;
+
+  .pressing & {
+    color: $color-coral;
+  }
+}
+
+// 脉冲圈
+.sos-ring {
+  position: absolute;
+  width: 280rpx;
+  height: 280rpx;
+  border-radius: 50%;
+  border: 4rpx solid rgba(255,255,255,0.5);
+  animation: sosRingAnim 2s ease-out infinite;
+}
+
+.sos-ring-1 { animation-delay: 0s; }
+.sos-ring-2 { animation-delay: 1s; }
+
+@keyframes sosRingAnim {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+// 按压进度
+.sos-press-hint {
+  font-size: 28rpx;
+  color: rgba(255,255,255,0.8);
+  font-weight: 500;
+  margin-bottom: 16rpx;
+  min-height: 40rpx;
+  transition: all 0.2s ease;
+}
+
+.sos-progress-bar {
+  width: 320rpx;
+  height: 8rpx;
+  background-color: rgba(255,255,255,0.3);
+  border-radius: 4rpx;
+  overflow: hidden;
+}
+
+.sos-progress-fill {
+  height: 100%;
+  background-color: #ffffff;
+  border-radius: 4rpx;
+  transition: width 0.1s linear;
+}
+
+// ─── 触发前：紧急信息卡 ──────────────────────────────────────────────────
+.sos-pre-info {
+  padding: 0 32rpx 48rpx;
+}
+
+// ─── 触发后视图（白色背景）────────────────────────────────────────────────
+.sos-triggered {
+  background-color: #ffffff;
+}
+
+.sos-triggered-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 64rpx 32rpx 32rpx;
+}
+
+.sos-triggered-icon {
+  font-size: 80rpx;
+  line-height: 1;
+  margin-bottom: 16rpx;
+}
+
+.sos-triggered-title {
+  font-size: 52rpx;
+  font-weight: 700;
+  color: $color-text-primary;
+  margin-bottom: 8rpx;
+}
+
+.sos-triggered-sub {
+  font-size: 28rpx;
+  color: $color-text-secondary;
+}
+
+.sos-triggered-info {
+  padding: 0 32rpx;
+}
+
+.sos-location-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0 32rpx 24rpx;
+  gap: 8rpx;
+}
+
+.sos-location-icon {
+  font-size: 28rpx;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.sos-location-text {
+  font-size: 26rpx;
+  color: $color-text-secondary;
+  flex: 1;
+}
+
+// ─── 拨打按钮 ──────────────────────────────────────────────────────────────
+.sos-call-scroll {
+  flex: 1;
+  padding: 0 32rpx;
+}
+
+.sos-call-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+  padding-bottom: 200rpx;
+}
+
+.sos-call-btn {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 32rpx 0;
+  border-radius: 24rpx;
+  gap: 16rpx;
+
+  &.sos-call-btn-primary {
+    background-color: $color-coral;
+    box-shadow: 0 4rpx 24rpx rgba($color-coral, 0.3);
+  }
+
+  &.sos-call-btn-secondary {
+    background-color: $color-card-bg;
+    border: 2rpx solid $color-card-border;
+  }
+}
+
+.sos-call-icon {
+  font-size: 40rpx;
+  line-height: 1;
+}
+
+.sos-call-label {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #ffffff;
+
+  &.sos-call-label-secondary {
+    color: $color-text-primary;
+  }
+}
+
+// ─── 家庭成员确认 ──────────────────────────────────────────────────────────
+.sos-members-section {
+  margin-top: 32rpx;
+}
+
+.sos-members-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: $color-text-primary;
+  margin-bottom: 20rpx;
+  display: block;
+}
+
+.sos-member-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 24rpx;
+  background-color: $color-card-bg;
+  border: 2rpx solid $color-card-border;
+  border-radius: 20rpx;
+  margin-bottom: 16rpx;
+  gap: 16rpx;
+}
+
+.sos-member-avatar {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  background-color: $color-avatar-bg;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sos-member-avatar-text {
+  font-size: 32rpx;
+  line-height: 1;
+}
+
+.sos-member-name {
+  flex: 1;
+  font-size: 28rpx;
+  color: $color-text-primary;
+}
+
+.sos-member-status {
+  font-size: 24rpx;
+  color: $color-text-secondary;
+}
+
+// ─── 底部取消按钮 ──────────────────────────────────────────────────────────
+.sos-cancel-bar {
+  padding: 24rpx 32rpx;
+  border-top: 1rpx solid #E8E8E8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
+}
+
+.sos-cancel-btn {
+  font-size: 28rpx;
+  color: $color-text-secondary;
+  padding: 16rpx 32rpx;
+
+  &.disabled {
+    color: #B0ADAD;
+  }
+}
+
+// ─── 紧急信息卡片 ────────────────────────────────────────────────────────────
+.emergency-card {
+  width: 100%;
+  background-color: #ffffff;
+  border-radius: 32rpx;
+  padding: 40rpx;
+  box-shadow: 0 4rpx 24rpx rgba(0,0,0,0.08);
+
+  &.compact {
+    border-radius: 24rpx;
+    padding: 32rpx;
+    border: 2rpx solid $color-card-border;
+    background-color: $color-card-bg;
+    box-shadow: none;
+  }
+}
+
+.eic-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: 24rpx;
+  gap: 16rpx;
+}
+
+.eic-avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background-color: rgba($color-coral, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  .compact & {
+    width: 72rpx;
+    height: 72rpx;
+    background-color: $color-avatar-bg;
+  }
+}
+
+.eic-avatar-text {
+  font-size: 40rpx;
+  line-height: 1;
+
+  .compact & {
+    font-size: 36rpx;
+  }
+}
+
+.eic-name {
+  flex: 1;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: $color-text-primary;
+}
+
+.eic-blood-tag {
+  background-color: rgba($color-coral, 0.1);
+  border-radius: 16rpx;
+  padding: 8rpx 16rpx;
+  flex-shrink: 0;
+
+  .compact & {
+    background-color: $color-avatar-bg;
+  }
+}
+
+.eic-blood-text {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: $color-coral;
+
+  .compact & {
+    color: $color-text-primary;
+  }
+}
+
+.eic-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  margin-bottom: 12rpx;
+  gap: 12rpx;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  &.eic-row-alert {
+    .eic-alert-text {
+      color: $color-coral;
+    }
+  }
+}
+
+.eic-row-icon {
+  font-size: 24rpx;
+  line-height: 1.5;
+  flex-shrink: 0;
+  width: 32rpx;
+  text-align: center;
+
+  .compact & {
+    font-size: 22rpx;
+  }
+}
+
+.eic-row-text {
+  flex: 1;
+  font-size: 26rpx;
+  color: $color-text-secondary;
+  line-height: 1.5;
+
+  &.eic-alert-text {
+    color: $color-coral;
+    font-weight: 500;
+  }
+
+  &.eic-address {
+    color: $color-text-secondary;
+  }
+
+  .compact & {
+    font-size: 24rpx;
+  }
+}

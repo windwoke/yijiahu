@@ -497,6 +497,7 @@ export default function FamilyPage() {
                             </Text>
                           </View>
                         )}
+                        {m.isOnline && <View className="online-dot" />}
                       </View>
 
                       {/* 信息 */}

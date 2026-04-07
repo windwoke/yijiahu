@@ -67,4 +67,6 @@ export interface FamilyMemberDetail extends FamilyMember {
     phone: string;
     avatar: string | null;
   };
+  /** 成员是否在线（最近活跃） */
+  isOnline?: boolean;
 }

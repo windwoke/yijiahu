@@ -8,14 +8,15 @@ import { useState, useCallback, useEffect } from 'react';
 import { get, post } from '../../services/api';
 import { Storage } from '../../services/storage';
 import type {
-  CareRecipient,
   TodayMedicationSummary,
   MedicationLogItem,
 } from '../../shared/models/medication';
+import type { CareRecipient } from '../../shared/models/care-recipient';
 import type { DailyCareCheckin, CheckinStatus } from '../../shared/models/daily-care-checkin';
 import type { Appointment } from '../../shared/models/appointment';
 import type { FamilyTask } from '../../shared/models/family-task';
 import type { Family } from '../../shared/models/family';
+import type { CaregiverRecord } from '../../shared/models/caregiver-record';
 import './index.scss';
 
 // ─── 常量 ───────────────────────────────────────────────────────────────────
@@ -49,6 +50,7 @@ interface HomeState {
   recipients: CareRecipient[];
   medicationSummaries: TodayMedicationSummary[];
   checkins: Record<string, DailyCareCheckin>;
+  caregivers: Record<string, CaregiverRecord>;
   appointments: Appointment[];
   tasks: FamilyTask[];
   loading: boolean;
@@ -144,6 +146,7 @@ export default function HomePage() {
     checkins: {},
     appointments: [],
     tasks: [],
+    caregivers: {},
     loading: true,
   });
 
@@ -229,26 +232,41 @@ export default function HomePage() {
         recipients: careRecipients,
         medicationSummaries,
         checkins: {},
+        caregivers: {},
         appointments,
         tasks,
         loading: false,
       });
 
-      // 如果有照护对象，请求每日护理打卡数据
+      // 并发加载每日护理打卡 + 当前照护人
       if (careRecipients.length > 0) {
         const ids = careRecipients.map((r) => r.id).join(',');
-        try {
-          const checkinsData = await get<DailyCareCheckin[]>('/daily-care-checkins/today', {
+
+        const [checkinsData, ...cgResults] = await Promise.all([
+          get<DailyCareCheckin[]>('/daily-care-checkins/today', {
             recipientIds: ids,
             todayDate,
             familyId,
-          });
-          const checkinsMap: Record<string, DailyCareCheckin> = {};
-          (checkinsData || []).forEach((c: DailyCareCheckin) => {
-            checkinsMap[c.careRecipientId] = c;
-          });
-          setState((s) => ({ ...s, checkins: checkinsMap }));
-        } catch {}
+          }).catch(() => [] as DailyCareCheckin[]),
+          ...careRecipients.map((r) =>
+            get<CaregiverRecord>(`/caregiver-records/current`, {
+              careRecipientId: r.id,
+              familyId,
+            }).catch(() => null as CaregiverRecord | null)
+          ),
+        ]);
+
+        const checkinsMap: Record<string, DailyCareCheckin> = {};
+        (checkinsData || []).forEach((c: DailyCareCheckin) => {
+          checkinsMap[c.careRecipientId] = c;
+        });
+
+        const caregiversMap: Record<string, CaregiverRecord> = {};
+        careRecipients.forEach((r, i) => {
+          if (cgResults[i]) caregiversMap[r.id] = cgResults[i] as CaregiverRecord;
+        });
+
+        setState((s) => ({ ...s, checkins: checkinsMap, caregivers: caregiversMap }));
       }
     } catch (err) {
       console.error('首页加载失败:', err);
@@ -300,7 +318,7 @@ export default function HomePage() {
 
   // ─── 渲染 ──────────────────────────────────────────────────────────────────
 
-  const { familyName, memberCount, unreadCount, recipients, medicationSummaries, checkins, appointments, tasks, loading } = state;
+  const { familyName, memberCount, unreadCount, recipients, medicationSummaries, checkins, caregivers, appointments, tasks, loading } = state;
   const hasRecipients = recipients.length > 0;
 
   return (
@@ -377,6 +395,7 @@ export default function HomePage() {
               } as CareRecipient;
               const checkin = checkins[summary.recipientId];
               const checkinInfo = getCheckinStatusInfo(checkin);
+              const caregiver = caregivers[summary.recipientId];
               const progress = summary.total > 0 ? summary.completed / summary.total : 0;
               const progressColor = progress >= 1 ? COLOR_SUCCESS : COLOR_PRIMARY;
 
@@ -416,6 +435,13 @@ export default function HomePage() {
                             {summary.total > 0 ? `${summary.completed}/${summary.total}` : '无药品'}
                           </Text>
                         </View>
+                        {/* 照护人信息 */}
+                        {caregiver && (
+                          <View className="recipient-caregiver-row">
+                            <Text className="recipient-caregiver-label">当前照护人：</Text>
+                            <Text className="recipient-caregiver-name">{caregiver.caregiverNickname || '家庭成员'}</Text>
+                          </View>
+                        )}
                       </View>
                     </View>
 

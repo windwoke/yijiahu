@@ -104,12 +104,12 @@ export default function DailyCarePage() {
     try {
       await post('/daily-care-checkins', {
         familyId,
-        recipientId,
-        todayDate: todayStr,
+        careRecipientId: recipientId,
+        checkinDate: todayStr,
         status: selectedStatus,
         medicationCompleted: medCompleted,
         medicationTotal: medTotal,
-        specialNote: noteText.trim() || null,
+        specialNote: noteText.trim() || undefined,
       });
 
       Taro.showToast({ title: '打卡成功', icon: 'success', duration: 1500 });

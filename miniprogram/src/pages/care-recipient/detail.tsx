@@ -3,12 +3,15 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { View, Text, ScrollView } from '@tarojs/components';
+import { View, Text, ScrollView, Image, Input } from '@tarojs/components';
 import Taro from '@tarojs/taro';
-import { get, del } from '../../services/api';
+import { get, post, del } from '../../services/api';
 import { Storage } from '../../services/storage';
 import type { CareRecipient } from '../../shared/models/care-recipient';
 import type { Medication } from '../../shared/models/medication';
+import type { CaregiverRecord } from '../../shared/models/caregiver-record';
+import type { FamilyMember } from '../../shared/models/family';
+import { getImageUrl } from '../../shared/utils/image';
 import './detail.scss';
 
 function maskPhone(phone: string): string {
@@ -22,6 +25,17 @@ function toArray(val: string | string[] | null | undefined): string[] {
   return String(val).split(',').map((s) => s.trim()).filter(Boolean);
 }
 
+/** 格式化照护时间段标签 */
+function formatPeriodLabel(start: string, end?: string | null): string {
+  const fmt = (d: string) => {
+    const parts = d.substring(0, 10).split('-');
+    if (parts.length < 3) return d;
+    return `${parts[0]}年${parseInt(parts[1])}月${parseInt(parts[2])}日`;
+  };
+  if (!end) return `${fmt(start)} - 今`;
+  return `${fmt(start)} - ${fmt(end)}`;
+}
+
 export default function CareRecipientDetailPage() {
   const params = (Taro.getCurrentInstance().router?.params as any) || {};
   const { id } = params;
@@ -31,15 +45,28 @@ export default function CareRecipientDetailPage() {
   const [medications, setMedications] = useState<Medication[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // 照护人
+  const [currentCaregiver, setCurrentCaregiver] = useState<CaregiverRecord | null>(null);
+  const [caregiverRecords, setCaregiverRecords] = useState<CaregiverRecord[]>([]);
+  const [showCaregiverSheet, setShowCaregiverSheet] = useState(false);
+  const [caregiverMembers, setCaregiverMembers] = useState<FamilyMember[]>([]);
+  const [selectedCaregiverId, setSelectedCaregiverId] = useState('');
+  const [caregiverNote, setCaregiverNote] = useState('');
+  const [switching, setSwitching] = useState(false);
+
   const load = useCallback(async () => {
     if (!id) { setLoading(false); return; }
     try {
-      const [rRes, mRes] = await Promise.allSettled([
+      const [rRes, mRes, cgRes, cgRecordsRes] = await Promise.allSettled([
         get<CareRecipient>(`/care-recipients/${id}`, { familyId }),
         get<Medication[]>(`/medications`, { recipientId: id, familyId }),
+        get<CaregiverRecord>(`/caregiver-records/current`, { careRecipientId: id, familyId }).catch(() => null),
+        get<CaregiverRecord[]>(`/caregiver-records`, { careRecipientId: id, familyId }).catch(() => []),
       ]);
       if (rRes.status === 'fulfilled') setRecipient(rRes.value);
       if (mRes.status === 'fulfilled') setMedications(Array.isArray(mRes.value) ? mRes.value : []);
+      if (cgRes.status === 'fulfilled' && cgRes.value) setCurrentCaregiver(cgRes.value as CaregiverRecord);
+      if (cgRecordsRes.status === 'fulfilled') setCaregiverRecords((cgRecordsRes.value as CaregiverRecord[]) || []);
     } catch (e) {
       console.error('[detail] load error', e);
     } finally {
@@ -62,6 +89,74 @@ export default function CareRecipientDetailPage() {
       setTimeout(() => Taro.navigateBack(), 1500);
     } catch (e: any) {
       Taro.showToast({ title: e?.message || '删除失败', icon: 'none' });
+    }
+  };
+
+  /** 打开照护人切换弹层 */
+  const openCaregiverSheet = async () => {
+    // 加载家庭成员列表
+    try {
+      const members = await get<FamilyMember[]>(`/families/${familyId}/members`);
+      setCaregiverMembers(Array.isArray(members) ? members : []);
+      if (members && members.length > 0) {
+        setSelectedCaregiverId(members[0].userId || '');
+      }
+    } catch {
+      setCaregiverMembers([]);
+    }
+    setCaregiverNote('');
+    setShowCaregiverSheet(true);
+  };
+
+  /** 切换照护人 */
+  const handleSwitchCaregiver = async () => {
+    if (!selectedCaregiverId) {
+      Taro.showToast({ title: '请选择照护人', icon: 'none' });
+      return;
+    }
+    setSwitching(true);
+    try {
+      const today = new Date();
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      await post('/caregiver-records', {
+        careRecipientId: id,
+        caregiverId: selectedCaregiverId,
+        periodStart: todayStr,
+        note: caregiverNote.trim() || undefined,
+      });
+      Taro.showToast({ title: '切换成功', icon: 'success' });
+      setShowCaregiverSheet(false);
+      // 重新加载
+      const [cgRes, cgRecordsRes] = await Promise.all([
+        get<CaregiverRecord>(`/caregiver-records/current`, { careRecipientId: id, familyId }).catch(() => null),
+        get<CaregiverRecord[]>(`/caregiver-records`, { careRecipientId: id, familyId }).catch(() => []),
+      ]);
+      if (cgRes) setCurrentCaregiver(cgRes as CaregiverRecord);
+      if (cgRecordsRes) setCaregiverRecords((cgRecordsRes as CaregiverRecord[]) || []);
+    } catch (e: any) {
+      Taro.showToast({ title: e?.message || '切换失败', icon: 'none' });
+    } finally {
+      setSwitching(false);
+    }
+  };
+
+  /** 删除照护记录 */
+  const handleDeleteCaregiverRecord = async (recordId: string) => {
+    const res = await Taro.showModal({ title: '确认删除', content: '确定要删除该照护记录吗？', confirmColor: '#E07B5D' });
+    if (!res.confirm) return;
+    try {
+      await del(`/caregiver-records/${recordId}`, { params: { familyId } });
+      Taro.showToast({ title: '已删除', icon: 'success' });
+      // 重新加载
+      const [cgRes, cgRecordsRes] = await Promise.all([
+        get<CaregiverRecord>(`/caregiver-records/current`, { careRecipientId: id, familyId }).catch(() => null),
+        get<CaregiverRecord[]>(`/caregiver-records`, { careRecipientId: id, familyId }).catch(() => []),
+      ]);
+      if (cgRes) setCurrentCaregiver(cgRes as CaregiverRecord);
+      else setCurrentCaregiver(null);
+      if (cgRecordsRes) setCaregiverRecords((cgRecordsRes as CaregiverRecord[]) || []);
+    } catch {
+      Taro.showToast({ title: '删除失败', icon: 'none' });
     }
   };
 
@@ -127,6 +222,44 @@ export default function CareRecipientDetailPage() {
                 </View>
               )}
             </View>
+          </View>
+        </View>
+
+        {/* 当前照护人卡片 */}
+        <View className="section" style={{ marginTop: '24rpx' }}>
+          <View className="cg-card" onClick={openCaregiverSheet}>
+            <View className="cg-card-header">
+              <Text className="cg-card-label">当前主要照护人</Text>
+              <View className="cg-switch-btn">
+                <Text className="cg-switch-text">切换照护人 ›</Text>
+              </View>
+            </View>
+            {currentCaregiver ? (
+              <View className="cg-card-body">
+                <View className="cg-avatar">
+                  {currentCaregiver.caregiverAvatar ? (
+                    <Image
+                      className="cg-avatar-img"
+                      src={getImageUrl(currentCaregiver.caregiverAvatar)}
+                      mode="aspectFill"
+                    />
+                  ) : (
+                    <Text className="cg-avatar-text">{(currentCaregiver.caregiverNickname || '?')[0]}</Text>
+                  )}
+                </View>
+                <View className="cg-info">
+                  <Text className="cg-name">{currentCaregiver.caregiverNickname || '家庭成员'}</Text>
+                  <Text className="cg-period">照护时间：{formatPeriodLabel(currentCaregiver.periodStart, currentCaregiver.periodEnd)}</Text>
+                  {currentCaregiver.note && <Text className="cg-note">备注：{currentCaregiver.note}</Text>}
+                </View>
+                <Text className="cg-arrow">›</Text>
+              </View>
+            ) : (
+              <View className="cg-card-empty">
+                <Text className="cg-empty-text">暂未指定主要照护人</Text>
+                <Text className="cg-arrow">›</Text>
+              </View>
+            )}
           </View>
         </View>
 
@@ -263,6 +396,108 @@ export default function CareRecipientDetailPage() {
         <Text className="fab-add-med-icon">+</Text>
         <Text className="fab-add-med-label">添加药品</Text>
       </View>
+
+      {/* 照护人切换底部弹层 */}
+      {showCaregiverSheet && (
+        <>
+          <View className="sheet-mask" onClick={() => setShowCaregiverSheet(false)} />
+          <View className="cg-sheet">
+            <View className="sheet-handle" />
+            <View className="sheet-title-row">
+              <Text className="sheet-title-lg">照护人记录</Text>
+              <View className="sheet-add-btn" onClick={() => {
+                setShowCaregiverSheet(false);
+                setTimeout(() => openCaregiverSheet(), 100);
+              }}>
+                <Text className="sheet-add-btn-text">+ 添加记录</Text>
+              </View>
+            </View>
+
+            {/* 历史记录列表 */}
+            <ScrollView className="cg-history-scroll" scrollY>
+              {caregiverRecords.length === 0 ? (
+                <View className="cg-empty">
+                  <Text className="cg-empty-icon">📋</Text>
+                  <Text className="cg-empty-desc">暂无照护记录</Text>
+                </View>
+              ) : (
+                caregiverRecords.map((record) => (
+                  <View key={record.id} className="cg-record-item">
+                    <View className="cg-record-avatar">
+                      {record.caregiverAvatar ? (
+                        <Image
+                          className="cg-record-avatar-img"
+                          src={getImageUrl(record.caregiverAvatar)}
+                          mode="aspectFill"
+                        />
+                      ) : (
+                        <Text className="cg-record-avatar-text">{(record.caregiverNickname || '?')[0]}</Text>
+                      )}
+                    </View>
+                    <View className="cg-record-info">
+                      <View className="cg-record-name-row">
+                        <Text className="cg-record-name">{record.caregiverNickname || '家庭成员'}</Text>
+                        {!record.periodEnd && (
+                          <View className="cg-current-badge">
+                            <Text className="cg-current-text">当前</Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text className="cg-record-period">{formatPeriodLabel(record.periodStart, record.periodEnd)}</Text>
+                      {record.note && <Text className="cg-record-note">{record.note}</Text>}
+                    </View>
+                    {!record.periodEnd && caregiverRecords.length > 1 && (
+                      <Text
+                        className="cg-record-delete"
+                        onClick={() => handleDeleteCaregiverRecord(record.id)}
+                      >删除</Text>
+                    )}
+                  </View>
+                ))
+              )}
+            </ScrollView>
+
+            {/* 添加新照护人 */}
+            <View className="cg-add-form">
+              <Text className="cg-add-title">添加照护人</Text>
+              <View className="cg-member-list">
+                {caregiverMembers.map((m) => (
+                  <View
+                    key={m.userId}
+                    className={`cg-member-item ${selectedCaregiverId === m.userId ? 'selected' : ''}`}
+                    onClick={() => setSelectedCaregiverId(m.userId || '')}
+                  >
+                    <View className="cg-member-avatar">
+                      {m.avatarUrl ? (
+                        <Image className="cg-member-avatar-img" src={getImageUrl(m.avatarUrl)} mode="aspectFill" />
+                      ) : (
+                        <Text className="cg-member-avatar-text">{(m.nickname || '?')[0]}</Text>
+                      )}
+                    </View>
+                    <Text className="cg-member-name">{m.nickname || '成员'}</Text>
+                    {selectedCaregiverId === m.userId && <Text className="cg-member-check">✓</Text>}
+                  </View>
+                ))}
+              </View>
+              <View className="cg-note-wrap">
+                <Input
+                  className="cg-note-input"
+                  placeholder="备注（选填）"
+                  value={caregiverNote}
+                  onInput={(e: any) => setCaregiverNote(e.detail.value)}
+                  maxLength={200}
+                />
+              </View>
+              <View
+                className={`cg-save-btn ${switching ? 'disabled' : ''}`}
+                onClick={switching ? undefined : handleSwitchCaregiver}
+              >
+                <Text className="cg-save-btn-text">{switching ? '保存中...' : '保存'}</Text>
+              </View>
+            </View>
+          </View>
+        </>
+      )}
     </View>
   );
 }

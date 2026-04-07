@@ -305,6 +305,25 @@ $color-card-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
   text-align: right;
 }
 
+/* 照护人信息行 */
+.recipient-caregiver-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0;
+  margin-top: 6rpx;
+}
+
+.recipient-caregiver-label {
+  font-size: 22rpx;
+  color: #B0ADAD;
+}
+
+.recipient-caregiver-name {
+  font-size: 22rpx;
+  color: #6B6B6B;
+}
+
 // ─── 右侧每日护理打卡入口 ────────────────────────────────────────────────────
 .checkin-entry {
   width: 200rpx;

@@ -335,7 +335,7 @@ export default function CareLogPage() {
           createdAt: item.createdAt,
         }));
 
-        // 用药打卡
+        // 用药打卡（后端返回 time 字段）
         const medLogs: CareLog[] = (medLogsData ?? []).map((item: any) => ({
           id: item.id,
           content: item.content || '',
@@ -363,7 +363,7 @@ export default function CareLogPage() {
           healthValue: item.value,
         }));
 
-        // 每日护理打卡
+        // 每日护理打卡（使用 createdAt 作为时间戳，checkinDate 仅为日期字段）
         const checkinLogs: CareLog[] = ((checkinData ?? []) as any[]).map((item: any) => {
           const medCompleted = item.medicationCompleted ?? 0;
           const medTotal = item.medicationTotal ?? 0;
@@ -375,7 +375,7 @@ export default function CareLogPage() {
             id: item.id,
             content,
             type: 'other',
-            createdAt: item.checkinDate,
+            createdAt: item.createdAt || item.checkinDate,
             authorName: item.authorName || '家庭成员',
             authorAvatar: item.authorAvatar,
             recipientId: item.careRecipientId,
@@ -684,13 +684,26 @@ export default function CareLogPage() {
                 const isCheckin = log.source === 'daily_care_checkin';
                 const range = isHealth ? checkHealthRange(log.recordType || '', log.healthValue) : 'normal';
 
-                // 卡片颜色：偏高/偏低 > 类型色 > 默认色
+                // 颜色
                 const baseColor = isMedication ? '#4A90D9' : isCheckin ? '#7B9E87' : typeDef.color;
                 const alertColor = range === 'high' ? '#E84040' : range === 'low' ? '#F5A623' : baseColor;
 
-                // emoji 和标签
-                const cardEmoji = isMedication ? '💊' : isCheckin ? '📝' : typeDef.emoji;
-                const cardLabel = isMedication ? '服药' : isCheckin ? '护理打卡' : typeDef.label;
+                // emoji
+                const cardEmoji = isMedication ? '💊' : isCheckin
+                  ? (log.checkinStatus === 'normal' ? '😊' : log.checkinStatus === 'concerning' ? '😟' : log.checkinStatus === 'poor' ? '😰' : '🆘')
+                  : isHealth ? HEALTH_METRIC_TYPES.find(m => m.key === log.recordType)?.emoji || '🩺' : typeDef.emoji;
+
+                // 护理打卡状态颜色
+                const checkinColor = log.checkinStatus === 'normal' ? '#7B9E87'
+                  : log.checkinStatus === 'concerning' ? '#D4A855'
+                  : log.checkinStatus === 'poor' ? '#E07B5D'
+                  : log.checkinStatus === 'critical' ? '#C0392B' : baseColor;
+
+                // 超范围时卡片加边框
+                const isAlertCard = isHealth && range !== 'normal';
+
+                // 时间格式：护理打卡显示日期，其他显示时间
+                const timeText = isCheckin ? log.createdAt.substring(0, 10) : formatTime(log.createdAt);
 
                 return (
                   <View key={log.id} className="log-item-row">
@@ -698,59 +711,121 @@ export default function CareLogPage() {
                     <View className="log-indicator">
                       <View
                         className="log-indicator-circle"
-                        style={{ backgroundColor: `${alertColor}1A`, borderColor: `${alertColor}4D` }}
+                        style={{
+                          backgroundColor: `${alertColor}1A`,
+                          borderColor: isAlertCard ? alertColor : `${alertColor}4D`,
+                          borderWidth: isAlertCard ? '3rpx' : '1rpx',
+                        }}
                       >
                         <Text className="log-indicator-emoji">{cardEmoji}</Text>
                       </View>
                     </View>
 
                     {/* 右侧：卡片 */}
-                    <View className="log-card">
-                      {/* 卡片顶部行：时间 + 类型标签 + 偏高偏低 + 头像 + 名字 */}
+                    <View
+                      className={`log-card ${isAlertCard ? 'log-card-alert' : ''}`}
+                      style={isAlertCard ? { borderColor: `${alertColor}66`, borderWidth: '1.5rpx' } : {}}
+                    >
+                      {/* 卡片顶部行 */}
                       <View className="log-card-top-row">
-                        <Text className="log-time">{formatTime(log.createdAt)}</Text>
-                        <View
-                          className="log-type-badge"
-                          style={{ backgroundColor: `${alertColor}1A` }}
-                        >
-                          <Text className="log-type-badge-text" style={{ color: alertColor }}>{cardLabel}</Text>
-                        </View>
+                        <Text className="log-time">{timeText}</Text>
+
+                        {isHealth && log.recordType && (
+                          <View className="log-type-badge" style={{ backgroundColor: `${baseColor}1A` }}>
+                            <Text className="log-type-badge-text" style={{ color: baseColor }}>
+                              {HEALTH_METRIC_TYPES.find(m => m.key === log.recordType)?.label || ''}
+                            </Text>
+                          </View>
+                        )}
+                        {!isHealth && (
+                          <View className="log-type-badge" style={{ backgroundColor: `${alertColor}1A` }}>
+                            <Text className="log-type-badge-text" style={{ color: alertColor }}>
+                              {isMedication ? '服药' : isCheckin ? `护理打卡 · ${log.checkinStatus === 'normal' ? '状态良好' : log.checkinStatus === 'concerning' ? '需要关注' : log.checkinStatus === 'poor' ? '状态较差' : '紧急情况'}` : typeDef.label}
+                            </Text>
+                          </View>
+                        )}
+
+                        {/* 偏高/偏低标签（在头像前） */}
                         {range !== 'normal' && (
                           <View
                             className="log-alert-badge"
-                            style={{ backgroundColor: range === 'high' ? '#FFEAEA' : '#FFF8E6' }}
+                            style={{ backgroundColor: range === 'high' ? 'rgba(232,64,64,0.12)' : 'rgba(245,166,35,0.12)' }}
                           >
                             <Text
                               className="log-alert-badge-text"
                               style={{ color: range === 'high' ? '#E84040' : '#F5A623' }}
                             >
-                              {range === 'high' ? '↑偏高' : '↓偏低'}
+                              {range === 'high' ? '偏高' : '偏低'}
                             </Text>
                           </View>
                         )}
-                        <View className="log-card-top-right">
-                          {log.authorAvatar ? (
-                            <Image
-                              className="log-author-avatar"
-                              src={getImageUrl(log.authorAvatar || '')}
-                              mode="aspectFill"
-                            />
-                          ) : (
-                            <View className="log-author-avatar-placeholder">
-                              <Text className="log-author-avatar-text">{(log.authorName || '家')[0]}</Text>
-                            </View>
-                          )}
-                          <Text className="log-author-name">{log.authorName || '家庭成员'}</Text>
-                        </View>
+
+                        {/* 头像 + 名字（偏高偏低时不显示右侧头像） */}
+                        {!isAlertCard && (
+                          <View className="log-card-top-right">
+                            {log.authorAvatar ? (
+                              <Image
+                                className="log-author-avatar"
+                                src={getImageUrl(log.authorAvatar || '')}
+                                mode="aspectFill"
+                              />
+                            ) : (
+                              <View className="log-author-avatar-placeholder">
+                                <Text className="log-author-avatar-text">{(log.authorName || '家')[0]}</Text>
+                              </View>
+                            )}
+                            <Text className="log-author-name">{log.authorName || '家庭成员'}</Text>
+                          </View>
+                        )}
                       </View>
 
-                      {/* 日志内容 */}
-                      <Text
-                        className={`log-content ${range !== 'normal' ? 'log-content-alert' : ''}`}
-                        style={range !== 'normal' ? { color: range === 'high' ? '#E84040' : '#F5A623' } : {}}
-                      >
-                        {log.content}
-                      </Text>
+                      {/* 卡片内容区 */}
+                      {isCheckin ? (
+                        /* 每日护理打卡：emoji + 状态 + 用药进度 + 备注 */
+                        <View className="checkin-card-body">
+                          <View
+                            className="checkin-emoji-box"
+                            style={{
+                              borderColor: `${checkinColor}4D`,
+                              backgroundColor: `${checkinColor}1A`,
+                            }}
+                          >
+                            <Text className="checkin-emoji">{cardEmoji}</Text>
+                          </View>
+                          <View className="checkin-info">
+                            <Text className="checkin-status" style={{ color: checkinColor }}>
+                              {log.checkinStatus === 'normal' ? '状态良好'
+                                : log.checkinStatus === 'concerning' ? '需要关注'
+                                : log.checkinStatus === 'poor' ? '状态较差'
+                                : log.checkinStatus === 'critical' ? '紧急情况'
+                                : '护理打卡'}
+                            </Text>
+                            {log.medicationTotal && log.medicationTotal > 0 && (
+                              <Text className="checkin-med-progress">
+                                用药：{log.medicationCompleted ?? 0}/{log.medicationTotal} 项已完成
+                              </Text>
+                            )}
+                            {log.specialNote && (
+                              <Text className="checkin-note">备注：{log.specialNote}</Text>
+                            )}
+                          </View>
+                        </View>
+                      ) : (
+                        <>
+                          <Text
+                            className={`log-content ${range !== 'normal' ? 'log-content-alert' : ''}`}
+                            style={range !== 'normal' ? { color: alertColor } : {}}
+                          >
+                            {log.content}
+                          </Text>
+                          {/* 超范围时显示参考范围 */}
+                          {isHealth && range !== 'normal' && (
+                            <Text className="log-range-hint">
+                              参考范围：{HEALTH_NORMAL_RANGES[log.recordType || ''] || ''}
+                            </Text>
+                          )}
+                        </>
+                      )}
 
                       {/* 附件图片 */}
                       {log.attachments && log.attachments.length > 0 && (

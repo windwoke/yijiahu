@@ -17,11 +17,16 @@ import './index.scss';
 
 type SheetType = 'name' | 'password' | 'switchFamily' | 'joinFamily' | 'createFamily' | null;
 
+/** 后端 /users/me/families 返回的每个成员 */
+interface FamilyWithRole extends Family {
+  role?: string;
+}
+
 interface ProfileState {
   user: User | null;
   loading: boolean;
   activeSheet: SheetType;
-  families: Family[];
+  families: FamilyWithRole[];
   selectedFamilyId: string | null;
   currentFamilyName: string;
 }
@@ -74,8 +79,10 @@ export default function ProfilePage() {
 
   const loadFamilies = useCallback(async () => {
     try {
-      const res = await get<{ families: Family[] }>('/users/me/families');
-      const families = res?.families ?? [];
+      const res = await get<{ families: Array<{ family: Family; role?: string }> }>('/users/me/families');
+      // 后端返回 { families: [{ family: Family, role }] }，需要提取 family 并带上 role
+      const raw = res?.families ?? [];
+      const families: FamilyWithRole[] = raw.map((item) => ({ ...item.family, role: item.role }));
       const currentFamilyId = Storage.getCurrentFamilyId();
       const currentFamily = families.find((f) => f.id === currentFamilyId);
       setState((s) => ({

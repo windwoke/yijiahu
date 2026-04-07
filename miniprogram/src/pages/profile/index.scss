@@ -5,6 +5,10 @@
  */
 
 // ─── 颜色变量 ────────────────────────────────────────────────────────────────
+
+// ─── 统一颜色变量 ───────────────────────────────────────────────────────────
+$color-surface-low: #F5F5F5;
+
 $color-primary: #7B9E87;
 $color-coral: #E07B5D;
 $color-blue: #4A90D9;
@@ -61,7 +65,7 @@ $color-shadow: rgba(0, 0, 0, 0.06);
   width: 128rpx;
   height: 128rpx;
   border-radius: 64rpx;
-  background-color: #F0F0F0;
+  background-color: $color-surface-low;
   overflow: hidden;
 }
 
@@ -79,7 +83,7 @@ $color-shadow: rgba(0, 0, 0, 0.06);
 .avatar-initial {
   font-size: 56rpx;
   font-weight: 700;
-  color: #FFFFFF;
+  color: $color-surface;
   line-height: 1;
 }
 
@@ -100,7 +104,7 @@ $color-shadow: rgba(0, 0, 0, 0.06);
 
 .avatar-edit-icon {
   font-size: 20rpx;
-  color: #FFFFFF;
+  color: $color-surface;
   line-height: 1;
 }
 
@@ -248,7 +252,7 @@ $color-shadow: rgba(0, 0, 0, 0.06);
 .logout-text {
   font-size: 32rpx;
   font-weight: 600;
-  color: #FFFFFF;
+  color: $color-surface;
 }
 
 // ─── 底部 Sheet ──────────────────────────────────────────────────────────────
@@ -377,7 +381,7 @@ $color-shadow: rgba(0, 0, 0, 0.06);
 .sheet-btn-confirm-text {
   font-size: 30rpx;
   font-weight: 600;
-  color: #FFFFFF;
+  color: $color-surface;
 }
 
 .sheet-btn-disabled {

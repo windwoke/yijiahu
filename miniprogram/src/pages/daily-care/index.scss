@@ -2,9 +2,26 @@
 /* 设计稿 375px，所有值用 rpx（750rpx = 375px） */
 
 /* 页面容器 */
+
+// ─── 统一颜色变量 ───────────────────────────────────────────────────────────
+$color-primary: #7B9E87;
+$color-primary-dark: #5C8268;
+$color-coral: #E07B5D;
+$color-blue: #4A90D9;
+$color-success: #6BA07E;
+$color-warning: #F5A623;
+$color-bg: #FAF9F7;
+$color-surface: #FFFFFF;
+$color-surface-lowest: #FFFFFF;
+$color-surface-low: #F5F5F5;
+$color-border: #EEECE8;
+$color-text-primary: #2C2C2C;
+$color-text-secondary: #6B6B6B;
+$color-text-tertiary: #B0ADAD;
+
 .daily-care-page {
   min-height: 100vh;
-  background-color: #FAF9F7;
+  background-color: $color-bg;
   display: flex;
   flex-direction: column;
 }
@@ -16,7 +33,7 @@
   justify-content: space-between;
   padding: 16rpx 24rpx;
   padding-top: calc(env(safe-area-inset-top) + 16rpx);
-  background-color: #FAF9F7;
+  background-color: $color-bg;
 }
 
 .nav-back {
@@ -32,14 +49,14 @@
 .back-arrow {
   font-size: 40rpx;
   font-weight: 600;
-  color: #2C2C2C;
+  color: $color-text-primary;
   line-height: 1;
 }
 
 .nav-title {
   font-size: 34rpx;
   font-weight: 700;
-  color: #2C2C2C;
+  color: $color-text-primary;
 }
 
 .nav-placeholder {
@@ -56,7 +73,7 @@
 .recipient-card {
   display: flex;
   align-items: center;
-  background-color: #ffffff;
+  background-color: $color-surface;
   border-radius: 32rpx;
   padding: 32rpx;
   margin-top: 16rpx;
@@ -66,7 +83,7 @@
 .recipient-avatar {
   width: 100rpx;
   height: 100rpx;
-  background-color: #F5F5F5;
+  background-color: $color-surface-low;
   border-radius: 24rpx;
   display: flex;
   align-items: center;
@@ -87,13 +104,13 @@
 .recipient-name {
   font-size: 36rpx;
   font-weight: 700;
-  color: #2C2C2C;
+  color: $color-text-primary;
   display: block;
 }
 
 .recipient-date {
   font-size: 26rpx;
-  color: #6B6B6B;
+  color: $color-text-secondary;
   display: block;
   margin-top: 6rpx;
 }
@@ -106,7 +123,7 @@
 .section-title {
   font-size: 30rpx;
   font-weight: 700;
-  color: #2C2C2C;
+  color: $color-text-primary;
   display: block;
   margin-bottom: 24rpx;
 }
@@ -122,9 +139,9 @@
   display: flex;
   align-items: center;
   padding: 20rpx 28rpx;
-  background-color: #ffffff;
+  background-color: $color-surface;
   border-radius: 24rpx;
-  border: 2rpx solid #E8E6E2;
+  border: 2rpx solid $color-border;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
   transition: all 0.2s ease;
 }
@@ -142,12 +159,12 @@
 .status-label {
   font-size: 28rpx;
   font-weight: 500;
-  color: #6B6B6B;
+  color: $color-text-secondary;
 }
 
 /* 用药情况卡片 */
 .med-card {
-  background-color: #ffffff;
+  background-color: $color-surface;
   border-radius: 32rpx;
   padding: 32rpx;
   border: 2rpx solid rgba(232, 230, 226, 0.6);
@@ -168,14 +185,14 @@
 .med-title {
   font-size: 28rpx;
   font-weight: 600;
-  color: #2C2C2C;
+  color: $color-text-primary;
   margin-left: 12rpx;
 }
 
 .med-count {
   font-size: 28rpx;
   font-weight: 700;
-  color: #7B9E87;
+  color: $color-primary;
   margin-left: auto;
 }
 
@@ -189,7 +206,7 @@
 .progress-bar-bg {
   flex: 1;
   height: 16rpx;
-  background-color: #F0F0F0;
+  background-color: $color-surface-low;
   border-radius: 8rpx;
   overflow: hidden;
 }
@@ -203,14 +220,14 @@
 .progress-percent {
   font-size: 26rpx;
   font-weight: 600;
-  color: #6B6B6B;
+  color: $color-text-secondary;
   min-width: 72rpx;
   text-align: right;
 }
 
 /* 特殊情况备注 */
 .note-wrap {
-  background-color: #ffffff;
+  background-color: $color-surface;
   border-radius: 24rpx;
   padding: 24rpx;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
@@ -220,14 +237,14 @@
   width: 100%;
   min-height: 180rpx;
   font-size: 28rpx;
-  color: #2C2C2C;
+  color: $color-text-primary;
   line-height: 1.6;
   background: transparent;
 }
 
 .note-placeholder {
   font-size: 28rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
 }
 
 /* 提交按钮 */
@@ -237,7 +254,7 @@
 }
 
 .submit-btn {
-  background-color: #7B9E87;
+  background-color: $color-primary;
   border-radius: 32rpx;
   padding: 32rpx;
   display: flex;
@@ -253,7 +270,7 @@
 .submit-text {
   font-size: 32rpx;
   font-weight: 700;
-  color: #ffffff;
+  color: $color-surface;
 }
 
 .loading-text {

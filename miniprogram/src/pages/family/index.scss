@@ -3,13 +3,14 @@
  */
 
 $color-primary: #7B9E87;
+$color-primary-dark: #5C8268;
 $color-coral: #E07B5D;
 $color-blue: #4A90D9;
 $color-success: #6BA07E;
 $color-bg: #FAF9F7;
 $color-surface: #FFFFFF;
 $color-surface-lowest: #FFFFFF;
-$color-surface-low: #F5F5F3;
+$color-surface-low: #F5F5F5;
 $color-border: #EEECE8;
 $color-text-primary: #2C2C2C;
 $color-text-secondary: #6B6B6B;
@@ -674,7 +675,7 @@ $shadow-card: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
 
 .sheet-container {
   width: 100%;
-  background-color: #ffffff;
+  background-color: $color-surface-lowest;
   border-radius: 32rpx 32rpx 0 0;
   max-height: 80vh;
   display: flex;
@@ -690,7 +691,7 @@ $shadow-card: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
 .sheet-handle {
   width: 80rpx;
   height: 8rpx;
-  background-color: #E0E0E0;
+  background-color: $color-border;
   border-radius: 4rpx;
   align-self: center;
   margin: 16rpx 0 0;
@@ -708,29 +709,29 @@ $shadow-card: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
 .sheet-title {
   font-size: 34rpx;
   font-weight: 700;
-  color: #2C2C2C;
+  color: $color-text-primary;
 }
 
 .sheet-confirm-btn {
-  background-color: #7B9E87;
+  background-color: $color-primary;
   border-radius: 20rpx;
   padding: 10rpx 28rpx;
   box-shadow: 0 4rpx 12rpx rgba(123, 158, 135, 0.3);
 }
 
 .sheet-confirm-btn.disabled {
-  background-color: #C8C8C8;
+  background-color: $color-border;
   box-shadow: none;
 }
 
 .sheet-confirm-text {
   font-size: 28rpx;
   font-weight: 600;
-  color: #ffffff;
+  color: $color-surface-lowest;
 }
 
 .sheet-close-btn {
-  background-color: #F5F5F5;
+  background-color: $color-surface-low;
   border-radius: 20rpx;
   padding: 10rpx 24rpx;
 }
@@ -738,7 +739,7 @@ $shadow-card: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
 .sheet-close-text {
   font-size: 28rpx;
   font-weight: 500;
-  color: #6B6B6B;
+  color: $color-text-secondary;
 }
 
 .sheet-body {
@@ -750,14 +751,14 @@ $shadow-card: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
 .sheet-label {
   font-size: 26rpx;
   font-weight: 600;
-  color: #6B6B6B;
+  color: $color-text-secondary;
   display: block;
   margin-top: 20rpx;
   margin-bottom: 12rpx;
 }
 
 .sheet-input-wrap {
-  background-color: #F5F5F5;
+  background-color: $color-surface-low;
   border-radius: 16rpx;
   overflow: hidden;
 }
@@ -768,12 +769,12 @@ $shadow-card: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
   height: auto !important;
   padding: 20rpx 24rpx;
   font-size: 30rpx;
-  color: #2C2C2C;
+  color: $color-text-primary;
   box-sizing: border-box;
   border: none;
   outline: none;
   background-color: transparent;
-  placeholder-color: #B0ADAD;
+  placeholder-color: $color-text-tertiary;
 }
 
 .role-select-list {
@@ -789,7 +790,7 @@ $shadow-card: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
   gap: 12rpx;
   padding: 20rpx 24rpx;
   border-radius: 16rpx;
-  background-color: #F5F5F5;
+  background-color: $color-surface-low;
   margin-bottom: 8rpx;
 }
 
@@ -807,7 +808,7 @@ $shadow-card: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
 .role-select-label {
   font-size: 28rpx;
   font-weight: 500;
-  color: #6B6B6B;
+  color: $color-text-secondary;
   flex: 1;
 }
 
@@ -818,7 +819,7 @@ $shadow-card: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
 .role-select-check {
   font-size: 28rpx;
   font-weight: 700;
-  color: #7B9E87;
+  color: $color-primary;
 }
 
 .edit-member-info {
@@ -827,7 +828,7 @@ $shadow-card: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
   align-items: center;
   gap: 20rpx;
   padding: 20rpx;
-  background-color: #F5F5F5;
+  background-color: $color-surface-low;
   border-radius: 20rpx;
   margin-bottom: 8rpx;
 }
@@ -835,14 +836,14 @@ $shadow-card: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
 .edit-member-name {
   font-size: 30rpx;
   font-weight: 600;
-  color: #2C2C2C;
+  color: $color-text-primary;
   display: block;
   margin-bottom: 4rpx;
 }
 
 .edit-member-phone {
   font-size: 24rpx;
-  color: #6B6B6B;
+  color: $color-text-secondary;
 }
 
 .remove-member-btn {
@@ -852,14 +853,14 @@ $shadow-card: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
   margin-top: 32rpx;
   padding: 20rpx;
   border-radius: 20rpx;
-  border: 2rpx solid #E07B5D;
+  border: 2rpx solid $color-coral;
   background-color: rgba(224, 123, 93, 0.06);
 }
 
 .remove-member-btn-text {
   font-size: 28rpx;
   font-weight: 600;
-  color: #E07B5D;
+  color: $color-coral;
 }
 
 // ─── 成员角色标签（带星星）──────────────────────────────────────────────────
@@ -889,7 +890,7 @@ $shadow-card: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
   flex-direction: row;
   align-items: flex-start;
   gap: 8rpx;
-  background-color: #F5F5F5;
+  background-color: $color-surface-low;
   border-radius: 12rpx;
   padding: 12rpx 16rpx;
   margin-top: 12rpx;
@@ -903,14 +904,14 @@ $shadow-card: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
 
 .role-desc-text {
   font-size: 22rpx;
-  color: #6B6B6B;
+  color: $color-text-secondary;
   flex: 1;
   line-height: 1.5;
 }
 
 // ─── 保存按钮（与照护详情页一致）────────────────────────────────────────────
 .cg-save-btn {
-  background: linear-gradient(135deg, #7B9E87 0%, #5C8268 100%);
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-dark 100%);
   border-radius: 56rpx;
   padding: 24rpx;
   display: flex;
@@ -925,7 +926,7 @@ $shadow-card: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
 
 .cg-save-btn-text {
   font-size: 30rpx;
-  color: #ffffff;
+  color: $color-surface-lowest;
   font-weight: 600;
 }
 
@@ -953,12 +954,12 @@ $shadow-card: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
   bottom: 0;
   width: 36rpx;
   height: 36rpx;
-  background-color: #7B9E87;
+  background-color: $color-primary;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2rpx solid #ffffff;
+  border: 2rpx solid $color-surface-lowest;
 }
 
 .avatar-camera-icon {
@@ -968,7 +969,7 @@ $shadow-card: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
 
 .edit-member-avatar-hint {
   font-size: 24rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
 }
 
 // ─── 编辑家庭弹层 ─────────────────────────────────────────────────────────
@@ -997,7 +998,7 @@ $shadow-card: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
 .family-edit-avatar-placeholder {
   width: 160rpx;
   height: 160rpx;
-  background-color: #F5F5F5;
+  background-color: $color-surface-low;
   border-radius: 40rpx;
   display: flex;
   align-items: center;
@@ -1015,12 +1016,12 @@ $shadow-card: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
   bottom: 0;
   width: 56rpx;
   height: 56rpx;
-  background-color: #7B9E87;
+  background-color: $color-primary;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 4rpx solid #ffffff;
+  border: 4rpx solid $color-surface-lowest;
 }
 
 .family-edit-avatar-camera-icon {
@@ -1030,11 +1031,11 @@ $shadow-card: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
 
 .family-edit-avatar-hint {
   font-size: 24rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
 }
 
 .family-save-btn {
-  background: linear-gradient(135deg, #7B9E87 0%, #5C8268 100%);
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-dark 100%);
   border-radius: 56rpx;
   padding: 24rpx;
   display: flex;
@@ -1049,6 +1050,6 @@ $shadow-card: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
 
 .family-save-btn-text {
   font-size: 30rpx;
-  color: #ffffff;
+  color: $color-surface-lowest;
   font-weight: 600;
 }

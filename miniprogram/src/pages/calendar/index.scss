@@ -1,9 +1,26 @@
 /* 日历页样式 */
 /* 对应 Flutter calendar_page.dart，与首页风格对齐 */
 
+// ─── 统一颜色变量 ───────────────────────────────────────────────────────────
+$color-primary: #7B9E87;
+$color-primary-dark: #5C8268;
+$color-coral: #E07B5D;
+$color-blue: #4A90D9;
+$color-success: #6BA07E;
+$color-warning: #F5A623;
+$color-bg: #FAF9F7;
+$color-surface: #FFFFFF;
+$color-surface-lowest: #FFFFFF;
+$color-surface-low: #F5F5F5;
+$color-border: #EEECE8;
+$color-text-primary: #2C2C2C;
+$color-text-secondary: #6B6B6B;
+$color-text-tertiary: #B0ADAD;
+
+
 .calendar-page {
   min-height: 100vh;
-  background-color: #FAF9F7;
+  background-color: $color-bg;
   display: flex;
   flex-direction: column;
 }
@@ -19,7 +36,7 @@
   z-index: 100;
   width: 64rpx;
   height: 64rpx;
-  background-color: #7B9E87;
+  background-color: $color-primary;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -29,7 +46,7 @@
 
 .fixed-add-icon {
   font-size: 36rpx;
-  color: #ffffff;
+  color: $color-surface;
   font-weight: 400;
   line-height: 1;
 }
@@ -43,7 +60,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 12rpx 24rpx;
-  background-color: #FAF9F7;
+  background-color: $color-bg;
 }
 
 .month-arrow {
@@ -57,13 +74,13 @@
 
 .arrow-text {
   font-size: 28rpx;
-  color: #6B6B6B;
+  color: $color-text-secondary;
 }
 
 .month-label {
   font-size: 32rpx;
   font-weight: 600;
-  color: #2C2C2C;
+  color: $color-text-primary;
 }
 
 /* ============================
@@ -74,7 +91,7 @@
   display: flex;
   flex-direction: row;
   padding: 0 8rpx;
-  background-color: #FAF9F7;
+  background-color: $color-bg;
 }
 
 .weekday-cell {
@@ -88,7 +105,7 @@
 .weekday-text {
   font-size: 24rpx;
   font-weight: 600;
-  color: #6B6B6B;
+  color: $color-text-secondary;
 }
 
 /* ============================
@@ -99,7 +116,7 @@
   display: flex;
   flex-wrap: wrap;
   padding: 0 8rpx 16rpx;
-  background-color: #FAF9F7;
+  background-color: $color-bg;
 }
 
 .calendar-cell {
@@ -116,17 +133,17 @@
 .cell-day {
   font-size: 30rpx;
   font-weight: 500;
-  color: #2C2C2C;
+  color: $color-text-primary;
   line-height: 1;
 }
 
 .cell-day-today {
-  color: #7B9E87;
+  color: $color-primary;
   font-weight: 600;
 }
 
 .cell-day-selected {
-  color: #ffffff;
+  color: $color-surface;
   font-weight: 600;
 }
 
@@ -160,7 +177,7 @@
     width: 64rpx;
     height: 64rpx;
     border-radius: 50%;
-    background-color: #7B9E87;
+    background-color: $color-primary;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -170,7 +187,7 @@
 
 .cell-other-month {
   .cell-day {
-    color: #B0ADAD;
+    color: $color-text-tertiary;
     font-weight: 400;
   }
 }
@@ -192,11 +209,11 @@
 }
 
 .dot-appointment {
-  background-color: #E07B5D;
+  background-color: $color-coral;
 }
 
 .dot-task {
-  background-color: #4A90D9;
+  background-color: $color-blue;
 }
 
 /* ============================
@@ -205,7 +222,7 @@
 
 .divider {
   height: 1rpx;
-  background-color: #E8E6E2;
+  background-color: $color-border;
   margin: 0 32rpx;
 }
 
@@ -224,7 +241,7 @@
 .events-title {
   font-size: 26rpx;
   font-weight: 600;
-  color: #6B6B6B;
+  color: $color-text-secondary;
 }
 
 .events-legend {
@@ -247,16 +264,16 @@
 }
 
 .legend-appt {
-  background-color: #E07B5D;
+  background-color: $color-coral;
 }
 
 .legend-task {
-  background-color: #4A90D9;
+  background-color: $color-blue;
 }
 
 .legend-text {
   font-size: 22rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
 }
 
 /* 视图切换按钮 */
@@ -278,11 +295,11 @@
 
 .toggle-text {
   font-size: 24rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
 }
 
 .toggle-text-active {
-  color: #7B9E87;
+  color: $color-primary;
   font-weight: 600;
 }
 
@@ -296,7 +313,7 @@
 
 .loading-text {
   font-size: 26rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
 }
 
 /* ============================
@@ -332,11 +349,11 @@
 }
 
 .section-bar-appt {
-  background-color: #E07B5D;
+  background-color: $color-coral;
 }
 
 .section-bar-task {
-  background-color: #4A90D9;
+  background-color: $color-blue;
 }
 
 .section-label {
@@ -345,11 +362,11 @@
 }
 
 .section-label-appt {
-  color: #E07B5D;
+  color: $color-coral;
 }
 
 .section-label-task {
-  color: #4A90D9;
+  color: $color-blue;
 }
 
 .cards-list {
@@ -364,7 +381,7 @@
    ============================ */
 
 .appt-card {
-  background-color: #ffffff;
+  background-color: $color-surface;
   border-radius: 24rpx;
   overflow: hidden;
   box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
@@ -376,13 +393,13 @@
   align-items: center;
   justify-content: space-between;
   padding: 16rpx 24rpx;
-  border-bottom: 1rpx solid #F0EEEB;
+  border-bottom: 1rpx solid $color-bg;
 }
 
 .appt-date {
   font-size: 26rpx;
   font-weight: 600;
-  color: #E07B5D;
+  color: $color-coral;
 }
 
 .appt-time-badge {
@@ -394,7 +411,7 @@
 .appt-time {
   font-size: 26rpx;
   font-weight: 600;
-  color: #E07B5D;
+  color: $color-coral;
 }
 
 .appt-body {
@@ -416,7 +433,7 @@
 .recipient-name {
   font-size: 28rpx;
   font-weight: 600;
-  color: #2C2C2C;
+  color: $color-text-primary;
 }
 
 .appt-type-badge {
@@ -428,7 +445,7 @@
 
 .appt-type-text {
   font-size: 22rpx;
-  color: #7B9E87;
+  color: $color-primary;
   font-weight: 500;
 }
 
@@ -445,7 +462,7 @@
 
 .appt-info-text {
   font-size: 26rpx;
-  color: #6B6B6B;
+  color: $color-text-secondary;
   flex: 1;
 }
 
@@ -476,11 +493,11 @@
 }
 
 .action-btn-text-call {
-  color: #7B9E87;
+  color: $color-primary;
 }
 
 .action-btn-text-nav {
-  color: #4A90D9;
+  color: $color-blue;
 }
 
 /* ============================
@@ -488,7 +505,7 @@
    ============================ */
 
 .task-card {
-  background-color: #ffffff;
+  background-color: $color-surface;
   border-radius: 24rpx;
   overflow: hidden;
   box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
@@ -544,7 +561,7 @@
 
 .task-desc {
   font-size: 24rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
   margin-bottom: 10rpx;
   display: block;
 }
@@ -571,7 +588,7 @@
 .task-due,
 .task-assignee {
   font-size: 24rpx;
-  color: #6B6B6B;
+  color: $color-text-secondary;
 }
 
 /* 完成按钮 */
@@ -590,7 +607,7 @@
 
 .task-complete-icon {
   font-size: 36rpx;
-  color: #6BA07E;
+  color: $color-success;
   font-weight: 700;
 }
 
@@ -605,7 +622,7 @@
 .group-date {
   font-size: 24rpx;
   font-weight: 600;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
   margin-bottom: 12rpx;
   display: block;
 }
@@ -630,14 +647,14 @@
 .empty-title {
   font-size: 30rpx;
   font-weight: 600;
-  color: #2C2C2C;
+  color: $color-text-primary;
   display: block;
   margin-top: 8rpx;
 }
 
 .empty-sub {
   font-size: 26rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
   display: block;
   text-align: center;
 }
@@ -660,7 +677,7 @@
 
 .sheet-container {
   width: 100%;
-  background-color: #ffffff;
+  background-color: $color-surface;
   border-radius: 32rpx 32rpx 0 0;
   padding: 20rpx 40rpx 60rpx;
   box-sizing: border-box;
@@ -669,7 +686,7 @@
 .sheet-handle {
   width: 72rpx;
   height: 8rpx;
-  background-color: #E8E6E2;
+  background-color: $color-border;
   border-radius: 4rpx;
   margin: 0 auto 32rpx;
 }
@@ -709,11 +726,11 @@
 }
 
 .option-label-appt {
-  color: #E07B5D;
+  color: $color-coral;
 }
 
 .option-label-task {
-  color: #4A90D9;
+  color: $color-blue;
 }
 
 /* ============================

@@ -1,8 +1,25 @@
 /* 添加照护对象页 */
 
+// ─── 统一颜色变量 ───────────────────────────────────────────────────────────
+$color-primary: #7B9E87;
+$color-primary-dark: #5C8268;
+$color-coral: #E07B5D;
+$color-blue: #4A90D9;
+$color-success: #6BA07E;
+$color-warning: #F5A623;
+$color-bg: #FAF9F7;
+$color-surface: #FFFFFF;
+$color-surface-lowest: #FFFFFF;
+$color-surface-low: #F5F5F5;
+$color-border: #EEECE8;
+$color-text-primary: #2C2C2C;
+$color-text-secondary: #6B6B6B;
+$color-text-tertiary: #B0ADAD;
+
+
 .acr-page {
   height: 100vh;
-  background-color: #FAF9F7;
+  background-color: $color-bg;
   display: flex;
   flex-direction: column;
 }
@@ -22,7 +39,7 @@
 
 .loading-text {
   font-size: 28rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
 }
 
 /* 区块 */
@@ -39,7 +56,7 @@
 .section-title {
   font-size: 30rpx;
   font-weight: 700;
-  color: #2C2C2C;
+  color: $color-text-primary;
   margin-bottom: 20rpx;
   display: block;
 }
@@ -56,15 +73,15 @@
   width: 88rpx;
   height: 88rpx;
   border-radius: 50%;
-  background-color: #ffffff;
-  border: 3rpx solid #E8E8E8;
+  background-color: $color-surface;
+  border: 3rpx solid $color-border;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
 
   &.selected {
-    border-color: #7B9E87;
+    border-color: $color-primary;
     background-color: rgba(123, 158, 135, 0.1);
     box-shadow: 0 4rpx 12rpx rgba(123, 158, 135, 0.3);
   }
@@ -83,32 +100,32 @@
 .field-label {
   font-size: 26rpx;
   font-weight: 600;
-  color: #6B6B6B;
+  color: $color-text-secondary;
   display: block;
   margin-bottom: 12rpx;
 }
 
 .field-input {
   width: 100%;
-  background-color: #ffffff;
+  background-color: $color-surface;
   border-radius: 16rpx;
   padding: 24rpx;
   font-size: 30rpx;
-  color: #2C2C2C;
+  color: $color-text-primary;
   box-sizing: border-box;
-  border: 2rpx solid #E8E8E8;
-  placeholder-color: #B0ADAD;
+  border: 2rpx solid $color-border;
+  placeholder-color: $color-text-tertiary;
   line-height: 1 !important;
   height: auto !important;
 }
 
 .field-picker {
   width: 100%;
-  background-color: #ffffff;
+  background-color: $color-surface;
   border-radius: 16rpx;
   padding: 20rpx 24rpx;
   box-sizing: border-box;
-  border: 2rpx solid #E8E8E8;
+  border: 2rpx solid $color-border;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -117,17 +134,17 @@
 
 .field-picker-text {
   font-size: 30rpx;
-  color: #2C2C2C;
+  color: $color-text-primary;
 }
 
 .field-picker-placeholder {
   font-size: 30rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
 }
 
 .field-picker-arrow {
   font-size: 32rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
 }
 
 /* 性别选择 */
@@ -140,9 +157,9 @@
 .gender-chip {
   flex: 1;
   padding: 16rpx;
-  background-color: #ffffff;
+  background-color: $color-surface;
   border-radius: 16rpx;
-  border: 2rpx solid #E8E8E8;
+  border: 2rpx solid $color-border;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -150,17 +167,17 @@
 
   &.selected {
     background-color: rgba(123, 158, 135, 0.1);
-    border-color: #7B9E87;
+    border-color: $color-primary;
   }
 }
 
 .gender-chip-text {
   font-size: 28rpx;
   font-weight: 500;
-  color: #6B6B6B;
+  color: $color-text-secondary;
 
   &.selected {
-    color: #7B9E87;
+    color: $color-primary;
     font-weight: 600;
   }
 }
@@ -175,27 +192,27 @@
 .blood-chip {
   flex: 1;
   padding: 16rpx;
-  background-color: #ffffff;
+  background-color: $color-surface;
   border-radius: 16rpx;
-  border: 2rpx solid #E8E8E8;
+  border: 2rpx solid $color-border;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
 
   &.selected {
-    background-color: #E07B5D;
-    border-color: #E07B5D;
+    background-color: $color-coral;
+    border-color: $color-coral;
   }
 }
 
 .blood-chip-text {
   font-size: 28rpx;
   font-weight: 500;
-  color: #6B6B6B;
+  color: $color-text-secondary;
 
   &.selected {
-    color: #ffffff;
+    color: $color-surface;
     font-weight: 600;
   }
 }
@@ -211,13 +228,13 @@
   left: 0;
   right: 0;
   padding: 20rpx 32rpx calc(20rpx + env(safe-area-inset-bottom));
-  background-color: #ffffff;
+  background-color: $color-surface;
   box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.06);
   z-index: 100;
 }
 
 .acr-submit-btn {
-  background-color: #7B9E87;
+  background-color: $color-primary;
   border-radius: 24rpx;
   padding: 24rpx;
   display: flex;
@@ -226,7 +243,7 @@
   box-shadow: 0 4rpx 16rpx rgba(123, 158, 135, 0.35);
 
   &.loading {
-    background-color: #C8C8C8;
+    background-color: $color-border;
     box-shadow: none;
   }
 }
@@ -234,7 +251,7 @@
 .acr-submit-text {
   font-size: 32rpx;
   font-weight: 600;
-  color: #ffffff;
+  color: $color-surface;
 }
 
 /* 导航栏 */
@@ -245,13 +262,13 @@
   justify-content: space-between;
   padding: 16rpx 24rpx;
   padding-top: calc(16rpx + env(safe-area-inset-top));
-  background-color: #ffffff;
+  background-color: $color-surface;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
 }
 
 .add-navbar-back {
   font-size: 48rpx;
-  color: #2C2C2C;
+  color: $color-text-primary;
   font-weight: 300;
   line-height: 1;
   padding: 8rpx;
@@ -260,7 +277,7 @@
 .add-navbar-title {
   font-size: 34rpx;
   font-weight: 700;
-  color: #2C2C2C;
+  color: $color-text-primary;
   flex: 1;
   text-align: center;
   margin-right: 64rpx; // 平衡 back 按钮占的宽度

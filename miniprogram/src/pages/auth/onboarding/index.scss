@@ -3,6 +3,22 @@
  * 与 Flutter family_onboarding.dart 完全对齐
  */
 
+// ─── 统一颜色变量 ───────────────────────────────────────────────────────────
+$color-primary: #7B9E87;
+$color-primary-dark: #5C8268;
+$color-coral: #E07B5D;
+$color-blue: #4A90D9;
+$color-success: #6BA07E;
+$color-warning: #F5A623;
+$color-bg: #FAF9F7;
+$color-surface: #FFFFFF;
+$color-surface-lowest: #FFFFFF;
+$color-surface-low: #F5F5F5;
+$color-border: #EEECE8;
+$color-text-primary: #2C2C2C;
+$color-text-secondary: #6B6B6B;
+$color-text-tertiary: #B0ADAD;
+
 // ─── 全屏遮罩容器 ──────────────────────────────────────────────────────
 .onboarding-page {
   width: 100%;
@@ -26,7 +42,7 @@
 // ─── 居中卡片 ──────────────────────────────────────────────────────────
 .onboard-card {
   width: 100%;
-  background-color: #FFFFFF;
+  background-color: $color-surface;
   border-radius: 24rpx;
   padding: 48rpx 40rpx;
   display: flex;
@@ -58,13 +74,13 @@
 .onboard-title {
   font-size: 40rpx;
   font-weight: 700;
-  color: #2C2C2C;
+  color: $color-text-primary;
   margin-bottom: 12rpx;
 }
 
 .onboard-subtitle {
   font-size: 28rpx;
-  color: #6B6B6B;
+  color: $color-text-secondary;
   margin-bottom: 40rpx;
 }
 
@@ -110,21 +126,21 @@
 .onboard-action-label {
   font-size: 28rpx;
   font-weight: 600;
-  color: #7B9E87;
+  color: $color-primary;
 }
 
 .onboard-action-join .onboard-action-label {
-  color: #4A90D9;
+  color: $color-blue;
 }
 
 // ─── 加入视图 ───────────────────────────────────────────────────────────
 .onboard-input {
   width: 100%;
-  background-color: #FAF9F7;
+  background-color: $color-bg;
   border-radius: 24rpx;
   padding: 24rpx 32rpx;
   font-size: 30rpx;
-  color: #2C2C2C;
+  color: $color-text-primary;
   box-sizing: border-box;
   border: 2rpx solid transparent;
   letter-spacing: 4rpx;
@@ -133,17 +149,17 @@
 }
 
 .onboard-input-error {
-  border-color: #E07B5D;
+  border-color: $color-coral;
 }
 
 .onboard-placeholder {
-  color: #B0ADAD;
+  color: $color-text-tertiary;
   letter-spacing: 0;
 }
 
 .onboard-error {
   font-size: 24rpx;
-  color: #E07B5D;
+  color: $color-coral;
   margin-top: 16rpx;
   align-self: flex-start;
 }
@@ -159,13 +175,13 @@
 .onboard-btn-cancel {
   flex: 1;
   height: 96rpx;
-  background-color: #FAF9F7;
+  background-color: $color-bg;
   border-radius: 48rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   border-width: 2rpx;
-  border-color: #E8E6E2;
+  border-color: $color-border;
   border-style: solid;
   box-sizing: border-box;
 }
@@ -173,13 +189,13 @@
 .onboard-btn-cancel-text {
   font-size: 30rpx;
   font-weight: 500;
-  color: #6B6B6B;
+  color: $color-text-secondary;
 }
 
 .onboard-btn-confirm {
   flex: 1;
   height: 96rpx;
-  background-color: #4A90D9;
+  background-color: $color-blue;
   border-radius: 48rpx;
   display: flex;
   align-items: center;
@@ -194,13 +210,13 @@
 .onboard-btn-confirm-text {
   font-size: 30rpx;
   font-weight: 600;
-  color: #FFFFFF;
+  color: $color-surface;
 }
 
 // ─── 加载状态 ───────────────────────────────────────────────────────────
 .onboard-loading-text {
   font-size: 28rpx;
-  color: #6B6B6B;
+  color: $color-text-secondary;
   padding-top: 40rpx;
   padding-bottom: 40rpx;
 }
@@ -223,7 +239,7 @@
 
 .create-sheet {
   width: 100%;
-  background-color: #FFFFFF;
+  background-color: $color-surface;
   border-radius: 32rpx;
   padding: 40rpx;
   display: flex;
@@ -240,23 +256,23 @@
 .create-sheet-title {
   font-size: 36rpx;
   font-weight: 600;
-  color: #2C2C2C;
+  color: $color-text-primary;
   margin-bottom: 12rpx;
 }
 
 .create-sheet-subtitle {
   font-size: 28rpx;
-  color: #6B6B6B;
+  color: $color-text-secondary;
   margin-bottom: 32rpx;
 }
 
 .create-sheet-input {
   width: 100%;
-  background-color: #FAF9F7;
+  background-color: $color-bg;
   border-radius: 24rpx;
   padding: 24rpx 32rpx;
   font-size: 30rpx;
-  color: #2C2C2C;
+  color: $color-text-primary;
   box-sizing: border-box;
   border: 2rpx solid transparent;
   line-height: 1 !important;
@@ -264,23 +280,23 @@
 }
 
 .create-sheet-input-error {
-  border-color: #E07B5D;
+  border-color: $color-coral;
 }
 
 .create-sheet-placeholder {
-  color: #B0ADAD;
+  color: $color-text-tertiary;
 }
 
 .create-sheet-error {
   font-size: 24rpx;
-  color: #E07B5D;
+  color: $color-coral;
   margin-top: 16rpx;
   align-self: flex-start;
 }
 
 .create-sheet-btn {
   width: 100%;
-  background-color: #7B9E87;
+  background-color: $color-primary;
   border-radius: 48rpx;
   padding: 24rpx;
   display: flex;
@@ -297,12 +313,12 @@
 .create-sheet-btn-text {
   font-size: 32rpx;
   font-weight: 600;
-  color: #FFFFFF;
+  color: $color-surface;
 }
 
 .create-sheet-cancel {
   font-size: 28rpx;
-  color: #6B6B6B;
+  color: $color-text-secondary;
   margin-top: 16rpx;
   padding: 16rpx;
 }

@@ -1,8 +1,18 @@
 /* 添加复诊页 */
 
+// ─── 颜色变量 ───────────────────────────────────────────────────────────────
+$color-primary: #7B9E87;
+$color-coral: #E07B5D;
+$color-bg: #FAF9F7;
+$color-surface: #FFFFFF;
+$color-border: #EEECE8;
+$color-text-primary: #2C2C2C;
+$color-text-secondary: #6B6B6B;
+$color-text-tertiary: #B0ADAD;
+
 .appt-add-page {
   height: 100vh;
-  background-color: #FAF9F7;
+  background-color: $color-bg;
   display: flex;
   flex-direction: column;
 }
@@ -21,7 +31,7 @@
 
 .loading-text {
   font-size: 28rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
 }
 
 /* 空状态 */
@@ -42,20 +52,20 @@
 .empty-title {
   font-size: 32rpx;
   font-weight: 600;
-  color: #2C2C2C;
+  color: $color-text-primary;
 }
 
 .empty-action {
   margin-top: 16rpx;
   padding: 16rpx 40rpx;
-  background-color: #7B9E87;
+  background-color: $color-primary;
   border-radius: 24rpx;
 }
 
 .empty-action-text {
   font-size: 28rpx;
   font-weight: 600;
-  color: #ffffff;
+  color: $color-surface;
 }
 
 /* 区块 */
@@ -66,7 +76,7 @@
 .section-title {
   font-size: 30rpx;
   font-weight: 700;
-  color: #2C2C2C;
+  color: $color-text-primary;
   margin-bottom: 20rpx;
   display: block;
 }
@@ -79,32 +89,32 @@
 .field-label {
   font-size: 26rpx;
   font-weight: 600;
-  color: #6B6B6B;
+  color: $color-text-secondary;
   display: block;
   margin-bottom: 12rpx;
 }
 
 .field-input {
   width: 100%;
-  background-color: #ffffff;
+  background-color: $color-surface;
   border-radius: 16rpx;
   padding: 24rpx;
   font-size: 30rpx;
-  color: #2C2C2C;
+  color: $color-text-primary;
   box-sizing: border-box;
-  border: 2rpx solid #E8E8E8;
-  placeholder-color: #B0ADAD;
+  border: 2rpx solid $color-border;
+  placeholder-color: $color-text-tertiary;
   line-height: 1 !important;
   height: auto !important;
 }
 
 .field-picker {
   width: 100%;
-  background-color: #ffffff;
+  background-color: $color-surface;
   border-radius: 16rpx;
   padding: 20rpx 24rpx;
   box-sizing: border-box;
-  border: 2rpx solid #E8E8E8;
+  border: 2rpx solid $color-border;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -113,17 +123,17 @@
 
 .field-picker-text {
   font-size: 30rpx;
-  color: #2C2C2C;
+  color: $color-text-primary;
 }
 
 .field-picker-placeholder {
   font-size: 30rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
 }
 
 .field-picker-arrow {
   font-size: 32rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
 }
 
 /* 日期时间行 */
@@ -140,13 +150,13 @@
 
 .date-time-sep {
   font-size: 28rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
   flex-shrink: 0;
 }
 
 .date-picker-text {
   font-weight: 600;
-  color: #E07B5D;
+  color: $color-coral;
 }
 
 /* 芯片选择行 */
@@ -159,25 +169,25 @@
 
 .chip-select-item {
   padding: 10rpx 20rpx;
-  background-color: #ffffff;
+  background-color: $color-surface;
   border-radius: 20rpx;
-  border: 2rpx solid #E8E8E8;
+  border: 2rpx solid $color-border;
   transition: all 0.2s ease;
 
   &.selected {
     background-color: rgba(123, 158, 135, 0.1);
-    border-color: #7B9E87;
+    border-color: $color-primary;
   }
 }
 
 .chip-select-text {
   font-size: 26rpx;
   font-weight: 500;
-  color: #6B6B6B;
+  color: $color-text-secondary;
   white-space: nowrap;
 
   &.selected {
-    color: #7B9E87;
+    color: $color-primary;
     font-weight: 600;
   }
 }
@@ -192,9 +202,9 @@
 .reminder-chip {
   flex: 1;
   padding: 20rpx;
-  background-color: #ffffff;
+  background-color: $color-surface;
   border-radius: 16rpx;
-  border: 2rpx solid #E8E8E8;
+  border: 2rpx solid $color-border;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -204,7 +214,7 @@
 
   &.active {
     background-color: rgba(224, 123, 93, 0.08);
-    border-color: #E07B5D;
+    border-color: $color-coral;
   }
 }
 
@@ -221,10 +231,10 @@
 .reminder-chip-text {
   font-size: 26rpx;
   font-weight: 500;
-  color: #6B6B6B;
+  color: $color-text-secondary;
 
   &.active {
-    color: #E07B5D;
+    color: $color-coral;
     font-weight: 600;
   }
 }
@@ -232,7 +242,7 @@
 /* 提示文字 */
 .hint-text {
   font-size: 26rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
 }
 
 /* 底部 */
@@ -246,13 +256,13 @@
   left: 0;
   right: 0;
   padding: 20rpx 32rpx calc(20rpx + env(safe-area-inset-bottom));
-  background-color: #ffffff;
+  background-color: $color-surface;
   box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.06);
   z-index: 100;
 }
 
 .appt-add-submit-btn {
-  background-color: #7B9E87;
+  background-color: $color-primary;
   border-radius: 24rpx;
   padding: 24rpx;
   display: flex;
@@ -261,7 +271,7 @@
   box-shadow: 0 4rpx 16rpx rgba(123, 158, 135, 0.35);
 
   &.loading {
-    background-color: #C8C8C8;
+    background-color: $color-border;
     box-shadow: none;
   }
 }
@@ -269,5 +279,5 @@
 .appt-add-submit-text {
   font-size: 32rpx;
   font-weight: 600;
-  color: #ffffff;
+  color: $color-surface;
 }

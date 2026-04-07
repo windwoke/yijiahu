@@ -1,9 +1,24 @@
 /* 照护日志页 - 与 Flutter 参考设计对齐 */
 
+// ─── 统一颜色变量 ───────────────────────────────────────────────────────
+$color-primary: #7B9E87;
+$color-primary-dark: #5C8268;
+$color-coral: #E07B5D;
+$color-blue: #4A90D9;
+$color-success: #6BA07E;
+$color-bg: #FAF9F7;
+$color-surface: #FFFFFF;
+$color-surface-lowest: #FFFFFF;
+$color-surface-low: #F5F5F5;
+$color-border: #EEECE8;
+$color-text-primary: #2C2C2C;
+$color-text-secondary: #6B6B6B;
+$color-text-tertiary: #B0ADAD;
+
 /* 主容器 */
 .care-log-page {
   min-height: 100vh;
-  background-color: #FAF9F7;
+  background-color: $color-bg;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -12,7 +27,7 @@
 /* 状态栏占位 */
 .status-bar {
   height: 44rpx;
-  background-color: #FAF9F7;
+  background-color: $color-bg;
 }
 
 /* 页面标题 */
@@ -26,7 +41,7 @@
 .page-title {
   font-size: 44rpx;
   font-weight: 700;
-  color: #2C2C2C;
+  color: $color-text-primary;
   letter-spacing: 1rpx;
 }
 
@@ -40,7 +55,7 @@
 
 .timeline-badge-text {
   font-size: 24rpx;
-  color: #6B6B6B;
+  color: $color-text-secondary;
 }
 
 /* 照护对象切换器 */
@@ -64,16 +79,16 @@
   align-items: center;
   gap: 8rpx;
   padding: 12rpx 20rpx;
-  background-color: #ffffff;
+  background-color: $color-surface-lowest;
   border-radius: 24rpx;
-  border: 2rpx solid #E8E8E8;
+  border: 2rpx solid $color-border;
   flex-shrink: 0;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
 }
 
 .recipient-chip.selected {
-  background-color: #7B9E87;
-  border-color: #7B9E87;
+  background-color: $color-primary;
+  border-color: $color-primary;
   box-shadow: 0 4rpx 16rpx rgba(123, 158, 135, 0.3);
 }
 
@@ -85,12 +100,12 @@
 .chip-name {
   font-size: 26rpx;
   font-weight: 500;
-  color: #6B6B6B;
+  color: $color-text-secondary;
   white-space: nowrap;
 }
 
 .chip-name.selected {
-  color: #ffffff;
+  color: $color-surface-lowest;
   font-weight: 600;
 }
 
@@ -115,9 +130,9 @@
   align-items: center;
   gap: 6rpx;
   padding: 10rpx 20rpx;
-  background-color: #ffffff;
+  background-color: $color-surface-lowest;
   border-radius: 20rpx;
-  border: 2rpx solid #E8E8E8;
+  border: 2rpx solid $color-border;
   flex-shrink: 0;
   transition: all 0.2s ease;
 }
@@ -141,11 +156,11 @@
 .type-chip-label {
   font-size: 26rpx;
   font-weight: 500;
-  color: #6B6B6B;
+  color: $color-text-secondary;
 }
 
 .type-chip-label.active {
-  color: #ffffff;
+  color: $color-surface-lowest;
   font-weight: 600;
 }
 
@@ -209,7 +224,7 @@
 /* 右侧卡片 */
 .log-card {
   flex: 1;
-  background-color: #ffffff;
+  background-color: $color-surface-lowest;
   border-radius: 24rpx;
   padding: 20rpx;
   box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
@@ -259,13 +274,13 @@
 
 .checkin-med-progress {
   font-size: 26rpx;
-  color: #6B6B6B;
+  color: $color-text-secondary;
   line-height: 1.5;
 }
 
 .checkin-note {
   font-size: 26rpx;
-  color: #6B6B6B;
+  color: $color-text-secondary;
   line-height: 1.5;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -277,7 +292,7 @@
 /* 参考范围提示文字 */
 .log-range-hint {
   font-size: 24rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
   margin-top: 8rpx;
 }
 
@@ -288,11 +303,11 @@
 }
 
 .date-label-wrap.today {
-  background-color: #7B9E87;
+  background-color: $color-primary;
 }
 
 .date-label-wrap.yesterday {
-  background-color: #E07B5D;
+  background-color: $color-coral;
 }
 
 .date-label-wrap.past {
@@ -306,11 +321,11 @@
 
 .date-label.today,
 .date-label.yesterday {
-  color: #ffffff;
+  color: $color-surface-lowest;
 }
 
 .date-label.past {
-  color: #6B6B6B;
+  color: $color-text-secondary;
 }
 
 .date-line {
@@ -331,7 +346,7 @@
 
 .log-time {
   font-size: 24rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
   flex-shrink: 0;
 }
 
@@ -378,7 +393,7 @@
   width: 36rpx;
   height: 36rpx;
   border-radius: 50%;
-  background-color: #7B9E87;
+  background-color: $color-primary;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -387,13 +402,13 @@
 
 .log-author-avatar-text {
   font-size: 20rpx;
-  color: #ffffff;
+  color: $color-surface-lowest;
   font-weight: 600;
 }
 
 .log-author-name {
   font-size: 24rpx;
-  color: #6B6B6B;
+  color: $color-text-secondary;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -402,7 +417,7 @@
 /* 日志内容 */
 .log-content {
   font-size: 30rpx;
-  color: #2C2C2C;
+  color: $color-text-primary;
   line-height: 1.6;
   display: block;
   word-break: break-all;
@@ -418,13 +433,13 @@
 
 .log-action-btn {
   font-size: 24rpx;
-  color: #7B9E87;
+  color: $color-primary;
   padding: 4rpx 8rpx;
   border-radius: 8rpx;
 }
 
 .log-action-btn.log-action-delete {
-  color: #E07B5D;
+  color: $color-coral;
 }
 
 /* ─── 日志编辑表单 ─────────────────────────────────────────────────── */
@@ -445,7 +460,7 @@
   width: 56rpx;
   height: 56rpx;
   border-radius: 50%;
-  background-color: #F0EEEB;
+  background-color: $color-surface-low;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -463,11 +478,11 @@
 .log-edit-input {
   width: 100%;
   min-height: 120rpx;
-  background-color: #F5F5F5;
+  background-color: $color-surface-low;
   border-radius: 16rpx;
   padding: 16rpx;
   font-size: 30rpx;
-  color: #2C2C2C;
+  color: $color-text-primary;
   line-height: 1.6;
   box-sizing: border-box;
   border: none;
@@ -482,18 +497,18 @@
 
 .log-edit-cancel {
   font-size: 28rpx;
-  color: #6B6B6B;
+  color: $color-text-secondary;
   padding: 8rpx 16rpx;
 }
 
 .log-edit-save {
   font-size: 28rpx;
-  color: #7B9E87;
+  color: $color-primary;
   font-weight: 600;
   padding: 8rpx 16rpx;
 
   &.disabled {
-    color: #B0ADAD;
+    color: $color-text-tertiary;
   }
 }
 
@@ -530,7 +545,7 @@
 
 .attach-uploading-text {
   font-size: 20rpx;
-  color: #ffffff;
+  color: $color-surface-lowest;
 }
 
 .attach-failed {
@@ -544,7 +559,7 @@
 
 .attach-failed-text {
   font-size: 20rpx;
-  color: #ffffff;
+  color: $color-surface-lowest;
 }
 
 .attach-remove {
@@ -569,8 +584,8 @@
   width: 120rpx;
   height: 120rpx;
   border-radius: 12rpx;
-  border: 2rpx dashed #E8E6E2;
-  background-color: #FAF9F7;
+  border: 2rpx dashed $color-border;
+  background-color: $color-bg;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -621,7 +636,7 @@
 .attachment-more-text {
   font-size: 36rpx;
   font-weight: 700;
-  color: #ffffff;
+  color: $color-surface-lowest;
 }
 
 /* 加载更多 */
@@ -634,7 +649,7 @@
 
 .loading-text {
   font-size: 26rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
 }
 
 /* 到底提示 */
@@ -647,7 +662,7 @@
 
 .end-tip-text {
   font-size: 24rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
 }
 
 /* 底部留白 */
@@ -675,12 +690,12 @@
 .empty-title {
   font-size: 34rpx;
   font-weight: 600;
-  color: #2C2C2C;
+  color: $color-text-primary;
 }
 
 .empty-desc {
   font-size: 28rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
   text-align: center;
 }
 
@@ -693,7 +708,7 @@
   flex-direction: row;
   align-items: center;
   gap: 8rpx;
-  background: linear-gradient(135deg, #7B9E87 0%, #5C8268 100%);
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-dark 100%);
   border-radius: 48rpx;
   padding: 20rpx 36rpx;
   box-shadow: 0 8rpx 24rpx rgba(123, 158, 135, 0.45);
@@ -709,7 +724,7 @@
 .fab-label {
   font-size: 28rpx;
   font-weight: 600;
-  color: #ffffff;
+  color: $color-surface-lowest;
 }
 
 /* 底部弹窗遮罩 */
@@ -731,7 +746,7 @@
 /* 添加日志弹窗 */
 .add-sheet {
   width: 100%;
-  background-color: #ffffff;
+  background-color: $color-surface-lowest;
   border-radius: 32rpx 32rpx 0 0;
   padding: 0 0 env(safe-area-inset-bottom);
   max-height: 85vh;
@@ -750,7 +765,7 @@
 .sheet-handle {
   width: 80rpx;
   height: 8rpx;
-  background-color: #E0E0E0;
+  background-color: $color-border;
   border-radius: 4rpx;
   align-self: center;
   margin: 16rpx 0 0;
@@ -769,7 +784,7 @@
 .sheet-title {
   font-size: 34rpx;
   font-weight: 700;
-  color: #2C2C2C;
+  color: $color-text-primary;
 }
 
 .sheet-close-btn {
@@ -798,7 +813,7 @@
 .sheet-label {
   font-size: 26rpx;
   font-weight: 600;
-  color: #6B6B6B;
+  color: $color-text-secondary;
   display: block;
   margin-bottom: 12rpx;
 }
@@ -822,7 +837,7 @@
   align-items: center;
   gap: 8rpx;
   padding: 10rpx 20rpx;
-  background-color: #F5F5F5;
+  background-color: $color-surface-low;
   border-radius: 20rpx;
   border: 2rpx solid transparent;
   flex-shrink: 0;
@@ -830,17 +845,17 @@
 
 .sheet-recipient-chip.selected {
   background-color: rgba(123, 158, 135, 0.1);
-  border-color: #7B9E87;
+  border-color: $color-primary;
 }
 
 .sheet-recipient-chip .chip-name {
   font-size: 26rpx;
-  color: #6B6B6B;
+  color: $color-text-secondary;
   font-weight: 500;
 }
 
 .sheet-recipient-chip.selected .chip-name {
-  color: #7B9E87;
+  color: $color-primary;
   font-weight: 600;
 }
 
@@ -863,7 +878,7 @@
   align-items: center;
   gap: 6rpx;
   padding: 10rpx 20rpx;
-  background-color: #F5F5F5;
+  background-color: $color-surface-low;
   border-radius: 20rpx;
   border: 2rpx solid transparent;
   flex-shrink: 0;
@@ -884,11 +899,11 @@
 .sheet-type-label {
   font-size: 26rpx;
   font-weight: 500;
-  color: #6B6B6B;
+  color: $color-text-secondary;
 }
 
 .sheet-type-label.active {
-  color: #ffffff;
+  color: $color-surface-lowest;
   font-weight: 600;
 }
 
@@ -901,16 +916,16 @@
 .content-input {
   width: 100%;
   min-height: 200rpx;
-  background-color: #F5F5F5;
+  background-color: $color-surface-low;
   border-radius: 20rpx;
   padding: 24rpx;
   font-size: 30rpx;
-  color: #2C2C2C;
+  color: $color-text-primary;
   line-height: 1.6;
   box-sizing: border-box;
   border: none;
   outline: none;
-  placeholder-color: #B0ADAD;
+  placeholder-color: $color-text-tertiary;
 }
 
 /* 底部发送按钮 */
@@ -921,7 +936,7 @@
 
 .send-btn {
   width: 100%;
-  background-color: #7B9E87;
+  background-color: $color-primary;
   border-radius: 24rpx;
   padding: 24rpx;
   box-shadow: 0 4rpx 12rpx rgba(123, 158, 135, 0.3);
@@ -931,14 +946,14 @@
 }
 
 .send-btn.disabled {
-  background-color: #C8C8C8;
+  background-color: $color-border;
   box-shadow: none;
 }
 
 .send-btn-text {
   font-size: 30rpx;
   font-weight: 600;
-  color: #ffffff;
+  color: $color-surface-lowest;
 }
 
 /* 健康指标输入 */
@@ -951,7 +966,7 @@
 
 .health-range-hint-text {
   font-size: 24rpx;
-  color: #7B9E87;
+  color: $color-primary;
 }
 
 .health-input-row {
@@ -967,22 +982,22 @@
 
 .health-input-sep {
   font-size: 36rpx;
-  color: #999;
+  color: $color-text-secondary;
   padding-bottom: 16rpx;
 }
 
 .health-input-wrap {
   margin-top: 8rpx;
-  background-color: #f5f5f5;
+  background-color: $color-surface-low;
   border-radius: 16rpx;
   padding: 20rpx 24rpx;
-  border: 1px solid #e8e8e8;
+  border: 1px solid $color-border;
 }
 
 .health-input {
   width: 100%;
   font-size: 30rpx;
-  color: #333;
+  color: $color-text-primary;
   background: transparent;
   border: none;
   outline: none;
@@ -998,22 +1013,22 @@
 .health-type-btn {
   padding: 12rpx 24rpx;
   border-radius: 16rpx;
-  background-color: #f5f5f5;
-  border: 1px solid #e8e8e8;
+  background-color: $color-surface-low;
+  border: 1px solid $color-border;
 }
 
 .health-type-btn.active {
   background-color: rgba(123, 158, 135, 0.12);
-  border-color: #7B9E87;
+  border-color: $color-primary;
 }
 
 .health-type-btn-text {
   font-size: 26rpx;
-  color: #666;
+  color: $color-text-secondary;
 }
 
 .health-type-btn-text.active {
-  color: #7B9E87;
+  color: $color-primary;
   font-weight: 600;
 }
 

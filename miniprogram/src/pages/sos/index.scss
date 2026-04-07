@@ -3,6 +3,12 @@
  * 与 Flutter sos_page.dart 完全对齐
  */
 
+
+// ─── 统一颜色变量 ───────────────────────────────────────────────────────────
+$color-surface: #FFFFFF;
+$color-border: #EEECE8;
+$color-text-tertiary: #B0ADAD;
+
 $color-coral: #E07B5D;
 $color-primary: #7B9E87;
 $color-success: #6BA07E;
@@ -36,7 +42,7 @@ $color-avatar-bg: #E8D8C0;
   height: 60px;
   border-radius: 50%;
   border: 4px solid rgba(255,255,255,0.3);
-  border-top-color: #ffffff;
+  border-top-color: $color-surface;
   animation: sosSpin 1s linear infinite;
 }
 
@@ -68,7 +74,7 @@ $color-avatar-bg: #E8D8C0;
 }
 
 .sos-close-icon {
-  color: #ffffff;
+  color: $color-surface;
   font-size: 32rpx;
   line-height: 1;
 }
@@ -91,7 +97,7 @@ $color-avatar-bg: #E8D8C0;
 .sos-pre-title {
   font-size: 56rpx;
   font-weight: 700;
-  color: #ffffff;
+  color: $color-surface;
   letter-spacing: 4rpx;
   margin-bottom: 16rpx;
 }
@@ -110,7 +116,7 @@ $color-avatar-bg: #E8D8C0;
   height: 280rpx;
   border-radius: 50%;
   background-color: $color-coral;
-  border: 6rpx solid #ffffff;
+  border: 6rpx solid $color-surface;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -120,7 +126,7 @@ $color-avatar-bg: #E8D8C0;
   box-shadow: 0 8rpx 32rpx rgba(0,0,0,0.15);
 
   &.pressing {
-    background-color: #ffffff;
+    background-color: $color-surface;
     transform: scale(1.06);
     box-shadow: 0 12rpx 48rpx rgba(0,0,0,0.2);
   }
@@ -136,7 +142,7 @@ $color-avatar-bg: #E8D8C0;
 .sos-circle-text {
   font-size: 72rpx;
   font-weight: 700;
-  color: #ffffff;
+  color: $color-surface;
   letter-spacing: 4rpx;
 
   .pressing & {
@@ -188,7 +194,7 @@ $color-avatar-bg: #E8D8C0;
 
 .sos-progress-fill {
   height: 100%;
-  background-color: #ffffff;
+  background-color: $color-surface;
   border-radius: 4rpx;
   transition: width 0.1s linear;
 }
@@ -200,7 +206,7 @@ $color-avatar-bg: #E8D8C0;
 
 // ─── 触发后视图（白色背景）────────────────────────────────────────────────
 .sos-triggered {
-  background-color: #ffffff;
+  background-color: $color-surface;
 }
 
 .sos-triggered-header {
@@ -293,7 +299,7 @@ $color-avatar-bg: #E8D8C0;
 .sos-call-label {
   font-size: 32rpx;
   font-weight: 600;
-  color: #ffffff;
+  color: $color-surface;
 
   &.sos-call-label-secondary {
     color: $color-text-primary;
@@ -355,11 +361,11 @@ $color-avatar-bg: #E8D8C0;
 // ─── 底部取消按钮 ──────────────────────────────────────────────────────────
 .sos-cancel-bar {
   padding: 24rpx 32rpx;
-  border-top: 1rpx solid #E8E8E8;
+  border-top: 1rpx solid $color-border;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #ffffff;
+  background-color: $color-surface;
   padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
 }
 
@@ -369,14 +375,14 @@ $color-avatar-bg: #E8D8C0;
   padding: 16rpx 32rpx;
 
   &.disabled {
-    color: #B0ADAD;
+    color: $color-text-tertiary;
   }
 }
 
 // ─── 紧急信息卡片 ────────────────────────────────────────────────────────────
 .emergency-card {
   width: 100%;
-  background-color: #ffffff;
+  background-color: $color-surface;
   border-radius: 32rpx;
   padding: 40rpx;
   box-shadow: 0 4rpx 24rpx rgba(0,0,0,0.08);

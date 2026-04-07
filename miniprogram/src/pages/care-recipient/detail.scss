@@ -1,8 +1,25 @@
 /* 照护对象详情页 */
 
+// ─── 统一颜色变量 ───────────────────────────────────────────────────────────
+$color-primary: #7B9E87;
+$color-primary-dark: #5C8268;
+$color-coral: #E07B5D;
+$color-blue: #4A90D9;
+$color-success: #6BA07E;
+$color-warning: #F5A623;
+$color-bg: #FAF9F7;
+$color-surface: #FFFFFF;
+$color-surface-lowest: #FFFFFF;
+$color-surface-low: #F5F5F5;
+$color-border: #EEECE8;
+$color-text-primary: #2C2C2C;
+$color-text-secondary: #6B6B6B;
+$color-text-tertiary: #B0ADAD;
+
+
 .detail-page {
   min-height: 100vh;
-  background-color: #FAF9F7;
+  background-color: $color-bg;
   display: flex;
   flex-direction: column;
 }
@@ -20,7 +37,7 @@
   justify-content: space-between;
   padding: 16rpx 24rpx;
   padding-top: calc(16rpx + env(safe-area-inset-top));
-  background-color: #ffffff;
+  background-color: $color-surface;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
   flex-shrink: 0;
   z-index: 100;
@@ -34,7 +51,7 @@
 
 .navbar-back {
   font-size: 56rpx;
-  color: #2C2C2C;
+  color: $color-text-primary;
   font-weight: 300;
   line-height: 1;
 }
@@ -42,7 +59,7 @@
 .navbar-title {
   font-size: 34rpx;
   font-weight: 700;
-  color: #2C2C2C;
+  color: $color-text-primary;
   flex: 1;
   text-align: center;
   overflow: hidden;
@@ -59,7 +76,7 @@
 
 .navbar-edit {
   font-size: 28rpx;
-  color: #7B9E87;
+  color: $color-primary;
   font-weight: 600;
   padding: 8rpx 16rpx;
   background-color: rgba(123, 158, 135, 0.1);
@@ -68,7 +85,7 @@
 
 .navbar-delete {
   font-size: 28rpx;
-  color: #E07B5D;
+  color: $color-coral;
   font-weight: 600;
   padding: 8rpx 16rpx;
   background-color: rgba(224, 123, 93, 0.1);
@@ -84,7 +101,7 @@
 
 .loading-text {
   font-size: 28rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
 }
 
 .empty-state {
@@ -104,7 +121,7 @@
 .empty-title {
   font-size: 32rpx;
   font-weight: 600;
-  color: #2C2C2C;
+  color: $color-text-primary;
 }
 
 /* 头部卡片 */
@@ -114,7 +131,7 @@
   align-items: center;
   gap: 24rpx;
   padding: 32rpx;
-  background-color: #ffffff;
+  background-color: $color-surface;
   margin: 24rpx;
   border-radius: 24rpx;
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
@@ -143,7 +160,7 @@
 .header-name {
   font-size: 40rpx;
   font-weight: 700;
-  color: #2C2C2C;
+  color: $color-text-primary;
   margin-bottom: 12rpx;
 }
 
@@ -166,7 +183,7 @@
 
 .tag-text {
   font-size: 24rpx;
-  color: #6B6B6B;
+  color: $color-text-secondary;
   line-height: 1;
 }
 
@@ -187,7 +204,7 @@
 .section-title {
   font-size: 30rpx;
   font-weight: 700;
-  color: #2C2C2C;
+  color: $color-text-primary;
   display: block;
   margin-bottom: 16rpx;
   padding: 0 8rpx;
@@ -195,7 +212,7 @@
 
 /* 警示卡 */
 .alert-card {
-  background-color: #ffffff;
+  background-color: $color-surface;
   border-radius: 20rpx;
   padding: 8rpx 0;
   box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
@@ -222,21 +239,21 @@
 .alert-label {
   font-size: 26rpx;
   font-weight: 600;
-  color: #6B6B6B;
+  color: $color-text-secondary;
   flex-shrink: 0;
   width: 80rpx;
 }
 
 .alert-value {
   font-size: 26rpx;
-  color: #2C2C2C;
+  color: $color-text-primary;
   flex: 1;
   line-height: 1.5;
 }
 
 /* 信息卡 */
 .info-card {
-  background-color: #ffffff;
+  background-color: $color-surface;
   border-radius: 20rpx;
   padding: 8rpx 0;
   box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
@@ -257,25 +274,25 @@
 
 .info-label {
   font-size: 26rpx;
-  color: #6B6B6B;
+  color: $color-text-secondary;
   flex-shrink: 0;
   width: 140rpx;
 }
 
 .info-value {
   font-size: 26rpx;
-  color: #2C2C2C;
+  color: $color-text-primary;
   flex: 1;
   line-height: 1.5;
 }
 
 .info-value-link {
-  color: #7B9E87;
+  color: $color-primary;
 }
 
 .info-empty {
   font-size: 26rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
   padding: 24rpx;
   text-align: center;
 }
@@ -289,7 +306,7 @@
 
 .add-med-btn-text {
   font-size: 24rpx;
-  color: #7B9E87;
+  color: $color-primary;
   font-weight: 600;
 }
 
@@ -304,7 +321,7 @@
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  background-color: #ffffff;
+  background-color: $color-surface;
   border-radius: 16rpx;
   padding: 20rpx 24rpx;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
@@ -317,14 +334,14 @@
 .med-card-name {
   font-size: 30rpx;
   font-weight: 600;
-  color: #2C2C2C;
+  color: $color-text-primary;
   display: block;
   margin-bottom: 4rpx;
 }
 
 .med-card-dose {
   font-size: 24rpx;
-  color: #6B6B6B;
+  color: $color-text-secondary;
 }
 
 .med-card-right {
@@ -333,7 +350,7 @@
 
 .med-card-freq {
   font-size: 24rpx;
-  color: #7B9E87;
+  color: $color-primary;
   font-weight: 500;
   background-color: rgba(123, 158, 135, 0.1);
   padding: 4rpx 12rpx;
@@ -341,7 +358,7 @@
 }
 
 .empty-card {
-  background-color: #ffffff;
+  background-color: $color-surface;
   border-radius: 16rpx;
   padding: 40rpx;
   display: flex;
@@ -351,12 +368,12 @@
 
 .empty-card-text {
   font-size: 26rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
 }
 
 /* 删除按钮 */
 .delete-btn {
-  background-color: #ffffff;
+  background-color: $color-surface;
   border-radius: 16rpx;
   padding: 24rpx;
   display: flex;
@@ -367,7 +384,7 @@
 
 .delete-btn-text {
   font-size: 28rpx;
-  color: #E07B5D;
+  color: $color-coral;
   font-weight: 500;
 }
 
@@ -389,7 +406,7 @@
   flex-direction: row;
   align-items: center;
   gap: 8rpx;
-  background: linear-gradient(135deg, #7B9E87 0%, #5C8268 100%);
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-dark 100%);
   border-radius: 56rpx;
   padding: 16rpx 28rpx;
   box-shadow: 0 8rpx 24rpx rgba(123, 158, 135, 0.4);
@@ -397,14 +414,14 @@
 
 .fab-add-med-icon {
   font-size: 36rpx;
-  color: #ffffff;
+  color: $color-surface;
   font-weight: 300;
   line-height: 1;
 }
 
 .fab-add-med-label {
   font-size: 26rpx;
-  color: #ffffff;
+  color: $color-surface;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -412,7 +429,7 @@
 /* ── 照护人卡片 ─────────────────────────────────────────── */
 
 .cg-card {
-  background-color: #ffffff;
+  background-color: $color-surface;
   border-radius: 24rpx;
   padding: 24rpx;
   box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
@@ -429,7 +446,7 @@
 .cg-card-label {
   font-size: 26rpx;
   font-weight: 600;
-  color: #7B9E87;
+  color: $color-primary;
 }
 
 .cg-switch-btn {
@@ -440,7 +457,7 @@
 
 .cg-switch-text {
   font-size: 22rpx;
-  color: #7B9E87;
+  color: $color-primary;
   font-weight: 600;
 }
 
@@ -460,13 +477,13 @@
 
 .cg-empty-text {
   font-size: 28rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
   font-weight: 500;
 }
 
 .cg-arrow {
   font-size: 28rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
 }
 
 .cg-avatar {
@@ -490,7 +507,7 @@
 .cg-avatar-text {
   font-size: 28rpx;
   font-weight: 600;
-  color: #7B9E87;
+  color: $color-primary;
 }
 
 .cg-info {
@@ -503,17 +520,17 @@
 .cg-name {
   font-size: 30rpx;
   font-weight: 600;
-  color: #2C2C2C;
+  color: $color-text-primary;
 }
 
 .cg-period {
   font-size: 24rpx;
-  color: #6B6B6B;
+  color: $color-text-secondary;
 }
 
 .cg-note {
   font-size: 24rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
@@ -538,7 +555,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background-color: #ffffff;
+  background-color: $color-surface;
   border-radius: 32rpx 32rpx 0 0;
   z-index: 501;
   max-height: 80vh;
@@ -550,7 +567,7 @@
 .sheet-handle {
   width: 60rpx;
   height: 8rpx;
-  background-color: #E0E0E0;
+  background-color: $color-border;
   border-radius: 4rpx;
   margin: 16rpx auto 0;
   flex-shrink: 0;
@@ -568,7 +585,7 @@
 .sheet-title-lg {
   font-size: 34rpx;
   font-weight: 700;
-  color: #2C2C2C;
+  color: $color-text-primary;
 }
 
 .sheet-add-btn {
@@ -579,7 +596,7 @@
 
 .sheet-add-btn-text {
   font-size: 24rpx;
-  color: #7B9E87;
+  color: $color-primary;
   font-weight: 600;
 }
 
@@ -603,7 +620,7 @@
 
 .cg-empty-desc {
   font-size: 26rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
 }
 
 .cg-record-item {
@@ -612,7 +629,7 @@
   align-items: flex-start;
   gap: 16rpx;
   padding: 20rpx 0;
-  border-bottom: 1rpx solid #F0F0F0;
+  border-bottom: 1rpx solid $color-surface-low;
 }
 
 .cg-record-avatar {
@@ -636,7 +653,7 @@
 .cg-record-avatar-text {
   font-size: 26rpx;
   font-weight: 600;
-  color: #7B9E87;
+  color: $color-primary;
 }
 
 .cg-record-info {
@@ -656,7 +673,7 @@
 .cg-record-name {
   font-size: 28rpx;
   font-weight: 600;
-  color: #2C2C2C;
+  color: $color-text-primary;
 }
 
 .cg-current-badge {
@@ -667,18 +684,18 @@
 
 .cg-current-text {
   font-size: 20rpx;
-  color: #6BA07E;
+  color: $color-success;
   font-weight: 600;
 }
 
 .cg-record-period {
   font-size: 24rpx;
-  color: #6B6B6B;
+  color: $color-text-secondary;
 }
 
 .cg-record-note {
   font-size: 24rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
@@ -688,21 +705,21 @@
 
 .cg-record-delete {
   font-size: 24rpx;
-  color: #E07B5D;
+  color: $color-coral;
   flex-shrink: 0;
 }
 
 /* 添加表单 */
 .cg-add-form {
   padding: 16rpx 32rpx 32rpx;
-  border-top: 1rpx solid #F0F0F0;
+  border-top: 1rpx solid $color-surface-low;
   flex-shrink: 0;
 }
 
 .cg-add-title {
   font-size: 28rpx;
   font-weight: 600;
-  color: #2C2C2C;
+  color: $color-text-primary;
   margin-bottom: 16rpx;
 }
 
@@ -719,15 +736,15 @@
   flex-direction: row;
   align-items: center;
   gap: 8rpx;
-  background-color: #F5F5F5;
-  border: 2rpx solid #F0F0F0;
+  background-color: $color-surface-low;
+  border: 2rpx solid $color-surface-low;
   border-radius: 20rpx;
   padding: 10rpx 16rpx;
 }
 
 .cg-member-item.selected {
   background-color: rgba(123, 158, 135, 0.1);
-  border-color: #7B9E87;
+  border-color: $color-primary;
 }
 
 .cg-member-avatar {
@@ -751,23 +768,23 @@
 .cg-member-avatar-text {
   font-size: 20rpx;
   font-weight: 600;
-  color: #7B9E87;
+  color: $color-primary;
 }
 
 .cg-member-name {
   font-size: 24rpx;
-  color: #2C2C2C;
+  color: $color-text-primary;
   font-weight: 500;
 }
 
 .cg-member-check {
   font-size: 24rpx;
-  color: #7B9E87;
+  color: $color-primary;
   font-weight: 700;
 }
 
 .cg-note-wrap {
-  background-color: #F5F5F5;
+  background-color: $color-surface-low;
   border-radius: 16rpx;
   padding: 16rpx 20rpx;
   margin-bottom: 16rpx;
@@ -776,14 +793,14 @@
 .cg-note-input {
   width: 100%;
   font-size: 28rpx;
-  color: #2C2C2C;
+  color: $color-text-primary;
   background: transparent;
   border: none;
   outline: none;
 }
 
 .cg-save-btn {
-  background: linear-gradient(135deg, #7B9E87 0%, #5C8268 100%);
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-dark 100%);
   border-radius: 56rpx;
   padding: 24rpx;
   display: flex;
@@ -797,6 +814,6 @@
 
 .cg-save-btn-text {
   font-size: 30rpx;
-  color: #ffffff;
+  color: $color-surface;
   font-weight: 600;
 }

@@ -1,8 +1,25 @@
 /* 药品详情页 */
 
+// ─── 统一颜色变量 ───────────────────────────────────────────────────────────
+$color-primary: #7B9E87;
+$color-primary-dark: #5C8268;
+$color-coral: #E07B5D;
+$color-blue: #4A90D9;
+$color-success: #6BA07E;
+$color-warning: #F5A623;
+$color-bg: #FAF9F7;
+$color-surface: #FFFFFF;
+$color-surface-lowest: #FFFFFF;
+$color-surface-low: #F5F5F5;
+$color-border: #EEECE8;
+$color-text-primary: #2C2C2C;
+$color-text-secondary: #6B6B6B;
+$color-text-tertiary: #B0ADAD;
+
+
 .med-detail-page {
   min-height: 100vh;
-  background-color: #FAF9F7;
+  background-color: $color-bg;
   display: flex;
   flex-direction: column;
 }
@@ -21,7 +38,7 @@
 
 .loading-text {
   font-size: 28rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
 }
 
 .empty-state {
@@ -41,7 +58,7 @@
 .empty-title {
   font-size: 32rpx;
   font-weight: 600;
-  color: #2C2C2C;
+  color: $color-text-primary;
 }
 
 /* 导航栏 */
@@ -52,7 +69,7 @@
   justify-content: space-between;
   padding: 16rpx 24rpx;
   padding-top: calc(16rpx + env(safe-area-inset-top));
-  background-color: #ffffff;
+  background-color: $color-surface;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
   flex-shrink: 0;
   z-index: 100;
@@ -66,7 +83,7 @@
 
 .navbar-back {
   font-size: 56rpx;
-  color: #2C2C2C;
+  color: $color-text-primary;
   font-weight: 300;
   line-height: 1;
 }
@@ -74,7 +91,7 @@
 .navbar-title {
   font-size: 34rpx;
   font-weight: 700;
-  color: #2C2C2C;
+  color: $color-text-primary;
   flex: 1;
   text-align: center;
   overflow: hidden;
@@ -91,7 +108,7 @@
 
 .navbar-edit {
   font-size: 28rpx;
-  color: #7B9E87;
+  color: $color-primary;
   font-weight: 600;
   padding: 8rpx 16rpx;
   background-color: rgba(123, 158, 135, 0.1);
@@ -100,7 +117,7 @@
 
 .navbar-delete {
   font-size: 28rpx;
-  color: #E07B5D;
+  color: $color-coral;
   font-weight: 600;
   padding: 8rpx 16rpx;
   background-color: rgba(224, 123, 93, 0.1);
@@ -114,7 +131,7 @@
   align-items: center;
   gap: 24rpx;
   padding: 32rpx;
-  background-color: #ffffff;
+  background-color: $color-surface;
   margin: 24rpx;
   border-radius: 24rpx;
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
@@ -146,12 +163,12 @@
 .header-name {
   font-size: 40rpx;
   font-weight: 700;
-  color: #2C2C2C;
+  color: $color-text-primary;
 }
 
 .header-realname {
   font-size: 26rpx;
-  color: #6B6B6B;
+  color: $color-text-secondary;
 }
 
 .header-status {
@@ -182,7 +199,7 @@
 .section-title {
   font-size: 30rpx;
   font-weight: 700;
-  color: #2C2C2C;
+  color: $color-text-primary;
   display: block;
   margin-bottom: 16rpx;
   padding: 0 8rpx;
@@ -190,12 +207,12 @@
 
 .section-subtitle {
   font-size: 24rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
 }
 
 /* 信息卡 */
 .info-card {
-  background-color: #ffffff;
+  background-color: $color-surface;
   border-radius: 20rpx;
   box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
   overflow: hidden;
@@ -216,14 +233,14 @@
 
 .info-label {
   font-size: 26rpx;
-  color: #6B6B6B;
+  color: $color-text-secondary;
   flex-shrink: 0;
   width: 140rpx;
 }
 
 .info-value {
   font-size: 26rpx;
-  color: #2C2C2C;
+  color: $color-text-primary;
   flex: 1;
   line-height: 1.5;
 }
@@ -234,7 +251,7 @@
 
 /* 服药时间卡 */
 .time-card {
-  background-color: #ffffff;
+  background-color: $color-surface;
   border-radius: 20rpx;
   padding: 24rpx;
   box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
@@ -261,7 +278,7 @@
 
 .time-chip-text {
   font-size: 28rpx;
-  color: #7B9E87;
+  color: $color-primary;
   font-weight: 600;
 }
 
@@ -278,7 +295,7 @@
   width: 12rpx;
   height: 12rpx;
   border-radius: 50%;
-  background-color: #B0ADAD;
+  background-color: $color-text-tertiary;
   animation: pulse 1.2s ease-in-out infinite;
 
   &:nth-child(2) { animation-delay: 0.2s; }
@@ -305,7 +322,7 @@
 
 .history-empty-text {
   font-size: 26rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
 }
 
 .history-row {
@@ -330,7 +347,7 @@
 
 .history-time {
   font-size: 26rpx;
-  color: #6B6B6B;
+  color: $color-text-secondary;
   width: 160rpx;
   flex-shrink: 0;
 }
@@ -368,13 +385,13 @@
 .author-avatar-text {
   font-size: 20rpx;
   font-weight: 600;
-  color: #7B9E87;
+  color: $color-primary;
   line-height: 1;
 }
 
 .author-name {
   font-size: 24rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
   max-width: 120rpx;
   overflow: hidden;
   text-overflow: ellipsis;

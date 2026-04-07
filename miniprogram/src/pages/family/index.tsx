@@ -24,11 +24,26 @@ const ROLE_LABELS: Record<string, string> = {
   guest: '访客',
 };
 
+/** 统一颜色常量（与 SCSS 变量对应）*/
+const COLORS = {
+  primary: '#7B9E87',
+  primaryDark: '#5C8268',
+  coral: '#E07B5D',
+  blue: '#4A90D9',
+  success: '#6BA07E',
+  textPrimary: '#2C2C2C',
+  textSecondary: '#6B6B6B',
+  textTertiary: '#B0ADAD',
+  border: COLORS.border,
+  surfaceLowest: '#FFFFFF',
+  surfaceLow: '#F5F5F5',
+} as const;
+
 const ROLE_COLORS: Record<string, string> = {
-  owner: '#7B9E87',
-  coordinator: '#4A90D9',
-  caregiver: '#6B6B6B',
-  guest: '#B0ADAD',
+  owner: COLORS.primary,
+  coordinator: COLORS.blue,
+  caregiver: COLORS.textSecondary,
+  guest: COLORS.textTertiary,
 };
 
 /** 角色功能描述 */
@@ -146,7 +161,6 @@ export default function FamilyPage() {
     if (!familyId) return;
     try {
       const data = await get<FamilyMemberDetail[]>(`/families/${familyId}/members`);
-      console.warn('[family] members API response:', JSON.stringify(data));
       setMembers(data ?? []);
     } catch (err) {
       console.error('加载成员列表失败', err);
@@ -352,7 +366,7 @@ export default function FamilyPage() {
       title: '移除成员',
       content: '确定要移除该成员吗？移除后可通过邀请码重新加入。',
       confirmText: '移除',
-      confirmColor: '#E07B5D',
+      confirmColor: COLORS.coral,
       cancelText: '取消',
     });
     if (res.confirm !== true) return;
@@ -473,7 +487,7 @@ export default function FamilyPage() {
 
   /* ─── 贡献条颜色（按排名递减）─── */
   const contributionColors = [
-    '#7B9E87',
+    COLORS.primary,
     'rgba(123, 158, 135, 0.7)',
     'rgba(123, 158, 135, 0.5)',
     'rgba(123, 158, 135, 0.35)',
@@ -577,8 +591,7 @@ export default function FamilyPage() {
               listItems.map((item) => {
                 if (item.kind === 'member') {
                   const m = item.data;
-                  console.warn('[family] member:', JSON.stringify({ role: m.role, nickname: m.nickname }));
-                  const roleColor = ROLE_COLORS[m.role] ?? '#B0ADAD';
+                  const roleColor = ROLE_COLORS[m.role] ?? COLORS.textTertiary;
                   const isMe = m.userId === currentUserId;
 
                   return (
@@ -829,7 +842,7 @@ export default function FamilyPage() {
                       style={{
                         backgroundColor: addRole === r.value
                           ? ROLE_COLORS[r.value as FamilyMemberRole]
-                          : '#E0E0E0',
+                          : COLORS.border,
                       }}
                     />
                     <Text
@@ -910,7 +923,7 @@ export default function FamilyPage() {
         const canEdit = isOwnCard || showManageButtons;
         const canChangeRole = showManageButtons && !isOwnCard && selectedMember.role !== 'owner';
         const isElevated = isElevatedRole(selectedMember.role as FamilyMemberRole);
-        const roleColor = ROLE_COLORS[selectedMember.role as string] ?? '#B0ADAD';
+        const roleColor = ROLE_COLORS[selectedMember.role as string] ?? COLORS.textTertiary;
 
         return (
           <View className="sheet-overlay" onClick={() => { setActiveSheet(null); setSelectedMember(null); }}>
@@ -1005,7 +1018,7 @@ export default function FamilyPage() {
                             style={{
                               backgroundColor: editMemberRole === r.value
                                 ? ROLE_COLORS[r.value]
-                                : '#E0E0E0',
+                                : COLORS.border,
                             }}
                           />
                           <Text

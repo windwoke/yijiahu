@@ -1,8 +1,25 @@
 /* 添加任务页 */
 
+// ─── 统一颜色变量 ───────────────────────────────────────────────────────────
+$color-primary: #7B9E87;
+$color-primary-dark: #5C8268;
+$color-coral: #E07B5D;
+$color-blue: #4A90D9;
+$color-success: #6BA07E;
+$color-warning: #F5A623;
+$color-bg: #FAF9F7;
+$color-surface: #FFFFFF;
+$color-surface-lowest: #FFFFFF;
+$color-surface-low: #F5F5F5;
+$color-border: #EEECE8;
+$color-text-primary: #2C2C2C;
+$color-text-secondary: #6B6B6B;
+$color-text-tertiary: #B0ADAD;
+
+
 .task-add-page {
   height: 100vh;
-  background-color: #FAF9F7;
+  background-color: $color-bg;
   display: flex;
   flex-direction: column;
 }
@@ -21,7 +38,7 @@
 
 .loading-text {
   font-size: 28rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
 }
 
 /* 区块 */
@@ -32,7 +49,7 @@
 .section-title {
   font-size: 30rpx;
   font-weight: 700;
-  color: #2C2C2C;
+  color: $color-text-primary;
   margin-bottom: 20rpx;
   display: block;
 }
@@ -45,32 +62,32 @@
 .field-label {
   font-size: 26rpx;
   font-weight: 600;
-  color: #6B6B6B;
+  color: $color-text-secondary;
   display: block;
   margin-bottom: 12rpx;
 }
 
 .field-input {
   width: 100%;
-  background-color: #ffffff;
+  background-color: $color-surface;
   border-radius: 16rpx;
   padding: 24rpx;
   font-size: 30rpx;
-  color: #2C2C2C;
+  color: $color-text-primary;
   box-sizing: border-box;
-  border: 2rpx solid #E8E8E8;
-  placeholder-color: #B0ADAD;
+  border: 2rpx solid $color-border;
+  placeholder-color: $color-text-tertiary;
   line-height: 1 !important;
   height: auto !important;
 }
 
 .field-picker {
   width: 100%;
-  background-color: #ffffff;
+  background-color: $color-surface;
   border-radius: 16rpx;
   padding: 20rpx 24rpx;
   box-sizing: border-box;
-  border: 2rpx solid #E8E8E8;
+  border: 2rpx solid $color-border;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -79,17 +96,17 @@
 
 .field-picker-text {
   font-size: 30rpx;
-  color: #2C2C2C;
+  color: $color-text-primary;
 }
 
 .field-picker-placeholder {
   font-size: 30rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
 }
 
 .field-picker-arrow {
   font-size: 32rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
 }
 
 /* 芯片选择行 */
@@ -102,25 +119,25 @@
 
 .chip-select-item {
   padding: 10rpx 20rpx;
-  background-color: #ffffff;
+  background-color: $color-surface;
   border-radius: 20rpx;
-  border: 2rpx solid #E8E8E8;
+  border: 2rpx solid $color-border;
   transition: all 0.2s ease;
 
   &.selected {
     background-color: rgba(123, 158, 135, 0.1);
-    border-color: #7B9E87;
+    border-color: $color-primary;
   }
 }
 
 .chip-select-text {
   font-size: 26rpx;
   font-weight: 500;
-  color: #6B6B6B;
+  color: $color-text-secondary;
   white-space: nowrap;
 
   &.selected {
-    color: #7B9E87;
+    color: $color-primary;
     font-weight: 600;
   }
 }
@@ -135,9 +152,9 @@
 .freq-btn {
   flex: 1;
   padding: 16rpx 8rpx;
-  background-color: #ffffff;
+  background-color: $color-surface;
   border-radius: 16rpx;
-  border: 2rpx solid #E8E8E8;
+  border: 2rpx solid $color-border;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -153,10 +170,10 @@
 .freq-btn-text {
   font-size: 26rpx;
   font-weight: 500;
-  color: #6B6B6B;
+  color: $color-text-secondary;
 
   &.active {
-    color: #4A90E2;
+    color: $color-blue;
     font-weight: 600;
   }
 }
@@ -171,27 +188,27 @@
 .weekday-chip {
   flex: 1;
   padding: 16rpx 4rpx;
-  background-color: #ffffff;
+  background-color: $color-surface;
   border-radius: 16rpx;
-  border: 2rpx solid #E8E8E8;
+  border: 2rpx solid $color-border;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
 
   &.selected {
-    background-color: #4A90E2;
-    border-color: #4A90E2;
+    background-color: $color-blue;
+    border-color: $color-blue;
   }
 }
 
 .weekday-chip-text {
   font-size: 26rpx;
   font-weight: 500;
-  color: #6B6B6B;
+  color: $color-text-secondary;
 
   &.selected {
-    color: #ffffff;
+    color: $color-surface;
     font-weight: 600;
   }
 }
@@ -208,26 +225,26 @@
   width: 72rpx;
   height: 72rpx;
   border-radius: 50%;
-  background-color: #ffffff;
-  border: 2rpx solid #E8E8E8;
+  background-color: $color-surface;
+  border: 2rpx solid $color-border;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
 
   &.selected {
-    background-color: #4A90E2;
-    border-color: #4A90E2;
+    background-color: $color-blue;
+    border-color: $color-blue;
   }
 }
 
 .month-day-chip-text {
   font-size: 26rpx;
   font-weight: 500;
-  color: #6B6B6B;
+  color: $color-text-secondary;
 
   &.selected {
-    color: #ffffff;
+    color: $color-surface;
     font-weight: 600;
   }
 }
@@ -241,13 +258,13 @@
 
 .warn-text {
   font-size: 26rpx;
-  color: #E07B5D;
+  color: $color-coral;
 }
 
 /* 提示文字 */
 .hint-text {
   font-size: 26rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
 }
 
 /* 底部 */
@@ -261,13 +278,13 @@
   left: 0;
   right: 0;
   padding: 20rpx 32rpx calc(20rpx + env(safe-area-inset-bottom));
-  background-color: #ffffff;
+  background-color: $color-surface;
   box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.06);
   z-index: 100;
 }
 
 .task-add-submit-btn {
-  background-color: #7B9E87;
+  background-color: $color-primary;
   border-radius: 24rpx;
   padding: 24rpx;
   display: flex;
@@ -276,7 +293,7 @@
   box-shadow: 0 4rpx 16rpx rgba(123, 158, 135, 0.35);
 
   &.loading {
-    background-color: #C8C8C8;
+    background-color: $color-border;
     box-shadow: none;
   }
 }
@@ -284,5 +301,5 @@
 .task-add-submit-text {
   font-size: 32rpx;
   font-weight: 600;
-  color: #ffffff;
+  color: $color-surface;
 }

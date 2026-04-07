@@ -3,19 +3,35 @@
  * 包含：列表页 + 添加/编辑表单页 + 打卡弹窗
  * 对齐 Flutter medication_management_page.dart + MedicationCheckInSheet
  * 设计稿 375px，所有值用 rpx（750rpx = 375px）
- * 品牌色：#7B9E87 主色，#E8E6E2 边框，#F5F5F5 背景
+ * 品牌色：$color-primary 主色，$color-border 边框，$color-surface-low 背景
  */
+
+// ─── 统一颜色变量 ───────────────────────────────────────────────────────────
+$color-primary: #7B9E87;
+$color-primary-dark: #5C8268;
+$color-coral: #E07B5D;
+$color-blue: #4A90D9;
+$color-success: #6BA07E;
+$color-warning: #F5A623;
+$color-bg: #FAF9F7;
+$color-surface: #FFFFFF;
+$color-surface-lowest: #FFFFFF;
+$color-surface-low: #F5F5F5;
+$color-border: #EEECE8;
+$color-text-primary: #2C2C2C;
+$color-text-secondary: #6B6B6B;
+$color-text-tertiary: #B0ADAD;
 
 // ═══════════════════════════════════════════════════════════════════
 // 通用
 // ═══════════════════════════════════════════════════════════════════
 
 page {
-  --color-primary: #7B9E87;
-  --color-primary-dark: #5C8268;
-  --color-border: #E8E6E2;
-  --color-bg: #F5F5F5;
-  background-color: #FAF9F7;
+  --color-primary: $color-primary;
+  --color-primary-dark: $color-primary-dark;
+  --color-border: $color-border;
+  --color-bg: $color-surface-low;
+  background-color: $color-bg;
 }
 
 /* 列表页导航栏 */
@@ -26,7 +42,7 @@ page {
   justify-content: space-between;
   padding: 16rpx 24rpx;
   padding-top: calc(16rpx + env(safe-area-inset-top));
-  background-color: #ffffff;
+  background-color: $color-surface;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
   flex-shrink: 0;
   z-index: 100;
@@ -41,7 +57,7 @@ page {
 
 .navbar-back {
   font-size: 56rpx;
-  color: #2C2C2C;
+  color: $color-text-primary;
   font-weight: 300;
   line-height: 1;
 }
@@ -49,7 +65,7 @@ page {
 .navbar-title {
   font-size: 34rpx;
   font-weight: 700;
-  color: #2C2C2C;
+  color: $color-text-primary;
   flex: 1;
   text-align: center;
 }
@@ -64,7 +80,7 @@ page {
 
 .med-page {
   min-height: 100vh;
-  background-color: #FAF9F7;
+  background-color: $color-bg;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -98,19 +114,19 @@ page {
 .empty-title {
   font-size: 32rpx;
   font-weight: 600;
-  color: #2C2C2C;
+  color: $color-text-primary;
 }
 
 .empty-desc {
   font-size: 26rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
   text-align: center;
 }
 
 .btn-primary-empty {
   margin-top: 24rpx;
-  background-color: #7B9E87 !important;
-  color: #ffffff !important;
+  background-color: $color-primary !important;
+  color: $color-surface !important;
   font-size: 28rpx;
   font-weight: 500;
   border-radius: 24rpx;
@@ -132,7 +148,7 @@ page {
 
 .loading-text {
   font-size: 28rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -147,14 +163,14 @@ page {
 }
 
 .med-card {
-  background-color: #ffffff;
+  background-color: $color-surface;
   border-radius: 24rpx;
   padding: 28rpx 32rpx;
   display: flex;
   align-items: center;
   justify-content: space-between;
   box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
-  border: 1rpx solid #E8E6E2;
+  border: 1rpx solid $color-border;
 }
 
 .med-card-left {
@@ -168,7 +184,7 @@ page {
 .med-name-text {
   font-size: 30rpx;
   font-weight: 600;
-  color: #2C2C2C;
+  color: $color-text-primary;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -176,7 +192,7 @@ page {
 
 .med-dosage-text {
   font-size: 26rpx;
-  color: #6B6B6B;
+  color: $color-text-secondary;
 }
 
 .med-card-right {
@@ -202,7 +218,7 @@ page {
 
 .time-tag-text {
   font-size: 22rpx;
-  color: #7B9E87;
+  color: $color-primary;
   font-weight: 500;
 }
 
@@ -227,7 +243,7 @@ page {
   width: 112rpx;
   height: 112rpx;
   border-radius: 50%;
-  background: linear-gradient(135deg, #7B9E87 0%, #5C8268 100%);
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-dark 100%);
   box-shadow: 0 8rpx 24rpx rgba(123, 158, 135, 0.4);
   display: flex;
   align-items: center;
@@ -237,7 +253,7 @@ page {
 .fab-text {
   font-size: 64rpx;
   font-weight: 300;
-  color: #ffffff;
+  color: $color-surface;
   line-height: 1;
   margin-top: -4rpx;
 }
@@ -261,7 +277,7 @@ page {
   display: block;
   font-size: 40rpx;
   font-weight: 700;
-  color: #2C2C2C;
+  color: $color-text-primary;
   margin-bottom: 40rpx;
   padding: 0 8rpx;
 }
@@ -274,30 +290,30 @@ page {
   display: block;
   font-size: 28rpx;
   font-weight: 600;
-  color: #2C2C2C;
+  color: $color-text-primary;
   margin-bottom: 16rpx;
   padding: 0 8rpx;
 }
 
 .form-input {
-  background-color: #ffffff;
-  border: 2rpx solid #E8E6E2;
+  background-color: $color-surface;
+  border: 2rpx solid $color-border;
   border-radius: 20rpx;
   padding: 24rpx 28rpx;
   font-size: 30rpx;
-  color: #2C2C2C;
+  color: $color-text-primary;
   width: 100%;
   box-sizing: border-box;
   line-height: 1 !important;
   height: auto !important;
 
   &.field-error {
-    border-color: #E07B5D;
+    border-color: $color-coral;
   }
 }
 
 .form-placeholder {
-  color: #B0ADAD;
+  color: $color-text-tertiary;
   font-size: 28rpx;
 }
 
@@ -313,8 +329,8 @@ page {
 }
 
 .time-check-btn {
-  background-color: #ffffff;
-  border: 2rpx solid #E8E6E2;
+  background-color: $color-surface;
+  border: 2rpx solid $color-border;
   border-radius: 20rpx;
   padding: 24rpx 0;
   display: flex;
@@ -323,17 +339,17 @@ page {
 
   &.checked {
     background-color: rgba(123, 158, 135, 0.1);
-    border-color: #7B9E87;
+    border-color: $color-primary;
   }
 }
 
 .time-check-label {
   font-size: 30rpx;
   font-weight: 500;
-  color: #6B6B6B;
+  color: $color-text-secondary;
 
   &.checked {
-    color: #7B9E87;
+    color: $color-primary;
     font-weight: 600;
   }
 }
@@ -343,8 +359,8 @@ page {
 // ═══════════════════════════════════════════════════════════════════
 
 .picker-wrap {
-  background-color: #ffffff;
-  border: 2rpx solid #E8E6E2;
+  background-color: $color-surface;
+  border: 2rpx solid $color-border;
   border-radius: 20rpx;
   overflow: hidden;
 }
@@ -359,7 +375,7 @@ page {
   align-items: center;
   padding: 24rpx 28rpx;
   gap: 16rpx;
-  border-bottom: 1rpx solid #F0EEEB;
+  border-bottom: 1rpx solid $color-bg;
   transition: background-color 0.15s;
 
   &:last-child {
@@ -389,24 +405,24 @@ page {
 
 .recipient-name-text {
   font-size: 30rpx;
-  color: #2C2C2C;
+  color: $color-text-primary;
   flex: 1;
 
   &.selected {
     font-weight: 600;
-    color: #7B9E87;
+    color: $color-primary;
   }
 }
 
 .picker-check {
   font-size: 28rpx;
-  color: #7B9E87;
+  color: $color-primary;
   font-weight: 700;
 }
 
 .recipient-empty {
-  background-color: #ffffff;
-  border: 2rpx solid #E8E6E2;
+  background-color: $color-surface;
+  border: 2rpx solid $color-border;
   border-radius: 20rpx;
   padding: 28rpx;
   display: flex;
@@ -416,7 +432,7 @@ page {
 
 .recipient-empty-text {
   font-size: 26rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
   text-align: center;
 }
 
@@ -427,7 +443,7 @@ page {
 .form-error {
   display: block;
   font-size: 24rpx;
-  color: #E07B5D;
+  color: $color-coral;
   padding: 0 8rpx;
   margin-bottom: 20rpx;
   margin-top: -8rpx;
@@ -435,8 +451,8 @@ page {
 
 .btn-save {
   margin: 8rpx 8rpx 16rpx;
-  background-color: #7B9E87 !important;
-  color: #ffffff !important;
+  background-color: $color-primary !important;
+  color: $color-surface !important;
   font-size: 32rpx !important;
   font-weight: 600 !important;
   border-radius: 24rpx !important;
@@ -445,19 +461,19 @@ page {
   line-height: 1.4 !important;
 
   &.disabled {
-    background-color: #B0ADAD !important;
+    background-color: $color-text-tertiary !important;
     opacity: 0.8;
   }
 }
 
 .btn-cancel {
   margin: 0 8rpx;
-  background-color: #ffffff !important;
-  color: #6B6B6B !important;
+  background-color: $color-surface !important;
+  color: $color-text-secondary !important;
   font-size: 28rpx !important;
   font-weight: 500 !important;
   border-radius: 24rpx !important;
-  border: 2rpx solid #E8E6E2 !important;
+  border: 2rpx solid $color-border !important;
   padding: 22rpx 0 !important;
   line-height: 1.4 !important;
 }
@@ -465,11 +481,11 @@ page {
 .btn-delete {
   margin: 8rpx 8rpx 16rpx;
   background-color: rgba(224, 123, 93, 0.08) !important;
-  color: #E07B5D !important;
+  color: $color-coral !important;
   font-size: 28rpx !important;
   font-weight: 500 !important;
   border-radius: 24rpx !important;
-  border: 2rpx solid #E07B5D !important;
+  border: 2rpx solid $color-coral !important;
   padding: 22rpx 0 !important;
   line-height: 1.4 !important;
 }
@@ -484,8 +500,8 @@ page {
 
 .freq-btn {
   flex: 1;
-  background-color: #ffffff;
-  border: 2rpx solid #E8E6E2;
+  background-color: $color-surface;
+  border: 2rpx solid $color-border;
   border-radius: 20rpx;
   padding: 20rpx 0;
   display: flex;
@@ -494,17 +510,17 @@ page {
 
   &.checked {
     background-color: rgba(123, 158, 135, 0.1);
-    border-color: #7B9E87;
+    border-color: $color-primary;
   }
 }
 
 .freq-label {
   font-size: 28rpx;
   font-weight: 500;
-  color: #6B6B6B;
+  color: $color-text-secondary;
 
   &.checked {
-    color: #7B9E87;
+    color: $color-primary;
     font-weight: 600;
   }
 }
@@ -520,8 +536,8 @@ page {
 
 .date-field {
   flex: 1;
-  background-color: #ffffff;
-  border: 2rpx solid #E8E6E2;
+  background-color: $color-surface;
+  border: 2rpx solid $color-border;
   border-radius: 20rpx;
   padding: 20rpx 24rpx;
   display: flex;
@@ -531,25 +547,25 @@ page {
 
 .date-picker {
   flex: 1;
-  background-color: #ffffff;
-  border: 2rpx solid #E8E6E2;
+  background-color: $color-surface;
+  border: 2rpx solid $color-border;
   border-radius: 20rpx;
   overflow: hidden;
 }
 
 .date-field-text {
   font-size: 28rpx;
-  color: #2C2C2C;
+  color: $color-text-primary;
   text-align: center;
 
   &.placeholder {
-    color: #B0ADAD;
+    color: $color-text-tertiary;
   }
 }
 
 .date-sep {
   font-size: 28rpx;
-  color: #6B6B6B;
+  color: $color-text-secondary;
   flex-shrink: 0;
 }
 
@@ -576,7 +592,7 @@ page {
 .sheet-container {
   position: relative;
   z-index: 1001;
-  background-color: #ffffff;
+  background-color: $color-surface;
   border-radius: 48rpx 48rpx 0 0;
   padding: 20rpx 48rpx calc(48rpx + env(safe-area-inset-bottom));
   max-height: 85vh;
@@ -594,7 +610,7 @@ page {
 .drag-handle {
   width: 72rpx;
   height: 8rpx;
-  background-color: #E8E6E2;
+  background-color: $color-border;
   border-radius: 4rpx;
   margin: 0 auto 20rpx;
 }
@@ -603,7 +619,7 @@ page {
   display: block;
   font-size: 40rpx;
   font-weight: 700;
-  color: #2C2C2C;
+  color: $color-text-primary;
   text-align: center;
   margin-bottom: 8rpx;
 }
@@ -611,7 +627,7 @@ page {
 .med-sub {
   display: block;
   font-size: 28rpx;
-  color: #6B6B6B;
+  color: $color-text-secondary;
   text-align: center;
   margin-bottom: 56rpx;
 }
@@ -627,7 +643,7 @@ page {
   width: 200rpx;
   height: 200rpx;
   border-radius: 50%;
-  background-color: #7B9E87;
+  background-color: $color-primary;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -635,43 +651,43 @@ page {
   box-shadow: 0 12rpx 32rpx rgba(123, 158, 135, 0.35);
 
   &.done {
-    background-color: #E8E6E2;
+    background-color: $color-border;
     box-shadow: none;
   }
 
   &.loading {
-    background-color: #7B9E87;
+    background-color: $color-primary;
     opacity: 0.85;
   }
 }
 
 .checkin-icon {
   font-size: 56rpx;
-  color: #ffffff;
+  color: $color-surface;
   line-height: 1;
   font-weight: 700;
 }
 
 .checkin-btn.done .checkin-icon {
-  color: #6B6B6B;
+  color: $color-text-secondary;
 }
 
 .checkin-label {
   font-size: 30rpx;
   font-weight: 700;
-  color: #ffffff;
+  color: $color-surface;
   margin-top: 8rpx;
 }
 
 .checkin-btn.done .checkin-label {
-  color: #6B6B6B;
+  color: $color-text-secondary;
 }
 
 .spinner {
   width: 56rpx;
   height: 56rpx;
   border: 6rpx solid rgba(255, 255, 255, 0.3);
-  border-top-color: #ffffff;
+  border-top-color: $color-surface;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -698,29 +714,29 @@ page {
   justify-content: center;
 
   &.btn-delay {
-    border-color: #7B9E87;
+    border-color: $color-primary;
 
     .btn-outline-icon,
     .btn-outline-text {
-      color: #7B9E87;
+      color: $color-primary;
     }
   }
 
   &.btn-skip {
-    border-color: #E8E6E2;
+    border-color: $color-border;
 
     .btn-outline-icon,
     .btn-outline-text {
-      color: #6B6B6B;
+      color: $color-text-secondary;
     }
   }
 
   &.disabled {
-    border-color: #E8E6E2;
+    border-color: $color-border;
 
     .btn-outline-icon,
     .btn-outline-text {
-      color: #B0ADAD;
+      color: $color-text-tertiary;
     }
   }
 }
@@ -738,7 +754,7 @@ page {
 
 .divider {
   height: 2rpx;
-  background-color: #F0EEEB;
+  background-color: $color-bg;
   margin: 0 0 40rpx;
 }
 
@@ -749,7 +765,7 @@ page {
 .history-title {
   font-size: 30rpx;
   font-weight: 600;
-  color: #2C2C2C;
+  color: $color-text-primary;
   display: block;
   margin-bottom: 24rpx;
 }
@@ -765,7 +781,7 @@ page {
 .loading-dot {
   width: 12rpx;
   height: 12rpx;
-  background-color: #B0ADAD;
+  background-color: $color-text-tertiary;
   border-radius: 50%;
   animation: pulse 1.2s ease-in-out infinite;
 
@@ -793,7 +809,7 @@ page {
 
 .history-empty-text {
   font-size: 26rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
 }
 
 .history-item {
@@ -801,7 +817,7 @@ page {
   align-items: center;
   gap: 16rpx;
   padding: 16rpx 0;
-  border-bottom: 1rpx solid #F5F5F5;
+  border-bottom: 1rpx solid $color-surface-low;
 
   &:last-child {
     border-bottom: none;
@@ -817,7 +833,7 @@ page {
 
 .history-time {
   font-size: 26rpx;
-  color: #6B6B6B;
+  color: $color-text-secondary;
   width: 160rpx;
   flex-shrink: 0;
 }
@@ -854,13 +870,13 @@ page {
 .author-avatar-text {
   font-size: 20rpx;
   font-weight: 600;
-  color: #7B9E87;
+  color: $color-primary;
   line-height: 1;
 }
 
 .author-name {
   font-size: 24rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
   max-width: 120rpx;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -880,7 +896,7 @@ page {
 
 .reason-sheet {
   width: 100%;
-  background-color: #ffffff;
+  background-color: $color-surface;
   border-radius: 40rpx 40rpx 0 0;
   padding: 48rpx 48rpx calc(env(safe-area-inset-bottom) + 48rpx);
 }
@@ -889,14 +905,14 @@ page {
   display: block;
   font-size: 34rpx;
   font-weight: 600;
-  color: #2C2C2C;
+  color: $color-text-primary;
   text-align: center;
   margin-bottom: 32rpx;
 }
 
 .reason-item {
   padding: 28rpx 0;
-  border-bottom: 1rpx solid #F0EEEB;
+  border-bottom: 1rpx solid $color-bg;
 
   &:last-of-type {
     border-bottom: none;
@@ -905,7 +921,7 @@ page {
 
 .reason-item-text {
   font-size: 30rpx;
-  color: #2C2C2C;
+  color: $color-text-primary;
   display: block;
   text-align: center;
 }
@@ -918,5 +934,5 @@ page {
 
 .reason-cancel-text {
   font-size: 28rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
 }

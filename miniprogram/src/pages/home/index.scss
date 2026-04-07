@@ -5,12 +5,16 @@
 
 // ─── 全局变量 ────────────────────────────────────────────────────────────────
 $color-primary: #7B9E87;      // 鼠尾草绿
+$color-primary-dark: #5C8268;
 $color-coral: #E07B5D;        // 珊瑚色
 $color-blue: #4A90D9;          // 蓝色
 $color-success: #6BA07E;      // 绿色
 $color-warning: #F5A623;       // 警告色
 $color-bg: #FAF9F7;            // 背景色
 $color-surface: #FFFFFF;        // 卡片背景
+$color-surface-lowest: #FFFFFF;
+$color-surface-low: #F5F5F5;
+$color-border: #EEECE8;
 $color-text-primary: #2C2C2C;  // 主文字
 $color-text-secondary: #6B6B6B;// 次文字
 $color-text-tertiary: #B0ADAD; // 弱文字
@@ -53,7 +57,7 @@ $color-card-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 .family-avatar {
   width: 72rpx;
   height: 72rpx;
-  background-color: #F0F0F0;
+  background-color: $color-surface-low;
   border-radius: 24rpx;
   display: flex;
   align-items: center;
@@ -134,7 +138,7 @@ $color-card-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 .bell-badge-text {
   font-size: 18rpx;
   font-weight: 700;
-  color: #FFFFFF;
+  color: $color-surface;
   line-height: 1;
 }
 
@@ -195,7 +199,7 @@ $color-card-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 
 .empty-add-btn {
   padding: 20rpx 48rpx;
-  background-color: #7B9E87;
+  background-color: $color-primary;
   border-radius: 48rpx;
   box-shadow: 0 4rpx 16rpx rgba(123, 158, 135, 0.4);
 }
@@ -203,7 +207,7 @@ $color-card-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 .empty-add-btn-text {
   font-size: 30rpx;
   font-weight: 600;
-  color: #ffffff;
+  color: $color-surface;
 }
 
 // ─── 照护对象 Section ───────────────────────────────────────────────────────
@@ -234,7 +238,7 @@ $color-card-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 .recipient-avatar {
   width: 80rpx;
   height: 80rpx;
-  background-color: #F5F5F5;
+  background-color: $color-surface-low;
   border-radius: 20rpx;
   display: flex;
   align-items: center;
@@ -268,7 +272,7 @@ $color-card-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 }
 
 .age-badge {
-  background-color: #F5F5F5;
+  background-color: $color-surface-low;
   border-radius: 8rpx;
   padding: 2rpx 12rpx;
 }
@@ -287,7 +291,7 @@ $color-card-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 .progress-bar-mini {
   flex: 1;
   height: 8rpx;
-  background-color: #F0F0F0;
+  background-color: $color-surface-low;
   border-radius: 4rpx;
   overflow: hidden;
 }
@@ -316,12 +320,12 @@ $color-card-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 
 .recipient-caregiver-label {
   font-size: 22rpx;
-  color: #B0ADAD;
+  color: $color-text-tertiary;
 }
 
 .recipient-caregiver-name {
   font-size: 22rpx;
-  color: #6B6B6B;
+  color: $color-text-secondary;
 }
 
 // ─── 右侧每日护理打卡入口 ────────────────────────────────────────────────────
@@ -448,7 +452,7 @@ $color-card-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 .med-action-text {
   font-size: 24rpx;
   font-weight: 600;
-  color: #FFFFFF;
+  color: $color-surface;
 }
 
 // 药品空状态
@@ -468,7 +472,7 @@ $color-card-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 // ─── 今日用药总进度卡片 ─────────────────────────────────────────────────────
 .med-progress-card {
   margin: 0 32rpx 32rpx;
-  background: linear-gradient(135deg, $color-primary 0%, #5C8268 100%);
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-dark 100%);
   border-radius: 32rpx;
   padding: 32rpx;
   box-shadow: 0 8rpx 24rpx rgba(123, 158, 135, 0.3);
@@ -484,7 +488,7 @@ $color-card-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 .med-progress-title {
   font-size: 32rpx;
   font-weight: 600;
-  color: #FFFFFF;
+  color: $color-surface;
 }
 
 .med-progress-sub {
@@ -509,7 +513,7 @@ $color-card-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 
 .med-progress-fill {
   height: 100%;
-  background-color: #FFFFFF;
+  background-color: $color-surface;
   border-radius: 8rpx;
   transition: width 0.5s ease;
 }
@@ -517,7 +521,7 @@ $color-card-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 .med-progress-percent {
   font-size: 28rpx;
   font-weight: 600;
-  color: #FFFFFF;
+  color: $color-surface;
   min-width: 80rpx;
   text-align: right;
 }
@@ -531,7 +535,7 @@ $color-card-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 .med-progress-done {
   font-size: 64rpx;
   font-weight: 700;
-  color: #FFFFFF;
+  color: $color-surface;
 }
 
 .med-progress-slash {
@@ -862,7 +866,7 @@ $color-card-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 .sos-label {
   font-size: 32rpx;
   font-weight: 700;
-  color: #FFFFFF;
+  color: $color-surface;
   letter-spacing: 2rpx;
 }
 

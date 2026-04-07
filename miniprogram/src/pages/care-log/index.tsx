@@ -390,7 +390,7 @@ export default function CareLogPage() {
 
         // 合并并按时间倒序
         const merged = [...logs, ...medLogs, ...healthLogs, ...checkinLogs].sort(
-          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+          (a, b) => new Date(b.createdAt.replace(/-/g, '/')).getTime() - new Date(a.createdAt.replace(/-/g, '/')).getTime(),
         );
         setDayGroups(groupByDate(merged));
         setPage(1);

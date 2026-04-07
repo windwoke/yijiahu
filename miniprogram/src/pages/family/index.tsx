@@ -61,11 +61,6 @@ interface ContributionItem {
    工具函数
    ============================ */
 
-function getCurrentMonth(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-}
-
 function parseLocalDate(isoStr: string): Date {
   const d = new Date(isoStr.replace(/-/g, '/'));
   d.setHours(d.getHours() + 8);
@@ -168,18 +163,21 @@ export default function FamilyPage() {
     if (!familyId) return;
     setContributionLoading(true);
     try {
-      const month = getCurrentMonth();
       const [careLogsRes, medLogsRes] = await Promise.allSettled([
-        get<any[]>('/care-logs', { familyId, limit: 100, month }),
-        get<any[]>('/medication-logs/summary', { familyId, month }),
+        get<any[]>('/care-logs', { familyId, limit: 100 }),
+        get<any[]>('/medication-logs/timeline', { familyId, days: 45 }),
       ]);
 
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
       const statsMap = new Map<string, ContributionItem>();
 
-      // 护理日志
+      // 护理日志（仅当月数据）
       if (careLogsRes.status === 'fulfilled') {
-        for (const log of (careLogsRes.value ?? [])) {
-          if (!log.authorId) continue;
+        const logs = Array.isArray(careLogsRes.value) ? careLogsRes.value : [];
+        for (const log of logs) {
+          const createdAt = new Date(log.createdAt?.replace(/-/g, '/') ?? '');
+          if (!log.authorId || createdAt < monthStart) continue;
           if (!statsMap.has(log.authorId)) {
             statsMap.set(log.authorId, {
               userId: log.authorId,
@@ -192,13 +190,14 @@ export default function FamilyPage() {
         }
       }
 
-      // 用药打卡
+      // 用药打卡（仅当月数据）
       if (medLogsRes.status === 'fulfilled') {
-        const medLogs = medLogsRes.value ?? [];
+        const medLogs = medLogsRes.value;
         const items = Array.isArray(medLogs) ? medLogs : (medLogs?.items ?? []);
         for (const log of items) {
+          const createdAt = new Date(log.takenAt?.replace(/-/g, '/') ?? '');
           const authorId = log.takenBy?.id;
-          if (!authorId) continue;
+          if (!authorId || createdAt < monthStart) continue;
           if (!statsMap.has(authorId)) {
             statsMap.set(authorId, {
               userId: authorId,

@@ -39,22 +39,18 @@ $color-card-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
   backdrop-filter: blur(20rpx);
   -webkit-backdrop-filter: blur(20rpx);
   border-radius: 40rpx;
-  margin: 0 16rpx 16rpx;
-  padding: 20rpx 32rpx;
-  padding-top: calc(20rpx + env(safe-area-inset-top));
+  margin: 16rpx;
   box-shadow: 0 2rpx 16rpx $color-shadow;
   border: 1rpx solid rgba(0, 0, 0, 0.04);
   flex-shrink: 0;
   z-index: 10;
-  height: calc(112rpx + env(safe-area-inset-top));
-  box-sizing: border-box;
 }
 
 .glass-bar-inner {
   display: flex;
   align-items: center;
-  padding: 0 0;
-  height: 72rpx;
+  padding: 20rpx 32rpx;
+  height: 112rpx;
   box-sizing: border-box;
 }
 

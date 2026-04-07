@@ -354,8 +354,6 @@ export default function ProfilePage() {
 
   return (
     <View className="profile-page">
-      {/* 状态栏占位 */}
-      <View className="status-bar" />
       <ScrollView className="profile-scroll" scrollY>
         {/* ── 用户卡片 ─────────────────────────────────────────────── */}
         <View className="user-card">

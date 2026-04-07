@@ -337,8 +337,6 @@ export default function CalendarPage() {
 
   return (
     <View className="calendar-page">
-      {/* 状态栏占位 */}
-      <View className="status-bar" />
       {/* 右侧添加按钮（仅 owner/coordinator 可用） */}
       {(myRole === 'owner' || myRole === 'coordinator') && (
         <View className="fixed-add-btn" onClick={() => setShowAddSheet(true)}>

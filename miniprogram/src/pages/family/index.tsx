@@ -34,7 +34,7 @@ const COLORS = {
   textPrimary: '#2C2C2C',
   textSecondary: '#6B6B6B',
   textTertiary: '#B0ADAD',
-  border: COLORS.border,
+  border: '#EEECE8',
   surfaceLowest: '#FFFFFF',
   surfaceLow: '#F5F5F5',
 } as const;

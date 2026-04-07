@@ -961,3 +961,85 @@ $shadow-card: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
   font-size: 24rpx;
   color: #B0ADAD;
 }
+
+// ─── 编辑家庭弹层 ─────────────────────────────────────────────────────────
+.family-edit-avatar-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 32rpx;
+}
+
+.family-edit-avatar-wrap {
+  position: relative;
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 40rpx;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.family-edit-avatar-img {
+  width: 160rpx;
+  height: 160rpx;
+}
+
+.family-edit-avatar-placeholder {
+  width: 160rpx;
+  height: 160rpx;
+  background-color: #F5F5F5;
+  border-radius: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.family-edit-avatar-emoji {
+  font-size: 80rpx;
+  line-height: 1;
+}
+
+.family-edit-avatar-camera {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 56rpx;
+  height: 56rpx;
+  background-color: #7B9E87;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 4rpx solid #ffffff;
+}
+
+.family-edit-avatar-camera-icon {
+  font-size: 28rpx;
+  line-height: 1;
+}
+
+.family-edit-avatar-hint {
+  font-size: 24rpx;
+  color: #B0ADAD;
+}
+
+.family-save-btn {
+  background: linear-gradient(135deg, #7B9E87 0%, #5C8268 100%);
+  border-radius: 56rpx;
+  padding: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 32rpx;
+}
+
+.family-save-btn.disabled {
+  opacity: 0.6;
+}
+
+.family-save-btn-text {
+  font-size: 30rpx;
+  color: #ffffff;
+  font-weight: 600;
+}

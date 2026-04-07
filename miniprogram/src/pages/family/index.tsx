@@ -119,6 +119,8 @@ export default function FamilyPage() {
 
   // 编辑家庭
   const [editFamilyName, setEditFamilyName] = useState('');
+  const [editFamilyDesc, setEditFamilyDesc] = useState('');
+  const [editFamilyAvatar, setEditFamilyAvatar] = useState(''); // 本地新头像路径
 
   // 编辑成员表单
   const [editMemberNickname, setEditMemberNickname] = useState('');
@@ -399,17 +401,53 @@ export default function FamilyPage() {
     }
   };
 
-  /* ─── 编辑家庭名称 ─── */
-  const handleUpdateFamilyName = async () => {
+  /* ─── 选择家庭头像 ─── */
+  const handleChooseFamilyAvatar = () => {
+    Taro.chooseMedia({
+      count: 1,
+      sizeType: ['compressed'],
+      sourceType: ['album', 'camera'],
+      mediaType: ['image'],
+    }).then((res: any) => {
+      if (res.tempFiles?.[0]) {
+        setEditFamilyAvatar(res.tempFiles[0].tempFilePath);
+      }
+    }).catch(() => {});
+  };
+
+  /* ─── 保存家庭信息 ─── */
+  const handleSaveFamily = async () => {
     if (!editFamilyName.trim() || !family) return;
     setSubmitting(true);
     try {
-      await put(`/families/${family.id}`, { name: editFamilyName.trim() });
+      let newAvatarUrl = family.avatarUrl ?? undefined;
+      // 上传新头像
+      if (editFamilyAvatar) {
+        try {
+          const uploadRes = await uploadFile(
+            `/upload/family-avatar?familyId=${family.id}`,
+            editFamilyAvatar,
+            'file',
+          );
+          if (uploadRes?.avatarUrl) {
+            newAvatarUrl = uploadRes.avatarUrl;
+          }
+        } catch (e) {
+          console.error('头像上传失败', e);
+        }
+      }
+      await put(`/families/${family.id}`, {
+        name: editFamilyName.trim(),
+        ...(editFamilyDesc.trim() ? { description: editFamilyDesc.trim() } : {}),
+        ...(newAvatarUrl ? { avatarUrl: newAvatarUrl } : {}),
+      });
       Taro.showToast({ title: '已更新', icon: 'success', duration: 1500 });
       setActiveSheet(null);
+      setEditFamilyAvatar('');
+      setEditFamilyDesc('');
       await loadFamily();
     } catch (err) {
-      console.error('更新家庭名称失败', err);
+      console.error('更新家庭失败', err);
       Taro.showToast({ title: '更新失败', icon: 'none', duration: 2000 });
     } finally {
       setSubmitting(false);
@@ -451,7 +489,12 @@ export default function FamilyPage() {
         </View>
         <Text className="navbar-title">家庭成员</Text>
         {showEditFamily ? (
-          <View className="navbar-edit" onClick={() => setActiveSheet('editFamily')}>
+          <View className="navbar-edit" onClick={() => {
+            setEditFamilyName(family?.name ?? '');
+            setEditFamilyDesc(family?.description ?? '');
+            setEditFamilyAvatar('');
+            setActiveSheet('editFamily');
+          }}>
             <Text className="navbar-edit-text">编辑</Text>
           </View>
         ) : (
@@ -1016,25 +1059,65 @@ export default function FamilyPage() {
           <View className="sheet-container" onClick={(e) => e.stopPropagation()}>
             <View className="sheet-handle" />
             <View className="sheet-header">
-              <Text className="sheet-title">编辑家庭</Text>
+              <Text className="sheet-title">编辑家庭信息</Text>
               <View
-                className={`sheet-confirm-btn ${submitting ? 'disabled' : ''}`}
-                onClick={handleUpdateFamilyName}
+                className="sheet-close-btn"
+                onClick={() => { setActiveSheet(null); setEditFamilyAvatar(''); setEditFamilyDesc(''); }}
               >
-                <Text className="sheet-confirm-text">{submitting ? '保存中...' : '保存'}</Text>
+                <Text className="sheet-close-text">关闭</Text>
               </View>
             </View>
 
             <View className="sheet-body">
+              {/* 头像 */}
+              <View className="family-edit-avatar-row">
+                <View className="family-edit-avatar-wrap" onClick={handleChooseFamilyAvatar}>
+                  {editFamilyAvatar ? (
+                    <Image className="family-edit-avatar-img" src={editFamilyAvatar} mode="aspectFill" />
+                  ) : family?.avatarUrl ? (
+                    <Image className="family-edit-avatar-img" src={getImageUrl(family.avatarUrl || '')} mode="aspectFill" />
+                  ) : (
+                    <View className="family-edit-avatar-placeholder">
+                      <Text className="family-edit-avatar-emoji">👨‍👩‍👧‍👦</Text>
+                    </View>
+                  )}
+                  <View className="family-edit-avatar-camera">
+                    <Text className="family-edit-avatar-camera-icon">📷</Text>
+                  </View>
+                </View>
+                <Text className="family-edit-avatar-hint">点击更换头像</Text>
+              </View>
+
+              {/* 家庭名称 */}
               <Text className="sheet-label">家庭名称</Text>
               <View className="sheet-input-wrap">
                 <input
                   className="sheet-input"
-                  placeholder="请输入家庭名称"
+                  placeholder="例如：张氏大家庭"
                   value={editFamilyName}
                   onInput={(e: any) => setEditFamilyName(e.detail.value)}
-                  maxLength={50}
+                  maxLength={30}
                 />
+              </View>
+
+              {/* 一句话简介 */}
+              <Text className="sheet-label" style={{ marginTop: '16rpx' }}>一句话简介</Text>
+              <View className="sheet-input-wrap">
+                <input
+                  className="sheet-input"
+                  placeholder="描述一下您的家庭（选填）"
+                  value={editFamilyDesc}
+                  onInput={(e: any) => setEditFamilyDesc(e.detail.value)}
+                  maxLength={100}
+                />
+              </View>
+
+              {/* 保存按钮 */}
+              <View
+                className={`family-save-btn ${submitting ? 'disabled' : ''}`}
+                onClick={submitting ? undefined : handleSaveFamily}
+              >
+                <Text className="family-save-btn-text">{submitting ? '保存中...' : '保存'}</Text>
               </View>
             </View>
           </View>

@@ -50,6 +50,8 @@ function familyReducer(state = initialFamilyState, action: any): FamilyState {
   switch (action.type) {
     case 'family/setCurrentFamily':
       return { ...state, currentFamily: action.payload };
+    case 'family/setCurrentFamilyId':
+      return { ...state, currentFamilyId: action.payload };
     default:
       return state;
   }
@@ -70,6 +72,9 @@ export const selectIsLoggedIn = (state: { auth: AuthState }) =>
 export const selectCurrentUser = (state: { auth: AuthState }) =>
   state.auth.user;
 
+export const selectCurrentFamilyId = (state: { family: FamilyState }) =>
+  state.family.currentFamilyId;
+
 /**
  * 从 Storage 恢复状态（在 App mount 时调用）
  * 避免模块初始化时调用 Taro API
@@ -82,7 +87,7 @@ export function hydrateStore(): void {
     }
     const familyId = Taro.getStorageSync('yijiahu_current_family_id');
     if (familyId) {
-      store.dispatch({ type: 'family/setFamilyId', payload: familyId });
+      store.dispatch({ type: 'family/setCurrentFamilyId', payload: familyId });
     }
   } catch (e) {
     // ignore storage errors

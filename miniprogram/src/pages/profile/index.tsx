@@ -229,6 +229,8 @@ export default function ProfilePage() {
       activeSheet: null,
       currentFamilyName: family?.name || '我的家庭',
     }));
+    // 同步 Redux，让其他订阅 currentFamilyId 变化的页面自动刷新
+    store.dispatch({ type: 'family/setCurrentFamilyId', payload: state.selectedFamilyId });
     Taro.showToast({ title: `已切换至「${family?.name}」`, icon: 'success', duration: 1200 });
     setTimeout(() => {
       Taro.switchTab({ url: '/pages/home/index' });
@@ -256,6 +258,7 @@ export default function ProfilePage() {
       const newFamilyId = result?.id;
       if (newFamilyId) {
         Storage.setCurrentFamilyId(newFamilyId);
+        store.dispatch({ type: 'family/setCurrentFamilyId', payload: newFamilyId });
       }
       setState((s) => ({ ...s, activeSheet: null }));
       Taro.showToast({ title: '加入成功', icon: 'success', duration: 1200 });
@@ -294,6 +297,7 @@ export default function ProfilePage() {
       const newFamilyId = result?.id;
       if (newFamilyId) {
         Storage.setCurrentFamilyId(newFamilyId);
+        store.dispatch({ type: 'family/setCurrentFamilyId', payload: newFamilyId });
       }
       setState((s) => ({ ...s, activeSheet: null }));
       Taro.showToast({ title: '家庭创建成功', icon: 'success', duration: 1200 });

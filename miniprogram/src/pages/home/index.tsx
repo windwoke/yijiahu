@@ -7,6 +7,7 @@ import Taro, { useDidShow } from '@tarojs/taro';
 import { useState, useCallback, useEffect } from 'react';
 import { get, post } from '../../services/api';
 import { Storage } from '../../services/storage';
+import { store, selectCurrentFamilyId } from '../../store';
 import type {
   TodayMedicationSummary,
   MedicationLogItem,
@@ -285,7 +286,21 @@ export default function HomePage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 每次页面显示时刷新（tab 切换或从其他页返回）
+  // 订阅 Redux currentFamilyId 变化（切换家庭时触发）
+  useEffect(() => {
+    let prevFamilyId = selectCurrentFamilyId(store.getState());
+    const unsubscribe = store.subscribe(() => {
+      const currentFamilyId = selectCurrentFamilyId(store.getState());
+      if (currentFamilyId !== prevFamilyId) {
+        prevFamilyId = currentFamilyId;
+        loadDataInner();
+      }
+    });
+    return unsubscribe;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 每次页面显示时刷新（非 tab 页返回时触发）
   useDidShow(() => {
     loadDataInner();
   });

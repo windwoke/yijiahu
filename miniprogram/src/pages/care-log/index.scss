@@ -874,3 +874,79 @@
   font-weight: 600;
   color: #ffffff;
 }
+
+/* 健康指标输入 */
+.health-range-hint {
+  background-color: rgba(123, 158, 135, 0.08);
+  border: 1px solid rgba(123, 158, 135, 0.2);
+  border-radius: 16rpx;
+  padding: 16rpx 20rpx;
+}
+
+.health-range-hint-text {
+  font-size: 24rpx;
+  color: #7B9E87;
+}
+
+.health-input-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 16rpx;
+}
+
+.health-input-item {
+  flex: 1;
+}
+
+.health-input-sep {
+  font-size: 36rpx;
+  color: #999;
+  padding-bottom: 16rpx;
+}
+
+.health-input-wrap {
+  margin-top: 8rpx;
+  background-color: #f5f5f5;
+  border-radius: 16rpx;
+  padding: 20rpx 24rpx;
+  border: 1px solid #e8e8e8;
+}
+
+.health-input {
+  width: 100%;
+  font-size: 30rpx;
+  color: #333;
+  background: transparent;
+  border: none;
+  outline: none;
+}
+
+.health-type-toggle {
+  display: flex;
+  flex-direction: row;
+  gap: 12rpx;
+  margin-top: 16rpx;
+}
+
+.health-type-btn {
+  padding: 12rpx 24rpx;
+  border-radius: 16rpx;
+  background-color: #f5f5f5;
+  border: 1px solid #e8e8e8;
+}
+
+.health-type-btn.active {
+  background-color: rgba(123, 158, 135, 0.12);
+  border-color: #7B9E87;
+}
+
+.health-type-btn-text {
+  font-size: 26rpx;
+  color: #666;
+}
+
+.health-type-btn-text.active {
+  color: #7B9E87;
+  font-weight: 600;
+}

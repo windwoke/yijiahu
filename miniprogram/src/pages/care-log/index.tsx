@@ -18,12 +18,25 @@ import './index.scss';
 const CARE_LOG_TYPES = [
   { key: null, label: '全部', emoji: '📋', color: '#7B9E87' },
   { key: 'medication', label: '服药', emoji: '💊', color: '#4A90D9' },
-  { key: 'health', label: '健康', emoji: '♥', color: '#7B9E87' },
-  { key: 'emotion', label: '情绪', emoji: '☺', color: '#D4A855' },
+  { key: 'health', label: '健康', emoji: '🩺', color: '#7B9E87' },
+  { key: 'emotion', label: '情绪', emoji: '😊', color: '#D4A855' },
   { key: 'activity', label: '活动', emoji: '🚶', color: '#6BA07E' },
   { key: 'meal', label: '饮食', emoji: '🍽', color: '#C88C50' },
   { key: 'other', label: '其他', emoji: '📝', color: '#6B6B6B' },
 ];
+
+/** 健康指标类型 */
+const HEALTH_METRIC_TYPES = [
+  { key: 'blood_pressure', label: '血压', emoji: '🫀', unit: 'mmHg', hint: '120/80' },
+  { key: 'blood_glucose', label: '血糖', emoji: '🩸', unit: 'mmol/L', hint: '5.6' },
+  { key: 'weight', label: '体重', emoji: '⚖️', unit: 'kg', hint: '60' },
+];
+
+const HEALTH_NORMAL_RANGES: Record<string, string> = {
+  blood_pressure: '正常 90-140/60-90 mmHg',
+  blood_glucose: '空腹 3.9-6.1 mmol/L',
+  weight: '参考个人基准',
+};
 
 interface CareRecipient {
   id: string;
@@ -136,6 +149,7 @@ export default function CareLogPage() {
   const [recipients, setRecipients] = useState<CareRecipient[]>([]);
   const [dayGroups, setDayGroups] = useState<DayGroup[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [page, setPage] = useState(1);
   const [showAddSheet, setShowAddSheet] = useState(false);
@@ -144,6 +158,18 @@ export default function CareLogPage() {
   const [addRecipientId, setAddRecipientId] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
   const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
+
+  // 健康指标
+  const [addHealthMetric, setAddHealthMetric] = useState<string>(''); // 'blood_pressure' | 'blood_glucose' | 'weight'
+  // 血压
+  const [bpSys, setBpSys] = useState('');
+  const [bpDia, setBpDia] = useState('');
+  // 血糖
+  const [glucoseVal, setGlucoseVal] = useState('');
+  const [glucoseType, setGlucoseType] = useState<string>('fasting'); // 'fasting' | 'postprandial'
+  // 体重
+  const [weightVal, setWeightVal] = useState('');
+  const [weightUnit, setWeightUnit] = useState<string>('kg'); // 'kg' | 'jin'
 
   const uploadAttachment = async (id: string, localPath: string) => {
     if (!familyId) return;
@@ -168,16 +194,25 @@ export default function CareLogPage() {
   };
 
   const handleChooseImages = () => {
-    Taro.chooseImage({ count: 9, sizeType: ['compressed'], sourceType: ['album', 'camera'] })
-      .then((res) => {
-        const newOnes: PendingAttachment[] = res.tempFilePaths.map((path: string) => ({
-          id: `local-${Date.now()}-${Math.random()}`,
-          localPath: path,
-          uploading: true,
-        }));
-        setPendingAttachments((prev) => [...prev, ...newOnes]);
-        newOnes.forEach((a) => uploadAttachment(a.id, a.localPath));
-      });
+    const remaining = 9 - pendingAttachments.length;
+    if (remaining <= 0) {
+      Taro.showToast({ title: '最多上传9张', icon: 'none' });
+      return;
+    }
+    Taro.chooseMedia({
+      count: remaining,
+      sizeType: ['compressed'],
+      sourceType: ['album', 'camera'],
+      mediaType: ['image', 'video'],
+    }).then((res) => {
+      const newOnes: PendingAttachment[] = res.tempFiles.map((f: any) => ({
+        id: `local-${Date.now()}-${Math.random()}`,
+        localPath: f.tempFilePath,
+        uploading: true,
+      }));
+      setPendingAttachments((prev) => [...prev, ...newOnes]);
+      newOnes.forEach((a) => uploadAttachment(a.id, a.localPath));
+    });
   };
 
   const removeAttachment = (id: string) => {
@@ -284,10 +319,6 @@ export default function CareLogPage() {
   };
 
   const handleAddLog = async () => {
-    if (!addContent.trim()) {
-      Taro.showToast({ title: '请输入日志内容', icon: 'none' });
-      return;
-    }
     if (!familyId) {
       Taro.showToast({ title: '请先加入家庭', icon: 'none' });
       return;
@@ -299,24 +330,74 @@ export default function CareLogPage() {
 
     setSubmitting(true);
     try {
-      const attachmentIds = pendingAttachments
-        .filter((a) => !a.uploading && a.uploadedId && !a.failed)
-        .map((a) => a.uploadedId!);
-      const payload: Record<string, any> = {
-        recipientId: addRecipientId,
-        content: addContent.trim(),
-        type: addType,
-      };
-      if (attachmentIds.length > 0) {
-        payload.attachmentIds = attachmentIds;
+      if (addType === 'health') {
+        // 健康类型：校验指标数据
+        if (!addHealthMetric) {
+          Taro.showToast({ title: '请选择健康指标', icon: 'none' });
+          setSubmitting(false);
+          return;
+        }
+        let value: Record<string, any> = {};
+        if (addHealthMetric === 'blood_pressure') {
+          if (!bpSys.trim() || !bpDia.trim()) {
+            Taro.showToast({ title: '请填写血压数值', icon: 'none' });
+            setSubmitting(false);
+            return;
+          }
+          value = { systolic: Number(bpSys), diastolic: Number(bpDia) };
+        } else if (addHealthMetric === 'blood_glucose') {
+          if (!glucoseVal.trim()) {
+            Taro.showToast({ title: '请填写血糖数值', icon: 'none' });
+            setSubmitting(false);
+            return;
+          }
+          value = { value: Number(glucoseVal), type: glucoseType };
+        } else {
+          if (!weightVal.trim()) {
+            Taro.showToast({ title: '请填写体重数值', icon: 'none' });
+            setSubmitting(false);
+            return;
+          }
+          value = { value: Number(weightVal), unit: weightUnit };
+        }
+        await post('/health-records', {
+          familyId,
+          recipientId: addRecipientId,
+          recordType: addHealthMetric,
+          value,
+          note: addContent.trim() || undefined,
+        });
+        Taro.showToast({ title: '记录成功', icon: 'success' });
+      } else {
+        // 普通日志
+        if (!addContent.trim() && pendingAttachments.length === 0) {
+          Taro.showToast({ title: '请输入内容或添加图片', icon: 'none' });
+          setSubmitting(false);
+          return;
+        }
+        const attachmentIds = pendingAttachments
+          .filter((a) => !a.uploading && a.uploadedId && !a.failed)
+          .map((a) => a.uploadedId!);
+        const payload: Record<string, any> = {
+          recipientId: addRecipientId,
+          content: addContent.trim() || '（图片日志）',
+          type: addType,
+        };
+        if (attachmentIds.length > 0) {
+          payload.attachmentIds = attachmentIds;
+        }
+        await post(`/care-logs?familyId=${familyId}`, payload);
+        Taro.showToast({ title: '记录成功', icon: 'success' });
       }
-      console.log('[care-log] submit payload:', JSON.stringify(payload));
-      await post(`/care-logs?familyId=${familyId}`, payload);
-      Taro.showToast({ title: '记录成功', icon: 'success' });
       setShowAddSheet(false);
       setAddContent('');
       setAddType('other');
+      setAddHealthMetric('');
       setPendingAttachments([]);
+      setBpSys('');
+      setBpDia('');
+      setGlucoseVal('');
+      setWeightVal('');
       loadTimeline(true);
     } catch (err) {
       console.error('提交日志失败', err);
@@ -331,6 +412,11 @@ export default function CareLogPage() {
     setPendingAttachments([]);
     setAddContent('');
     setAddType('other');
+    setAddHealthMetric('');
+    setBpSys('');
+    setBpDia('');
+    setGlucoseVal('');
+    setWeightVal('');
   };
 
   const titleLabel = selectedRecipientId
@@ -415,6 +501,14 @@ export default function CareLogPage() {
           scrollY
           onScrollToLower={onScrollToLower}
           scrollWithAnimation
+          refresherEnabled
+          refresherTriggered={refreshing}
+          onRefresherRefresh={() => {
+            setRefreshing(true);
+            loadTimeline(true)
+              .catch(() => {})
+              .finally(() => setRefreshing(false));
+          }}
         >
           {dayGroups.map((group) => (
             <View key={group.dateISO} className="day-group">
@@ -460,7 +554,6 @@ export default function CareLogPage() {
                           className="log-type-badge"
                           style={{ backgroundColor: `${typeDef.color}1A` }}
                         >
-                          <Text className="log-type-badge-emoji">{typeDef.emoji}</Text>
                           <Text className="log-type-badge-text" style={{ color: typeDef.color }}>{typeDef.label}</Text>
                         </View>
                         <View className="log-card-top-right">
@@ -551,7 +644,7 @@ export default function CareLogPage() {
 
             {/* 头部：标题 + 关闭按钮 */}
             <View className="sheet-header">
-              <Text className="sheet-title">记一笔</Text>
+              <Text className="sheet-title">{addType === 'health' ? '记录健康数据' : '记一笔'}</Text>
               <View className="sheet-close-btn" onClick={closeSheet}>
                 <Image
                   className="sheet-close-icon"
@@ -591,7 +684,12 @@ export default function CareLogPage() {
                     key={t.key}
                     className={`sheet-type-chip ${addType === t.key ? 'active' : ''}`}
                     style={addType === t.key && t.color ? { backgroundColor: t.color } : {}}
-                    onClick={() => setAddType(t.key!)}
+                    onClick={() => {
+                      setAddType(t.key!);
+                      if (t.key !== 'health') {
+                        setAddHealthMetric('');
+                      }
+                    }}
                   >
                     <Text className="sheet-type-emoji">{t.emoji}</Text>
                     <Text className={`sheet-type-label ${addType === t.key ? 'active' : ''}`}>{t.label}</Text>
@@ -600,19 +698,212 @@ export default function CareLogPage() {
               </View>
             </View>
 
-            {/* 内容输入 */}
-            <View className="sheet-section">
-              <Text className="sheet-label">内容</Text>
-              <View className="content-input-wrap">
-                <textarea
-                  className="content-input"
-                  placeholder="记录今天发生了什么..."
-                  value={addContent}
-                  onInput={(e: any) => setAddContent(e.detail.value)}
-                  maxLength={1000}
-                />
-              </View>
-            </View>
+            {addType === 'health' ? (
+              <>
+                {/* 健康指标选择 */}
+                <View className="sheet-section">
+                  <Text className="sheet-label">选择指标</Text>
+                  <View className="sheet-type-chips-wrap">
+                    {HEALTH_METRIC_TYPES.map((m) => (
+                      <View
+                        key={m.key}
+                        className={`sheet-type-chip ${addHealthMetric === m.key ? 'active' : ''}`}
+                        style={addHealthMetric === m.key ? { backgroundColor: '#7B9E87' } : {}}
+                        onClick={() => setAddHealthMetric(m.key)}
+                      >
+                        <Text className="sheet-type-emoji">{m.emoji}</Text>
+                        <Text className={`sheet-type-label ${addHealthMetric === m.key ? 'active' : ''}`}>{m.label}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+
+                {/* 参考范围提示 */}
+                {addHealthMetric && HEALTH_NORMAL_RANGES[addHealthMetric] && (
+                  <View className="sheet-section">
+                    <View className="health-range-hint">
+                      <Text className="health-range-hint-text">
+                        参考范围：{HEALTH_NORMAL_RANGES[addHealthMetric]}
+                      </Text>
+                    </View>
+                  </View>
+                )}
+
+                {/* 健康指标输入 */}
+                {addHealthMetric === 'blood_pressure' && (
+                  <View className="sheet-section">
+                    <View className="health-input-row">
+                      <View className="health-input-item">
+                        <Text className="sheet-label">收缩压 (mmHg)</Text>
+                        <View className="health-input-wrap">
+                          <input
+                            className="health-input"
+                            type="number"
+                            placeholder="120"
+                            value={bpSys}
+                            onInput={(e: any) => setBpSys(e.detail.value)}
+                          />
+                        </View>
+                      </View>
+                      <Text className="health-input-sep">/</Text>
+                      <View className="health-input-item">
+                        <Text className="sheet-label">舒张压 (mmHg)</Text>
+                        <View className="health-input-wrap">
+                          <input
+                            className="health-input"
+                            type="number"
+                            placeholder="80"
+                            value={bpDia}
+                            onInput={(e: any) => setBpDia(e.detail.value)}
+                          />
+                        </View>
+                      </View>
+                    </View>
+                  </View>
+                )}
+
+                {addHealthMetric === 'blood_glucose' && (
+                  <View className="sheet-section">
+                    <View className="health-input-row">
+                      <View className="health-input-item" style={{ flex: 1 }}>
+                        <Text className="sheet-label">血糖值 (mmol/L)</Text>
+                        <View className="health-input-wrap">
+                          <input
+                            className="health-input"
+                            type="digit"
+                            placeholder="5.6"
+                            value={glucoseVal}
+                            onInput={(e: any) => setGlucoseVal(e.detail.value)}
+                          />
+                        </View>
+                      </View>
+                    </View>
+                    <View className="health-type-toggle">
+                      <View
+                        className={`health-type-btn ${glucoseType === 'fasting' ? 'active' : ''}`}
+                        onClick={() => setGlucoseType('fasting')}
+                      >
+                        <Text className={`health-type-btn-text ${glucoseType === 'fasting' ? 'active' : ''}`}>空腹</Text>
+                      </View>
+                      <View
+                        className={`health-type-btn ${glucoseType === 'postprandial' ? 'active' : ''}`}
+                        onClick={() => setGlucoseType('postprandial')}
+                      >
+                        <Text className={`health-type-btn-text ${glucoseType === 'postprandial' ? 'active' : ''}`}>餐后</Text>
+                      </View>
+                    </View>
+                  </View>
+                )}
+
+                {addHealthMetric === 'weight' && (
+                  <View className="sheet-section">
+                    <View className="health-input-row">
+                      <View className="health-input-item" style={{ flex: 1 }}>
+                        <Text className="sheet-label">体重</Text>
+                        <View className="health-input-wrap">
+                          <input
+                            className="health-input"
+                            type="digit"
+                            placeholder="60"
+                            value={weightVal}
+                            onInput={(e: any) => setWeightVal(e.detail.value)}
+                          />
+                        </View>
+                      </View>
+                    </View>
+                    <View className="health-type-toggle">
+                      <View
+                        className={`health-type-btn ${weightUnit === 'kg' ? 'active' : ''}`}
+                        onClick={() => setWeightUnit('kg')}
+                      >
+                        <Text className={`health-type-btn-text ${weightUnit === 'kg' ? 'active' : ''}`}>公斤</Text>
+                      </View>
+                      <View
+                        className={`health-type-btn ${weightUnit === 'jin' ? 'active' : ''}`}
+                        onClick={() => setWeightUnit('jin')}
+                      >
+                        <Text className={`health-type-btn-text ${weightUnit === 'jin' ? 'active' : ''}`}>斤</Text>
+                      </View>
+                    </View>
+                  </View>
+                )}
+
+                {/* 备注 */}
+                <View className="sheet-section">
+                  <Text className="sheet-label">备注（选填）</Text>
+                  <View className="content-input-wrap">
+                    <textarea
+                      className="content-input"
+                      placeholder="测量时状态..."
+                      value={addContent}
+                      onInput={(e: any) => setAddContent(e.detail.value)}
+                      maxLength={200}
+                    />
+                  </View>
+                </View>
+              </>
+            ) : (
+              <>
+                {/* 内容输入 */}
+                <View className="sheet-section">
+                  <Text className="sheet-label">内容</Text>
+                  <View className="content-input-wrap">
+                    <textarea
+                      className="content-input"
+                      placeholder="记录今天发生了什么..."
+                      value={addContent}
+                      onInput={(e: any) => setAddContent(e.detail.value)}
+                      maxLength={1000}
+                    />
+                  </View>
+                </View>
+
+                {/* 图片附件 */}
+                <View className="sheet-section attach-section">
+                  <Text className="sheet-label">图片（选填）</Text>
+                  <View className="attach-row">
+                    {pendingAttachments.map((att) => (
+                      <View key={att.id} className="attach-thumb">
+                        <Image
+                          className="attach-img"
+                          src={att.localPath}
+                          mode="aspectFill"
+                        />
+                        {att.uploading && (
+                          <View className="attach-uploading">
+                            <Text className="attach-uploading-text">上传中</Text>
+                          </View>
+                        )}
+                        {att.failed && (
+                          <View className="attach-failed">
+                            <Text className="attach-failed-text">失败</Text>
+                          </View>
+                        )}
+                        <View
+                          className="attach-remove"
+                          onClick={() => removeAttachment(att.id)}
+                        >
+                          <Image
+                            className="attach-remove-icon"
+                            src={require('../../assets/icons/care-close.png')}
+                            mode="aspectFit"
+                          />
+                        </View>
+                      </View>
+                    ))}
+                    {pendingAttachments.length < 9 && (
+                      <View className="attach-add-btn" onClick={handleChooseImages}>
+                        <Image
+                          className="attach-add-icon-img"
+                          src={require('../../assets/icons/care-add.png')}
+                          mode="aspectFit"
+                        />
+                      </View>
+                    )}
+                  </View>
+                </View>
+              </>
+            )}
 
             {/* 发送按钮 */}
             <View className="sheet-footer">
@@ -623,51 +914,6 @@ export default function CareLogPage() {
                 <Text className="send-btn-text">
                   {submitting ? '发送中...' : hasUploading ? '上传中...' : '发送'}
                 </Text>
-              </View>
-            </View>
-
-            {/* 图片附件（底部） */}
-            <View className="sheet-section attach-section">
-              <Text className="sheet-label">图片（选填）</Text>
-              <View className="attach-row">
-                {pendingAttachments.map((att) => (
-                  <View key={att.id} className="attach-thumb">
-                    <Image
-                      className="attach-img"
-                      src={att.localPath}
-                      mode="aspectFill"
-                    />
-                    {att.uploading && (
-                      <View className="attach-uploading">
-                        <Text className="attach-uploading-text">上传中</Text>
-                      </View>
-                    )}
-                    {att.failed && (
-                      <View className="attach-failed">
-                        <Text className="attach-failed-text">失败</Text>
-                      </View>
-                    )}
-                    <View
-                      className="attach-remove"
-                      onClick={() => removeAttachment(att.id)}
-                    >
-                      <Image
-                        className="attach-remove-icon"
-                        src={require('../../assets/icons/care-close.png')}
-                        mode="aspectFit"
-                      />
-                    </View>
-                  </View>
-                ))}
-                {pendingAttachments.length < 9 && (
-                  <View className="attach-add-btn" onClick={handleChooseImages}>
-                    <Image
-                      className="attach-add-icon-img"
-                      src={require('../../assets/icons/care-add.png')}
-                      mode="aspectFit"
-                    />
-                  </View>
-                )}
               </View>
             </View>
           </View>

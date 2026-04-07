@@ -236,7 +236,7 @@ export default function HomePage() {
 
       // 如果有照护对象，请求每日护理打卡数据
       if (careRecipients.length > 0) {
-        const ids = finalRecipients.map((r) => r.id).join(',');
+        const ids = careRecipients.map((r) => r.id).join(',');
         try {
           const checkinsData = await get<DailyCareCheckin[]>('/daily-care-checkins/today', {
             recipientIds: ids,

@@ -919,3 +919,45 @@ $shadow-card: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
   color: #ffffff;
   font-weight: 600;
 }
+
+// ─── 编辑成员弹层: 头像选择 ───────────────────────────────────────────────
+.edit-member-avatar-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 24rpx;
+  margin-bottom: 24rpx;
+}
+
+.edit-member-avatar-wrap {
+  position: relative;
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 24rpx;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.avatar-camera-badge {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 36rpx;
+  height: 36rpx;
+  background-color: #7B9E87;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2rpx solid #ffffff;
+}
+
+.avatar-camera-icon {
+  font-size: 20rpx;
+  line-height: 1;
+}
+
+.edit-member-avatar-hint {
+  font-size: 24rpx;
+  color: #B0ADAD;
+}

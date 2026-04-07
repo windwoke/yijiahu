@@ -6,7 +6,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, Image } from '@tarojs/components';
 import Taro, { useDidShow } from '@tarojs/taro';
-import { get, post, put, del } from '../../services/api';
+import { get, post, put, del, uploadFile } from '../../services/api';
 import { Storage } from '../../services/storage';
 import { getImageUrl } from '../../shared/utils/image';
 import type { Family, FamilyMemberDetail, FamilyMemberRole } from '../../shared/models/family';
@@ -123,6 +123,7 @@ export default function FamilyPage() {
   // 编辑成员表单
   const [editMemberNickname, setEditMemberNickname] = useState('');
   const [editMemberRole, setEditMemberRole] = useState<string>('caregiver');
+  const [editMemberAvatar, setEditMemberAvatar] = useState<string>(''); // 新选择的本地头像路径
 
   const familyId = Storage.getCurrentFamilyId();
   const currentUserId = Storage.getUserId();
@@ -279,6 +280,20 @@ export default function FamilyPage() {
     }
   };
 
+  /* ─── 选择成员头像 ─── */
+  const handleChooseMemberAvatar = () => {
+    Taro.chooseMedia({
+      count: 1,
+      sizeType: ['compressed'],
+      sourceType: ['album', 'camera'],
+      mediaType: ['image'],
+    }).then((res: any) => {
+      if (res.tempFiles?.[0]) {
+        setEditMemberAvatar(res.tempFiles[0].tempFilePath);
+      }
+    }).catch(() => {});
+  };
+
   /* ─── 保存成员编辑 ─── */
   const handleSaveMember = async () => {
     if (!familyId || !selectedMember) return;
@@ -291,6 +306,23 @@ export default function FamilyPage() {
       }
       if (editMemberRole !== selectedMember.role) {
         data.role = editMemberRole;
+      }
+      // 上传新头像
+      if (editMemberAvatar) {
+        try {
+          const uploadRes = await uploadFile(
+            `/upload/attachments?familyId=${familyId}`,
+            editMemberAvatar,
+            'files',
+          );
+          const attachments = uploadRes?.attachments || uploadRes?.data?.attachments || [];
+          const uploaded = attachments[0];
+          if (uploaded?.url) {
+            data.avatarUrl = uploaded.url;
+          }
+        } catch (e) {
+          console.error('头像上传失败', e);
+        }
       }
       if (Object.keys(data).length === 0) {
         setActiveSheet(null);
@@ -513,6 +545,7 @@ export default function FamilyPage() {
                           setSelectedMember(m);
                           setEditMemberNickname(m.nickname || '');
                           setEditMemberRole(m.role as string || 'caregiver');
+                          setEditMemberAvatar(''); // 重置新头像
                           setActiveSheet('editMember');
                         }
                       }}
@@ -846,10 +879,15 @@ export default function FamilyPage() {
               </View>
 
               <View className="sheet-body">
-                {/* 成员信息 */}
-                <View className="edit-member-info">
-                  <View className="member-avatar-wrap">
-                    {selectedMember.avatarUrl ? (
+                {/* 成员头像 + 可点击上传 */}
+                <View className="edit-member-avatar-row">
+                  <View
+                    className="edit-member-avatar-wrap"
+                    onClick={canEdit ? handleChooseMemberAvatar : undefined}
+                  >
+                    {editMemberAvatar ? (
+                      <Image className="member-avatar-img" src={editMemberAvatar} mode="aspectFill" />
+                    ) : selectedMember.avatarUrl ? (
                       <Image className="member-avatar-img" src={getImageUrl(selectedMember.avatarUrl || '')} mode="aspectFill" />
                     ) : (
                       <View className="member-avatar-placeholder">
@@ -858,7 +896,19 @@ export default function FamilyPage() {
                         </Text>
                       </View>
                     )}
+                    {canEdit && (
+                      <View className="avatar-camera-badge">
+                        <Text className="avatar-camera-icon">📷</Text>
+                      </View>
+                    )}
                   </View>
+                  {canEdit && (
+                    <Text className="edit-member-avatar-hint">点击更换头像</Text>
+                  )}
+                </View>
+
+                {/* 成员信息 */}
+                <View className="edit-member-info">
                   <View>
                     <Text className="edit-member-name">{selectedMember.nickname || '未命名'}</Text>
                     <View className="edit-member-role-row">

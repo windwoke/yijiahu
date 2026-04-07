@@ -69,6 +69,16 @@ interface CareLog {
   recipientId?: string;
   recipientName?: string;
   attachments: Attachment[];
+  /** 'care_log' | 'medication' | 'health_record' | 'daily_care_checkin' */
+  source: string;
+  /** 健康记录专用字段 */
+  recordType?: string;
+  healthValue?: Record<string, any>;
+  /** 每日护理打卡专用 */
+  checkinStatus?: string;
+  medicationCompleted?: number;
+  medicationTotal?: number;
+  specialNote?: string;
 }
 
 interface TimelineResponse {
@@ -128,6 +138,51 @@ function getTypeDef(type: string | null) {
 function formatTime(isoStr: string): string {
   const d = new Date(isoStr.replace(/-/g, '/'));
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+/** 根据 recordType 和 value 构建健康记录显示内容 */
+function buildHealthContent(recordType: string, value: Record<string, any> | undefined): string {
+  switch (recordType) {
+    case 'blood_pressure': {
+      const sys = value?.systolic ?? '-';
+      const dia = value?.diastolic ?? '-';
+      return `血压 ${sys}/${dia} mmHg`;
+    }
+    case 'blood_glucose': {
+      const val = value?.value ?? '-';
+      const t = value?.type === 'postprandial' ? '餐后' : '空腹';
+      return `${t}血糖 ${val} mmol/L`;
+    }
+    case 'weight': {
+      const val = value?.value ?? '-';
+      const unit = value?.unit ?? 'kg';
+      return `体重 ${val} ${unit}`;
+    }
+    default:
+      return '健康记录';
+  }
+}
+
+/** 判断健康指标是否超出范围：'normal' | 'high' | 'low' */
+function checkHealthRange(recordType: string, value: Record<string, any> | undefined): 'normal' | 'high' | 'low' {
+  switch (recordType) {
+    case 'blood_pressure': {
+      const sys = (value?.systolic as number) ?? 0;
+      const dia = (value?.diastolic as number) ?? 0;
+      if (sys >= 140 || dia >= 90) return 'high';
+      if (sys < 90 || dia < 60) return 'low';
+      return 'normal';
+    }
+    case 'blood_glucose': {
+      const val = (value?.value as number) ?? 0;
+      if (val > 11.1 || val < 2.8) return 'high';
+      if (val > 7.8 || val < 3.9) return 'low';
+      return 'normal';
+    }
+    case 'weight':
+    default:
+      return 'normal';
+  }
 }
 
 function getAttachmentUrl(url: string): string {
@@ -244,21 +299,112 @@ export default function CareLogPage() {
     const currentPage = reset ? 1 : page;
     if (reset) setLoading(true);
     try {
-      const params: Record<string, string | number> = {
-        familyId,
-        page: currentPage,
-        limit: 20,
-      };
-      if (filterType) params['type'] = filterType;
-      if (selectedRecipientId) params['recipientId'] = selectedRecipientId;
-
-      const data = await get<any[]>('/care-logs', params);
-      const logs = data ?? [];
-
       if (reset) {
-        setDayGroups(groupByDate(logs));
+        // 并发拉取 4 个来源
+        const [careLogsData, medLogsData, healthData, checkinData] = await Promise.all([
+          get<any[]>('/care-logs', {
+            familyId,
+            page: 1,
+            limit: 20,
+            ...(filterType ? { type: filterType } : {}),
+            ...(selectedRecipientId ? { recipientId: selectedRecipientId } : {}),
+          }),
+          get<any[]>('/medication-logs/timeline', {
+            days: 45,
+            limit: 30,
+            ...(selectedRecipientId ? { recipientId: selectedRecipientId } : {}),
+            ...(familyId ? { familyId } : {}),
+          }).catch(() => [] as any[]),
+          get<any[]>('/health-records/recent', {
+            limit: 20,
+            days: 90,
+            ...(selectedRecipientId ? { recipientId: selectedRecipientId } : {}),
+            ...(familyId ? { familyId } : {}),
+          }).catch(() => [] as any[]),
+          get<any[]>('/daily-care-checkins/by-recipient', {
+            limit: 30,
+            ...(selectedRecipientId ? { careRecipientId: selectedRecipientId } : {}),
+            ...(familyId ? { familyId } : {}),
+          }).catch(() => [] as any[]),
+        ]);
+
+        // care logs
+        const logs: CareLog[] = (careLogsData ?? []).map((item: any) => ({
+          ...item,
+          source: 'care_log',
+          createdAt: item.createdAt,
+        }));
+
+        // 用药打卡
+        const medLogs: CareLog[] = (medLogsData ?? []).map((item: any) => ({
+          id: item.id,
+          content: item.content || '',
+          type: 'medication',
+          createdAt: item.time || item.createdAt,
+          authorName: item.authorName || '家庭成员',
+          authorAvatar: item.authorAvatar,
+          recipientId: item.recipientId,
+          attachments: [],
+          source: 'medication',
+        }));
+
+        // 健康记录
+        const healthLogs: CareLog[] = ((healthData ?? []) as any[]).map((item: any) => ({
+          id: item.id,
+          content: buildHealthContent(item.recordType, item.value),
+          type: 'health',
+          createdAt: item.recordedAt,
+          authorName: item.authorName || '家庭成员',
+          authorAvatar: item.authorAvatar,
+          recipientId: item.recipientId,
+          attachments: [],
+          source: 'health_record',
+          recordType: item.recordType,
+          healthValue: item.value,
+        }));
+
+        // 每日护理打卡
+        const checkinLogs: CareLog[] = ((checkinData ?? []) as any[]).map((item: any) => {
+          const medCompleted = item.medicationCompleted ?? 0;
+          const medTotal = item.medicationTotal ?? 0;
+          let content = medTotal > 0
+            ? `用药完成 ${medCompleted}/${medTotal} 项`
+            : '护理打卡';
+          if (item.specialNote) content += ` · ${item.specialNote}`;
+          return {
+            id: item.id,
+            content,
+            type: 'other',
+            createdAt: item.checkinDate,
+            authorName: item.authorName || '家庭成员',
+            authorAvatar: item.authorAvatar,
+            recipientId: item.careRecipientId,
+            attachments: [],
+            source: 'daily_care_checkin',
+            checkinStatus: item.status,
+            medicationCompleted: item.medicationCompleted,
+            medicationTotal: item.medicationTotal,
+            specialNote: item.specialNote,
+          };
+        });
+
+        // 合并并按时间倒序
+        const merged = [...logs, ...medLogs, ...healthLogs, ...checkinLogs].sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        );
+        setDayGroups(groupByDate(merged));
         setPage(1);
+        setHasMore(logs.length === 20);
       } else {
+        // 加载更多：只追加 care logs
+        const data = await get<any[]>('/care-logs', {
+          familyId,
+          page: currentPage,
+          limit: 20,
+          ...(filterType ? { type: filterType } : {}),
+          ...(selectedRecipientId ? { recipientId: selectedRecipientId } : {}),
+        });
+        const logs: CareLog[] = (data ?? []).map((item: any) => ({ ...item, source: 'care_log' }));
         setDayGroups((prev) => {
           const existing = new Map(prev.map((g) => [g.dateISO, g]));
           for (const g of groupByDate(logs)) {
@@ -270,8 +416,8 @@ export default function CareLogPage() {
           }
           return Array.from(existing.values()).sort((a, b) => b.dateISO.localeCompare(a.dateISO));
         });
+        setHasMore(logs.length === 20);
       }
-      setHasMore(logs.length === 20);
     } catch (err) {
       console.error('加载时间线失败', err);
     } finally {
@@ -533,31 +679,56 @@ export default function CareLogPage() {
               {/* 日志卡片列表 */}
               {group.logs.map((log) => {
                 const typeDef = getTypeDef(log.type);
+                const isHealth = log.source === 'health_record';
+                const isMedication = log.source === 'medication';
+                const isCheckin = log.source === 'daily_care_checkin';
+                const range = isHealth ? checkHealthRange(log.recordType || '', log.healthValue) : 'normal';
+
+                // 卡片颜色：偏高/偏低 > 类型色 > 默认色
+                const baseColor = isMedication ? '#4A90D9' : isCheckin ? '#7B9E87' : typeDef.color;
+                const alertColor = range === 'high' ? '#E84040' : range === 'low' ? '#F5A623' : baseColor;
+
+                // emoji 和标签
+                const cardEmoji = isMedication ? '💊' : isCheckin ? '📝' : typeDef.emoji;
+                const cardLabel = isMedication ? '服药' : isCheckin ? '护理打卡' : typeDef.label;
+
                 return (
                   <View key={log.id} className="log-item-row">
-                    {/* 左侧：32×32 圆形 emoji 指示器 */}
+                    {/* 左侧：圆形 emoji 指示器 */}
                     <View className="log-indicator">
                       <View
                         className="log-indicator-circle"
-                        style={{ backgroundColor: `${typeDef.color}1A`, borderColor: `${typeDef.color}4D` }}
+                        style={{ backgroundColor: `${alertColor}1A`, borderColor: `${alertColor}4D` }}
                       >
-                        <Text className="log-indicator-emoji">{typeDef.emoji}</Text>
+                        <Text className="log-indicator-emoji">{cardEmoji}</Text>
                       </View>
                     </View>
 
                     {/* 右侧：卡片 */}
                     <View className="log-card">
-                      {/* 卡片顶部行：时间 + 类型标签 + Spacer + 头像 + 名字 */}
+                      {/* 卡片顶部行：时间 + 类型标签 + 偏高偏低 + 头像 + 名字 */}
                       <View className="log-card-top-row">
                         <Text className="log-time">{formatTime(log.createdAt)}</Text>
                         <View
                           className="log-type-badge"
-                          style={{ backgroundColor: `${typeDef.color}1A` }}
+                          style={{ backgroundColor: `${alertColor}1A` }}
                         >
-                          <Text className="log-type-badge-text" style={{ color: typeDef.color }}>{typeDef.label}</Text>
+                          <Text className="log-type-badge-text" style={{ color: alertColor }}>{cardLabel}</Text>
                         </View>
+                        {range !== 'normal' && (
+                          <View
+                            className="log-alert-badge"
+                            style={{ backgroundColor: range === 'high' ? '#FFEAEA' : '#FFF8E6' }}
+                          >
+                            <Text
+                              className="log-alert-badge-text"
+                              style={{ color: range === 'high' ? '#E84040' : '#F5A623' }}
+                            >
+                              {range === 'high' ? '↑偏高' : '↓偏低'}
+                            </Text>
+                          </View>
+                        )}
                         <View className="log-card-top-right">
-                          {/* 头像（24px 圆形） */}
                           {log.authorAvatar ? (
                             <Image
                               className="log-author-avatar"
@@ -574,7 +745,12 @@ export default function CareLogPage() {
                       </View>
 
                       {/* 日志内容 */}
-                      <Text className="log-content">{log.content}</Text>
+                      <Text
+                        className={`log-content ${range !== 'normal' ? 'log-content-alert' : ''}`}
+                        style={range !== 'normal' ? { color: range === 'high' ? '#E84040' : '#F5A623' } : {}}
+                      >
+                        {log.content}
+                      </Text>
 
                       {/* 附件图片 */}
                       {log.attachments && log.attachments.length > 0 && (

@@ -950,3 +950,20 @@
   color: #7B9E87;
   font-weight: 600;
 }
+
+/* 健康偏高/偏低提示标签 */
+.log-alert-badge {
+  padding: 4rpx 12rpx;
+  border-radius: 12rpx;
+  flex-shrink: 0;
+}
+
+.log-alert-badge-text {
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+/* 健康告警内容文字 */
+.log-content-alert {
+  font-weight: 600;
+}

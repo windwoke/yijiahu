@@ -167,7 +167,7 @@ $color-text-tertiary: #B0ADAD;
 /* 时间线滚动区 */
 .timeline-scroll {
   flex: 1;
-  height: calc(100vh - 240rpx);
+  height: calc(100vh - 80rpx);
   padding: 0 24rpx;
 }
 
@@ -667,7 +667,7 @@ $color-text-tertiary: #B0ADAD;
 
 /* 底部留白 */
 .bottom-pad {
-  height: 160rpx;
+  height: 80rpx;
 }
 
 /* 空状态 */
@@ -703,7 +703,7 @@ $color-text-tertiary: #B0ADAD;
 .fab {
   position: fixed;
   right: 32rpx;
-  bottom: 120rpx;
+  bottom: 60rpx;
   display: flex;
   flex-direction: row;
   align-items: center;

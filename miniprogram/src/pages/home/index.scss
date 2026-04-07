@@ -65,9 +65,15 @@ $color-card-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
   flex-shrink: 0;
 }
 
-.avatar-icon {
-  width: 36rpx;
-  height: 36rpx;
+.family-avatar-img {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 24rpx;
+}
+
+.family-avatar-emoji {
+  font-size: 36rpx;
+  line-height: 1;
 }
 
 .family-info {

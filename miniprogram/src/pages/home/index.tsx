@@ -46,6 +46,7 @@ interface StatusInfo {
 
 interface HomeState {
   familyName: string;
+  familyAvatarUrl: string | null;
   memberCount: number;
   unreadCount: number;
   recipients: CareRecipient[];
@@ -140,6 +141,7 @@ export default function HomePage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [state, setState] = useState<HomeState>({
     familyName: '我的家庭',
+    familyAvatarUrl: null,
     memberCount: 0,
     unreadCount: 0,
     recipients: [],
@@ -171,6 +173,7 @@ export default function HomePage() {
       const currentFamily = familyList[0]?.family;
       const familyIdFromRes = familyList[0]?.family?.id || familyId;
       const familyName = currentFamily?.name || '我的家庭';
+      const familyAvatarUrl = currentFamily?.avatarUrl || null;
 
       // 1b. 获取家庭成员数量
       let memberCount = 0;
@@ -228,6 +231,7 @@ export default function HomePage() {
 
       setState({
         familyName,
+        familyAvatarUrl,
         memberCount,
         unreadCount,
         recipients: careRecipients,
@@ -319,7 +323,7 @@ export default function HomePage() {
 
   // ─── 渲染 ──────────────────────────────────────────────────────────────────
 
-  const { familyName, memberCount, unreadCount, recipients, medicationSummaries, checkins, caregivers, appointments, tasks, loading } = state;
+  const { familyName, familyAvatarUrl, memberCount, unreadCount, recipients, medicationSummaries, checkins, caregivers, appointments, tasks, loading } = state;
   const hasRecipients = recipients.length > 0;
 
   return (
@@ -329,7 +333,11 @@ export default function HomePage() {
         <View className="glass-bar-inner">
           {/* 家庭头像 */}
           <View className="family-avatar">
-            <Image className="avatar-icon" src={require('../../assets/icons/family.png')} mode="aspectFit" />
+            {familyAvatarUrl ? (
+              <Image className="family-avatar-img" src={getImageUrl(familyAvatarUrl)} mode="aspectFill" />
+            ) : (
+              <Text className="family-avatar-emoji">👨‍👩‍👧</Text>
+            )}
           </View>
 
           {/* 家庭信息 */}

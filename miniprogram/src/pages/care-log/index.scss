@@ -26,8 +26,9 @@ $color-text-tertiary: #B0ADAD;
 
 /* 状态栏占位 */
 .status-bar {
-  height: 44rpx;
+  height: calc(44rpx + env(safe-area-inset-top));
   background-color: $color-bg;
+  flex-shrink: 0;
 }
 
 /* 页面标题 */

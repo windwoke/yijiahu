@@ -23,6 +23,13 @@ $color-shadow-soft: rgba(0, 0, 0, 0.04);
 $color-shadow: rgba(0, 0, 0, 0.06);
 
 // ─── 全屏容器 ────────────────────────────────────────────────────────────────
+/* 状态栏占位 */
+.status-bar {
+  height: calc(44rpx + env(safe-area-inset-top));
+  background-color: $color-bg;
+  flex-shrink: 0;
+}
+
 .profile-page {
   height: 100%;
   background-color: $color-bg;

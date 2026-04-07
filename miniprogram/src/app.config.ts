@@ -23,9 +23,7 @@ export default defineAppConfig({
   ],
   window: {
     backgroundTextStyle: 'light',
-    navigationBarBackgroundColor: '#7B9E87',
-    navigationBarTitleText: '一家护',
-    navigationBarTextStyle: 'white',
+    navigationStyle: 'custom',
     backgroundColor: '#FAF9F7',
   },
   tabBar: {

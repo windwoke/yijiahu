@@ -25,6 +25,13 @@ $color-text-tertiary: #B0ADAD;
   flex-direction: column;
 }
 
+/* 状态栏占位 */
+.status-bar {
+  height: calc(44rpx + env(safe-area-inset-top));
+  background-color: $color-bg;
+  flex-shrink: 0;
+}
+
 /* ============================
    固定添加按钮
    ============================ */

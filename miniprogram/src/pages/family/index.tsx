@@ -146,6 +146,7 @@ export default function FamilyPage() {
     if (!familyId) return;
     try {
       const data = await get<FamilyMemberDetail[]>(`/families/${familyId}/members`);
+      console.warn('[family] members API response:', JSON.stringify(data));
       setMembers(data ?? []);
     } catch (err) {
       console.error('加载成员列表失败', err);
@@ -576,6 +577,7 @@ export default function FamilyPage() {
               listItems.map((item) => {
                 if (item.kind === 'member') {
                   const m = item.data;
+                  console.warn('[family] member:', JSON.stringify({ role: m.role, nickname: m.nickname }));
                   const roleColor = ROLE_COLORS[m.role] ?? '#B0ADAD';
                   const isMe = m.userId === currentUserId;
 
@@ -632,6 +634,9 @@ export default function FamilyPage() {
                           </View>
                         </View>
                         {m.phone && <Text className="member-phone">{maskPhone(m.phone)}</Text>}
+                        {ROLE_DESCRIPTIONS[m.role as string] && (
+                          <Text className="member-role-desc">{ROLE_DESCRIPTIONS[m.role as string]}</Text>
+                        )}
                       </View>
 
                       {showManageButtons && !isMe && (

@@ -42,20 +42,11 @@ export class NotificationService {
     private readonly wechatSvc: WechatService,
     private readonly config: ConfigService,
   ) {
-    // 从环境变量读取各通知类型的订阅消息模板 ID
+    // 从环境变量读取各通知类型的订阅消息模板 ID（仅低频场景使用一次性订阅）
+    // 模板字段名必须与微信后台配置完全一致
     this.wechatTemplateIds = {
-      [NotificationType.MEDICATION_REMINDER]: this.config.get<string>('wechat.tmpl.medicationReminder') || '',
-      [NotificationType.MISSED_DOSE]: this.config.get<string>('wechat.tmpl.missedDose') || '',
-      [NotificationType.APPOINTMENT_REMINDER]: this.config.get<string>('wechat.tmpl.appointmentReminder') || '',
       [NotificationType.SOS]: this.config.get<string>('wechat.tmpl.sos') || '',
-      [NotificationType.DAILY_CHECKIN]: this.config.get<string>('wechat.tmpl.dailyCheckin') || '',
-      [NotificationType.DAILY_CHECKIN_COMPLETED]: this.config.get<string>('wechat.tmpl.dailyCheckinCompleted') || '',
-      [NotificationType.TASK_REMINDER]: this.config.get<string>('wechat.tmpl.taskReminder') || '',
-      [NotificationType.TASK_ASSIGNED]: this.config.get<string>('wechat.tmpl.taskAssigned') || '',
-      [NotificationType.TASK_COMPLETED]: this.config.get<string>('wechat.tmpl.taskCompleted') || '',
-      [NotificationType.HEALTH_ALERT]: this.config.get<string>('wechat.tmpl.healthAlert') || '',
-      [NotificationType.MEMBER_JOINED]: this.config.get<string>('wechat.tmpl.memberJoined') || '',
-      [NotificationType.CAREGIVER_CHANGED]: this.config.get<string>('wechat.tmpl.caregiverChanged') || '',
+      [NotificationType.APPOINTMENT_REMINDER]: this.config.get<string>('wechat.tmpl.appointmentReminder') || '',
     };
   }
 
@@ -238,20 +229,42 @@ export class NotificationService {
       );
     }
 
-    // 2. 微信小程序订阅消息（如果用户开启了微信通知且有 openId）
+    // 2. 微信小程序订阅消息（仅低频关键场景：SOS、复诊提醒）
     const wechatEnabled = await this.prefSvc.isWechatEnabled(userId);
     if (wechatEnabled && user?.openId) {
       const templateId = this.wechatTemplateIds[notification.type];
       if (templateId) {
+        const dataJson = notification.dataJson || {};
+        let data: Record<string, string> = {};
+
+        if (notification.type === NotificationType.SOS) {
+          // 模板字段: thing1(姓名) thing3(地址) thing5(紧急联系人) phone_number6(电话) thing7(备注)
+          data = {
+            thing1: dataJson.recipientName || '家人',
+            thing3: dataJson.address || '未知地址',
+            thing5: dataJson.emergencyContact || '未知联系人',
+            phone_number6: dataJson.emergencyPhone || '',
+            thing7: notification.body.replace(/[^\u4e00-\u9fa5a-zA-Z0-9\s，,。.]/g, '').slice(0, 20),
+          };
+        } else if (notification.type === NotificationType.APPOINTMENT_REMINDER) {
+          // 模板字段: time1(复诊日期) time2(复诊时间) thing3(复诊医院) thing4(温馨提示) thing6(复诊人)
+          const apptTime = dataJson.appointmentTime ? new Date(dataJson.appointmentTime) : null;
+          const dateStr = apptTime ? `${apptTime.getMonth() + 1}月${apptTime.getDate()}日` : '';
+          const timeStr = apptTime ? `${apptTime.getHours().toString().padStart(2, '0')}:${apptTime.getMinutes().toString().padStart(2, '0')}` : '';
+          data = {
+            time1: dateStr,
+            time2: timeStr,
+            thing3: dataJson.hospital || '未知医院',
+            thing4: '请携带相关证件和病历按时就诊',
+            thing6: dataJson.recipientName || '家人',
+          };
+        }
+
         const result = await this.wechatSvc.sendSubscribeMessage({
           openId: user.openId,
           templateId,
           page: 'pages/home/index',
-          data: {
-            phrase1: notification.title.replace(/^\p{Emoji}+/u, '').trim(), // 通知名称
-            thing2: notification.body.length > 20 ? notification.body.substring(0, 20) + '...' : notification.body, // 通知内容（最多20字）
-            time3: new Date().toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit' }), // 通知时间
-          },
+          data,
         });
 
         if (result.errcode === 0) {

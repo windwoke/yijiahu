@@ -77,20 +77,13 @@ export default () => ({
         process.env.WECHAT_TMPL_APPOINTMENT || 'TMPL_APPOINTMENT',
       sos: process.env.WECHAT_TMPL_SOS || 'TMPL_SOS',
     },
-    // 小程序订阅消息模板 ID（通过微信公众平台配置，参考 wechat.tmpl.*）
+    // 小程序订阅消息模板 ID（通过微信公众平台配置，仅支持一次性订阅的低频关键场景）
+    // 模板字段必须与微信后台配置完全一致
     tmpl: {
-      medicationReminder: process.env.WECHAT_TMPL_MEDICATION || '',
-      missedDose: process.env.WECHAT_TMPL_MISSED_DOSE || '',
-      appointmentReminder: process.env.WECHAT_TMPL_APPOINTMENT || '',
+      // SOS 紧急求助（thing1姓名 thing3地址 thing5紧急联系人 phone_number6电话 thing7备注）
       sos: process.env.WECHAT_TMPL_SOS || '',
-      dailyCheckin: process.env.WECHAT_TMPL_DAILY_CHECKIN || '',
-      dailyCheckinCompleted: process.env.WECHAT_TMPL_DAILY_CHECKIN_COMPLETED || '',
-      taskReminder: process.env.WECHAT_TMPL_TASK_REMINDER || '',
-      taskAssigned: process.env.WECHAT_TMPL_TASK_ASSIGNED || '',
-      taskCompleted: process.env.WECHAT_TMPL_TASK_COMPLETED || '',
-      healthAlert: process.env.WECHAT_TMPL_HEALTH_ALERT || '',
-      memberJoined: process.env.WECHAT_TMPL_MEMBER_JOINED || '',
-      caregiverChanged: process.env.WECHAT_TMPL_CAREGIVER_CHANGED || '',
+      // 复诊提醒（time1复诊日期 time2复诊时间 thing3复诊医院 thing4温馨提示 thing6复诊人）
+      appointmentReminder: process.env.WECHAT_TMPL_APPOINTMENT || '',
     },
   },
 });

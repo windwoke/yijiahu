@@ -11,9 +11,7 @@ import { get, del } from '../../services/api';
 import { Storage } from '../../services/storage';
 import {
   Medication,
-  MedicationLog,
   MedicationLogStatus,
-  MEDICATION_FREQUENCY_LABELS,
 } from '../../shared/models/medication';
 import './detail.scss';
 
@@ -30,7 +28,7 @@ function formatDate(dateStr: string | null | undefined): string {
 }
 
 function formatTimeStr(timeStr: string | null | undefined): string {
-  if (!timeStr) return '';
+  if (!timeStr) return '--';
   const parts = timeStr.split(' ');
   if (parts.length < 2) return timeStr;
   const date = parts[0].split('-');
@@ -38,10 +36,13 @@ function formatTimeStr(timeStr: string | null | undefined): string {
   return `${date[1]}/${date[2]} ${parts[1].substring(0, 5)}`;
 }
 
-function formatLogTime(log: MedicationLog): string {
-  if (log.actualTime) return formatTimeStr(log.actualTime);
-  if (log.createdAt) return formatTimeStr(log.createdAt);
-  return '';
+/** timeline 接口返回的用药记录条目 */
+interface TimelineItem {
+  id: string;
+  time: string; // 格式化的本地时间字符串
+  status: MedicationLogStatus;
+  authorName: string;
+  authorAvatar: string | null;
 }
 
 export default function MedicationDetailPage() {
@@ -50,7 +51,7 @@ export default function MedicationDetailPage() {
   const familyId = Storage.getCurrentFamilyId();
 
   const [med, setMed] = useState<Medication | null>(null);
-  const [history, setHistory] = useState<MedicationLog[]>([]);
+  const [history, setHistory] = useState<TimelineItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingHistory, setLoadingHistory] = useState(true);
 
@@ -67,29 +68,32 @@ export default function MedicationDetailPage() {
   }, [id, familyId]);
 
   const loadHistory = useCallback(async () => {
-    if (!id || !familyId || !med) { setLoadingHistory(false); return; }
+    if (!id || !familyId) { setLoadingHistory(false); return; }
     try {
-      const data = await get<MedicationLog[]>('/medication-logs/history', {
-        familyId,
-        recipientId: med.recipientId,
+      const data = await get<any[]>('/medication-logs/timeline', {
+        medicationId: id,
+        limit: 4,
       });
-      // 过滤当前药品的记录
-      const filtered = (Array.isArray(data) ? data : []).filter(
-        (log) => log.medicationId === id
-      );
-      setHistory(filtered);
+      const logs: TimelineItem[] = (Array.isArray(data) ? data : []).map((item) => ({
+        id: item.id,
+        time: item.time,
+        status: item.status,
+        authorName: item.authorName || '家庭成员',
+        authorAvatar: item.authorAvatar || null,
+      }));
+      setHistory(logs);
     } catch (e) {
       console.error('[detail] load history error', e);
     } finally {
       setLoadingHistory(false);
     }
-  }, [id, familyId, med]);
+  }, [id, familyId]);
 
   useEffect(() => { load(); }, [load]);
 
   useEffect(() => {
-    if (med) loadHistory();
-  }, [med, loadHistory]);
+    if (id) loadHistory();
+  }, [id, loadHistory]);
 
   const handleEdit = () => {
     if (!id) return;
@@ -233,14 +237,13 @@ export default function MedicationDetailPage() {
                 <Text className="history-empty-text">暂无用药记录</Text>
               </View>
             ) : (
-              history.slice(0, 7).map((log) => {
+              history.slice(0, 4).map((log) => {
                 const isTaken = log.status === MedicationLogStatus.TAKEN;
                 const color = isTaken ? '#6BA07E' : '#B0ADAD';
-                const authorName = log.takenBy?.name || '家庭成员';
                 return (
                   <View key={log.id} className="history-row">
                     <View className="history-dot" style={{ backgroundColor: color }} />
-                    <Text className="history-time">{formatLogTime(log)}</Text>
+                    <Text className="history-time">{formatTimeStr(log.time)}</Text>
                     <View className="history-badge" style={{ color, backgroundColor: `${color}1A` }}>
                       <Text className="history-badge-text">
                         {isTaken ? '已服用' : '已跳过'}
@@ -249,11 +252,11 @@ export default function MedicationDetailPage() {
                     <View className="history-author">
                       <View className="author-avatar">
                         <Text className="author-avatar-text">
-                          {authorName ? authorName[0] : '?'}
+                          {log.authorName ? log.authorName[0] : '?'}
                         </Text>
                       </View>
                       <Text className="author-name">
-                        {authorName.length > 4 ? `${authorName.substring(0, 4)}…` : authorName}
+                        {log.authorName.length > 4 ? `${log.authorName.substring(0, 4)}…` : log.authorName}
                       </Text>
                     </View>
                   </View>

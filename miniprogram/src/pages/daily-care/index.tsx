@@ -10,6 +10,7 @@ import { get, post } from '../../services/api';
 import { getImageUrl } from '../../shared/utils/image';
 import { Storage } from '../../services/storage';
 import type { DailyCareCheckin, CheckinStatus } from '../../shared/models/daily-care-checkin';
+import type { TodayMedicationSummary } from '../../shared/models/medication';
 import './index.scss';
 
 /** 状态选项配置 */
@@ -29,8 +30,8 @@ export default function DailyCarePage() {
   // 从路由参数获取照护对象信息
   const params = Taro.getCurrentInstance().router?.params ?? {};
   const recipientId: string = params.recipientId ?? '';
-  const recipientName: string = params.recipientName ?? '未知';
-  const recipientAvatar: string = params.recipientAvatar ?? '';
+  const recipientName: string = decodeURIComponent(params.recipientName ?? '') || '未知';
+  const recipientAvatar: string = decodeURIComponent(params.recipientAvatar ?? '');
 
   // 状态
   const [selectedStatus, setSelectedStatus] = useState<CheckinStatus>('normal');
@@ -53,26 +54,34 @@ export default function DailyCarePage() {
     const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
     try {
-      const data = await get<DailyCareCheckin[]>(
-        '/daily-care-checkins/today',
-        {
-          recipientIds: recipientId,
-          todayDate: todayStr,
-          familyId,
-        }
-      );
-      if (data && Array.isArray(data) && data.length > 0) {
-        const checkin = data[0];
+      // 并行请求：今日打卡数据 + 今日用药汇总（后者作为 fallback）
+      const [checkinsData, medSummary] = await Promise.all([
+        get<DailyCareCheckin[]>(
+          '/daily-care-checkins/today',
+          { recipientIds: recipientId, todayDate: todayStr, familyId }
+        ).catch(() => null),
+        get<TodayMedicationSummary>(
+          '/medication-logs/today',
+          { recipientId, familyId }
+        ).catch(() => null),
+      ]);
+
+      if (checkinsData && Array.isArray(checkinsData) && checkinsData.length > 0) {
+        const checkin = checkinsData[0];
         setSelectedStatus(checkin.status);
-        setMedCompleted(checkin.medicationCompleted ?? 0);
-        setMedTotal(checkin.medicationTotal ?? 0);
+        // 优先用打卡记录中的用药数，否则用今日用药汇总
+        setMedTotal(checkin.medicationTotal > 0 ? checkin.medicationTotal : (medSummary?.total ?? 0));
+        setMedCompleted(checkin.medicationCompleted >= 0 ? checkin.medicationCompleted : (medSummary?.completed ?? 0));
         if (checkin.specialNote) {
           setNoteText(checkin.specialNote);
         }
+      } else if (medSummary) {
+        // 无打卡记录，直接用今日用药汇总
+        setMedTotal(medSummary.total);
+        setMedCompleted(medSummary.completed);
       }
     } catch (err) {
       console.error('加载今日打卡数据失败:', err);
-      // 静默失败，使用默认空值
     }
   };
 

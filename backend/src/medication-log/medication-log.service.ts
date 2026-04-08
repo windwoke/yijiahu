@@ -191,7 +191,7 @@ export class MedicationLogService {
     start.setUTCHours(0, 0, 0, 0);
     const end = new Date(targetDate);
     end.setUTCHours(23, 59, 59, 999);
-    return this.logRepo.find({
+    const logs = await this.logRepo.find({
       where: {
         recipientId,
         scheduledDate: Between(start, end),
@@ -199,6 +199,10 @@ export class MedicationLogService {
       relations: ['medication'],
       order: { scheduledTime: 'ASC' },
     });
+    return logs.map((log) => ({
+      ...log,
+      actualTime: log.takenAt ? formatLocalTime(log.takenAt) : null,
+    }));
   }
 
   /** 时间线用药记录（taken/skipped） */

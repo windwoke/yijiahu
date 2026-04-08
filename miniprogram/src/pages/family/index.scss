@@ -79,6 +79,11 @@ $shadow-card: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
   color: $color-primary;
 }
 
+.navbar-edit-icon {
+  font-size: 36rpx;
+  line-height: 1;
+}
+
 // ─── 主滚动区 ───────────────────────────────────────────────────────────────
 .family-scroll {
   flex: 1;

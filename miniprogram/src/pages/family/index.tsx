@@ -499,9 +499,6 @@ export default function FamilyPage() {
     <View className="family-page">
       {/* ─── 顶部导航栏 ─── */}
       <View className="family-navbar">
-        <View className="navbar-back" onClick={() => Taro.navigateBack()}>
-          <Text className="navbar-back-icon">‹</Text>
-        </View>
         <Text className="navbar-title">家庭成员</Text>
         {showEditFamily ? (
           <View className="navbar-edit" onClick={() => {
@@ -510,7 +507,7 @@ export default function FamilyPage() {
             setEditFamilyAvatar('');
             setActiveSheet('editFamily');
           }}>
-            <Text className="navbar-edit-text">编辑</Text>
+            <Text className="navbar-edit-icon">✏️</Text>
           </View>
         ) : (
           <View style={{ width: '64rpx' }} />
@@ -783,10 +780,10 @@ export default function FamilyPage() {
           <View className="action-btn-row">
             <View
               className="action-btn"
-              onClick={() => setActiveSheet('addMember')}
+              onClick={handleCopyInviteCode}
             >
-              <Text className="action-btn-icon">👤</Text>
-              <Text className="action-btn-text">添加成员</Text>
+              <Text className="action-btn-icon">📋</Text>
+              <Text className="action-btn-text">复制邀请码</Text>
             </View>
             <View
               className="action-btn action-btn-recipient"

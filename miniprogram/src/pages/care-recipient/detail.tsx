@@ -372,7 +372,7 @@ export default function CareRecipientDetailPage() {
           {medications.length > 0 ? (
             <View className="med-list">
               {medications.map((med) => (
-                <View key={med.id} className="med-card">
+                <View key={med.id} className="med-card" onClick={() => Taro.navigateTo({ url: `/pages/medication/detail?id=${med.id}` })}>
                   <View className="med-card-left">
                     <Text className="med-card-name">{med.name}</Text>
                     {med.dosage && <Text className="med-card-dose">{med.dosage}</Text>}

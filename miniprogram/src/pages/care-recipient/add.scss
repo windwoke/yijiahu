@@ -62,11 +62,18 @@ $color-text-tertiary: #B0ADAD;
 }
 
 /* 头像选择 */
+.avatar-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16rpx;
+}
+
 .avatar-grid {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  gap: 16rpx;
+  gap: 12rpx;
 }
 
 .avatar-chip {
@@ -90,6 +97,54 @@ $color-text-tertiary: #B0ADAD;
 .avatar-chip-text {
   font-size: 48rpx;
   line-height: 1;
+}
+
+/* 已上传的头像 */
+.avatar-uploaded {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16rpx;
+}
+
+.avatar-uploaded-img {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 60rpx;
+  border: 4rpx solid $color-primary;
+}
+
+.avatar-upload-btn {
+  background-color: rgba(123, 158, 135, 0.1);
+  border: 2rpx solid $color-primary;
+  border-radius: 16rpx;
+  padding: 10rpx 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-upload-btn-text {
+  font-size: 26rpx;
+  color: $color-primary;
+  font-weight: 500;
+}
+
+/* 上传图片按钮 */
+.avatar-upload-chip {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background-color: $color-surface-low;
+  border: 2rpx dashed $color-border;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  &.uploading {
+    opacity: 0.5;
+  }
 }
 
 /* 字段 */
@@ -156,7 +211,7 @@ $color-text-tertiary: #B0ADAD;
 
 .gender-chip {
   flex: 1;
-  padding: 16rpx;
+  padding: 12rpx 16rpx;
   background-color: $color-surface;
   border-radius: 16rpx;
   border: 2rpx solid $color-border;
@@ -191,7 +246,7 @@ $color-text-tertiary: #B0ADAD;
 
 .blood-chip {
   flex: 1;
-  padding: 16rpx;
+  padding: 12rpx 16rpx;
   background-color: $color-surface;
   border-radius: 16rpx;
   border: 2rpx solid $color-border;

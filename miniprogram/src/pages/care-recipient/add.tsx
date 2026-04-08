@@ -8,6 +8,8 @@ import { useState, useEffect } from 'react';
 import { View, Text, Input, ScrollView, Picker } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import { get, post, patch } from '../../services/api';
+import { uploadFile } from '../../services/api';
+import { getImageUrl } from '../../shared/utils/image';
 import { Storage } from '../../services/storage';
 import type { CareRecipient } from '../../shared/models/care-recipient';
 import './add.scss';
@@ -17,7 +19,6 @@ const BLOOD_TYPES = ['A', 'B', 'AB', 'O'];
 const GENDERS = [
   { label: '男', value: 'male' },
   { label: '女', value: 'female' },
-  { label: '其他', value: 'other' },
 ];
 
 export default function AddCareRecipientPage() {
@@ -29,6 +30,8 @@ export default function AddCareRecipientPage() {
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(isEdit);
   const [selectedAvatar, setSelectedAvatar] = useState('👴');
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
   const [gender, setGender] = useState('male');
   const [birthDate, setBirthDate] = useState('');
   const [phone, setPhone] = useState('');
@@ -51,6 +54,7 @@ export default function AddCareRecipientPage() {
       .then((r) => {
         setName(r.name || '');
         setSelectedAvatar(r.avatarEmoji || '👴');
+        setAvatarUrl(r.avatarUrl || '');
         setGender(r.gender || 'male');
         setBirthDate(r.birthDate ? String(r.birthDate).slice(0, 10) : '');
         setPhone(r.phone || '');
@@ -82,7 +86,8 @@ export default function AddCareRecipientPage() {
     try {
       const payload: Record<string, any> = {
         name: name.trim(),
-        avatarEmoji: selectedAvatar,
+        avatarEmoji: selectedAvatar || null,
+        avatarUrl: avatarUrl || null,
         gender: gender || null,
         birthDate: birthDate || null,
         phone: phone || null,
@@ -118,6 +123,42 @@ export default function AddCareRecipientPage() {
     }
   };
 
+  /** 上传头像（仅编辑模式） */
+  const handleUploadAvatar = async () => {
+    if (!isEdit) {
+      Taro.showToast({ title: '创建后可上传真实头像', icon: 'none' });
+      return;
+    }
+    try {
+      const res = await Taro.chooseMedia({
+        count: 1,
+        mediaType: ['image'],
+        sourceType: ['album', 'camera'],
+        maxWidth: 512,
+        maxHeight: 512,
+      });
+      if (!res.tempFiles?.length) return;
+      setIsUploading(true);
+      const tempFilePath = res.tempFiles[0].tempFilePath;
+      const uploadRes = await uploadFile(
+        `/upload/recipient-avatar?familyId=${familyId}&recipientId=${editId}`,
+        tempFilePath,
+        'file',
+      );
+      const url = uploadRes?.avatarUrl || '';
+      if (url) {
+        setAvatarUrl(url);
+        setSelectedAvatar(''); // 有真实照片时清空 emoji
+        Taro.showToast({ title: '头像上传成功', icon: 'success' });
+      }
+    } catch (e) {
+      console.error('上传头像失败', e);
+      Taro.showToast({ title: '上传失败', icon: 'none' });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   // 加载中
   if (loading) {
     return (
@@ -139,17 +180,45 @@ export default function AddCareRecipientPage() {
         {/* 头像选择 */}
         <View className="section">
           <Text className="section-title">头像</Text>
-          <View className="avatar-grid">
-            {AVATAR_OPTIONS.map((emoji) => (
-              <View
-                key={emoji}
-                className={`avatar-chip ${selectedAvatar === emoji ? 'selected' : ''}`}
-                onClick={() => setSelectedAvatar(emoji)}
-              >
-                <Text className="avatar-chip-text">{emoji}</Text>
+          {/* 已上传的头像 */}
+          {avatarUrl ? (
+            <View className="avatar-uploaded">
+              <Image className="avatar-uploaded-img" src={getImageUrl(avatarUrl)} mode="aspectFill" />
+              {isEdit && (
+                <View className="avatar-upload-btn" onClick={handleUploadAvatar}>
+                  <Text className="avatar-upload-btn-text">更换头像</Text>
+                </View>
+              )}
+            </View>
+          ) : (
+            <View className="avatar-row">
+              {/* Emoji 选择 */}
+              <View className="avatar-grid">
+                {AVATAR_OPTIONS.map((emoji) => (
+                  <View
+                    key={emoji}
+                    className={`avatar-chip ${selectedAvatar === emoji ? 'selected' : ''}`}
+                    onClick={() => setSelectedAvatar(emoji)}
+                  >
+                    <Text className="avatar-chip-text">{emoji}</Text>
+                  </View>
+                ))}
               </View>
-            ))}
-          </View>
+              {/* 上传按钮（仅编辑模式） */}
+              {isEdit && (
+                <View
+                  className={`avatar-upload-chip ${isUploading ? 'uploading' : ''}`}
+                  onClick={isUploading ? undefined : handleUploadAvatar}
+                >
+                  {isUploading ? (
+                    <Text className="avatar-chip-text">...</Text>
+                  ) : (
+                    <Text className="avatar-chip-text">📷</Text>
+                  )}
+                </View>
+              )}
+            </View>
+          )}
         </View>
 
         {/* 基本信息 */}

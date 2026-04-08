@@ -7,9 +7,9 @@ import { useState } from 'react';
 import { View, Text, Textarea, Image } from '@tarojs/components';
 import Taro, { useDidShow } from '@tarojs/taro';
 import { get, post } from '../../services/api';
+import { getImageUrl } from '../../shared/utils/image';
 import { Storage } from '../../services/storage';
 import type { DailyCareCheckin, CheckinStatus } from '../../shared/models/daily-care-checkin';
-import type { TodayMedicationSummary } from '../../shared/models/medication';
 import './index.scss';
 
 /** 状态选项配置 */
@@ -53,34 +53,21 @@ export default function DailyCarePage() {
     const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
     try {
-      // 并行请求：今日打卡数据 + 今日用药汇总
-      const [checkinsData, medSummary] = await Promise.all([
-        get<DailyCareCheckin[]>(
-          '/daily-care-checkins/today',
-          {
-            recipientIds: recipientId,
-            todayDate: todayStr,
-            familyId,
-          }
-        ).catch(() => null),
-        get<TodayMedicationSummary>(`/medication-logs/today-summary?recipientId=${recipientId}`).catch(
-          () => null
-        ),
-      ]);
-
-      if (checkinsData && Array.isArray(checkinsData) && checkinsData.length > 0) {
-        const checkin = checkinsData[0];
+      const data = await get<DailyCareCheckin[]>(
+        '/daily-care-checkins/today',
+        {
+          recipientIds: recipientId,
+          todayDate: todayStr,
+          familyId,
+        }
+      );
+      if (data && Array.isArray(data) && data.length > 0) {
+        const checkin = data[0];
         setSelectedStatus(checkin.status);
-        setMedCompleted(checkin.medicationCompleted);
-        setMedTotal(checkin.medicationTotal > 0 ? checkin.medicationTotal : (medSummary?.total ?? 0));
+        setMedCompleted(checkin.medicationCompleted ?? 0);
+        setMedTotal(checkin.medicationTotal ?? 0);
         if (checkin.specialNote) {
           setNoteText(checkin.specialNote);
-        }
-      } else {
-        // 无打卡记录，使用今日用药汇总数据
-        if (medSummary) {
-          setMedCompleted(medSummary.taken);
-          setMedTotal(medSummary.total);
         }
       }
     } catch (err) {
@@ -148,7 +135,7 @@ export default function DailyCarePage() {
         <View className="recipient-card">
           <View className="recipient-avatar">
             {recipientAvatar ? (
-              <Image className="avatar-img" src={recipientAvatar} />
+              <Image className="avatar-img" src={getImageUrl(recipientAvatar)} mode="aspectFill" />
             ) : (
               <Text className="avatar-emoji">👤</Text>
             )}

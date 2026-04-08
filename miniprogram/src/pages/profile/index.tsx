@@ -6,7 +6,7 @@
 import { View, Text, Image, Input, ScrollView } from '@tarojs/components';
 import Taro, { useDidShow } from '@tarojs/taro';
 import { useState, useEffect, useCallback } from 'react';
-import { get, post, uploadFile } from '../../services/api';
+import { get, post, put, uploadFile } from '../../services/api';
 import { Storage } from '../../services/storage';
 import { getImageUrl } from '../../shared/utils/image';
 import { store, selectCurrentFamilyId } from '../../store';
@@ -406,6 +406,25 @@ export default function ProfilePage() {
             <Text className="avatar-hint-text">编辑头像</Text>
           </View>
         </View>
+
+        {/* ── 未绑定手机号软引导 ─────────────────────────────────── */}
+        {!user?.phone && (
+          <View
+            className="bind-phone-banner"
+            onClick={() => Taro.navigateTo({ url: '/pages/auth/bind-phone/index' })}
+          >
+            <View className="bp-banner-left">
+              <Image className="bp-banner-icon" src={require('../../assets/icons/phone.png')} />
+              <View className="bp-banner-text-wrap">
+                <Text className="bp-banner-title">绑定手机号</Text>
+                <Text className="bp-banner-subtitle">绑定后可与 App 端账号互通</Text>
+              </View>
+            </View>
+            <View className="bp-banner-arrow">
+              <Text className="bp-banner-arrow-text">›</Text>
+            </View>
+          </View>
+        )}
 
         {/* ── 账号设置区块 ────────────────────────────────────────── */}
         <View className="section-title">账号设置</View>

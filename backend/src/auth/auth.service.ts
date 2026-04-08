@@ -12,6 +12,7 @@ import { User } from '../user/entities/user.entity';
 import { SendCodeDto } from './dto/send-code.dto';
 import { LoginDto } from './dto/login.dto';
 import { WechatLoginDto } from './dto/wechat-login.dto';
+import { BindPhoneDto } from './dto/bind-phone.dto';
 import { RedisService } from '../common/redis/redis.service';
 import { WechatService } from '../wechat/wechat.service';
 
@@ -210,6 +211,38 @@ export class AuthService {
 
     await this.userRepo.save(user);
     return { success: true };
+  }
+
+  /**
+   * 绑定手机号（微信小程序 getPhoneNumber 一键授权）
+   * 流程：解密微信手机号 → 绑定到当前用户
+   */
+  async bindPhone(userId: string, dto: BindPhoneDto): Promise<{
+    success: boolean;
+    phone: string;
+  }> {
+    // 1. 解密微信手机号
+    const phone = await this.wechatService.decryptPhoneNumber(
+      dto.code,
+      dto.encryptedData,
+      dto.iv,
+    );
+
+    // 2. 查找用户
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) throw new UnauthorizedException('用户不存在');
+
+    // 3. 检查手机号是否已被其他用户绑定
+    const existing = await this.userRepo.findOne({ where: { phone } });
+    if (existing && existing.id !== userId) {
+      throw new BadRequestException('该手机号已被其他账号绑定');
+    }
+
+    // 4. 绑定手机号
+    user.phone = phone;
+    await this.userRepo.save(user);
+
+    return { success: true, phone };
   }
 
   async refreshToken(userId: string) {

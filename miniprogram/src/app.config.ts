@@ -6,6 +6,7 @@ export default defineAppConfig({
   pages: [
     'pages/auth/login/index',     // 登录页
     'pages/auth/onboarding/index', // 家庭引导（首次登录无家庭时跳转）
+    'pages/auth/bind-phone/index', // 绑定手机号（微信一键授权）
     'pages/home/index',            // 首页
     'pages/medication/index',     // 药品管理
     'pages/calendar/index',        // 日历

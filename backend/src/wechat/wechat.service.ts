@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
+import { createDecipheriv, randomBytes } from 'crypto';
 
 /**
  * 微信 API 封装服务
@@ -94,7 +95,49 @@ export class WechatService {
   }
 
   // ══════════════════════════════════════════════════════════════
-  // 2. 获取 access_token（带缓存自动刷新）
+  // 2. 解密微信手机号
+  // ══════════════════════════════════════════════════════════════
+
+  /**
+   * 解密微信 getPhoneNumber 返回的加密手机号
+   * 文档：https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/user-info/phone-number/getPhoneNumber.html
+   *
+   * @param code - wx.login() 返回的 code（用于换取 sessionKey）
+   * @param encryptedData - getPhoneNumber 回调返回的 encryptedData
+   * @param iv - getPhoneNumber 回调返回的 iv
+   */
+  async decryptPhoneNumber(code: string, encryptedData: string, iv: string): Promise<string> {
+    // 用 code 换取 sessionKey
+    const { sessionKey } = await this.code2Session(code);
+
+    if (!sessionKey) {
+      throw new Error('无法获取 sessionKey，解密失败');
+    }
+
+    // AES-256-CBC 解密
+    const decipher = createDecipheriv(
+      'aes-256-cbc',
+      Buffer.from(sessionKey, 'base64'),
+      Buffer.from(iv, 'base64'),
+    );
+
+    // PKCS7 自动去 padding
+    let decrypted = Buffer.concat([
+      decipher.update(Buffer.from(encryptedData, 'base64')),
+      decipher.final(),
+    ]).toString('utf8');
+
+    const data = JSON.parse(decrypted) as { phoneNumber?: string };
+    if (!data.phoneNumber) {
+      throw new Error('解密结果中未找到手机号');
+    }
+
+    this.logger.log(`手机号解密成功: ${data.phoneNumber.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2')}`);
+    return data.phoneNumber;
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // 3. 获取 access_token（带缓存自动刷新）
   // ══════════════════════════════════════════════════════════════
 
   /**

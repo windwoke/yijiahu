@@ -1,0 +1,176 @@
+/**
+ * 绑定手机号页样式
+ * 简洁引导风格，与登录页对齐
+ */
+
+// ─── 颜色变量 ───────────────────────────────────────────────────────────────
+$color-primary: #7B9E87;
+$color-primary-dark: #5C8268;
+$color-coral: #E07B5D;
+$color-wechat: #07c160;
+$color-bg: #FAF9F7;
+$color-surface: #FFFFFF;
+$color-text-primary: #2C2C2C;
+$color-text-secondary: #6B6B6B;
+$color-text-tertiary: #B0ADAD;
+$color-border: #EEECE8;
+
+// ─── 全屏容器 ────────────────────────────────────────────────────────────────
+.bp-page {
+  min-height: 100vh;
+  background-color: $color-bg;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 0 48rpx;
+  position: relative;
+  overflow: hidden;
+}
+
+// ─── 顶部装饰 ────────────────────────────────────────────────────────────────
+.bp-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 160rpx;
+  margin-bottom: 80rpx;
+}
+
+.bp-icon-wrap {
+  width: 160rpx;
+  height: 160rpx;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-dark 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 40rpx;
+  box-shadow: 0 16rpx 40rpx rgba($color-primary, 0.3);
+}
+
+.bp-icon {
+  width: 80rpx;
+  height: 80rpx;
+}
+
+.bp-title {
+  font-size: 48rpx;
+  font-weight: 600;
+  color: $color-text-primary;
+  margin-bottom: 16rpx;
+  letter-spacing: 2rpx;
+}
+
+.bp-subtitle {
+  font-size: 28rpx;
+  color: $color-text-secondary;
+  text-align: center;
+  line-height: 1.6;
+}
+
+// ─── 内容区 ─────────────────────────────────────────────────────────────────
+.bp-content {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+// ─── 好处列表 ────────────────────────────────────────────────────────────────
+.bp-benefit-row {
+  width: 100%;
+  background-color: $color-surface;
+  border-radius: 24rpx;
+  padding: 32rpx 40rpx;
+  margin-bottom: 60rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+}
+
+.bp-benefit-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24rpx;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.bp-benefit-icon {
+  color: $color-primary;
+  font-size: 32rpx;
+  font-weight: 700;
+  margin-right: 16rpx;
+  width: 40rpx;
+  text-align: center;
+}
+
+.bp-benefit-text {
+  font-size: 28rpx;
+  color: $color-text-primary;
+  line-height: 1;
+}
+
+// ─── 绑定按钮 ────────────────────────────────────────────────────────────────
+.bp-btn-wrap {
+  width: 100%;
+}
+
+.bp-btn {
+  width: 100%;
+  height: 96rpx;
+  background: linear-gradient(135deg, $color-wechat 0%, #05a855 100%);
+  border-radius: 48rpx;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 24rpx rgba($color-wechat, 0.3);
+  padding: 0;
+  margin: 0;
+  position: relative;
+
+  &::after {
+    border: none;
+  }
+}
+
+.bp-btn-wrap-disabled {
+  .bp-btn {
+    background: linear-gradient(135deg, #cccccc 0%, #bbbbbb 100%);
+    box-shadow: none;
+  }
+}
+
+.bp-btn-text {
+  color: #ffffff;
+  font-size: 32rpx;
+  font-weight: 600;
+  letter-spacing: 2rpx;
+}
+
+// ─── 跳过按钮 ────────────────────────────────────────────────────────────────
+.bp-skip {
+  margin-top: 32rpx;
+  padding: 16rpx;
+}
+
+.bp-skip-text {
+  font-size: 26rpx;
+  color: $color-text-tertiary;
+  text-decoration: underline;
+}
+
+// ─── 底部声明 ────────────────────────────────────────────────────────────────
+.bp-footer {
+  padding: 40rpx 0 60rpx;
+  text-align: center;
+}
+
+.bp-footer-text {
+  font-size: 22rpx;
+  color: $color-text-tertiary;
+  line-height: 1.6;
+}

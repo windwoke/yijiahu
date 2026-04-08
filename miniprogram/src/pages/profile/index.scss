@@ -276,6 +276,65 @@ $color-shadow: rgba(0, 0, 0, 0.06);
   margin-left: 88rpx;
 }
 
+// ─── 微信通知横幅 ────────────────────────────────────────────────────────────
+.wechat-notif-banner {
+  margin: 16rpx 32rpx;
+  background: linear-gradient(135deg, #f0fdf4 0%, #e8f5ec 100%);
+  border: 2rpx solid rgba(#07C160, 0.2);
+  border-radius: 24rpx;
+  padding: 24rpx 28rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+}
+
+.wnb-left {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.wnb-icon-wrap {
+  width: 72rpx;
+  height: 72rpx;
+  background-color: #07C160;
+  border-radius: 18rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 20rpx;
+  flex-shrink: 0;
+}
+
+.wnb-icon {
+  font-size: 36rpx;
+}
+
+.wnb-text-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.wnb-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1aad19;
+  margin-bottom: 4rpx;
+}
+
+.wnb-subtitle {
+  font-size: 24rpx;
+  color: $color-text-secondary;
+}
+
+.wnb-arrow {
+  font-size: 40rpx;
+  color: #1aad19;
+  font-weight: 300;
+  flex-shrink: 0;
+}
+
 // ─── 底部留白 ────────────────────────────────────────────────────────────────
 .bottom-pad {
   height: 200rpx;

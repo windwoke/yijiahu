@@ -426,25 +426,26 @@ export default function ProfilePage() {
           </View>
         )}
 
+        {/* ── 微信通知横幅 ─────────────────────────────────── */}
+        <View
+          className="wechat-notif-banner"
+          onClick={() => Taro.navigateTo({ url: '/pages/notification/index' })}
+        >
+          <View className="wnb-left">
+            <View className="wnb-icon-wrap">
+              <Text className="wnb-icon">🔔</Text>
+            </View>
+            <View className="wnb-text-wrap">
+              <Text className="wnb-title">开启微信通知</Text>
+              <Text className="wnb-subtitle">接收 SOS 和复诊提醒</Text>
+            </View>
+          </View>
+          <Text className="wnb-arrow">›</Text>
+        </View>
+
         {/* ── 账号设置区块 ────────────────────────────────────────── */}
         <View className="section-title">账号设置</View>
         <View className="section-card">
-
-          {/* 通知设置 */}
-          <View
-            className="setting-item"
-            onClick={() => Taro.navigateTo({ url: '/pages/notification/index' })}
-          >
-            <View className="setting-left">
-              <Image className="setting-icon" src={require('../../assets/icons/bell.png')} />
-              <Text className="setting-label">通知设置</Text>
-            </View>
-            <View className="setting-right">
-              <Text className="setting-chevron">›</Text>
-            </View>
-          </View>
-
-          <View className="setting-divider" />
 
           {/* 修改密码 */}
           <View className="setting-item" onClick={openPasswordSheet}>

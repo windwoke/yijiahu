@@ -611,7 +611,7 @@ $shadow-card: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
 
 // ─── 底部操作区域 ────────────────────────────────────────────────────────────
 .action-section {
-  padding: 24rpx 24rpx calc(24rpx + env(safe-area-inset-bottom));
+  padding: 24rpx 24rpx 24rpx;
 }
 
 .action-divider {
@@ -743,7 +743,7 @@ $shadow-card: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
 }
 
 .sheet-body {
-  padding: 8rpx 32rpx calc(32rpx + env(safe-area-inset-bottom));
+  padding: 8rpx 32rpx 32rpx;
   overflow-y: auto;
   flex: 1;
 }

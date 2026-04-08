@@ -366,7 +366,7 @@ $color-avatar-bg: #E8D8C0;
   align-items: center;
   justify-content: center;
   background-color: $color-surface;
-  padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
+  padding-bottom: 24rpx;
 }
 
 .sos-cancel-btn {

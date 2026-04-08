@@ -234,7 +234,7 @@ page {
 
 .fab-wrap {
   position: fixed;
-  bottom: calc(env(safe-area-inset-bottom) + 32rpx);
+  bottom: 32rpx;
   right: 32rpx;
   z-index: 100;
 }
@@ -594,7 +594,7 @@ page {
   z-index: 1001;
   background-color: $color-surface;
   border-radius: 48rpx 48rpx 0 0;
-  padding: 20rpx 48rpx calc(48rpx + env(safe-area-inset-bottom));
+  padding: 20rpx 48rpx 48rpx;
   max-height: 85vh;
   display: flex;
   flex-direction: column;
@@ -898,7 +898,7 @@ page {
   width: 100%;
   background-color: $color-surface;
   border-radius: 40rpx 40rpx 0 0;
-  padding: 48rpx 48rpx calc(env(safe-area-inset-bottom) + 48rpx);
+  padding: 48rpx 48rpx 48rpx;
 }
 
 .reason-title {

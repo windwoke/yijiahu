@@ -428,12 +428,18 @@ $color-card-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
   font-weight: 600;
 }
 
-// 已完成信息
+// 已完成信息：第一行时间和已服用，第二行记录人
 .med-done-info {
   margin-top: 4rpx;
   display: flex;
   flex-direction: column;
   gap: 2rpx;
+}
+
+.med-done-row {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
 }
 
 .med-done-time {

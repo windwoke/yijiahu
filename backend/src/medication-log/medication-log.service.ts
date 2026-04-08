@@ -184,15 +184,17 @@ export class MedicationLogService {
   }
 
   /** 历史记录 */
-  async getHistory(recipientId: string, familyId: string, date: string) {
+  async getHistory(recipientId: string, familyId: string, date?: string) {
     await this.validateRecipientInFamily(recipientId, familyId);
+    const targetDate = date ? new Date(`${date}T00:00:00Z`) : new Date();
+    const start = new Date(targetDate);
+    start.setUTCHours(0, 0, 0, 0);
+    const end = new Date(targetDate);
+    end.setUTCHours(23, 59, 59, 999);
     return this.logRepo.find({
       where: {
         recipientId,
-        scheduledDate: Between(
-          new Date(`${date}T00:00:00Z`),
-          new Date(`${date}T23:59:59Z`),
-        ),
+        scheduledDate: Between(start, end),
       },
       relations: ['medication'],
       order: { scheduledTime: 'ASC' },

@@ -9,7 +9,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { get, post, uploadFile } from '../../services/api';
 import { Storage } from '../../services/storage';
 import { getImageUrl } from '../../shared/utils/image';
-import { store } from '../../store';
+import { store, selectCurrentFamilyId } from '../../store';
 import { logout } from '../../services/auth.service';
 import type { User } from '../../shared/models/user';
 import type { Family } from '../../shared/models/family';

@@ -529,12 +529,14 @@ export default function HomePage() {
                           {/* 底部：打卡按钮 / 已完成信息 */}
                           {isDone && item.takenBy ? (
                             <View className="med-done-info">
-                              <Text className="med-done-time" style={{ color }}>
-                                {item.actualTime ? item.actualTime.slice(11, 16) : ''}
-                              </Text>
-                              <Text className="med-done-label">
-                                {item.status === 'taken' ? '已服用' : '已跳过'}
-                              </Text>
+                              <View className="med-done-row">
+                                <Text className="med-done-time" style={{ color }}>
+                                  {item.actualTime ? item.actualTime.slice(11, 16) : ''}
+                                </Text>
+                                <Text className="med-done-label">
+                                  {item.status === 'taken' ? '已服用' : '已跳过'}
+                                </Text>
+                              </View>
                               <Text className="med-done-by">由 {item.takenBy?.name} 记录</Text>
                             </View>
                           ) : item.canCheckIn ? (

@@ -346,7 +346,7 @@ export default function FamilyPage() {
         setSelectedMember(null);
         return;
       }
-      await put(`/families/${familyId}/members/${selectedMember.id}`, data);
+      await patch(`/families/${familyId}/members/${selectedMember.id}`, data);
       Taro.showToast({ title: '已保存', icon: 'success', duration: 1500 });
       setActiveSheet(null);
       setSelectedMember(null);

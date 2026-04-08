@@ -507,7 +507,7 @@ export default function FamilyPage() {
             setEditFamilyAvatar('');
             setActiveSheet('editFamily');
           }}>
-            <Image className="navbar-edit-img" src={require('../../assets/icons/edit.png')} />
+            <Text className="navbar-edit-icon">✏️</Text>
           </View>
         ) : (
           <View style={{ width: '64rpx' }} />
@@ -782,7 +782,7 @@ export default function FamilyPage() {
               className="action-btn"
               onClick={handleCopyInviteCode}
             >
-              <Image className="action-btn-img" src={require('../../assets/icons/copy.png')} />
+              <Text className="action-btn-icon">📋</Text>
               <Text className="action-btn-text">复制邀请码</Text>
             </View>
             <View

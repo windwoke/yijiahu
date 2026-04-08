@@ -84,11 +84,6 @@ $shadow-card: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
   line-height: 1;
 }
 
-.navbar-edit-img {
-  width: 40rpx;
-  height: 40rpx;
-}
-
 // ─── 主滚动区 ───────────────────────────────────────────────────────────────
 .family-scroll {
   flex: 1;
@@ -655,12 +650,6 @@ $shadow-card: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
 .action-btn-icon {
   font-size: 28rpx;
   line-height: 1;
-}
-
-.action-btn-img {
-  width: 36rpx;
-  height: 36rpx;
-  flex-shrink: 0;
 }
 
 .action-btn-text {

@@ -79,6 +79,10 @@ export class NotificationPreference {
   @Column({ type: 'boolean', default: true })
   vibrationEnabled: boolean;
 
+  // 微信小程序订阅通知开关（默认关闭，用户主动订阅后开启）
+  @Column({ type: 'boolean', default: false })
+  wechatEnabled: boolean;
+
   @CreateDateColumn()
   createdAt: Date;
 

@@ -52,6 +52,7 @@ export class NotificationPreferenceService {
       'dndEnd',
       'soundEnabled',
       'vibrationEnabled',
+      'wechatEnabled',
     ];
     for (const field of allowedFields) {
       if ((dto as any)[field] !== undefined) {
@@ -103,6 +104,12 @@ export class NotificationPreferenceService {
   async getAppointmentLeadHours(userId: string): Promise<number> {
     const pref = await this.getByUserId(userId);
     return pref.appointmentLeadHours ?? 24;
+  }
+
+  /** 检查用户是否开启了微信小程序订阅通知 */
+  async isWechatEnabled(userId: string): Promise<boolean> {
+    const pref = await this.getByUserId(userId);
+    return pref.wechatEnabled === true;
   }
 
   /** 检查当前是否在免打扰时段（不包含 SOS）*/

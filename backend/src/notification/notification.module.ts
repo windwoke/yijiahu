@@ -17,9 +17,11 @@ import { FamilyTask } from '../family-task/entities/family-task.entity';
 import { DailyCareCheckin } from '../daily-care-checkin/entities/daily-care-checkin.entity';
 import { FamilyMember } from '../family/entities/family-member.entity';
 import { User } from '../user/entities/user.entity';
+import { WechatModule } from '../wechat/wechat.module';
 
 @Module({
   imports: [
+    WechatModule,
     TypeOrmModule.forFeature([
       Notification,
       NotificationPreference,

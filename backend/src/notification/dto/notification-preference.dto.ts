@@ -87,4 +87,9 @@ export class UpdatePreferenceDto {
   @IsOptional()
   @IsBoolean()
   vibrationEnabled?: boolean;
+
+  // 微信小程序订阅通知开关
+  @IsOptional()
+  @IsBoolean()
+  wechatEnabled?: boolean;
 }

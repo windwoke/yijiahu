@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
+import { ConfigService } from '@nestjs/config';
 import {
   Notification,
   NotificationType,
@@ -21,9 +22,13 @@ import { FamilyMember } from '../family/entities/family-member.entity';
 import { User } from '../user/entities/user.entity';
 import { NotificationPreferenceService } from './notification-preference.service';
 import { JPushService } from './jpush.service';
+import { WechatService } from '../wechat/wechat.service';
 
 @Injectable()
 export class NotificationService {
+  // 微信订阅消息模板 ID 映射（从环境变量读取）
+  private readonly wechatTemplateIds: Record<string, string>;
+
   constructor(
     @InjectRepository(Notification)
     private readonly repo: Repository<Notification>,
@@ -34,7 +39,25 @@ export class NotificationService {
     private readonly prefSvc: NotificationPreferenceService,
     @Inject(forwardRef(() => JPushService))
     private readonly jpushSvc: JPushService,
-  ) {}
+    private readonly wechatSvc: WechatService,
+    private readonly config: ConfigService,
+  ) {
+    // 从环境变量读取各通知类型的订阅消息模板 ID
+    this.wechatTemplateIds = {
+      [NotificationType.MEDICATION_REMINDER]: this.config.get<string>('wechat.tmpl.medicationReminder') || '',
+      [NotificationType.MISSED_DOSE]: this.config.get<string>('wechat.tmpl.missedDose') || '',
+      [NotificationType.APPOINTMENT_REMINDER]: this.config.get<string>('wechat.tmpl.appointmentReminder') || '',
+      [NotificationType.SOS]: this.config.get<string>('wechat.tmpl.sos') || '',
+      [NotificationType.DAILY_CHECKIN]: this.config.get<string>('wechat.tmpl.dailyCheckin') || '',
+      [NotificationType.DAILY_CHECKIN_COMPLETED]: this.config.get<string>('wechat.tmpl.dailyCheckinCompleted') || '',
+      [NotificationType.TASK_REMINDER]: this.config.get<string>('wechat.tmpl.taskReminder') || '',
+      [NotificationType.TASK_ASSIGNED]: this.config.get<string>('wechat.tmpl.taskAssigned') || '',
+      [NotificationType.TASK_COMPLETED]: this.config.get<string>('wechat.tmpl.taskCompleted') || '',
+      [NotificationType.HEALTH_ALERT]: this.config.get<string>('wechat.tmpl.healthAlert') || '',
+      [NotificationType.MEMBER_JOINED]: this.config.get<string>('wechat.tmpl.memberJoined') || '',
+      [NotificationType.CAREGIVER_CHANGED]: this.config.get<string>('wechat.tmpl.caregiverChanged') || '',
+    };
+  }
 
   /** 查询用户通知列表（分页，可按家庭过滤） */
   async findByUser(
@@ -204,6 +227,8 @@ export class NotificationService {
     notification: Notification,
   ): Promise<void> {
     const user = await this.userRepo.findOne({ where: { id: userId } });
+
+    // 1. 极光推送（App 内推送）
     if (user?.pushToken) {
       await this.jpushSvc.pushToRegistration(
         user.pushToken,
@@ -212,6 +237,29 @@ export class NotificationService {
         notification.dataJson || {},
       );
     }
+
+    // 2. 微信小程序订阅消息（如果用户开启了微信通知且有 openId）
+    const wechatEnabled = await this.prefSvc.isWechatEnabled(userId);
+    if (wechatEnabled && user?.openId) {
+      const templateId = this.wechatTemplateIds[notification.type];
+      if (templateId) {
+        const result = await this.wechatSvc.sendSubscribeMessage({
+          openId: user.openId,
+          templateId,
+          page: 'pages/home/index',
+          data: {
+            phrase1: notification.title.replace(/^\p{Emoji}+/u, '').trim(), // 通知名称
+            thing2: notification.body.length > 20 ? notification.body.substring(0, 20) + '...' : notification.body, // 通知内容（最多20字）
+            time3: new Date().toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit' }), // 通知时间
+          },
+        });
+
+        if (result.errcode === 0) {
+          notification.channel = NotificationChannel.WECHAT;
+        }
+      }
+    }
+
     notification.status = NotificationStatus.SENT;
     notification.sentAt = new Date();
     await this.repo.save(notification);

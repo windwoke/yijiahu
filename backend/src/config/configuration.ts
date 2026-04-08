@@ -77,5 +77,20 @@ export default () => ({
         process.env.WECHAT_TMPL_APPOINTMENT || 'TMPL_APPOINTMENT',
       sos: process.env.WECHAT_TMPL_SOS || 'TMPL_SOS',
     },
+    // 小程序订阅消息模板 ID（通过微信公众平台配置，参考 wechat.tmpl.*）
+    tmpl: {
+      medicationReminder: process.env.WECHAT_TMPL_MEDICATION || '',
+      missedDose: process.env.WECHAT_TMPL_MISSED_DOSE || '',
+      appointmentReminder: process.env.WECHAT_TMPL_APPOINTMENT || '',
+      sos: process.env.WECHAT_TMPL_SOS || '',
+      dailyCheckin: process.env.WECHAT_TMPL_DAILY_CHECKIN || '',
+      dailyCheckinCompleted: process.env.WECHAT_TMPL_DAILY_CHECKIN_COMPLETED || '',
+      taskReminder: process.env.WECHAT_TMPL_TASK_REMINDER || '',
+      taskAssigned: process.env.WECHAT_TMPL_TASK_ASSIGNED || '',
+      taskCompleted: process.env.WECHAT_TMPL_TASK_COMPLETED || '',
+      healthAlert: process.env.WECHAT_TMPL_HEALTH_ALERT || '',
+      memberJoined: process.env.WECHAT_TMPL_MEMBER_JOINED || '',
+      caregiverChanged: process.env.WECHAT_TMPL_CAREGIVER_CHANGED || '',
+    },
   },
 });

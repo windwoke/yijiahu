@@ -220,6 +220,7 @@ jobs:
               set -a && . "$ENV_FILE" && set +a
               PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "${DB_PORT:-5432}" -U "$DB_USERNAME" -d "$DB_NAME" -f migrations/012_add_care_log_attachments_familyid.sql 2>&1 || echo "迁移完成或已有数据"
               PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "${DB_PORT:-5432}" -U "$DB_USERNAME" -d "$DB_NAME" -f migrations/013_add_wechat_bindings.sql 2>&1 || echo "迁移完成或已有数据"
+              PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "${DB_PORT:-5432}" -U "$DB_USERNAME" -d "$DB_NAME" -f migrations/014_add_wechat_notification_pref.sql 2>&1 || echo "迁移完成或已有数据"
             else
               echo "跳过数据库迁移（skip_migrate=true）"
             fi

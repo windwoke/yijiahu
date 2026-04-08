@@ -17,8 +17,10 @@ export class WechatService {
   private readonly oaAppSecret: string;
   private readonly redis: Redis;
 
-  // access_token 缓存 key
-  private readonly ACCESS_TOKEN_KEY = 'wechat:access_token';
+  // 服务号 access_token 缓存 key
+  private readonly OA_ACCESS_TOKEN_KEY = 'wechat:oa_access_token';
+  // 小程序 access_token 缓存 key
+  private readonly MINI_ACCESS_TOKEN_KEY = 'wechat:mini_access_token';
   private readonly ACCESS_TOKEN_EXPIRE = 7100; // 微信 access_token 有效期 7200s，提前 100s 刷新
 
   constructor(private config: ConfigService) {
@@ -144,9 +146,13 @@ export class WechatService {
    * 获取服务号的 access_token（用于发送模板消息等）
    * 文档：https://developers.weixin.qq.com/doc/offiaccount/Basic_Information/Get_access_token.html
    */
+  /**
+   * 获取服务号的 access_token（用于发送模板消息等）
+   * 文档：https://developers.weixin.qq.com/doc/offiaccount/Basic_Information/Get_access_token.html
+   */
   async getAccessToken(): Promise<string> {
     // 先查 Redis 缓存
-    const cached = await this.redis.get(this.ACCESS_TOKEN_KEY);
+    const cached = await this.redis.get(this.OA_ACCESS_TOKEN_KEY);
     if (cached) {
       return cached;
     }
@@ -180,7 +186,49 @@ export class WechatService {
 
     // 缓存到 Redis（比实际过期时间提前 100s）
     const ttl = Math.max((data.expires_in || 7200) - 100, 100);
-    await this.redis.set(this.ACCESS_TOKEN_KEY, data.access_token, 'EX', ttl);
+    await this.redis.set(this.OA_ACCESS_TOKEN_KEY, data.access_token, 'EX', ttl);
+
+    return data.access_token;
+  }
+
+  /**
+   * 获取小程序的 access_token（用于发送订阅消息等）
+   * 文档：https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/user-login/code2Session.html
+   */
+  async getMiniAppAccessToken(): Promise<string> {
+    // 先查 Redis 缓存
+    const cached = await this.redis.get(this.MINI_ACCESS_TOKEN_KEY);
+    if (cached) {
+      return cached;
+    }
+
+    if (!this.miniAppId || !this.miniAppSecret) {
+      this.logger.warn('微信小程序 AppID 或 AppSecret 未配置');
+      throw new Error('微信小程序未配置');
+    }
+
+    const url = `https://api.weixin.qq.com/cgi-bin/token`;
+    const params = new URLSearchParams({
+      grant_type: 'client_credential',
+      appid: this.miniAppId,
+      secret: this.miniAppSecret,
+    });
+
+    const response = await fetch(`${url}?${params.toString()}`);
+    const data = (await response.json()) as {
+      access_token?: string;
+      expires_in?: number;
+      errcode?: number;
+      errmsg?: string;
+    };
+
+    if (data.errcode || !data.access_token) {
+      this.logger.error(`获取小程序 access_token 失败: ${JSON.stringify(data)}`);
+      throw new Error(`获取小程序 access_token 失败: ${data.errmsg}`);
+    }
+
+    const ttl = Math.max((data.expires_in || 7200) - 100, 100);
+    await this.redis.set(this.MINI_ACCESS_TOKEN_KEY, data.access_token, 'EX', ttl);
 
     return data.access_token;
   }
@@ -232,6 +280,68 @@ export class WechatService {
     }
 
     return result;
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // 5. 小程序订阅消息
+  // ══════════════════════════════════════════════════════════════
+
+  /**
+   * 发送微信小程序订阅消息
+   * 文档：https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/m消息管理/发送订阅消息.html
+   *
+   * @param openId - 用户在小程序的 openId
+   * @param templateId - 微信公众平台配置的消息模板 ID
+   * @param page - 点击消息后跳转的小程序页面（默认首页）
+   * @param data - 模板数据，key 为微信后台配置的占位符，value 为显示内容
+   */
+  async sendSubscribeMessage(params: {
+    openId: string;
+    templateId: string;
+    page?: string;
+    data: Record<string, string>; // { keyword1: '内容', ... }
+  }): Promise<{ errcode: number; errmsg: string }> {
+    try {
+      const accessToken = await this.getMiniAppAccessToken();
+
+      const body = {
+        touser: params.openId,
+        template_id: params.templateId,
+        page: params.page || 'pages/home/index',
+        data: Object.fromEntries(
+          Object.entries(params.data).map(([key, value]) => [
+            key,
+            { value },
+          ]),
+        ),
+      };
+
+      const response = await fetch(
+        `https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token=${accessToken}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        },
+      );
+
+      const result = (await response.json()) as {
+        errcode: number;
+        errmsg: string;
+      };
+
+      if (result.errcode !== 0 && result.errcode !== 40001) {
+        // 40001 = access_token invalid，可能被其他实例刷新了，重试一次
+        this.logger.warn(
+          `订阅消息发送失败: errcode=${result.errcode} errmsg=${result.errmsg}`,
+        );
+      }
+
+      return result;
+    } catch (err: any) {
+      this.logger.error(`订阅消息发送异常: ${err.message}`);
+      return { errcode: -1, errmsg: err.message };
+    }
   }
 
   // ══════════════════════════════════════════════════════════════

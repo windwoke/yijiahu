@@ -317,6 +317,13 @@ export class NotificationService {
     address: string,
     dataJson?: Record<string, any>,
   ) {
+    // 将 SOS 关键信息注入 dataJson，供微信订阅消息模板使用
+    const sosDataJson = {
+      recipientName,
+      address,
+      ...(dataJson || {}),
+    };
+
     return this.broadcast({
       familyId,
       excludeUserId,
@@ -326,7 +333,7 @@ export class NotificationService {
       level: NotificationLevel.URGENT,
       sourceType: 'sos',
       sourceId: sosId,
-      dataJson,
+      dataJson: sosDataJson,
     });
   }
 

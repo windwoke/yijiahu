@@ -288,6 +288,8 @@ export class NotificationScheduler {
             recipientId: appt.recipientId,
             appointmentId: appt.id,
             appointmentTime: appt.appointmentTime,
+            hospital: appt.hospital,
+            recipientName: appt.recipient?.name,
           },
         });
 

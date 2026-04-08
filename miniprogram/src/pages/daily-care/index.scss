@@ -96,6 +96,12 @@ $color-text-tertiary: #B0ADAD;
   line-height: 1;
 }
 
+.avatar-img {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 24rpx;
+}
+
 .recipient-info {
   margin-left: 24rpx;
   flex: 1;

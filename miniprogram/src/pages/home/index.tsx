@@ -3,7 +3,7 @@
  * 玻璃态顶栏 + 照护对象用药打卡网格 + 每日护理打卡 + 复诊提醒 + 今日任务 + SOS
  */
 import { View, Text, ScrollView, Image } from '@tarojs/components';
-import Taro from '@tarojs/taro';
+import Taro, { useDidShow } from '@tarojs/taro';
 import { useState, useCallback, useEffect } from 'react';
 import { get, post } from '../../services/api';
 import { Storage } from '../../services/storage';
@@ -334,6 +334,11 @@ export default function HomePage() {
     }
   };
 
+  // ─── 从打卡页返回时刷新数据 ────────────────────────────────────────────────
+  useDidShow(() => {
+    loadDataInner();
+  });
+
   // ─── 渲染 ──────────────────────────────────────────────────────────────────
 
   const { familyName, familyAvatarUrl, memberCount, unreadCount, recipients, medicationSummaries, checkins, caregivers, appointments, tasks, loading } = state;
@@ -481,7 +486,7 @@ export default function HomePage() {
                       onClick={(e) => {
                         e.stopPropagation?.();
                         Taro.navigateTo({
-                          url: `/pages/daily-care/index?recipientId=${summary.recipientId}&recipientName=${encodeURIComponent(summary.recipientName || '')}`,
+                          url: `/pages/daily-care/index?recipientId=${summary.recipientId}&recipientName=${encodeURIComponent(summary.recipientName || recipient.name || '')}&recipientAvatar=${encodeURIComponent(recipient.avatarUrl || '')}`,
                         });
                       }}
                     >

@@ -30,6 +30,7 @@ export default function DailyCarePage() {
   const params = Taro.getCurrentInstance().router?.params ?? {};
   const recipientId: string = params.recipientId ?? '';
   const recipientName: string = params.recipientName ?? '未知';
+  const recipientAvatar: string = params.recipientAvatar ?? '';
 
   // 状态
   const [selectedStatus, setSelectedStatus] = useState<CheckinStatus>('normal');
@@ -146,7 +147,11 @@ export default function DailyCarePage() {
         {/* 照护对象卡片 */}
         <View className="recipient-card">
           <View className="recipient-avatar">
-            <Text className="avatar-emoji">👤</Text>
+            {recipientAvatar ? (
+              <Image className="avatar-img" src={recipientAvatar} />
+            ) : (
+              <Text className="avatar-emoji">👤</Text>
+            )}
           </View>
           <View className="recipient-info">
             <Text className="recipient-name">{recipientName}</Text>

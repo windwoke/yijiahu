@@ -245,10 +245,10 @@ export class FamilyService {
       relations: ['user'],
       order: { joinedAt: 'ASC' },
     });
-    // 统一 avatarUrl：优先用 FamilyMember.avatarUrl，否则 fallback 到 User.avatar
+    // 成员头像：统一取 User.avatar（用户头像）
     return members.map((m) => ({
       ...m,
-      avatarUrl: m.avatarUrl || m.user?.avatar || null,
+      avatarUrl: m.user?.avatar || null,
       userName: m.user?.name || null,
       phone: m.user?.phone || null,
     }));

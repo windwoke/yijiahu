@@ -129,6 +129,7 @@ export class MedicationLogService {
 
     const items = logs.map((log) => ({
       id: log.id,
+      medicationId: log.medicationId,
       medicationName: log.medication?.name || '',
       dosage: log.medication?.dosage || '',
       scheduledTime: log.scheduledTime,

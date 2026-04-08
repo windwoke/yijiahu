@@ -57,6 +57,7 @@ const SKIP_REASONS = ['忘记了', '身体不适', '医生建议停药', '已自
 // ═══════════════════════════════════════════════════════════════════
 
 function CheckInSheet(props: {
+  logId: string;
   medicationId: string;
   medicationName: string;
   dosage: string;
@@ -66,7 +67,7 @@ function CheckInSheet(props: {
 }) {
   const [loading, setLoading] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(true);
-  const [history, setHistory] = useState<MedicationLog[]>([]);
+  const [history, setHistory] = useState<any[]>([]);
   const [showReasonSheet, setShowReasonSheet] = useState(false);
 
   const isDone =
@@ -78,7 +79,6 @@ function CheckInSheet(props: {
     try {
       const data = await get<any[]>('/medication-logs/timeline', {
         medicationId: props.medicationId,
-        limit: 4,
       });
       setHistory(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -93,10 +93,10 @@ function CheckInSheet(props: {
   const handleCheckIn = async () => {
     if (isDone || loading) return;
     const familyId = Storage.getCurrentFamilyId();
-    if (!familyId || !props.medicationId) return;
+    if (!familyId || !props.logId) return;
     setLoading(true);
     try {
-      await post(`/medication-logs/${props.medicationId}/check-in`, {
+      await post(`/medication-logs/${props.logId}/check-in`, {
         familyId,
         status: 'taken',
       });
@@ -121,7 +121,7 @@ function CheckInSheet(props: {
     if (!familyId || !props.medicationId) return;
     setLoading(true);
     try {
-      await post(`/medication-logs/${props.medicationId}/check-in`, {
+      await post(`/medication-logs/${props.logId}/check-in`, {
         familyId,
         status: 'skipped',
         note: reason,
@@ -455,7 +455,8 @@ export default function MedicationPage() {
   if (isCheckIn) {
     return (
       <CheckInSheet
-        medicationId={medicationId!}
+        logId={router.params.logId || medicationId!}
+        medicationId={router.params.medicationId || ''}
         medicationName={decodeURIComponent(router.params.medicationName || '')}
         dosage={decodeURIComponent(router.params.dosage || '')}
         scheduledTime={decodeURIComponent(router.params.scheduledTime || '')}

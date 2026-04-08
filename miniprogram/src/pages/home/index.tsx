@@ -313,7 +313,7 @@ export default function HomePage() {
   // Flutter 风格：点击药品卡片 → 跳转到打卡弹窗页（与 MedicationCheckInSheet 对齐）
   const showCheckInSheet = (item: MedicationLogItem, recipientId: string) => {
     Taro.navigateTo({
-      url: `/pages/medication/index?medicationId=${item.id}&medicationName=${encodeURIComponent(item.medicationName)}&dosage=${encodeURIComponent(item.dosage)}&scheduledTime=${encodeURIComponent(item.scheduledTime)}&recipientId=${recipientId}&status=${item.status}`,
+      url: `/pages/medication/index?logId=${item.id}&medicationId=${item.medicationId}&medicationName=${encodeURIComponent(item.medicationName)}&dosage=${encodeURIComponent(item.dosage)}&scheduledTime=${encodeURIComponent(item.scheduledTime)}&recipientId=${recipientId}&status=${item.status}`,
     });
   };
 

@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { View, Text, Input, ScrollView, Picker } from '@tarojs/components';
+import { View, Text, Input, ScrollView, Picker, Image } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import { get, post, patch } from '../../services/api';
 import { uploadFile } from '../../services/api';

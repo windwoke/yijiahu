@@ -1,19 +1,19 @@
 /**
  * 绑定手机号页样式
- * 简洁引导风格，与登录页对齐
+ * 手机号+验证码表单，与登录页风格对齐
  */
 
 // ─── 颜色变量 ───────────────────────────────────────────────────────────────
 $color-primary: #7B9E87;
 $color-primary-dark: #5C8268;
 $color-coral: #E07B5D;
-$color-wechat: #07c160;
 $color-bg: #FAF9F7;
 $color-surface: #FFFFFF;
 $color-text-primary: #2C2C2C;
 $color-text-secondary: #6B6B6B;
 $color-text-tertiary: #B0ADAD;
 $color-border: #EEECE8;
+$color-error: #E07B5D;
 
 // ─── 全屏容器 ────────────────────────────────────────────────────────────────
 .bp-page {
@@ -24,8 +24,6 @@ $color-border: #EEECE8;
   align-items: center;
   box-sizing: border-box;
   padding: 0 48rpx;
-  position: relative;
-  overflow: hidden;
 }
 
 // ─── 顶部装饰 ────────────────────────────────────────────────────────────────
@@ -34,7 +32,7 @@ $color-border: #EEECE8;
   flex-direction: column;
   align-items: center;
   margin-top: 160rpx;
-  margin-bottom: 80rpx;
+  margin-bottom: 60rpx;
 }
 
 .bp-icon-wrap {
@@ -69,82 +67,102 @@ $color-border: #EEECE8;
   line-height: 1.6;
 }
 
-// ─── 内容区 ─────────────────────────────────────────────────────────────────
-.bp-content {
+// ─── 表单 ────────────────────────────────────────────────────────────────────
+.bp-form {
   width: 100%;
-  flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
 }
 
-// ─── 好处列表 ────────────────────────────────────────────────────────────────
-.bp-benefit-row {
-  width: 100%;
+.bp-field-row {
   background-color: $color-surface;
   border-radius: 24rpx;
-  padding: 32rpx 40rpx;
-  margin-bottom: 60rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
-}
-
-.bp-benefit-item {
+  padding: 0 28rpx;
+  height: 100rpx;
   display: flex;
   align-items: center;
   margin-bottom: 24rpx;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
+  border: 2rpx solid $color-border;
 }
 
-.bp-benefit-icon {
-  color: $color-primary;
-  font-size: 32rpx;
-  font-weight: 700;
-  margin-right: 16rpx;
+.bp-field-icon {
   width: 40rpx;
-  text-align: center;
+  height: 40rpx;
+  margin-right: 16rpx;
+  flex-shrink: 0;
 }
 
-.bp-benefit-text {
-  font-size: 28rpx;
+.bp-input {
+  flex: 1;
+  font-size: 30rpx;
   color: $color-text-primary;
-  line-height: 1;
+  height: 100rpx;
+  line-height: 100rpx;
+  padding: 0;
 }
 
-// ─── 绑定按钮 ────────────────────────────────────────────────────────────────
-.bp-btn-wrap {
-  width: 100%;
+.bp-input-code {
+  flex: 1;
 }
 
-.bp-btn {
-  width: 100%;
-  height: 96rpx;
-  background: linear-gradient(135deg, $color-wechat 0%, #05a855 100%);
-  border-radius: 48rpx;
-  border: none;
+.bp-input-error {
+  border-color: $color-error;
+}
+
+.bp-placeholder {
+  color: $color-text-tertiary;
+  font-size: 28rpx;
+}
+
+.bp-error {
+  font-size: 24rpx;
+  color: $color-error;
+  margin-top: -16rpx;
+  margin-bottom: 16rpx;
+  padding-left: 8rpx;
+}
+
+// ─── 验证码按钮 ──────────────────────────────────────────────────────────────
+.bp-code-btn {
+  height: 60rpx;
+  padding: 0 24rpx;
+  border-radius: 30rpx;
+  background-color: $color-primary;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8rpx 24rpx rgba($color-wechat, 0.3);
-  padding: 0;
-  margin: 0;
-  position: relative;
-
-  &::after {
-    border: none;
-  }
+  flex-shrink: 0;
+  margin-left: 16rpx;
 }
 
-.bp-btn-wrap-disabled {
-  .bp-btn {
-    background: linear-gradient(135deg, #cccccc 0%, #bbbbbb 100%);
-    box-shadow: none;
-  }
+.bp-code-btn-disabled {
+  background-color: $color-border;
 }
 
-.bp-btn-text {
+.bp-code-btn-text {
+  font-size: 24rpx;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+// ─── 确认绑定按钮 ────────────────────────────────────────────────────────────
+.bp-submit-btn {
+  height: 96rpx;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-dark 100%);
+  border-radius: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 16rpx;
+  box-shadow: 0 8rpx 24rpx rgba($color-primary, 0.3);
+}
+
+.bp-submit-disabled {
+  background: linear-gradient(135deg, #cccccc 0%, #bbbbbb 100%);
+  box-shadow: none;
+}
+
+.bp-submit-text {
   color: #ffffff;
   font-size: 32rpx;
   font-weight: 600;
@@ -155,6 +173,9 @@ $color-border: #EEECE8;
 .bp-skip {
   margin-top: 32rpx;
   padding: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .bp-skip-text {
@@ -165,6 +186,7 @@ $color-border: #EEECE8;
 
 // ─── 底部声明 ────────────────────────────────────────────────────────────────
 .bp-footer {
+  margin-top: auto;
   padding: 40rpx 0 60rpx;
   text-align: center;
 }

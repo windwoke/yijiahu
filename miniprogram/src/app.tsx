@@ -7,6 +7,7 @@ import { get, resetRedirectFlag } from './services/api';
 import './styles/variables.scss';
 import './styles/global.scss';
 
+
 type Props = {
   children?: React.ReactNode;
 };

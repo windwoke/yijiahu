@@ -16,7 +16,6 @@ import { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginWithPasswordDto } from './dto/login-with-password.dto';
 import { WechatLoginDto, WechatProfileDto } from './dto/wechat-login.dto';
-import { BindPhoneDto } from './dto/bind-phone.dto';
 
 @ApiTags('认证')
 @Controller('auth')
@@ -83,8 +82,11 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: '微信小程序绑定手机号（getPhoneNumber 一键授权）' })
-  bindPhone(@CurrentUser('id') userId: string, @Body() dto: BindPhoneDto) {
-    return this.authService.bindPhone(userId, dto);
+  @ApiOperation({ summary: '绑定手机号（短信验证码）' })
+  bindPhone(
+    @CurrentUser('id') userId: string,
+    @Body() body: { phone: string; code: string },
+  ) {
+    return this.authService.bindPhone(userId, body);
   }
 }

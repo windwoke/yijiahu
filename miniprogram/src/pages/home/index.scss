@@ -254,8 +254,9 @@ $color-card-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 }
 
 .recipient-avatar-text {
-  font-size: 40rpx;
-  line-height: 1;
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 20rpx;
 }
 
 .recipient-avatar-img {

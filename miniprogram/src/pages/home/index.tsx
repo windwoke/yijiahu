@@ -443,9 +443,11 @@ export default function HomePage() {
                             mode="aspectFill"
                           />
                         ) : (
-                          <Text className="recipient-avatar-text">
-                            {recipient.avatarEmoji || '👤'}
-                          </Text>
+                          <Image
+                            className="recipient-avatar-text"
+                            src={require('../../assets/icons/people.png')}
+                            mode="aspectFill"
+                          />
                         )}
                       </View>
 

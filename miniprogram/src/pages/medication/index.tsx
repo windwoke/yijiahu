@@ -74,13 +74,11 @@ function CheckInSheet(props: {
     props.status === MedicationLogStatus.SKIPPED;
 
   const loadHistory = async () => {
-    if (!props.medicationId || !props.recipientId) return;
-    const familyId = Storage.getCurrentFamilyId();
-    if (!familyId) return;
+    if (!props.medicationId) return;
     try {
-      const data = await get<MedicationLog[]>('/medication-logs/history', {
-        familyId,
-        recipientId: props.recipientId,
+      const data = await get<any[]>('/medication-logs/timeline', {
+        medicationId: props.medicationId,
+        limit: 4,
       });
       setHistory(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -224,13 +222,13 @@ function CheckInSheet(props: {
                 <Text className="history-empty-text">暂无用药记录</Text>
               </View>
             ) : (
-              history.slice(0, 5).map((log) => {
+              history.slice(0, 4).map((log: any) => {
                 const color = statusColor(log.status);
-                const authorName = log.takenBy?.name || '家庭成员';
+                const authorName = log.authorName || '家庭成员';
                 return (
                   <View key={log.id} className="history-item">
                     <View className="history-dot" style={{ backgroundColor: color }} />
-                    <Text className="history-time">{formatTime(log.actualTime || log.createdAt)}</Text>
+                    <Text className="history-time">{formatTime(log.time)}</Text>
                     <View className="history-badge" style={{ color, backgroundColor: `${color}1A` }}>
                       <Text className="history-badge-text">{statusText(log.status)}</Text>
                     </View>

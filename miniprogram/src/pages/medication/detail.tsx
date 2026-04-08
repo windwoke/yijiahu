@@ -72,7 +72,6 @@ export default function MedicationDetailPage() {
     try {
       const data = await get<any[]>('/medication-logs/timeline', {
         medicationId: id,
-        limit: 4,
       });
       const logs: TimelineItem[] = (Array.isArray(data) ? data : []).map((item) => ({
         id: item.id,

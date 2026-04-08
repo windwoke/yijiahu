@@ -44,7 +44,7 @@ export class MedicationLogController {
   getHistory(
     @Query('recipientId') recipientId: string,
     @Query('familyId') familyId: string,
-    @Query('date') date: string,
+    @Query('date') date?: string,
   ) {
     return this.service.getHistory(recipientId, familyId, date);
   }

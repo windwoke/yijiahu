@@ -40,13 +40,18 @@ class App extends Component<Props> {
           if (familyId) Storage.setCurrentFamilyId(familyId);
           Taro.switchTab({ url: '/pages/home/index' });
         }
-      } catch {
-        Storage.clearToken();
-        Storage.remove('user_id');
-        store.dispatch({ type: 'auth/clear' });
-        setTimeout(() => {
-          Taro.redirectTo({ url: '/pages/auth/login/index' });
-        }, 100);
+      } catch (err: any) {
+        // 只有 401（token 无效/过期）才清除 token 并跳转登录
+        // 网络错误等临时问题不踢人，保留 token 等下次重试
+        const isUnauthorized = err?.isUnauthorized || err?.code === 401 || err?.code === 20001;
+        if (isUnauthorized) {
+          Storage.clearToken();
+          Storage.remove('user_id');
+          store.dispatch({ type: 'auth/clear' });
+          setTimeout(() => {
+            Taro.redirectTo({ url: '/pages/auth/login/index' });
+          }, 100);
+        }
       }
     } else {
       setTimeout(() => {

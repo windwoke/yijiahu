@@ -134,9 +134,10 @@ export async function fetchCurrentUser(): Promise<User | null> {
     const user = await get<User>('/users/me');
     store.dispatch({ type: 'auth/setUser', payload: user });
     return user;
-  } catch {
-    // token 失效，清除
-    Storage.clearToken();
+  } catch (err: any) {
+    // 只有 401 才清除 token，网络错误等临时问题保留 token
+    const isUnauthorized = err?.isUnauthorized || err?.code === 401 || err?.code === 20001;
+    if (isUnauthorized) Storage.clearToken();
     return null;
   }
 }

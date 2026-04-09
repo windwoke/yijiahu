@@ -270,6 +270,16 @@ export default function CareLogPage() {
       const validOnes: PendingAttachment[] = [];
       for (const f of res.tempFiles as any[]) {
         const isVideo = f.fileType === 'video' || f.type === 'video';
+        // mov 格式不支持压缩，直接提示转 mp4
+        const rawPath: string = f.tempFilePath || '';
+        if (isVideo && rawPath.toLowerCase().endsWith('.mov')) {
+          Taro.showModal({
+            title: '不支持的格式',
+            content: 'iPhone 拍摄的视频请在相册中转换为 MP4 格式后再上传',
+            showCancel: false,
+          });
+          continue;
+        }
         // 视频超长检查
         if (isVideo && typeof f.duration === 'number' && f.duration > MAX_DURATION) {
           Taro.showToast({ title: `视频超过${MAX_DURATION}秒，已跳过`, icon: 'none' });

@@ -268,16 +268,17 @@ export default function CareLogPage() {
       const MAX_SIZE = 100 * 1024 * 1024;
       const MAX_DURATION = 30; // 秒
       const validOnes: PendingAttachment[] = [];
-      for (const f of res.tempFiles) {
+      for (const f of res.tempFiles as any[]) {
+        const isVideo = f.fileType === 'video' || f.type === 'video';
         // 视频超长检查
-        if (f.type === 'video' && typeof f.duration === 'number' && f.duration > MAX_DURATION) {
+        if (isVideo && typeof f.duration === 'number' && f.duration > MAX_DURATION) {
           Taro.showToast({ title: `视频超过${MAX_DURATION}秒，已跳过`, icon: 'none' });
           continue;
         }
         try {
           const info = await Taro.getFileInfo({ filePath: f.tempFilePath });
           if ((info as any).size > MAX_SIZE) {
-            Taro.showToast({ title: `${f.type === 'video' ? '视频' : '图片'}超过100MB，已跳过`, icon: 'none' });
+            Taro.showToast({ title: `${isVideo ? '视频' : '图片'}超过100MB，已跳过`, icon: 'none' });
             continue;
           }
         } catch {

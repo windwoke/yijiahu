@@ -262,11 +262,11 @@ export default function CareLogPage() {
       sizeType: ['compressed'],
       sourceType: ['album', 'camera'],
       mediaType: ['image', 'video'],
-      maxDuration: 30, // 视频最长 30 秒
+      maxDuration: 60, // 视频最长 60 秒
     }).then(async (res) => {
       // 过滤超限文件（>100MB）和超长视频（>30秒）
       const MAX_SIZE = 100 * 1024 * 1024;
-      const MAX_DURATION = 30; // 秒
+      const MAX_DURATION = 60; // 秒
       const validOnes: PendingAttachment[] = [];
       for (const f of res.tempFiles as any[]) {
         const isVideo = f.fileType === 'video' || f.type === 'video';

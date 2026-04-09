@@ -21,4 +21,8 @@ export default {
       compress: true,
     },
   },
+  defineConstants: {
+    // 环境变量 API_BASE_URL 控制，默认 localhost
+    API_BASE_URL: JSON.stringify(process.env.API_BASE_URL || 'http://127.0.0.1:3000/v1'),
+  },
 };

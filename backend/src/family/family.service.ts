@@ -31,7 +31,7 @@ export class FamilyService {
   ) {}
 
   private generateInviteCode(): string {
-    return Math.random().toString(36).slice(2, 8).toUpperCase();
+    return Math.random().toString(36).padEnd(8, '0').substring(2, 8).toUpperCase();
   }
 
   private getMaxFamilies(family: Family): number {

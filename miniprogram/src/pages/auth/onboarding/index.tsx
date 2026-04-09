@@ -100,27 +100,15 @@ export default function OnboardingPage() {
 
       {/* 标题 */}
       <Text className="onboard-title">欢迎使用一家护</Text>
-      <Text className="onboard-subtitle">创建或加入一个家庭，开始使用</Text>
+      <Text className="onboard-subtitle">创建一个家庭，开始使用</Text>
 
-      {/* 一行两按钮 */}
-      <View className="onboard-actions">
-        {/* 创建新家庭 */}
-        <View
-          className="onboard-action-btn onboard-action-create"
-          onClick={() => setShowCreateSheet(true)}
-        >
-          <Text className="onboard-action-emoji">🏠</Text>
-          <Text className="onboard-action-label">创建新家庭</Text>
-        </View>
-
-        {/* 输入邀请码加入 */}
-        <View
-          className="onboard-action-btn onboard-action-join"
-          onClick={() => setMode('join')}
-        >
-          <Text className="onboard-action-emoji">🔗</Text>
-          <Text className="onboard-action-label">输入邀请码加入</Text>
-        </View>
+      {/* 创建新家庭 */}
+      <View
+        className="onboard-action-btn onboard-action-create"
+        onClick={() => setShowCreateSheet(true)}
+      >
+        <Text className="onboard-action-emoji">🏠</Text>
+        <Text className="onboard-action-label">创建新家庭</Text>
       </View>
     </>
   );
@@ -132,8 +120,9 @@ export default function OnboardingPage() {
 
       <Input
         className={`onboard-input ${error ? 'onboard-input-error' : ''}`}
-        placeholder="请输入 8 位邀请码"
+        placeholder="请输入 6 位邀请码"
         placeholder-class="onboard-placeholder"
+        maxLength={6}
         value={inviteCode}
         onInput={(e) => { setInviteCode(e.detail.value); setError(''); }}
       />

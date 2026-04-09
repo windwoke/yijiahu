@@ -4,6 +4,8 @@ import {
   IsDateString,
   MaxLength,
   IsNumber,
+  IsArray,
+  ArrayMaxSize,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -43,15 +45,19 @@ export class CreateCareRecipientDto {
   @IsOptional()
   bloodType?: string;
 
-  @ApiPropertyOptional({ example: '青霉素,磺胺类' })
-  @IsString()
+  @ApiPropertyOptional({ example: ['青霉素', '磺胺类'] })
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsString({ each: true })
   @IsOptional()
-  allergies?: string;
+  allergies?: string[];
 
-  @ApiPropertyOptional({ example: '高血压10年,糖尿病5年' })
-  @IsString()
+  @ApiPropertyOptional({ example: ['高血压', '糖尿病'] })
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsString({ each: true })
   @IsOptional()
-  chronicConditions?: string;
+  chronicConditions?: string[];
 
   @ApiPropertyOptional({ example: '2020年做过阑尾手术' })
   @IsString()
@@ -141,14 +147,18 @@ export class UpdateCareRecipientDto {
   bloodType?: string;
 
   @ApiPropertyOptional()
-  @IsString()
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsString({ each: true })
   @IsOptional()
-  allergies?: string;
+  allergies?: string[];
 
   @ApiPropertyOptional()
-  @IsString()
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsString({ each: true })
   @IsOptional()
-  chronicConditions?: string;
+  chronicConditions?: string[];
 
   @ApiPropertyOptional()
   @IsString()

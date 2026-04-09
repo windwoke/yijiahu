@@ -28,6 +28,7 @@ export class WechatService {
     this.miniAppSecret = this.config.get<string>('wechat.miniApp.appSecret') || '';
     this.oaAppId = this.config.get<string>('wechat.officialAccount.appId') || '';
     this.oaAppSecret = this.config.get<string>('wechat.officialAccount.appSecret') || '';
+    this.logger.log(`[WechatService] miniAppId=${this.miniAppId || '(empty)'}, miniAppSecret=${this.miniAppSecret ? '***' : '(empty)'}`);
     this.redis = new Redis({
       host: this.config.get<string>('redis.host') || 'localhost',
       port: this.config.get<number>('redis.port') || 6379,
@@ -50,6 +51,7 @@ export class WechatService {
     errcode?: number;
     errmsg?: string;
   }> {
+    this.logger.log(`[code2Session] miniAppId=${this.miniAppId}, miniAppSecret=${this.miniAppSecret ? '****' : '(empty)'}`);
     if (!this.miniAppId || !this.miniAppSecret) {
       this.logger.warn('微信小程序 AppID 或 AppSecret 未配置，尝试 mock 模式');
       // 开发模式：mock 返回

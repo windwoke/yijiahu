@@ -34,6 +34,12 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
   final _doctorPhoneController = TextEditingController();
   final _medicalHistoryController = TextEditingController();
 
+  // 过敏史 / 慢性病（标签输入）
+  final _allergyController = TextEditingController();
+  final _chronicController = TextEditingController();
+  List<String> _allergies = [];
+  List<String> _chronicConditions = [];
+
   String _gender = '';
   DateTime? _birthDate;
   String? _bloodType;
@@ -65,6 +71,8 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
       _doctorNameController.text = r.doctorName ?? '';
       _doctorPhoneController.text = r.doctorPhone ?? '';
       _medicalHistoryController.text = r.medicalHistory ?? '';
+      _allergies = List<String>.from(r.allergies);
+      _chronicConditions = List<String>.from(r.chronicConditions);
     }
   }
 
@@ -79,6 +87,8 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
     _doctorNameController.dispose();
     _doctorPhoneController.dispose();
     _medicalHistoryController.dispose();
+    _allergyController.dispose();
+    _chronicController.dispose();
     super.dispose();
   }
 
@@ -173,6 +183,8 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
           'doctorPhone': _doctorPhoneController.text.trim(),
         if (_medicalHistoryController.text.isNotEmpty)
           'medicalHistory': _medicalHistoryController.text.trim(),
+        if (_allergies.isNotEmpty) 'allergies': _allergies,
+        if (_chronicConditions.isNotEmpty) 'chronicConditions': _chronicConditions,
       };
 
       if (isEditing) {
@@ -451,6 +463,34 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
                 // 健康信息卡片
                 _buildSectionCard([
                   _buildBloodTypeSelector(),
+                  _buildDivider(),
+                  _buildTagInput(
+                    label: '过敏史',
+                    hint: '输入过敏物，按回车添加',
+                    controller: _allergyController,
+                    chips: _allergies,
+                    chipColor: AppColors.coral,
+                    onAdd: (tag) => setState(() {
+                      final t = tag.trim();
+                      if (t.isNotEmpty && !_allergies.contains(t)) _allergies.add(t);
+                      _allergyController.clear();
+                    }),
+                    onRemove: (i) => setState(() => _allergies.removeAt(i)),
+                  ),
+                  _buildDivider(),
+                  _buildTagInput(
+                    label: '慢性病',
+                    hint: '输入慢性病，按回车添加',
+                    controller: _chronicController,
+                    chips: _chronicConditions,
+                    chipColor: AppColors.primary,
+                    onAdd: (tag) => setState(() {
+                      final t = tag.trim();
+                      if (t.isNotEmpty && !_chronicConditions.contains(t)) _chronicConditions.add(t);
+                      _chronicController.clear();
+                    }),
+                    onRemove: (i) => setState(() => _chronicConditions.removeAt(i)),
+                  ),
                 ]),
                 const SizedBox(height: 16),
 
@@ -671,6 +711,81 @@ class _AddCareRecipientPageState extends ConsumerState<AddCareRecipientPage> {
             Icon(Icons.chevron_right, color: Colors.grey[400]),
           ],
         ),
+      ),
+    );
+  }
+
+  /// 标签输入控件（过敏史/慢性病）
+  Widget _buildTagInput({
+    required String label,
+    required String hint,
+    required TextEditingController controller,
+    required List<String> chips,
+    required Color chipColor,
+    required void Function(String tag) onAdd,
+    required void Function(int index) onRemove,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 14)),
+          const SizedBox(height: 10),
+          if (chips.isNotEmpty) ...[
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: chips.asMap().entries.map((e) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: chipColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: chipColor.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(e.value, style: TextStyle(color: chipColor, fontSize: 13)),
+                      const SizedBox(width: 4),
+                      GestureDetector(
+                        onTap: () => onRemove(e.key),
+                        child: Icon(Icons.close, size: 14, color: chipColor.withValues(alpha: 0.7)),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 10),
+          ],
+          TextField(
+            controller: controller,
+            style: const TextStyle(fontSize: 14),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: AppColors.border),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: AppColors.border),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: chipColor, width: 1.5),
+              ),
+            ),
+            onSubmitted: (value) {
+              if (value.trim().isNotEmpty) onAdd(value.trim());
+            },
+          ),
+        ],
       ),
     );
   }

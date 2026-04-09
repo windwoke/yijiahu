@@ -39,11 +39,11 @@ export class CareRecipient {
   @Column({ nullable: true })
   bloodType: string;
 
-  @Column({ type: 'text', nullable: true })
-  allergies: string; // 逗号分隔的字符串，前端解析为数组
+  @Column({ type: 'simple-array', nullable: true })
+  allergies: string[];
 
-  @Column({ type: 'text', nullable: true })
-  chronicConditions: string; // 逗号分隔的字符串
+  @Column({ type: 'simple-array', nullable: true })
+  chronicConditions: string[];
 
   @Column({ type: 'text', nullable: true })
   medicalHistory: string;

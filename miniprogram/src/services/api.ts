@@ -7,8 +7,8 @@
 import Taro from '@tarojs/taro';
 import { store } from '../store';
 
-/** API 基础地址（通过 webpack DefinePlugin 注入，默认为本地） */
-export const BASE_URL = process.env.API_BASE_URL;
+/** API 基础地址（本地开发用 localhost，生产构建用 sed 替换为服务器 IP） */
+export const BASE_URL = 'http://127.0.0.1:3000/v1';
 
 /** 上传文件服务地址（OSS 地址，兼容开发和生产） */
 export const UPLOADS_URL = 'https://yijiahu.oss-cn-guangzhou.aliyuncs.com';

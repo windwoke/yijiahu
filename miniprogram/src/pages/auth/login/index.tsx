@@ -48,8 +48,17 @@ export default function LoginPage() {
     }
     setPhoneError('');
     try {
-      await sendCode(phone);
-      Taro.showToast({ title: '验证码已发送', icon: 'success' });
+      const res = await sendCode(phone);
+      if (res.mockCode) {
+        // 开发/测试模式：直接显示虚拟验证码
+        Taro.showModal({
+          title: '测试验证码',
+          content: `验证码：${res.mockCode}`,
+          showCancel: false,
+        });
+      } else {
+        Taro.showToast({ title: '验证码已发送', icon: 'success' });
+      }
       setCountdown(60);
       const timer = setInterval(() => {
         setCountdown((c) => {

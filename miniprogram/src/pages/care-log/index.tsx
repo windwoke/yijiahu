@@ -262,7 +262,7 @@ export default function CareLogPage() {
       sizeType: ['compressed'],
       sourceType: ['album', 'camera'],
       mediaType: ['image', 'video'],
-      maxDuration: 60, // 视频最长 60 秒
+      maxDuration: 30, // 视频最长 30 秒
     }).then(async (res) => {
       // 过滤超限文件（>100MB）
       const MAX_SIZE = 100 * 1024 * 1024;

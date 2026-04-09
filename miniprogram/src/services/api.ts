@@ -7,8 +7,8 @@
 import Taro from '@tarojs/taro';
 import { store } from '../store';
 
-/** API 基础地址（开发环境用 127.0.0.1，开发者工具里 localhost 有时不通） */
-export const BASE_URL = 'http://127.0.0.1:3000/v1';
+/** API 基础地址 */
+export const BASE_URL = 'http://8.163.69.199:3000/v1';
 
 /** 上传文件服务地址（OSS 地址，兼容开发和生产） */
 export const UPLOADS_URL = 'https://yijiahu.oss-cn-guangzhou.aliyuncs.com';

@@ -103,6 +103,20 @@ export default function MedicationDetailPage() {
     Taro.navigateTo({ url: `/pages/medication/index?action=edit&medicationId=${id}` });
   };
 
+  const handleActionMenu = () => {
+    Taro.showActionSheet({
+      itemList: ['编辑', '删除'],
+      itemColor: '#7B9E87',
+      success: (res) => {
+        if (res.tapIndex === 0) {
+          handleEdit();
+        } else if (res.tapIndex === 1) {
+          handleDelete();
+        }
+      },
+    });
+  };
+
   const handleDelete = async () => {
     if (!med) return;
     const res = await Taro.showModal({
@@ -142,18 +156,6 @@ export default function MedicationDetailPage() {
 
   return (
     <View className="med-detail-page">
-      {/* 导航栏 */}
-      <View className="detail-navbar">
-        <View className="navbar-left" onClick={() => Taro.navigateBack()}>
-          <Text className="navbar-back">‹</Text>
-        </View>
-        <Text className="navbar-title">药品详情</Text>
-        <View className="navbar-right">
-          <Text className="navbar-edit" onClick={handleEdit}>编辑</Text>
-          <Text className="navbar-delete" onClick={handleDelete}>删除</Text>
-        </View>
-      </View>
-
       <ScrollView className="detail-scroll" scrollY>
         {/* 头部卡片 */}
         <View className="header-card">
@@ -168,6 +170,10 @@ export default function MedicationDetailPage() {
                 {statusText}
               </Text>
             </View>
+          </View>
+          {/* 操作菜单 */}
+          <View className="header-actions" onClick={handleActionMenu}>
+            <Text className="header-actions-icon">⋮</Text>
           </View>
         </View>
 
@@ -281,6 +287,7 @@ const shareMedRef: { current: Medication | null } = { current: null };
 
 MedicationDetailPage.config = {
   enableShareAppMessage: true,
+  navigationBarTitleText: '药品详情',
 } as any;
 
 export { MedicationDetailPage };

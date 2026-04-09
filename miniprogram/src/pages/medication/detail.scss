@@ -61,78 +61,6 @@ $color-text-tertiary: #B0ADAD;
   color: $color-text-primary;
 }
 
-/* 导航栏 */
-.detail-navbar {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16rpx 24rpx;
-  padding-top: calc(16rpx + env(safe-area-inset-top));
-  background-color: $color-surface;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
-  flex-shrink: 0;
-  z-index: 100;
-}
-
-.navbar-left {
-  display: flex;
-  align-items: center;
-  padding: 8rpx;
-}
-
-.navbar-back {
-  font-size: 56rpx;
-  color: $color-text-primary;
-  font-weight: 300;
-  line-height: 1;
-}
-
-.navbar-title {
-  font-size: 34rpx;
-  font-weight: 700;
-  color: $color-text-primary;
-  flex: 1;
-  text-align: center;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.navbar-right {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8rpx;
-}
-
-.navbar-edit {
-  font-size: 28rpx;
-  color: $color-primary;
-  font-weight: 600;
-  padding: 8rpx 16rpx;
-  background-color: rgba(123, 158, 135, 0.1);
-  border-radius: 16rpx;
-}
-
-.navbar-delete {
-  font-size: 28rpx;
-  color: $color-coral;
-  font-weight: 600;
-  padding: 8rpx 16rpx;
-  background-color: rgba(224, 123, 93, 0.1);
-  border-radius: 16rpx;
-}
-
-.navbar-share {
-  font-size: 28rpx;
-  color: #ffffff;
-  font-weight: 600;
-  padding: 8rpx 16rpx;
-  background-color: rgba(255, 255, 255, 0.2);
-  border-radius: 16rpx;
-}
-
 /* 头部卡片 */
 .header-card {
   display: flex;
@@ -182,6 +110,22 @@ $color-text-tertiary: #B0ADAD;
 
 .header-status {
   margin-top: 4rpx;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56rpx;
+  height: 56rpx;
+  flex-shrink: 0;
+}
+
+.header-actions-icon {
+  font-size: 44rpx;
+  color: $color-text-secondary;
+  font-weight: 600;
+  line-height: 1;
 }
 
 .status-badge {

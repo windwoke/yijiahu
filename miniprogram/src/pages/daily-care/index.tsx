@@ -160,18 +160,6 @@ export default function DailyCarePage() {
 
   return (
     <View className="daily-care-page">
-      {/* 顶部导航栏 */}
-      <View className="nav-bar">
-        <View
-          className="nav-back"
-          onClick={() => Taro.navigateBack()}
-        >
-          <Text className="back-arrow">‹</Text>
-        </View>
-        <Text className="nav-title">今日护理打卡</Text>
-        <View className="nav-placeholder" />
-      </View>
-
       <View className="page-content">
         {/* 照护对象卡片 */}
         <View className="recipient-card">
@@ -289,6 +277,7 @@ export default function DailyCarePage() {
 // 页面级分享配置
 (DailyCarePage as any).config = {
   enableShareAppMessage: true,
+  navigationBarTitleText: '今日护理打卡',
 };
 
 

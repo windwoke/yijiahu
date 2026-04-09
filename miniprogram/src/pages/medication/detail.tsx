@@ -4,7 +4,7 @@
  * 导航栏 + 基本信息 + 服药时间 + 用药记录
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, ScrollView } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import { get, del } from '../../services/api';
@@ -54,12 +54,20 @@ export default function MedicationDetailPage() {
   const [history, setHistory] = useState<TimelineItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingHistory, setLoadingHistory] = useState(true);
+  const medRef = useRef<Medication | null>(null);
+
+  // 启用分享菜单
+  useEffect(() => {
+    Taro.showShareMenu({ withShareTicket: true });
+  }, []);
 
   const load = useCallback(async () => {
     if (!id || !familyId) { setLoading(false); return; }
     try {
       const data = await get<Medication>(`/medications/${id}`, { familyId });
       setMed(data);
+      medRef.current = data;
+      shareMedRef.current = data;
     } catch (e) {
       console.error('[detail] load error', e);
     } finally {
@@ -145,6 +153,7 @@ export default function MedicationDetailPage() {
         </View>
         <Text className="navbar-title">药品详情</Text>
         <View className="navbar-right">
+          <Text className="navbar-share" onClick={() => Taro.showShareMenu({ withShareTicket: true })}>分享</Text>
           <Text className="navbar-edit" onClick={handleEdit}>编辑</Text>
           <Text className="navbar-delete" onClick={handleDelete}>删除</Text>
         </View>
@@ -270,3 +279,34 @@ export default function MedicationDetailPage() {
     </View>
   );
 }
+
+// 分享内容（药品详情）
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const shareMedRef: { current: Medication | null } = { current: null };
+
+MedicationDetailPage.config = {
+  usingShareMenu: true,
+} as any;
+
+export { MedicationDetailPage };
+
+// 页面级分享回调
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(MedicationDetailPage as any).onShareAppMessage = function (): {
+  title: string;
+  path: string;
+  imageUrl?: string;
+} {
+  const med = shareMedRef.current;
+  if (med) {
+    return {
+      title: `${med.name} · 一家护`,
+      path: `/pages/medication/detail?id=${med.id}`,
+      imageUrl: '',
+    };
+  }
+  return {
+    title: '药品详情 · 一家护',
+    path: '/pages/home/index',
+  };
+};

@@ -371,6 +371,22 @@ $color-text-tertiary: #B0ADAD;
 }
 
 /* 卡片右上角：头像 + 名字 */
+.log-share-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6rpx 12rpx;
+  margin-left: 8rpx;
+  flex-shrink: 0;
+}
+
+.log-share-icon {
+  font-size: 28rpx;
+  color: $color-text-tertiary;
+  font-weight: 600;
+  transform: rotate(0deg);
+}
+
 .log-card-top-right {
   display: flex;
   flex-direction: row;

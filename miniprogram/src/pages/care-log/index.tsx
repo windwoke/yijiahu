@@ -3,13 +3,16 @@
  * 温暖日记风时间线 — 与 Flutter 设计对齐
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, ScrollView, Image } from '@tarojs/components';
 import Taro, { useDidShow } from '@tarojs/taro';
 import { get, post, del, uploadFile } from '../../services/api';
 import { Storage } from '../../services/storage';
 import { getImageUrl } from '../../shared/utils/image';
 import './index.scss';
+
+/** 页面级分享数据（模块变量，供 onShareAppMessage 读取） */
+let shareLogData: { source: string; content: string; recipientName?: string; time: string; sourceId: string } | null = null;
 
 /* ============================
    类型定义
@@ -427,6 +430,7 @@ export default function CareLogPage() {
 
   useEffect(() => {
     loadRecipients();
+    Taro.showShareMenu({ withShareTicket: true });
   }, [loadRecipients]);
 
   useEffect(() => {
@@ -757,6 +761,25 @@ export default function CareLogPage() {
                             >
                               {range === 'high' ? '偏高' : '偏低'}
                             </Text>
+                          </View>
+                        )}
+
+                        {/* 分享按钮（仅对可分享类型显示） */}
+                        {(isMedication || isHealth || isCheckin) && (
+                          <View
+                            className="log-share-btn"
+                            onClick={() => {
+                              shareLogData = {
+                                source: log.source,
+                                content: log.content,
+                                recipientName: log.recipientName,
+                                time: log.createdAt,
+                                sourceId: log.id,
+                              };
+                              Taro.showShareMenu({ withShareTicket: true });
+                            }}
+                          >
+                            <Text className="log-share-icon">↗</Text>
                           </View>
                         )}
 

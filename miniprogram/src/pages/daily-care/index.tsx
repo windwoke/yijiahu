@@ -3,7 +3,7 @@
  * 通过 Taro.getCurrentInstance().router?.params 获取 recipientId / recipientName
  */
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { View, Text, Textarea, Image } from '@tarojs/components';
 import Taro, { useDidShow } from '@tarojs/taro';
 import { get, post } from '../../services/api';
@@ -12,6 +12,16 @@ import { Storage } from '../../services/storage';
 import type { DailyCareCheckin, CheckinStatus } from '../../shared/models/daily-care-checkin';
 import type { TodayMedicationSummary } from '../../shared/models/medication';
 import './index.scss';
+
+/** 页面级分享数据 */
+let shareCheckinData: {
+  recipientName: string;
+  status: CheckinStatus;
+  medicationCompleted: number;
+  medicationTotal: number;
+  specialNote: string;
+  date: string;
+} | null = null;
 
 /** 状态选项配置 */
 const STATUS_OPTIONS: Array<{
@@ -79,6 +89,17 @@ export default function DailyCarePage() {
         if (checkin.specialNote) {
           setNoteText(checkin.specialNote);
         }
+        // 存储分享数据
+        const today = new Date();
+        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        shareCheckinData = {
+          recipientName,
+          status: checkin.status,
+          medicationCompleted: medSummary?.completed ?? 0,
+          medicationTotal: medSummary?.total ?? 0,
+          specialNote: checkin.specialNote || '',
+          date: todayStr,
+        };
       }
     } catch (err) {
       console.error('加载今日打卡数据失败:', err);
@@ -88,6 +109,11 @@ export default function DailyCarePage() {
   useDidShow(() => {
     loadData();
   });
+
+  // 启用分享菜单
+  useEffect(() => {
+    Taro.showShareMenu({ withShareTicket: true });
+  }, []);
 
   /** 提交打卡 */
   const handleSubmit = async () => {
@@ -108,6 +134,16 @@ export default function DailyCarePage() {
         medicationTotal: medTotal,
         specialNote: noteText.trim() || undefined,
       });
+
+      // 存储分享数据
+      shareCheckinData = {
+        recipientName,
+        status: selectedStatus,
+        medicationCompleted: medCompleted ?? 0,
+        medicationTotal: medTotal ?? 0,
+        specialNote: noteText.trim() || '',
+        date: todayStr,
+      };
 
       Taro.showToast({ title: '打卡成功', icon: 'success', duration: 1500 });
       setTimeout(() => {
@@ -138,7 +174,12 @@ export default function DailyCarePage() {
           <Text className="back-arrow">‹</Text>
         </View>
         <Text className="nav-title">今日护理打卡</Text>
-        <View className="nav-placeholder" />
+        <View
+          className="nav-share-btn"
+          onClick={() => Taro.showShareMenu({ withShareTicket: true })}
+        >
+          <Text className="nav-share-text">分享</Text>
+        </View>
       </View>
 
       <View className="page-content">
@@ -254,3 +295,20 @@ export default function DailyCarePage() {
     </View>
   );
 }
+
+// 页面级分享回调
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(DailyCarePage as any).onShareAppMessage = function (): {
+  title: string;
+  path: string;
+} {
+  if (shareCheckinData) {
+    const statusLabel = shareCheckinData.status === 'normal' ? '状态良好'
+      : shareCheckinData.status === 'concerning' ? '需要关注'
+      : shareCheckinData.status === 'poor' ? '状态较差'
+      : '紧急情况';
+    const title = `${shareCheckinData.recipientName} · ${statusLabel} · ${shareCheckinData.date} 护理打卡 · 一家护`;
+    return { title, path: '/pages/daily-care/index' };
+  }
+  return { title: '每日护理打卡 · 一家护', path: '/pages/daily-care/index' };
+};

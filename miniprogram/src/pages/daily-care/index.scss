@@ -59,8 +59,19 @@ $color-text-tertiary: #B0ADAD;
   color: $color-text-primary;
 }
 
-.nav-placeholder {
-  width: 64rpx;
+.nav-share-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8rpx 20rpx;
+  background-color: rgba($color-primary, 0.1);
+  border-radius: 16rpx;
+}
+
+.nav-share-text {
+  font-size: 26rpx;
+  color: $color-primary;
+  font-weight: 600;
 }
 
 /* 页面内容 */

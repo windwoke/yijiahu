@@ -57,10 +57,6 @@ export default function MedicationDetailPage() {
   const medRef = useRef<Medication | null>(null);
 
   // 启用分享菜单
-  useEffect(() => {
-    Taro.showShareMenu({ withShareTicket: true });
-  }, []);
-
   const load = useCallback(async () => {
     if (!id || !familyId) { setLoading(false); return; }
     try {
@@ -153,7 +149,6 @@ export default function MedicationDetailPage() {
         </View>
         <Text className="navbar-title">药品详情</Text>
         <View className="navbar-right">
-          <Text className="navbar-share" onClick={() => Taro.showShareMenu({ withShareTicket: true })}>分享</Text>
           <Text className="navbar-edit" onClick={handleEdit}>编辑</Text>
           <Text className="navbar-delete" onClick={handleDelete}>删除</Text>
         </View>
@@ -285,7 +280,7 @@ export default function MedicationDetailPage() {
 const shareMedRef: { current: Medication | null } = { current: null };
 
 MedicationDetailPage.config = {
-  usingShareMenu: true,
+  enableShareAppMessage: true,
 } as any;
 
 export { MedicationDetailPage };

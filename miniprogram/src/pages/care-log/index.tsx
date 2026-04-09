@@ -430,7 +430,6 @@ export default function CareLogPage() {
 
   useEffect(() => {
     loadRecipients();
-    Taro.showShareMenu({ withShareTicket: true });
   }, [loadRecipients]);
 
   useEffect(() => {
@@ -761,25 +760,6 @@ export default function CareLogPage() {
                             >
                               {range === 'high' ? '偏高' : '偏低'}
                             </Text>
-                          </View>
-                        )}
-
-                        {/* 分享按钮（仅对可分享类型显示） */}
-                        {(isMedication || isHealth || isCheckin) && (
-                          <View
-                            className="log-share-btn"
-                            onClick={() => {
-                              shareLogData = {
-                                source: log.source,
-                                content: log.content,
-                                recipientName: log.recipientName,
-                                time: log.createdAt,
-                                sourceId: log.id,
-                              };
-                              Taro.showShareMenu({ withShareTicket: true });
-                            }}
-                          >
-                            <Text className="log-share-icon">↗</Text>
                           </View>
                         )}
 
@@ -1196,3 +1176,26 @@ export default function CareLogPage() {
     </View>
   );
 }
+
+// 启用原生分享按钮
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(CareLogPage as any).config = {
+  enableShareAppMessage: true,
+};
+
+// 页面分享回调
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(CareLogPage as any).onShareAppMessage = function () {
+  const data = shareLogData;
+  shareLogData = null;
+  if (!data) return { title: '照护日志 · 一家护', path: '/pages/care-log/index' };
+  const date = data.time.substring(0, 10);
+  const title = data.source === 'medication'
+    ? `${data.content || '用药打卡'} · ${data.recipientName || ''} ${date} · 一家护`
+    : data.source === 'health_record'
+    ? `健康记录：${data.content} · ${data.recipientName || ''} ${date} · 一家护`
+    : data.source === 'daily_care_checkin'
+    ? `${data.recipientName || ''} 护理打卡 ${date} · 一家护`
+    : '照护日志 · 一家护';
+  return { title, path: '/pages/care-log/index' };
+};

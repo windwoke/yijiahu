@@ -110,11 +110,6 @@ export default function DailyCarePage() {
     loadData();
   });
 
-  // 启用分享菜单
-  useEffect(() => {
-    Taro.showShareMenu({ withShareTicket: true });
-  }, []);
-
   /** 提交打卡 */
   const handleSubmit = async () => {
     if (isLoading) return;
@@ -174,12 +169,7 @@ export default function DailyCarePage() {
           <Text className="back-arrow">‹</Text>
         </View>
         <Text className="nav-title">今日护理打卡</Text>
-        <View
-          className="nav-share-btn"
-          onClick={() => Taro.showShareMenu({ withShareTicket: true })}
-        >
-          <Text className="nav-share-text">分享</Text>
-        </View>
+        <View className="nav-placeholder" />
       </View>
 
       <View className="page-content">
@@ -296,7 +286,12 @@ export default function DailyCarePage() {
   );
 }
 
-// 页面级分享回调
+// 页面级分享配置
+(DailyCarePage as any).config = {
+  enableShareAppMessage: true,
+};
+
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (DailyCarePage as any).onShareAppMessage = function (): {
   title: string;

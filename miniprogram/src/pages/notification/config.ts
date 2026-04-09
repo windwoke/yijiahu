@@ -1,3 +1,3 @@
 export default definePageConfig({
-  navigationBarTitleText: '微信通知',
+  navigationBarTitleText: '通知提醒',
 });

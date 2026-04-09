@@ -1,5 +1,5 @@
 /**
- * 微信通知订阅页样式
+ * 微信通知页样式 —— App 引流版
  */
 
 $color-primary: #7B9E87;
@@ -11,26 +11,18 @@ $color-text-primary: #2C2C2C;
 $color-text-secondary: #6B6B6B;
 $color-text-tertiary: #B0ADAD;
 $color-border: #E8E6E2;
-$color-wechat-green: #07C160;
 
-.sub-page {
+.page {
   min-height: 100vh;
   background-color: $color-bg;
   padding: 32rpx;
   box-sizing: border-box;
 }
 
-.loading {
-  text-align: center;
-  padding: 80rpx 0;
-  font-size: 28rpx;
-  color: $color-text-tertiary;
-}
-
-// 顶部说明卡片
-.intro-card {
-  background: linear-gradient(135deg, #f0fdf4 0%, #e8f5ec 100%);
-  border: 2rpx solid rgba($color-wechat-green, 0.2);
+// 顶部
+.hero {
+  background: linear-gradient(135deg, #f0f7f2 0%, #e8f4ec 100%);
+  border: 2rpx solid rgba($color-primary, 0.15);
   border-radius: 32rpx;
   padding: 48rpx 32rpx;
   display: flex;
@@ -39,10 +31,10 @@ $color-wechat-green: #07C160;
   margin-bottom: 24rpx;
 }
 
-.intro-icon-wrap {
+.hero-icon-wrap {
   width: 120rpx;
   height: 120rpx;
-  background-color: $color-wechat-green;
+  background-color: $color-primary;
   border-radius: 30rpx;
   display: flex;
   align-items: center;
@@ -50,96 +42,135 @@ $color-wechat-green: #07C160;
   margin-bottom: 24rpx;
 }
 
-.intro-icon {
+.hero-icon {
   font-size: 60rpx;
 }
 
-.intro-title {
+.hero-title {
   font-size: 40rpx;
   font-weight: 700;
-  color: #1aad19;
-  margin-bottom: 12rpx;
+  color: $color-text-primary;
+  margin-bottom: 16rpx;
+  text-align: center;
 }
 
-.intro-desc {
+.hero-subtitle {
+  font-size: 26rpx;
+  color: $color-text-secondary;
+  text-align: center;
+  line-height: 1.8;
+}
+
+// 对比卡片
+.compare-card {
+  background-color: $color-surface;
+  border-radius: 24rpx;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.compare-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: $color-text-secondary;
+  margin-bottom: 24rpx;
+  text-align: center;
+}
+
+.compare-item {
+  padding: 8rpx 0;
+}
+
+.compare-label {
+  font-size: 24rpx;
+  font-weight: 600;
+  margin-bottom: 12rpx;
+  display: block;
+}
+
+.compare-item-mp .compare-label {
+  color: $color-text-tertiary;
+}
+
+.compare-item-app .compare-label {
+  color: $color-primary-dark;
+}
+
+.compare-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+}
+
+.compare-x {
+  font-size: 26rpx;
+  color: $color-text-tertiary;
+}
+
+.compare-check {
+  font-size: 26rpx;
+  color: $color-primary-dark;
+  font-weight: 500;
+}
+
+.compare-divider {
+  height: 1rpx;
+  background-color: $color-border;
+  margin: 20rpx 0;
+}
+
+// 操作区
+.action-card {
+  background-color: $color-surface;
+  border-radius: 24rpx;
+  padding: 40rpx 32rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.action-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: $color-text-primary;
+  margin-bottom: 16rpx;
+}
+
+.action-desc {
   font-size: 26rpx;
   color: $color-text-secondary;
   text-align: center;
   line-height: 1.7;
+  margin-bottom: 32rpx;
 }
 
-// 开关卡片
-.toggle-card {
-  background-color: $color-surface;
-  border-radius: 24rpx;
-  padding: 32rpx;
+.action-btn {
+  width: 100%;
+  height: 96rpx;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-dark 100%);
+  border-radius: 48rpx;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 24rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
-}
-
-.toggle-left {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  margin-right: 20rpx;
-}
-
-.toggle-label {
-  font-size: 32rpx;
-  font-weight: 600;
-  color: $color-text-primary;
-  margin-bottom: 8rpx;
-}
-
-.toggle-hint {
-  font-size: 24rpx;
-  color: $color-text-secondary;
-}
-
-// 通知说明卡片
-.desc-card {
-  background-color: $color-surface;
-  border-radius: 24rpx;
-  padding: 32rpx;
-  margin-bottom: 24rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
-}
-
-.desc-title {
-  font-size: 26rpx;
-  font-weight: 600;
-  color: $color-text-secondary;
+  justify-content: center;
+  box-shadow: 0 8rpx 24rpx rgba($color-primary, 0.3);
   margin-bottom: 20rpx;
 }
 
-.desc-item {
-  display: flex;
-  align-items: center;
-  margin-bottom: 14rpx;
+.action-btn-text {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: 2rpx;
 }
 
-.desc-dot {
-  color: $color-wechat-green;
-  margin-right: 12rpx;
-  font-size: 28rpx;
+.action-hint {
+  padding: 8rpx 0;
 }
 
-.desc-text {
-  font-size: 28rpx;
-  color: $color-text-primary;
-}
-
-// 注意
-.note-card {
-  padding: 20rpx 0;
-  text-align: center;
-}
-
-.note-text {
-  font-size: 22rpx;
-  color: $color-text-tertiary;
-  line-height: 1.6;
+.action-hint-text {
+  font-size: 24rpx;
+  color: $color-primary;
+  text-decoration: underline;
 }

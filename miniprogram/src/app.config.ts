@@ -42,12 +42,6 @@ export default defineAppConfig({
         selectedIconPath: 'assets/tabbar/home-active.png',
       },
       {
-        pagePath: 'pages/calendar/index',
-        text: '日历',
-        iconPath: 'assets/tabbar/calendar.png',
-        selectedIconPath: 'assets/tabbar/calendar-active.png',
-      },
-      {
         pagePath: 'pages/care-log/index',
         text: '日志',
         iconPath: 'assets/tabbar/log.png',

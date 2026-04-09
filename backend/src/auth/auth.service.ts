@@ -256,13 +256,17 @@ export class AuthService {
 
   async changePassword(
     userId: string,
-    oldPassword: string,
+    oldPassword: string | undefined,
     newPassword: string,
   ) {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) throw new UnauthorizedException('用户不存在');
 
     if (user.hashedPassword) {
+      // 有旧密码，必须验证
+      if (!oldPassword) {
+        throw new BadRequestException('请输入旧密码');
+      }
       const isValid = await bcrypt.compare(oldPassword, user.hashedPassword);
       if (!isValid) {
         throw new BadRequestException('旧密码错误');

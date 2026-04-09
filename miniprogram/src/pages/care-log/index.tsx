@@ -262,14 +262,30 @@ export default function CareLogPage() {
       sizeType: ['compressed'],
       sourceType: ['album', 'camera'],
       mediaType: ['image', 'video'],
-    }).then((res) => {
-      const newOnes: PendingAttachment[] = res.tempFiles.map((f: any) => ({
-        id: `local-${Date.now()}-${Math.random()}`,
-        localPath: f.tempFilePath,
-        uploading: true,
-      }));
-      setPendingAttachments((prev) => [...prev, ...newOnes]);
-      newOnes.forEach((a) => uploadAttachment(a.id, a.localPath));
+      maxDuration: 60, // 视频最长 60 秒
+    }).then(async (res) => {
+      // 过滤超限文件（>100MB）
+      const MAX_SIZE = 100 * 1024 * 1024;
+      const validOnes: PendingAttachment[] = [];
+      for (const f of res.tempFiles) {
+        try {
+          const info = await Taro.getFileInfo({ filePath: f.tempFilePath });
+          if ((info as any).size > MAX_SIZE) {
+            Taro.showToast({ title: `${f.type === 'video' ? '视频' : '图片'}超过100MB，已跳过`, icon: 'none' });
+            continue;
+          }
+        } catch {
+          // getFileInfo 失败时跳过校验，继续上传
+        }
+        validOnes.push({
+          id: `local-${Date.now()}-${Math.random()}`,
+          localPath: f.tempFilePath,
+          uploading: true,
+        });
+      }
+      if (validOnes.length === 0) return;
+      setPendingAttachments((prev) => [...prev, ...validOnes]);
+      validOnes.forEach((a) => uploadAttachment(a.id, a.localPath));
     });
   };
 

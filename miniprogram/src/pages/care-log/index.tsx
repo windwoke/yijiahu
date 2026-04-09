@@ -264,10 +264,16 @@ export default function CareLogPage() {
       mediaType: ['image', 'video'],
       maxDuration: 30, // 视频最长 30 秒
     }).then(async (res) => {
-      // 过滤超限文件（>100MB）
+      // 过滤超限文件（>100MB）和超长视频（>30秒）
       const MAX_SIZE = 100 * 1024 * 1024;
+      const MAX_DURATION = 30; // 秒
       const validOnes: PendingAttachment[] = [];
       for (const f of res.tempFiles) {
+        // 视频超长检查
+        if (f.type === 'video' && typeof f.duration === 'number' && f.duration > MAX_DURATION) {
+          Taro.showToast({ title: `视频超过${MAX_DURATION}秒，已跳过`, icon: 'none' });
+          continue;
+        }
         try {
           const info = await Taro.getFileInfo({ filePath: f.tempFilePath });
           if ((info as any).size > MAX_SIZE) {
@@ -287,10 +293,9 @@ export default function CareLogPage() {
       setPendingAttachments((prev) => [...prev, ...validOnes]);
       validOnes.forEach((a) => uploadAttachment(a.id, a.localPath));
     }).catch((err) => {
-      // 视频超长等选择错误
       const msg = (err as any)?.errMsg || '';
       if (msg.includes('cancel')) return;
-      Taro.showToast({ title: '视频最长30秒，请重新选择', icon: 'none' });
+      Taro.showToast({ title: '选择失败，请重试', icon: 'none' });
     });
   };
 

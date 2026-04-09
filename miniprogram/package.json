@@ -7,7 +7,7 @@
   "scripts": {
     "dev:weapp": "taro build --type weapp --watch",
     "build:weapp": "taro build --type weapp",
-    "build:weapp:prod": "sed -i '' \"s|http://127.0.0.1:3000/v1|http://8.163.69.199:3000/v1|g\" src/services/api.ts && taro build --type weapp",
+    "build:weapp:prod": "sed -i '' \"s|http://127.0.0.1:3000/v1|http://8.163.69.199/v1|g\" src/services/api.ts && taro build --type weapp",
     "build:h5": "taro build --type h5",
     "lint": "eslint src --ext .ts,.tsx",
     "lint:fix": "eslint src --ext .ts,.tsx --fix"

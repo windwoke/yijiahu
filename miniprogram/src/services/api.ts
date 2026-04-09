@@ -102,6 +102,8 @@ interface RequestOptions extends Omit<Taro.request.Option, 'url' | 'method' | 'h
   params?: Record<string, string | number>;
   noAuth?: boolean;
   noToast?: boolean;
+  /** 401 错误不自动 redirect 到登录页，由调用方自行处理 */
+  noAuthRedirect?: boolean;
 }
 
 interface ApiResponse<T = unknown> {
@@ -114,7 +116,7 @@ interface ApiResponse<T = unknown> {
 
 /** 通用请求方法 */
 async function request<T = unknown>(options: RequestOptions): Promise<T> {
-  const { url, method = 'GET', data, params, noAuth = false, noToast = false, ...taroOptions } = options;
+  const { url, method = 'GET', data, params, noAuth = false, noToast = false, noAuthRedirect = false, ...taroOptions } = options;
 
   // 拼接参数
   let fullUrl = `${BASE_URL}${url}`;
@@ -154,7 +156,8 @@ async function request<T = unknown>(options: RequestOptions): Promise<T> {
     if (res.statusCode < 200 || res.statusCode >= 300) {
       if (res.statusCode === 401) {
         // Token 过期，清除并跳转登录（加标志防止重复）
-        if (!isRedirecting) {
+        // 但 noAuthRedirect 时跳过 redirect，由调用方自行处理
+        if (!noAuthRedirect && !isRedirecting) {
           isRedirecting = true;
           console.error(`[api] 401 on ${method} ${url}, redirecting to login`);
           Taro.removeStorageSync(`${PREFIX}access_token`);

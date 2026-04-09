@@ -27,11 +27,11 @@ class App extends Component<Props> {
     const token = Storage.getToken();
     if (token) {
       try {
-        const user = await get<any>('/users/me', undefined, { noToast: true });
+        const user = await get<any>('/users/me', undefined, { noToast: true, noAuthRedirect: true });
         store.dispatch({ type: 'auth/setUser', payload: user });
 
         // 检查是否有家庭，无则跳引导页
-        const res = await get<{ families: any[] }>('/users/me/families', undefined, { noToast: true });
+        const res = await get<{ families: any[] }>('/users/me/families', undefined, { noToast: true, noAuthRedirect: true });
         const families = res?.families ?? [];
         if (!families || families.length === 0) {
           Taro.redirectTo({ url: '/pages/auth/onboarding/index' });

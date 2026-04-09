@@ -43,8 +43,10 @@ export default function AddCareRecipientPage() {
   const [doctorName, setDoctorName] = useState('');
   const [doctorPhone, setDoctorPhone] = useState('');
   const [medicalHistory, setMedicalHistory] = useState('');
-  const [allergies, setAllergies] = useState('');
-  const [chronicConditions, setChronicConditions] = useState('');
+  const [allergies, setAllergies] = useState<string[]>([]);
+  const [chronicConditions, setChronicConditions] = useState<string[]>([]);
+  const [allergyInput, setAllergyInput] = useState('');
+  const [chronicInput, setChronicInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   // 编辑模式：加载已有数据
@@ -66,9 +68,8 @@ export default function AddCareRecipientPage() {
         setDoctorName(r.doctorName || '');
         setDoctorPhone(r.doctorPhone || '');
         setMedicalHistory(r.medicalHistory || '');
-        // allergies/chronicConditions 后端返回字符串，显示时用逗号分隔
-        setAllergies(typeof r.allergies === 'string' ? r.allergies : Array.isArray(r.allergies) ? r.allergies.join('、') : '');
-        setChronicConditions(typeof r.chronicConditions === 'string' ? r.chronicConditions : Array.isArray(r.chronicConditions) ? r.chronicConditions.join('、') : '');
+        setAllergies(Array.isArray(r.allergies) ? r.allergies : []);
+        setChronicConditions(Array.isArray(r.chronicConditions) ? r.chronicConditions : []);
       })
       .catch((e) => {
         console.error('加载照护对象失败', e);
@@ -99,8 +100,8 @@ export default function AddCareRecipientPage() {
         doctorName: doctorName || null,
         doctorPhone: doctorPhone || null,
         medicalHistory: medicalHistory || null,
-        allergies: allergies || null,
-        chronicConditions: chronicConditions || null,
+        allergies: allergies.length > 0 ? allergies : null,
+        chronicConditions: chronicConditions.length > 0 ? chronicConditions : null,
       };
 
       if (isEdit) {
@@ -301,11 +302,28 @@ export default function AddCareRecipientPage() {
 
           <View className="field">
             <Text className="field-label">过敏史</Text>
+            {/* 已有标签 */}
+            {allergies.length > 0 && (
+              <View className="tag-chips">
+                {allergies.map((tag, i) => (
+                  <View key={i} className="tag-chip tag-chip-allergy">
+                    <Text className="tag-chip-text">{tag}</Text>
+                    <Text className="tag-chip-remove" onClick={() => setAllergies(allergies.filter((_, idx) => idx !== i))}>×</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+            {/* 输入框 */}
             <Input
-              className="field-input"
-              placeholder="多个用逗号分隔，如：青霉素、芒果"
-              value={allergies}
-              onInput={(e) => setAllergies(e.detail.value)}
+              className="field-input tag-input"
+              placeholder="输入后按回车添加"
+              value={allergyInput}
+              onInput={(e) => setAllergyInput(e.detail.value)}
+              onConfirm={(e) => {
+                const v = e.detail.value.trim();
+                if (v && !allergies.includes(v)) setAllergies([...allergies, v]);
+                setAllergyInput('');
+              }}
             />
           </View>
 
@@ -321,11 +339,28 @@ export default function AddCareRecipientPage() {
 
           <View className="field">
             <Text className="field-label">慢性病</Text>
+            {/* 已有标签 */}
+            {chronicConditions.length > 0 && (
+              <View className="tag-chips">
+                {chronicConditions.map((tag, i) => (
+                  <View key={i} className="tag-chip tag-chip-chronic">
+                    <Text className="tag-chip-text">{tag}</Text>
+                    <Text className="tag-chip-remove" onClick={() => setChronicConditions(chronicConditions.filter((_, idx) => idx !== i))}>×</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+            {/* 输入框 */}
             <Input
-              className="field-input"
-              placeholder="多个用逗号分隔，如：高血压、糖尿病"
-              value={chronicConditions}
-              onInput={(e) => setChronicConditions(e.detail.value)}
+              className="field-input tag-input"
+              placeholder="输入后按回车添加"
+              value={chronicInput}
+              onInput={(e) => setChronicInput(e.detail.value)}
+              onConfirm={(e) => {
+                const v = e.detail.value.trim();
+                if (v && !chronicConditions.includes(v)) setChronicConditions([...chronicConditions, v]);
+                setChronicInput('');
+              }}
             />
           </View>
         </View>

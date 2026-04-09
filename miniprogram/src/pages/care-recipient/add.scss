@@ -272,6 +272,54 @@ $color-text-tertiary: #B0ADAD;
   }
 }
 
+/* 标签输入 */
+.tag-chips {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-bottom: 12rpx;
+}
+
+.tag-chip {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6rpx;
+  padding: 8rpx 16rpx;
+  border-radius: 20rpx;
+  font-size: 26rpx;
+
+  &.tag-chip-allergy {
+    background-color: rgba(224, 123, 93, 0.1);
+    border: 2rpx solid rgba(224, 123, 93, 0.3);
+    .tag-chip-text { color: #E07B5D; }
+    .tag-chip-remove { color: rgba(224, 123, 93, 0.6); }
+  }
+
+  &.tag-chip-chronic {
+    background-color: rgba(123, 158, 135, 0.1);
+    border: 2rpx solid rgba(123, 158, 135, 0.3);
+    .tag-chip-text { color: #7B9E87; }
+    .tag-chip-remove { color: rgba(123, 158, 135, 0.6); }
+  }
+}
+
+.tag-chip-text {
+  font-size: 26rpx;
+  font-weight: 500;
+}
+
+.tag-chip-remove {
+  font-size: 28rpx;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.tag-input {
+  margin-top: 0;
+}
+
 /* 底部按钮 */
 .bottom-pad {
   height: 160rpx;

@@ -286,6 +286,11 @@ export default function CareLogPage() {
       if (validOnes.length === 0) return;
       setPendingAttachments((prev) => [...prev, ...validOnes]);
       validOnes.forEach((a) => uploadAttachment(a.id, a.localPath));
+    }).catch((err) => {
+      // 视频超长等选择错误
+      const msg = (err as any)?.errMsg || '';
+      if (msg.includes('cancel')) return;
+      Taro.showToast({ title: '视频最长30秒，请重新选择', icon: 'none' });
     });
   };
 

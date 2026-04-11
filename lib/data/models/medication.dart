@@ -127,7 +127,7 @@ class MedicationTimeStatus extends Equatable {
   }
 
   static MedicationLogStatus _parseStatus(String? status) {
-    switch (status) {
+    switch (status?.toLowerCase()) {
       case 'taken':
         return MedicationLogStatus.taken;
       case 'skipped':

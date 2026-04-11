@@ -300,6 +300,9 @@ class MedicationLogItem extends Equatable {
       takenByObj = MedicationLogTaker.fromJson(takenByRaw);
     }
 
+    // TODO: remove debug
+    final rawStatus = json['status'] as String?;
+    print('[DEBUG MedicationLogItem.fromJson] id=${json['id']} rawStatus=$rawStatus');
     return MedicationLogItem(
       id: json['id'] as String?,
       medicationId: json['medicationId'] as String? ?? json['medication_id'] as String? ?? '',
@@ -307,7 +310,7 @@ class MedicationLogItem extends Equatable {
       dosage: json['dosage'] as String? ?? '',
       scheduledTime: json['scheduledTime'] as String? ?? json['scheduled_time'] as String? ?? '',
       scheduledAt: null,
-      status: MedicationTimeStatus._parseStatus(json['status'] as String?),
+      status: MedicationTimeStatus._parseStatus(rawStatus),
       canCheckIn: json['canCheckIn'] as bool? ?? json['can_check_in'] as bool? ?? false,
       actualTime: json['actualTime'] != null
           ? DateTime.tryParse(json['actualTime'] as String)

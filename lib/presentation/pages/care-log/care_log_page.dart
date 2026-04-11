@@ -520,7 +520,7 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: (alertColor ?? baseColor).withValues(alpha: 0.3),
-                      width: isOutOfRange || isLowRange ? 2.5 : 1.5,
+                      width: isOutOfRange || isLowRange || isMedicationMissed ? 2.5 : 1.5,
                     ),
                   ),
                   child: Center(
@@ -542,7 +542,7 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
               decoration: BoxDecoration(
                 color: AppColors.surfaceContainerLowest,
                 borderRadius: BorderRadius.circular(20),
-                border: isOutOfRange || isLowRange
+                border: isOutOfRange || isLowRange || isMedicationMissed
                     ? Border.all(color: alertColor!.withValues(alpha: 0.4), width: 1.5)
                     : null,
                 boxShadow: [

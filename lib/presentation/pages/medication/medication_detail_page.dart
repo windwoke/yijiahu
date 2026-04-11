@@ -302,8 +302,6 @@ class MedicationDetailPage extends ConsumerWidget {
   }
 
   Widget _buildHistoryItem(MedicationLog log) {
-    // TODO: remove debug
-    print('[DEBUG history] id=${log.id} status=${log.status} statusIndex=${log.status.index}');
     final isTaken = log.status == MedicationLogStatus.taken;
     final isMissed = log.status == MedicationLogStatus.missed;
     final statusColor = isTaken

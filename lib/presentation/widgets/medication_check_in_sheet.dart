@@ -304,8 +304,9 @@ class _MedicationCheckInSheetState extends ConsumerState<MedicationCheckInSheet>
 
   Widget _buildHistoryItem(MedicationLog log) {
     final isTaken = log.status == MedicationLogStatus.taken;
-    final statusColor = isTaken ? AppColors.success : AppColors.textTertiary;
-    final statusText = isTaken ? '已服用' : '已跳过';
+    final isMissed = log.status == MedicationLogStatus.missed;
+    final statusColor = isTaken ? AppColors.success : isMissed ? AppColors.coral : AppColors.textTertiary;
+    final statusText = isTaken ? '已服用' : isMissed ? '已漏服' : '已跳过';
 
     final timeStr = _formatTimeStr(log.time);
     final authorName = log.authorName ?? '家庭成员';

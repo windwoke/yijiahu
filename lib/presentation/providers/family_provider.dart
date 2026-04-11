@@ -124,10 +124,7 @@ final medicationHistoryProvider =
     return data
         .map((e) {
           try {
-            final json = e as Map<String, dynamic>;
-            final status = json['status'];
-            print('[DEBUG] medication history item: id=${json['id']}, status=$status');
-            return models.MedicationLog.fromJson(json);
+            return models.MedicationLog.fromJson(e as Map<String, dynamic>);
           } catch (_) { return null; }
         })
         .whereType<models.MedicationLog>()

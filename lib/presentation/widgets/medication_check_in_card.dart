@@ -105,8 +105,6 @@ class MedicationCheckInCard extends StatelessWidget {
   }
 
   Widget _buildMedicationItem(BuildContext context, MedicationLogItem item) {
-    // TODO: remove debug
-    print('[DEBUG checkin card] id=${item.id} status=${item.status} statusIndex=${item.status.index}');
     final statusColor = _getStatusColor(item);
     final isTaken = item.status == MedicationLogStatus.taken;
     final isSkipped = item.status == MedicationLogStatus.skipped;

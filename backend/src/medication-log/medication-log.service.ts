@@ -262,10 +262,6 @@ export class MedicationLogService {
       )
       .take(50);
 
-    // 按实际时间排序：takenAt(UTC) vs scheduledDate(UTC midnight +8h北京时间)
-    // missed 的 scheduledDate 已是北京当日0点(UTC前一日20:00)，直接比即可
-    qb.orderBy('GREATEST(log.takenAt, log.scheduledDate::timestamp)', 'DESC');
-
     if (before) {
       qb.andWhere(
         '(log.takenAt IS NOT NULL AND log.takenAt < :before) OR (log.takenAt IS NULL AND log.scheduledDate < :before)',
@@ -283,6 +279,13 @@ export class MedicationLogService {
       qb.andWhere('log.medicationId = :medicationId', { medicationId });
 
     const logs = await qb.getMany();
+
+    // 应用层排序：按实际时间排序（takenAt 优先，missed 用 scheduledDate）
+    logs.sort((a, b) => {
+      const aTime = a.takenAt ?? a.scheduledDate;
+      const bTime = b.takenAt ?? b.scheduledDate;
+      return bTime.getTime() - aTime.getTime();
+    });
 
     // takenBy 存的是 userId，通过 FamilyMember 表查 nickname（通过 userId 匹配）
     const userIds = logs.map((l) => l.takenBy).filter(Boolean);

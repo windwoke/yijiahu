@@ -255,11 +255,19 @@ export class MedicationLogService {
       .where('log.status IN (:...statuses)', {
         statuses: [MedicationLogStatus.TAKEN, MedicationLogStatus.SKIPPED, MedicationLogStatus.MISSED],
       })
-      .andWhere('log.takenAt IS NOT NULL')
-      .orderBy('log.takenAt', 'DESC')
+      // missed 记录没有 takenAt，允许返回；排序用 scheduledDate（missed）或 takenAt（已打卡）
+      .andWhere(
+        '(log.takenAt IS NOT NULL OR log.status = :missedStatus)',
+        { missedStatus: MedicationLogStatus.MISSED },
+      )
+      .orderBy('COALESCE(log.takenAt, log.scheduledDate)', 'DESC')
       .take(50);
 
-    if (before) qb.andWhere('log.takenAt < :before', { before });
+    if (before)
+      qb.andWhere(
+        'COALESCE(log.takenAt, log.scheduledDate) < :before',
+        { before },
+      );
     if (recipientId)
       qb.andWhere('log.recipientId = :recipientId', { recipientId });
     if (familyId)

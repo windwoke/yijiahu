@@ -355,11 +355,13 @@ function formatLocalTime(date: Date): string {
   return `${local.getUTCFullYear()}-${pad(local.getUTCMonth() + 1)}-${pad(local.getUTCDate())} ${pad(local.getUTCHours())}:${pad(local.getUTCMinutes())}:${pad(local.getUTCSeconds())}`;
 }
 
-/** 格式化北京时间（scheduledDate UTC midnight + scheduledTime 小时分钟） */
+/** 格式化北京时间（scheduledDate UTC0点 + scheduledTime北京时间 → 北京完整时刻） */
 function formatBeijingDateTime(scheduledDate: Date, scheduledTime: string): string {
-  const [hour, minute] = scheduledTime.split(':').map(Number);
-  // scheduledDate 存的是 UTC 0点，加8小时是北京时间0点，再加上 hour*3600000 + minute*60000
-  const beijing = new Date(scheduledDate.getTime() + 8 * 3600000 + hour * 3600000 + minute * 60000);
-  const pad = (n: number) => n.toString().padStart(2, '0');
-  return `${beijing.getUTCFullYear()}-${pad(beijing.getUTCMonth() + 1)}-${pad(beijing.getUTCDate())} ${pad(beijing.getUTCHours())}:${pad(beijing.getUTCMinutes())}:${pad(beijing.getUTCSeconds())}`;
+  // scheduledDate 存 UTC 0点（如 new Date('2026-04-11T00:00:00Z') = April 11 00:00 UTC）
+  // scheduledTime 是北京时间"HH:mm"
+  // 北京时刻 = scheduledDate(UTC) + 8h(UTC偏移，转为北京时间0点) + HH*3600s + mm*60s
+  // 例：scheduledDate=April11UTC0点, scheduledTime="08:00" → April11 UTC 0点+8h+8h = April11 UTC 16:00 = 北京20:00
+  // 正确做法：直接取 scheduledDate 的 UTC 日期部分（即北京日期），拼接 scheduledTime
+  const datePart = scheduledDate.toISOString().substring(0, 10); // 'YYYY-MM-DD' 北京日期
+  return `${datePart} ${scheduledTime}:00`;
 }

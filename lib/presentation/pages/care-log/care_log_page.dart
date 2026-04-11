@@ -498,7 +498,7 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
             : (isMedicationMissed ? AppColors.coral : entry.type.color));
     final alertColor = isOutOfRange
         ? AppColors.coral
-        : (isLowRange ? AppColors.warning : null);
+        : (isLowRange ? AppColors.warning : (isMedicationMissed ? AppColors.coral : null));
 
     // 健康记录时左侧显示子类型标签
     final metricType = entry.healthMetricType;
@@ -745,19 +745,23 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
                             ],
                           ),
                         ] else ...[
-                          Text(
-                            entry.content,
-                            style: TextStyle(
-                              fontSize: isOutOfRange || isLowRange ? 17 : 15,
-                              fontWeight: isOutOfRange || isLowRange ? FontWeight.w700 : FontWeight.w500,
-                              color: isOutOfRange
-                                  ? AppColors.coral
-                                  : (isLowRange ? AppColors.warning : AppColors.textPrimary),
-                              height: 1.6,
+                          // 药品日志：药品名与状态分色显示
+                          if (entry.source == 'medication_log') ...[
+                            _buildMedicationContent(entry),
+                          ] else
+                            Text(
+                              entry.content,
+                              style: TextStyle(
+                                fontSize: isOutOfRange || isLowRange ? 17 : 15,
+                                fontWeight: isOutOfRange || isLowRange ? FontWeight.w700 : FontWeight.w500,
+                                color: isOutOfRange
+                                    ? AppColors.coral
+                                    : (isLowRange ? AppColors.warning : AppColors.textPrimary),
+                                height: 1.6,
+                              ),
+                              maxLines: 5,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            maxLines: 5,
-                            overflow: TextOverflow.ellipsis,
-                          ),
                         ],
                         // 超范围时显示正常范围提示
                         if (isOutOfRange || isLowRange) ...[
@@ -782,6 +786,44 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  /// 药品日志内容：药品名与状态分色显示
+  Widget _buildMedicationContent(TimelineEntry entry) {
+    final content = entry.content;
+    // 解析格式："药品名 已漏服 · 30mg" 或 "药品名 已服用"
+    // 匹配 " 已漏服" / " 已服用" / " 已跳过"
+    final statusMatch = RegExp(r' (已漏服|已服用|已跳过)').firstMatch(content);
+    if (statusMatch == null) {
+      return Text(content, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: AppColors.textPrimary, height: 1.6), maxLines: 5, overflow: TextOverflow.ellipsis);
+    }
+    final medName = content.substring(0, statusMatch.start);
+    final status = statusMatch.group(0)!.substring(1); // 去掉前导空格
+    final dosage = content.substring(statusMatch.end); // " · 30mg" 或 ""
+
+    // 状态颜色
+    final statusColor = switch (entry.medicationStatus) {
+      'missed' => AppColors.coral,
+      'taken' => AppColors.success,
+      'skipped' => AppColors.textSecondary,
+      _ => AppColors.textSecondary,
+    };
+
+    return RichText(
+      maxLines: 5,
+      overflow: TextOverflow.ellipsis,
+      text: TextSpan(
+        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: AppColors.textPrimary, height: 1.6),
+        children: [
+          TextSpan(text: medName),
+          TextSpan(text: ' ', style: const TextStyle(color: AppColors.textPrimary)),
+          TextSpan(text: status, style: TextStyle(color: statusColor, fontWeight: FontWeight.w600)),
+          if (dosage.isNotEmpty) ...[
+            TextSpan(text: dosage, style: const TextStyle(color: AppColors.textSecondary)),
+          ],
         ],
       ),
     );

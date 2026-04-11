@@ -108,6 +108,7 @@ class MedicationCheckInCard extends StatelessWidget {
     final statusColor = _getStatusColor(item);
     final isTaken = item.status == MedicationLogStatus.taken;
     final isSkipped = item.status == MedicationLogStatus.skipped;
+    final isMissed = item.status == MedicationLogStatus.missed;
     final isDone = isTaken || isSkipped;
 
     return Container(
@@ -187,31 +188,50 @@ class MedicationCheckInCard extends StatelessWidget {
                 SizedBox(
                   height: 32,
                   child: isDone && item.takenBy != null
-                      ? Align(alignment: Alignment.centerLeft, child: _buildDoneInfo(item, statusColor, isTaken))
-                      : item.canCheckIn
+                      ? Align(alignment: Alignment.centerLeft, child: _buildDoneInfo(item, statusColor, isTaken, isMissed))
+                      : isMissed
                           ? Align(
                               alignment: Alignment.centerLeft,
-                              child: ElevatedButton(
-                                onPressed: () => _showCheckInSheet(context, item),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primary,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                                  minimumSize: const Size(0, 32),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: AppColors.coral.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(6),
                                 ),
-                                child: const Text(
-                                  AppTexts.checkIn,
+                                child: Text(
+                                  '已漏服',
                                   style: TextStyle(
-                                    color: Colors.white,
+                                    fontSize: 11,
+                                    color: AppColors.coral,
                                     fontWeight: FontWeight.w600,
-                                    fontSize: 12,
                                   ),
                                 ),
                               ),
                             )
-                          : const SizedBox(),
+                          : item.canCheckIn
+                              ? Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: ElevatedButton(
+                                    onPressed: () => _showCheckInSheet(context, item),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.primary,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                                      minimumSize: const Size(0, 32),
+                                    ),
+                                    child: const Text(
+                                      AppTexts.checkIn,
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : const SizedBox(),
                 ),
               ],
             ),
@@ -221,9 +241,9 @@ class MedicationCheckInCard extends StatelessWidget {
     );
   }
 
-  Widget _buildDoneInfo(MedicationLogItem item, Color statusColor, bool isTaken) {
+  Widget _buildDoneInfo(MedicationLogItem item, Color statusColor, bool isTaken, bool isMissed) {
     final timeStr = _formatTimeStr(item.actualTime);
-    final action = isTaken ? '已服用' : '已跳过';
+    final action = isTaken ? '已服用' : isMissed ? '已漏服' : '已跳过';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,

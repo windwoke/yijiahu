@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between } from 'typeorm';
 import {
@@ -134,7 +135,9 @@ export class MedicationLogService {
       dosage: log.medication?.dosage || '',
       scheduledTime: log.scheduledTime,
       status: log.status,
-      canCheckIn: log.status === MedicationLogStatus.PENDING,
+      canCheckIn:
+        log.status === MedicationLogStatus.PENDING ||
+        log.status === MedicationLogStatus.MISSED,
       actualTime: log.takenAt ? formatLocalTime(log.takenAt) : null,
       takenBy: log.takenBy
         ? {
@@ -206,6 +209,38 @@ export class MedicationLogService {
     }));
   }
 
+  /** 定时任务：每天凌晨1点将过期的pending记录标记为missed */
+  @Cron(CronExpression.EVERY_DAY_AT_1AM)
+  async markMissedLogs() {
+    const now = new Date();
+    // 遍历所有 pending 记录，检查是否已过期
+    const pendingLogs = await this.logRepo.find({
+      where: { status: MedicationLogStatus.PENDING },
+    });
+
+    const overdue: MedicationLog[] = [];
+    for (const log of pendingLogs) {
+      // scheduledDate 存的是 UTC 0点的 Date，scheduledTime 如 "08:00" 表示北京时间
+      // 拼出完整的北京时间，然后和当前北京时间比较
+      const [hour, minute] = log.scheduledTime.split(':').map(Number);
+      // scheduledDate 是 UTC 0点 (=北京时间 8点)，加上 scheduledTime 的小时即北京时间
+      const scheduledBeijingMs =
+        log.scheduledDate.getTime() + hour * 3600000 + minute * 60000 + 8 * 3600000;
+      if (scheduledBeijingMs < now.getTime()) {
+        overdue.push(log);
+      }
+    }
+
+    if (overdue.length === 0) return;
+
+    await Promise.all(
+      overdue.map((log) =>
+        this.logRepo.update(log.id, { status: MedicationLogStatus.MISSED }),
+      ),
+    );
+    console.log(`[MedicationLog] 标记 ${overdue.length} 条用药记录为 missed`);
+  }
+
   /** 时间线用药记录（taken/skipped） */
   async getTimeline(
     recipientId?: string,
@@ -218,7 +253,7 @@ export class MedicationLogService {
       .createQueryBuilder('log')
       .leftJoinAndSelect('log.medication', 'medication')
       .where('log.status IN (:...statuses)', {
-        statuses: [MedicationLogStatus.TAKEN, MedicationLogStatus.SKIPPED],
+        statuses: [MedicationLogStatus.TAKEN, MedicationLogStatus.SKIPPED, MedicationLogStatus.MISSED],
       })
       .andWhere('log.takenAt IS NOT NULL')
       .orderBy('log.takenAt', 'DESC')
@@ -263,17 +298,35 @@ export class MedicationLogService {
       memberMap.set(m.userId, info); // userId -> info
     }
 
-    return logs.map((log) => ({
-      id: log.id,
-      type: 'medication',
-      content: `${log.medication?.name || ''} 已${log.status === MedicationLogStatus.TAKEN ? '服用' : '跳过'}${log.medication?.dosage ? ' · ' + log.medication.dosage : ''}`,
-      authorName: memberMap.get(log.takenBy)?.nickname || '家庭成员',
-      authorAvatar: memberMap.get(log.takenBy)?.avatarUrl || null,
-      authorId: log.takenBy,
-      recipientId: log.recipientId,
-      time: formatLocalTime(log.takenAt),
-      status: log.status,
-    }));
+    return logs.map((log) => {
+      const statusText =
+        log.status === MedicationLogStatus.TAKEN
+          ? '服用'
+          : log.status === MedicationLogStatus.MISSED
+            ? '漏服'
+            : '跳过';
+      // missed 的记录没有 takenAt，用 scheduledDate + scheduledTime 代替
+      const timeStr = log.takenAt
+        ? formatLocalTime(log.takenAt)
+        : `${log.scheduledDate.toISOString().split('T')[0]} ${log.scheduledTime}`;
+      return {
+        id: log.id,
+        type: 'medication',
+        content: `${log.medication?.name || ''} 已${statusText}${log.medication?.dosage ? ' · ' + log.medication.dosage : ''}`,
+        authorName:
+          log.status === MedicationLogStatus.MISSED
+            ? null
+            : memberMap.get(log.takenBy)?.nickname || '家庭成员',
+        authorAvatar:
+          log.status === MedicationLogStatus.MISSED
+            ? null
+            : memberMap.get(log.takenBy)?.avatarUrl || null,
+        authorId: log.takenBy,
+        recipientId: log.recipientId,
+        time: timeStr,
+        status: log.status,
+      };
+    });
   }
 }
 

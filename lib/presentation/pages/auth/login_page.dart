@@ -5,6 +5,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/constants.dart';
 import '../../../core/env/env_config.dart';
 import '../../../core/router/app_router.dart';
@@ -239,10 +240,21 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   /// false = 验证码登录，true = 密码登录
   bool _usePassword = false;
 
+  bool _agreedToTerms = true;
+
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), duration: const Duration(seconds: 10)),
     );
+  }
+
+  Future<void> _launchUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      _showError('无法打开链接');
+    }
   }
 
   void _sendCode() {
@@ -276,6 +288,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   Future<void> _login() async {
+    if (!_agreedToTerms) {
+      _showError('请先阅读并同意《用户协议》和《隐私政策》');
+      return;
+    }
+
     final phone = _phoneFieldKey.currentState!.controller.text.trim();
     if (!RegExp(r'^1[3-9]\d{9}$').hasMatch(phone)) {
       _showError('请输入正确的手机号');
@@ -461,6 +478,55 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         : const Text('登录', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                   ),
                   const SizedBox(height: 16),
+
+                  // 协议勾选
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => setState(() => _agreedToTerms = !_agreedToTerms),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: Checkbox(
+                                value: _agreedToTerms,
+                                onChanged: (v) => setState(() => _agreedToTerms = v ?? false),
+                                activeColor: AppColors.primary,
+                                side: const BorderSide(color: AppColors.grey400, width: 1.5),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '我已阅读并同意',
+                              style: TextStyle(fontSize: 12, color: AppColors.grey500),
+                            ),
+                          ],
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () => _launchUrl('http://8.163.69.199/agreement.html'),
+                        child: Text(
+                          '《用户协议》',
+                          style: TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                      Text(
+                        '和',
+                        style: TextStyle(fontSize: 12, color: AppColors.grey500),
+                      ),
+                      GestureDetector(
+                        onTap: () => _launchUrl('http://8.163.69.199/privacy.html'),
+                        child: Text(
+                          '《隐私政策》',
+                          style: TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 12),
                   Center(
                     child: AnimatedSwitcher(
                       duration: const Duration(milliseconds: 200),

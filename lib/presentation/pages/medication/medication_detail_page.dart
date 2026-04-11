@@ -303,8 +303,13 @@ class MedicationDetailPage extends ConsumerWidget {
 
   Widget _buildHistoryItem(MedicationLog log) {
     final isTaken = log.status == MedicationLogStatus.taken;
-    final statusColor = isTaken ? AppColors.success : AppColors.textTertiary;
-    final statusText = isTaken ? '已服用' : '已跳过';
+    final isMissed = log.status == MedicationLogStatus.missed;
+    final statusColor = isTaken
+        ? AppColors.success
+        : isMissed
+            ? AppColors.coral
+            : AppColors.textTertiary;
+    final statusText = isTaken ? '已服用' : isMissed ? '已漏服' : '已跳过';
 
     // 优先用后端返回的格式化时间字符串
     String timeStr = log.time ?? '';

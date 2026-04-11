@@ -5,10 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>一家护 - 以家庭为单位的照护协调平台</title>
   <meta name="description" content="一家护是一款以家庭为单位的照护协调平台，帮助家庭成员协作管理老人健康、用药、复诊等照护事务，让爱与关怀触手可及。" />
+  <!-- Open Graph / Social -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="一家护 - 以家庭为单位的照护协调平台" />
+  <meta property="og:description" content="帮助家庭成员协作管理老人健康、用药提醒、复诊安排，让爱与关怀触手可及。" />
+  <meta property="og:site_name" content="一家护" />
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="一家护 - 以家庭为单位的照护协调平台" />
+  <meta name="twitter:description" content="帮助家庭成员协作管理老人健康、用药提醒、复诊安排，让爱与关怀触手可及。" />
   <link rel="icon" type="image/x-icon" href="/favicon.ico" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet" />
   <style>
     :root {
       --green: #7B9E87;
@@ -132,14 +141,13 @@
     #nav-toggle:checked ~ .nav-overlay { opacity: 1; pointer-events: all; }
     #nav-toggle:checked ~ .nav-drawer { transform: translateX(0); }
 
-    /* Trust bar: center text, no flex stretch */
-    .trust-item { align-items: flex-start; }
+    /* Trust bar */
     @media (max-width: 768px) {
-      .trust-inner { flex-direction: column; align-items: flex-start; gap: 16px; }
+      .trust-inner { flex-direction: column; align-items: stretch; gap: 16px; }
       .trust-item { font-size: 13px; }
     }
     @media (max-width: 480px) {
-      .trust-inner { flex-direction: column; align-items: flex-start; gap: 16px; }
+      .trust-inner { flex-direction: column; align-items: stretch; gap: 16px; }
     }
 
     /* ── Hero ── */
@@ -293,7 +301,7 @@
       display: flex; justify-content: center; gap: 48px; flex-wrap: wrap;
     }
     .trust-item {
-      display: flex; align-items: flex-start; gap: 10px;
+      display: flex; align-items: center; gap: 10px;
       font-size: 14px; color: var(--text-light); font-weight: 500;
     }
     .trust-icon {
@@ -305,7 +313,7 @@
     }
 
     @media (max-width: 480px) {
-      .trust-inner { flex-direction: column; align-items: center; }
+      .trust-inner { flex-direction: column; align-items: stretch; }
     }
 
     /* ── Features ── */
@@ -321,35 +329,180 @@
     }
     .section-desc {
       text-align: center; font-size: 16px; color: var(--text-light);
-      max-width: 560px; margin: 0 auto 60px;
+      max-width: 560px; margin: 0 auto 64px;
     }
+
+    /* Feature cards grid */
     .features-grid {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
-      overflow-x: auto;
-      scroll-snap-type: x mandatory;
-      -webkit-overflow-scrolling: touch;
-      padding-bottom: 8px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: auto auto;
+      gap: 20px;
     }
-    .feature-card { scroll-snap-align: start; }
-    .features-grid::-webkit-scrollbar { height: 4px; }
-    .features-grid::-webkit-scrollbar-track { background: transparent; }
-    .features-grid::-webkit-scrollbar-thumb { background: var(--green-light); border-radius: 2px; }
+
+    /* Each feature card */
     .feature-card {
-      background: white; border-radius: var(--radius);
-      padding: 32px 28px;
-      border: 1px solid rgba(123,158,135,0.1);
-      transition: transform 0.25s, box-shadow 0.25s;
+      background: white;
+      border-radius: 20px;
+      padding: 0;
+      border: 1px solid rgba(123,158,135,0.08);
+      overflow: hidden;
+      position: relative;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      transform: translateY(24px);
     }
-    .feature-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(123,158,135,0.12); }
+    .feature-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .feature-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 20px 50px rgba(123,158,135,0.15);
+    }
+
+    /* Left accent bar */
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 4px;
+      border-radius: 4px 0 0 4px;
+    }
+
+    /* Feature number */
+    .feature-num {
+      position: absolute;
+      top: 20px; right: 20px;
+      font-size: 56px;
+      font-weight: 800;
+      line-height: 1;
+      opacity: 0.07;
+      color: var(--text);
+      font-family: 'Nunito', sans-serif;
+    }
+
+    /* Card header */
+    .feature-header {
+      padding: 28px 28px 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+    }
     .feature-icon {
-      width: 52px; height: 52px;
-      background: rgba(123,158,135,0.1);
+      width: 48px; height: 48px;
       border-radius: 14px;
       display: flex; align-items: center; justify-content: center;
-      margin-bottom: 20px;
+      flex-shrink: 0;
     }
-    .feature-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 10px; color: var(--text); }
-    .feature-card p { font-size: 14px; color: var(--text-light); line-height: 1.7; }
+    .feature-tag {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      opacity: 0.7;
+      margin-bottom: 4px;
+    }
+
+    /* Card body */
+    .feature-body {
+      padding: 0 28px 28px;
+      flex: 1;
+    }
+    .feature-card h3 {
+      font-size: 17px; font-weight: 700;
+      color: var(--text); margin-bottom: 8px;
+      line-height: 1.3;
+    }
+    .feature-card p {
+      font-size: 13.5px; color: var(--text-light);
+      line-height: 1.75;
+    }
+
+    /* Feature colors */
+    .feature-card:nth-child(1)::before { background: #E07A5F; }
+    .feature-card:nth-child(1) .feature-icon { background: rgba(224,122,95,0.12); }
+    .feature-card:nth-child(1) .feature-tag { color: #E07A5F; }
+
+    .feature-card:nth-child(2)::before { background: #81B29A; }
+    .feature-card:nth-child(2) .feature-icon { background: rgba(129,178,154,0.12); }
+    .feature-card:nth-child(2) .feature-tag { color: #81B29A; }
+
+    .feature-card:nth-child(3)::before { background: #F2CC8F; }
+    .feature-card:nth-child(3) .feature-icon { background: rgba(242,204,143,0.15); }
+    .feature-card:nth-child(3) .feature-tag { color: #C49A4B; }
+
+    .feature-card:nth-child(4)::before { background: #7B9E87; }
+    .feature-card:nth-child(4) .feature-icon { background: rgba(123,158,135,0.12); }
+    .feature-card:nth-child(4) .feature-tag { color: #7B9E87; }
+
+    .feature-card:nth-child(5)::before { background: #E07A5F; }
+    .feature-card:nth-child(5) .feature-icon { background: rgba(224,122,95,0.12); }
+    .feature-card:nth-child(5) .feature-tag { color: #E07A5F; }
+
+    .feature-card:nth-child(6)::before { background: #9B8EC4; }
+    .feature-card:nth-child(6) .feature-icon { background: rgba(155,142,196,0.12); }
+    .feature-card:nth-child(6) .feature-tag { color: #9B8EC4; }
+
+    /* Staggered height - make row 1 cards slightly taller */
+    .feature-card:nth-child(1) { min-height: 200px; }
+    .feature-card:nth-child(2) { min-height: 185px; }
+    .feature-card:nth-child(3) { min-height: 210px; }
+    .feature-card:nth-child(4) { min-height: 190px; }
+    .feature-card:nth-child(5) { min-height: 200px; }
+    .feature-card:nth-child(6) { min-height: 180px; }
+
+    /* Animation delays */
+    .feature-card:nth-child(1) { transition-delay: 0ms; }
+    .feature-card:nth-child(2) { transition-delay: 80ms; }
+    .feature-card:nth-child(3) { transition-delay: 160ms; }
+    .feature-card:nth-child(4) { transition-delay: 240ms; }
+    .feature-card:nth-child(5) { transition-delay: 320ms; }
+    .feature-card:nth-child(6) { transition-delay: 400ms; }
+
+    /* Mobile: stacked, full width */
+    @media (max-width: 768px) {
+      .features-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+      }
+      .feature-card {
+        min-height: unset !important;
+        flex-direction: column;
+      }
+      /* 顶部色条 */
+      .feature-card::before {
+        top: 0; bottom: auto; left: 0; right: 0;
+        width: auto;
+        height: 4px;
+        border-radius: 4px 4px 0 0;
+      }
+      .feature-num { display: none; }
+      .feature-header {
+        flex-direction: row;
+        align-items: center;
+        padding: 16px 16px 8px;
+        gap: 10px;
+      }
+      .feature-icon { width: 38px; height: 38px; margin-bottom: 0; }
+      .feature-tag { display: none; }
+      .feature-body {
+        padding: 0 16px 16px;
+      }
+      .feature-card h3 { font-size: 15px; margin-bottom: 4px; }
+      .feature-card p { font-size: 12px; line-height: 1.5; }
+      .feature-card.visible { transform: translateX(0); }
+      .feature-card { transform: translateX(-16px); }
+    }
+
+    /* Tablet */
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .features-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
 
     /* ── Comparison ── */
     .comparison {
@@ -394,14 +547,25 @@
       font-family: inherit;
     }
     .faq-q:hover { color: var(--green-dark); }
-    .faq-arrow { transition: transform 0.3s; flex-shrink: 0; }
+    .faq-arrow { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); flex-shrink: 0; }
     .faq-item.open .faq-arrow { transform: rotate(180deg); }
     .faq-a {
       max-height: 0; overflow: hidden;
-      transition: max-height 0.3s ease, padding 0.3s ease;
+      transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .faq-item.open .faq-a { max-height: 400px; padding-bottom: 20px; }
-    .faq-a p { font-size: 15px; color: var(--text-light); line-height: 1.8; }
+    .faq-item.open .faq-a {
+      max-height: 300px;
+    }
+    .faq-a-inner {
+      opacity: 0;
+      transform: translateY(-6px);
+      transition: opacity 0.3s ease 0.05s, transform 0.3s ease 0.05s;
+    }
+    .faq-item.open .faq-a-inner {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .faq-a p { font-size: 15px; color: var(--text-light); line-height: 1.8; padding-bottom: 20px; }
 
     /* ── How it works ── */
     .how { background: white; padding: 100px 24px; }
@@ -478,9 +642,14 @@
     footer p:first-child { font-size: 16px; color: rgba(255,255,255,0.75); margin-bottom: 8px; }
     footer a { color: rgba(255,255,255,0.75); }
     footer a:hover { color: var(--green-light); }
+    .footer-links { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 8px; }
+    .footer-links a { color: rgba(255,255,255,0.6); font-size: 13px; }
+    .footer-links span { color: rgba(255,255,255,0.4); }
 
     /* ── Mobile ── */
     @media (max-width: 768px) {
+      html, body { overflow-x: hidden; width: 100%; }
+      .comparison, .how, .features, .trust-bar { overflow-x: hidden; }
       .nav-links { display: none !important; }
       .nav-toggle-label { display: flex !important; }
       .nav-inner .btn-primary { display: none !important; }
@@ -488,32 +657,61 @@
       .hero-inner { grid-template-columns: 1fr; text-align: center; }
       .hero-badges, .hero-actions { justify-content: center; }
       .hero-visual { order: 1; margin-top: 40px; }
-      .phone-mockup { width: 160px; height: 320px; border-radius: 22px; }
+      .phone-mockup {
+        width: 180px;
+        height: 360px;
+        border-radius: 26px;
+        margin: 0 auto;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05) inset;
+      }
       .phone-wrapper { transform: none; }
-      .phone-glow, .phone-shadow, .phone-notch { display: none; }
-      .phone-screen { padding: 12px 10px; }
-      .phone-topbar { gap: 6px; margin-bottom: 8px; }
-      .phone-avatar { width: 24px; height: 24px; font-size: 10px; }
+      .phone-glow { display: none; }
+      .phone-shadow { display: none; }
+      .phone-notch { display: none; }
+      .phone-screen { padding: 14px 12px; }
+      .phone-topbar { gap: 6px; margin-bottom: 10px; }
+      .phone-avatar { width: 26px; height: 26px; font-size: 11px; }
       .phone-username { font-size: 11px; }
       .phone-date { font-size: 9px; }
-      .phone-card { padding: 7px 9px; margin-bottom: 6px; }
+      .phone-card { padding: 8px 10px; margin-bottom: 7px; }
       .phone-card-label { font-size: 9px; }
       .phone-card-value { font-size: 11px; }
       .hero-text h1 { font-size: clamp(26px, 7vw, 36px); }
       .hero-text p { font-size: 15px; }
       .features-grid {
-        display: flex; gap: 16px;
-        overflow-x: auto; scroll-snap-type: x mandatory;
-        -webkit-overflow-scrolling: touch; padding-bottom: 8px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
       }
-      .feature-card { flex-shrink: 0; width: 72vw; max-width: 280px; }
+      .feature-card { width: 100%; }
       .comparison-grid { grid-template-columns: 1fr; }
       .step-arrow { display: none; }
-      .steps { gap: 32px; }
+      .steps { gap: 0; }
+      .step {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        position: relative;
+        padding-bottom: 32px;
+      }
+      .step:last-child { padding-bottom: 0; }
+      .step-num { margin: 0 auto 12px; }
+      .step h4 { margin-bottom: 6px; }
+      .step p { font-size: 13px; max-width: 280px; }
       .cta-buttons { gap: 10px; }
       .cta-buttons .btn-white { padding: 12px 16px; font-size: 13px; gap: 6px; }
       .qr-box { flex-direction: column; text-align: center; }
       .contact-list { flex-direction: column; align-items: center; }
+
+      /* Comparison: 紧凑显示 fit 一屏 */
+      .comparison { padding: 60px 16px; }
+      .comparison-grid { gap: 16px; }
+      .compare-card { padding: 20px 18px; border-radius: 16px; }
+      .compare-card > p { margin-bottom: 16px; }
+      .compare-item { margin-bottom: 10px; gap: 8px; }
+      .compare-item p { font-size: 13px; line-height: 1.45; }
     }
   </style>
 </head>
@@ -563,12 +761,13 @@
   <div class="hero-inner">
     <div class="hero-text">
       <h1>让<span>照护</span>更有序<br/>让<span>家人</span>更安心</h1>
-      <p>一家护是以家庭为单位的照护协调平台，帮助家庭成员协作管理老人健康、用药提醒、复诊安排，让爱与关怀触手可及。</p>
+      <p>以家庭为单位，照护老人健康、用药、复诊，让爱与关怀触手可及。</p>
       <div class="hero-badges">
         <span class="badge">用药提醒</span>
         <span class="badge">健康记录</span>
         <span class="badge">复诊管理</span>
         <span class="badge">SOS 紧急呼叫</span>
+        <span class="badge">家庭协作</span>
       </div>
       <div class="hero-actions">
         <button class="btn-download" onclick="document.getElementById('download').scrollIntoView({behavior:'smooth'})">
@@ -645,49 +844,131 @@
   <h2 class="section-title">一个平台，搞定照护大小事</h2>
   <p class="section-desc">专为家庭照护场景设计，每一个功能都解决真实的照护痛点。</p>
   <div class="features-grid">
+    <!-- 01 用药 -->
     <div class="feature-card">
-      <div class="feature-icon">
-        <svg width="22" height="22" fill="none" stroke="#7B9E87" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="feature-num">01</span>
+      <div class="feature-header">
+        <div class="feature-icon">
+          <svg width="22" height="22" fill="none" stroke="#E07A5F" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div>
+          <div class="feature-tag">用药</div>
+          <h3>用药提醒与打卡</h3>
+        </div>
       </div>
-      <h3>用药提醒与打卡</h3>
-      <p>自动提醒服药时间，记录用药情况，漏服一目了然，全家共享用药进度。</p>
+      <div class="feature-body">
+        <p>自动提醒，全家共享，漏服不再。</p>
+      </div>
     </div>
+    <!-- 02 健康 -->
     <div class="feature-card">
-      <div class="feature-icon">
-        <svg width="22" height="22" fill="none" stroke="#7B9E87" stroke-width="2" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="feature-num">02</span>
+      <div class="feature-header">
+        <div class="feature-icon">
+          <svg width="22" height="22" fill="none" stroke="#81B29A" stroke-width="2" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div>
+          <div class="feature-tag">健康</div>
+          <h3>健康数据记录</h3>
+        </div>
       </div>
-      <h3>健康数据记录</h3>
-      <p>血压、血糖、心率、体温随时记录，趋势图表清晰展示，异常及时预警。</p>
+      <div class="feature-body">
+        <p>血压血糖记录，趋势图表，异常预警。</p>
+      </div>
     </div>
+    <!-- 03 复诊 -->
     <div class="feature-card">
-      <div class="feature-icon">
-        <svg width="22" height="22" fill="none" stroke="#7B9E87" stroke-width="2" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="feature-num">03</span>
+      <div class="feature-header">
+        <div class="feature-icon">
+          <svg width="22" height="22" fill="none" stroke="#C49A4B" stroke-width="2" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div>
+          <div class="feature-tag">复诊</div>
+          <h3>复诊管理</h3>
+        </div>
       </div>
-      <h3>复诊管理</h3>
-      <p>提前安排复诊日程，设置提醒，支持接送人分工协作，不遗漏任何重要日期。</p>
+      <div class="feature-body">
+        <p>提前提醒，接送分工，不漏重要日期。</p>
+      </div>
     </div>
+    <!-- 04 护理日志 -->
     <div class="feature-card">
-      <div class="feature-icon">
-        <svg width="22" height="22" fill="none" stroke="#7B9E87" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="feature-num">04</span>
+      <div class="feature-header">
+        <div class="feature-icon">
+          <svg width="22" height="22" fill="none" stroke="#7B9E87" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div>
+          <div class="feature-tag">日志</div>
+          <h3>护理日志</h3>
+        </div>
       </div>
-      <h3>护理日志</h3>
-      <p>记录每日照护情况，拍照上传附件，形成完整的照护档案，随时回顾。</p>
+      <div class="feature-body">
+        <p>拍照记录，照护档案，随时回顾。</p>
+      </div>
     </div>
+    <!-- 05 SOS -->
     <div class="feature-card">
-      <div class="feature-icon">
-        <svg width="22" height="22" fill="none" stroke="#7B9E87" stroke-width="2" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="feature-num">05</span>
+      <div class="feature-header">
+        <div class="feature-icon">
+          <svg width="22" height="22" fill="none" stroke="#E07A5F" stroke-width="2" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div>
+          <div class="feature-tag">紧急</div>
+          <h3>SOS 紧急呼叫</h3>
+        </div>
       </div>
-      <h3>SOS 紧急呼叫</h3>
-      <p>长按 3 秒触发 SOS，家庭成员同时收到通知，第一时间响应紧急情况。</p>
+      <div class="feature-body">
+        <p>长按3秒，全家通知，紧急快响应。</p>
+      </div>
     </div>
+    <!-- 06 家庭协作 -->
     <div class="feature-card">
-      <div class="feature-icon">
-        <svg width="22" height="22" fill="none" stroke="#7B9E87" stroke-width="2" viewBox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="feature-num">06</span>
+      <div class="feature-header">
+        <div class="feature-icon">
+          <svg width="22" height="22" fill="none" stroke="#9B8EC4" stroke-width="2" viewBox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div>
+          <div class="feature-tag">协作</div>
+          <h3>家庭协作</h3>
+        </div>
       </div>
-      <h3>家庭协作</h3>
-      <p>邀请家人加入，统一管理照护任务，分工明确，全家参与，让爱不孤单。</p>
+      <div class="feature-body">
+        <p>邀请家人，分工协作，全家参与。</p>
+      </div>
     </div>
   </div>
+  <style>
+  /* Intersection Observer animation trigger */
+  .features-grid .feature-card { opacity: 0; transform: translateY(24px); }
+  .features-grid .feature-card.visible { opacity: 1; transform: translateY(0); transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  @media (max-width: 768px) {
+    .features-grid .feature-card { transform: translateX(-16px); }
+    .features-grid .feature-card.visible { transform: translateX(0); }
+  }
+  </style>
+  <script>
+  (function() {
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          var cards = entry.target.querySelectorAll('.feature-card');
+          cards.forEach(function(card, i) {
+            setTimeout(function() {
+              card.classList.add('visible');
+            }, i * 80);
+          });
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+    var grid = document.querySelector('.features-grid');
+    if (grid) observer.observe(grid);
+  })();
+  </script>
 </section>
 
 <!-- Comparison -->
@@ -703,25 +984,25 @@
           <div class="compare-icon x">
             <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round"/></svg>
           </div>
-          <p>记不住什么时候该吃什么药，容易漏服或重复服用</p>
+          <p>记不住吃药，容易漏服或重复</p>
         </div>
         <div class="compare-item">
           <div class="compare-icon x">
             <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round"/></svg>
           </div>
-          <p>家人不知道彼此照顾情况，各干各的，信息不互通</p>
+          <p>家人各干各的，信息不互通</p>
         </div>
         <div class="compare-item">
           <div class="compare-icon x">
             <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round"/></svg>
           </div>
-          <p>复诊日期靠脑子记，容易忘，错过重要检查</p>
+          <p>复诊日期靠脑子记，容易忘</p>
         </div>
         <div class="compare-item">
           <div class="compare-icon x">
             <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round"/></svg>
           </div>
-          <p>紧急情况发生，家人不在身边时无法第一时间知道</p>
+          <p>紧急情况，家人无法第一时间知道</p>
         </div>
       </div>
       <div class="compare-card after">
@@ -731,25 +1012,25 @@
           <div class="compare-icon check">
             <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
-          <p>按时推送用药提醒，全家共享打卡情况，再也不怕漏服</p>
+          <p>按时提醒，全家共享，不再漏服</p>
         </div>
         <div class="compare-item">
           <div class="compare-icon check">
             <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
-          <p>护理日志实时同步，家人互相了解情况，配合更默契</p>
+          <p>日志实时同步，配合更默契</p>
         </div>
         <div class="compare-item">
           <div class="compare-icon check">
             <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
-          <p>复诊提前提醒，接送人分工协作，重要日期一个不落</p>
+          <p>复诊提前提醒，分工协作，不漏日期</p>
         </div>
         <div class="compare-item">
           <div class="compare-icon check">
             <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
-          <p>SOS 一键触发，全家同时收到通知，紧急响应快人一步</p>
+          <p>SOS一键触发，全家快响应</p>
         </div>
       </div>
     </div>
@@ -767,7 +1048,9 @@
         <svg class="faq-arrow" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
       <div class="faq-a">
-        <p>老人不需要操作 App。子女在 App 内完成所有管理操作，老人只需配合用药即可。SOS 功能安装在子女手机上，老人遇到紧急情况时由子女触发通知家人。</p>
+        <div class="faq-a-inner">
+          <p>老人不需要操作 App。子女在 App 内完成所有管理操作，老人只需配合用药即可。SOS 功能安装在子女手机上，老人遇到紧急情况时由子女触发通知家人。</p>
+        </div>
       </div>
     </div>
     <div class="faq-item" onclick="toggleFaq(this)">
@@ -776,7 +1059,9 @@
         <svg class="faq-arrow" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
       <div class="faq-a">
-        <p>完全可以，这正是一家护的核心价值。通过邀请码加入同一个家庭后，无论身处何地都能实时了解照护情况、收到提醒通知、查看健康记录。</p>
+        <div class="faq-a-inner">
+          <p>完全可以，这正是一家护的核心价值。通过邀请码加入同一个家庭后，无论身处何地都能实时了解照护情况、收到提醒通知、查看健康记录。</p>
+        </div>
       </div>
     </div>
     <div class="faq-item" onclick="toggleFaq(this)">
@@ -785,7 +1070,9 @@
         <svg class="faq-arrow" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
       <div class="faq-a">
-        <p>推广期全功能免费使用，无任何限制。后续如有付费计划，会提前通知。</p>
+        <div class="faq-a-inner">
+          <p>推广期全功能免费使用，无任何限制。后续如有付费计划，会提前通知。</p>
+        </div>
       </div>
     </div>
     <div class="faq-item" onclick="toggleFaq(this)">
@@ -794,7 +1081,9 @@
         <svg class="faq-arrow" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
       <div class="faq-a">
-        <p>数据仅在家庭内部可见，不对外部展示。每个家庭独立存储，家人之间完全隔离。没有第三方账号登录，不存在关联数据泄露风险。</p>
+        <div class="faq-a-inner">
+          <p>数据仅在家庭内部可见，不对外部展示。每个家庭独立存储，家人之间完全隔离。没有第三方账号登录，不存在关联数据泄露风险。</p>
+        </div>
       </div>
     </div>
     <div class="faq-item" onclick="toggleFaq(this)">
@@ -803,7 +1092,9 @@
         <svg class="faq-arrow" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
       <div class="faq-a">
-        <p>每个家庭支持添加多名成员，无人数限制。推广期不设任何上限。</p>
+        <div class="faq-a-inner">
+          <p>每个家庭支持添加多名成员，无人数限制。推广期不设任何上限。</p>
+        </div>
       </div>
     </div>
   </div>
@@ -892,13 +1183,24 @@
 <footer>
   <p>一家护 · 一家守护</p>
   <p>让每个家庭都能安心</p>
-  <p style="margin-top: 16px;">© 2026 一家护 YiJiaHu. 保留所有权利.</p>
+  <div class="footer-links">
+    <a href="http://8.163.69.199/privacy.html" target="_blank">隐私政策</a>
+    <span>·</span>
+    <a href="http://8.163.69.199/agreement.html" target="_blank">用户协议</a>
+  </div>
+  <p style="margin-top: 8px;">© 2026 一家护 YiJiaHu. 保留所有权利. <a href="https://beian.miit.gov.cn/" target="_blank" rel="nofollow">京ICP备XXXXXXXX号</a></p>
 </footer>
 
 <script>
   function toggleFaq(el) {
     el.classList.toggle('open');
   }
+  // 清理旧滚动动画留下的 inline 样式
+  document.querySelectorAll('.compare-card, .step, .faq-item, .trust-item').forEach(function(el) {
+    el.style.opacity = '';
+    el.style.transform = '';
+    el.style.transition = '';
+  });
 </script>
 
 </body>

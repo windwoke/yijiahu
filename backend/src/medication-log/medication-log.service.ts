@@ -320,10 +320,10 @@ export class MedicationLogService {
           : log.status === MedicationLogStatus.MISSED
             ? '漏服'
             : '跳过';
-      // missed 的记录没有 takenAt，用 scheduledDate + scheduledTime 代替
+      // missed 的记录没有 takenAt，用 scheduledDate + scheduledTime（北京时间）格式化
       const timeStr = log.takenAt
         ? formatLocalTime(log.takenAt)
-        : `${log.scheduledDate.toISOString().split('T')[0]} ${log.scheduledTime}`;
+        : formatBeijingDateTime(log.scheduledDate, log.scheduledTime);
       return {
         id: log.id,
         type: 'medication',
@@ -353,4 +353,13 @@ function formatLocalTime(date: Date): string {
   // 需要加回 8 小时再取本地 API，转为北京时间
   const local = new Date(date.getTime() + 8 * 60 * 60 * 1000);
   return `${local.getUTCFullYear()}-${pad(local.getUTCMonth() + 1)}-${pad(local.getUTCDate())} ${pad(local.getUTCHours())}:${pad(local.getUTCMinutes())}:${pad(local.getUTCSeconds())}`;
+}
+
+/** 格式化北京时间（scheduledDate UTC midnight + scheduledTime 小时分钟） */
+function formatBeijingDateTime(scheduledDate: Date, scheduledTime: string): string {
+  const [hour, minute] = scheduledTime.split(':').map(Number);
+  // scheduledDate 存的是 UTC 0点，加8小时是北京时间0点，再加上 hour*3600000 + minute*60000
+  const beijing = new Date(scheduledDate.getTime() + 8 * 3600000 + hour * 3600000 + minute * 60000);
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${beijing.getUTCFullYear()}-${pad(beijing.getUTCMonth() + 1)}-${pad(beijing.getUTCDate())} ${pad(beijing.getUTCHours())}:${pad(beijing.getUTCMinutes())}:${pad(beijing.getUTCSeconds())}`;
 }

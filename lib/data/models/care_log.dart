@@ -80,6 +80,8 @@ class TimelineEntry extends Equatable {
   final int? medicationCompleted;
   final int? medicationTotal;
   final String? specialNote;
+  /// 用药记录专用：taken / skipped / missed
+  final String? medicationStatus;
 
   const TimelineEntry({
     required this.id,
@@ -98,6 +100,7 @@ class TimelineEntry extends Equatable {
     this.medicationCompleted,
     this.medicationTotal,
     this.specialNote,
+    this.medicationStatus,
   });
 
   factory TimelineEntry.fromCareLog(Map<String, dynamic> json) {
@@ -130,6 +133,7 @@ class TimelineEntry extends Equatable {
       authorAvatar: json['authorAvatar'] as String?,
       recipientId: json['recipientId'] as String? ?? json['recipient_id'] as String? ?? '',
       source: 'medication_log',
+      medicationStatus: json['status'] as String?,
     );
   }
 

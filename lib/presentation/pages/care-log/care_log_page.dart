@@ -490,9 +490,12 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
     // 健康记录默认用主色蓝，超范围用警告橙
     final isHealthRecord = entry.source == 'health_record' && entry.healthMetricType != null;
     final isDailyCheckin = entry.source == 'daily_care_checkin';
+    final isMedicationMissed = entry.source == 'medication_log' && entry.medicationStatus == 'missed';
     final baseColor = isHealthRecord
         ? AppColors.primary
-        : (isDailyCheckin ? entry.checkinStatus?.color ?? AppColors.primary : entry.type.color);
+        : (isDailyCheckin
+            ? entry.checkinStatus?.color ?? AppColors.primary
+            : (isMedicationMissed ? AppColors.coral : entry.type.color));
     final alertColor = isOutOfRange
         ? AppColors.coral
         : (isLowRange ? AppColors.warning : null);
@@ -522,9 +525,11 @@ class _CareLogPageState extends ConsumerState<CareLogPage> with WidgetsBindingOb
                   ),
                   child: Center(
                     child: Text(
-                      isDailyCheckin
-                          ? entry.checkinStatus?.emoji ?? '📋'
-                          : (isHealthRecord ? metricType!.emoji : entry.type.emoji),
+                      isMedicationMissed
+                          ? '❌'
+                          : (isDailyCheckin
+                              ? entry.checkinStatus?.emoji ?? '📋'
+                              : (isHealthRecord ? metricType!.emoji : entry.type.emoji)),
                       style: const TextStyle(fontSize: 14),
                     ),
                   ),

@@ -260,14 +260,17 @@ export class MedicationLogService {
         '(log.takenAt IS NOT NULL OR log.status = :missedStatus)',
         { missedStatus: MedicationLogStatus.MISSED },
       )
-      .orderBy('COALESCE(log.takenAt, log.scheduledDate)', 'DESC')
+      .orderBy('log.takenAt', 'DESC')
+      .addOrderBy('log.scheduledDate', 'DESC')
       .take(50);
 
-    if (before)
+    if (before) {
+      // takenAt 为 NULL 时用 scheduledDate 比较
       qb.andWhere(
-        'COALESCE(log.takenAt, log.scheduledDate) < :before',
+        '(log.takenAt IS NOT NULL AND log.takenAt < :before) OR (log.takenAt IS NULL AND log.scheduledDate < :before)',
         { before },
       );
+    }
     if (recipientId)
       qb.andWhere('log.recipientId = :recipientId', { recipientId });
     if (familyId)

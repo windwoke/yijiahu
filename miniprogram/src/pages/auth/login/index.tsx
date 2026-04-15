@@ -163,7 +163,9 @@ export default function LoginPage() {
                 onClick={handleSendCode}
                 disabled={countdown > 0 || !isValidPhone(phone)}
               >
-                {countdown > 0 ? `${countdown}s` : '获取验证码'}
+                <Text style={{ color: countdown > 0 ? '#2C2C2C' : '#FFFFFF', fontSize: '26rpx', fontWeight: '500' }}>
+                  {countdown > 0 ? `${countdown}s` : '获取验证码'}
+                </Text>
               </Button>
             </View>
             {codeError && <Text className="field-error-msg">{codeError}</Text>}

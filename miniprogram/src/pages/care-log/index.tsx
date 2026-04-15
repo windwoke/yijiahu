@@ -817,8 +817,8 @@ export default function CareLogPage() {
                           </View>
                         )}
 
-                        {/* 头像 + 名字（偏高偏低时不显示右侧头像） */}
-                        {!isAlertCard && (
+                        {/* 头像 + 名字 */}
+                        {(
                           <View className="log-card-top-right">
                             {log.authorAvatar ? (
                               <Image

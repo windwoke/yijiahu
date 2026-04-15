@@ -248,14 +248,15 @@ export default function MedicationDetailPage() {
             ) : (
               history.slice(0, 4).map((log) => {
                 const isTaken = log.status === MedicationLogStatus.TAKEN;
-                const color = isTaken ? '#6BA07E' : '#B0ADAD';
+                const isMissed = log.status === MedicationLogStatus.MISSED;
+                const color = isTaken ? '#6BA07E' : isMissed ? '#E84040' : '#B0ADAD';
                 return (
                   <View key={log.id} className="history-row">
                     <View className="history-dot" style={{ backgroundColor: color }} />
                     <Text className="history-time">{formatTimeStr(log.time)}</Text>
                     <View className="history-badge" style={{ color, backgroundColor: `${color}1A` }}>
                       <Text className="history-badge-text">
-                        {isTaken ? '已服用' : '已跳过'}
+                        {isTaken ? '已服用' : isMissed ? '已漏服' : '已跳过'}
                       </Text>
                     </View>
                     <View className="history-author">

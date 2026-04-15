@@ -74,6 +74,8 @@ interface CareLog {
   attachments: Attachment[];
   /** 'care_log' | 'medication' | 'health_record' | 'daily_care_checkin' */
   source: string;
+  /** 用药记录专用：'pending' | 'taken' | 'skipped' | 'missed' */
+  status?: string;
   /** 健康记录专用字段 */
   recordType?: string;
   healthValue?: Record<string, any>;
@@ -376,17 +378,22 @@ export default function CareLogPage() {
         }));
 
         // 用药打卡（后端返回 time 字段）
-        const medLogs: CareLog[] = (medLogsData ?? []).map((item: any) => ({
-          id: item.id,
-          content: item.content || '',
-          type: 'medication',
-          createdAt: item.time || item.createdAt,
-          authorName: item.authorName || '家庭成员',
-          authorAvatar: item.authorAvatar,
-          recipientId: item.recipientId,
-          attachments: [],
-          source: 'medication',
-        }));
+        const medLogs: CareLog[] = (medLogsData ?? []).map((item: any) => {
+          // 漏服时 content 可能为空，用状态补上
+          const content = item.content || (item.status === 'missed' ? '已漏服' : '');
+          return {
+            id: item.id,
+            content,
+            type: 'medication',
+            createdAt: item.time || item.createdAt,
+            authorName: item.authorName || '家庭成员',
+            authorAvatar: item.authorAvatar,
+            recipientId: item.recipientId,
+            attachments: [],
+            source: 'medication',
+            status: item.status,
+          };
+        });
 
         // 健康记录
         const healthLogs: CareLog[] = ((healthData ?? []) as any[]).map((item: any) => ({
@@ -724,12 +731,17 @@ export default function CareLogPage() {
                 const isCheckin = log.source === 'daily_care_checkin';
                 const range = isHealth ? checkHealthRange(log.recordType || '', log.healthValue) : 'normal';
 
+                // 用药漏服状态
+                const isMedMissed = isMedication && log.status === 'missed';
+
                 // 颜色
                 const baseColor = isMedication ? '#4A90D9' : isCheckin ? '#7B9E87' : typeDef.color;
-                const alertColor = range === 'high' ? '#E84040' : range === 'low' ? '#F5A623' : baseColor;
+                const alertColor = range === 'high' ? '#E84040' : range === 'low' ? '#F5A623' : isMedMissed ? '#E84040' : baseColor;
 
                 // emoji
-                const cardEmoji = isMedication ? '💊' : isCheckin
+                const cardEmoji = isMedication
+                  ? (isMedMissed ? '💊' : '💊')
+                  : isCheckin
                   ? (log.checkinStatus === 'normal' ? '😊' : log.checkinStatus === 'concerning' ? '😟' : log.checkinStatus === 'poor' ? '😰' : '🆘')
                   : isHealth ? HEALTH_METRIC_TYPES.find(m => m.key === log.recordType)?.emoji || '🩺' : typeDef.emoji;
 
@@ -739,11 +751,16 @@ export default function CareLogPage() {
                   : log.checkinStatus === 'poor' ? '#E07B5D'
                   : log.checkinStatus === 'critical' ? '#C0392B' : baseColor;
 
-                // 超范围时卡片加边框
-                const isAlertCard = isHealth && range !== 'normal';
+                // 超范围时卡片加边框（健康记录异常 + 漏服药品）
+                const isAlertCard = (isHealth && range !== 'normal') || isMedMissed;
 
                 // 时间格式：护理打卡显示日期，其他显示时间
                 const timeText = isCheckin ? log.createdAt.substring(0, 10) : formatTime(log.createdAt);
+
+                // 用药状态标签文字
+                const medStatusLabel = isMedMissed ? '已漏服'
+                  : log.status === 'taken' ? '已服用'
+                  : log.status === 'skipped' ? '已跳过' : '待打卡';
 
                 return (
                   <View key={log.id} className="log-item-row">
@@ -780,7 +797,7 @@ export default function CareLogPage() {
                         {!isHealth && (
                           <View className="log-type-badge" style={{ backgroundColor: `${alertColor}1A` }}>
                             <Text className="log-type-badge-text" style={{ color: alertColor }}>
-                              {isMedication ? '服药' : isCheckin ? `护理打卡 · ${log.checkinStatus === 'normal' ? '状态良好' : log.checkinStatus === 'concerning' ? '需要关注' : log.checkinStatus === 'poor' ? '状态较差' : '紧急情况'}` : typeDef.label}
+                              {isMedication ? `服药 · ${medStatusLabel}` : isCheckin ? `护理打卡 · ${log.checkinStatus === 'normal' ? '状态良好' : log.checkinStatus === 'concerning' ? '需要关注' : log.checkinStatus === 'poor' ? '状态较差' : '紧急情况'}` : typeDef.label}
                             </Text>
                           </View>
                         )}

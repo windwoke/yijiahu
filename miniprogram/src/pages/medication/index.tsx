@@ -148,7 +148,7 @@ function CheckInSheet(props: {
     switch (s) {
       case MedicationLogStatus.TAKEN: return '已服用';
       case MedicationLogStatus.SKIPPED: return '已跳过';
-      case MedicationLogStatus.MISSED: return '已错过';
+      case MedicationLogStatus.MISSED: return '已漏服';
       default: return '待打卡';
     }
   };

@@ -27,6 +27,7 @@ $color-text-tertiary: #B0ADAD;
 .acr-scroll {
   flex: 1;
   height: 0;
+  padding-right: env(safe-area-inset-right);
 }
 
 .loading-state {
@@ -44,7 +45,7 @@ $color-text-tertiary: #B0ADAD;
 
 /* 区块 */
 .section {
-  padding: 32rpx 32rpx 0;
+  padding: 32rpx 40rpx 0;
 }
 
 .field-row {
@@ -363,8 +364,9 @@ $color-text-tertiary: #B0ADAD;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  padding: 16rpx 24rpx;
+  padding: 16rpx 24rpx 16rpx 24rpx;
   padding-top: calc(16rpx + env(safe-area-inset-top));
+  padding-right: calc(24rpx + env(safe-area-inset-right));
   background-color: $color-surface;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
 }

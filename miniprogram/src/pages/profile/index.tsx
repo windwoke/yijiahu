@@ -511,7 +511,7 @@ export default function ProfilePage() {
           {/* 关于我们 */}
           <View
             className="setting-item"
-            onClick={() => handleCopyLink('关于我们', 'http://8.163.69.199/')}
+            onClick={() => handleCopyLink('关于我们', 'https://yijiahu.com.cn/')}
           >
             <View className="setting-left">
               <Image className="setting-icon" src={require('../../assets/icons/info.png')} />
@@ -527,7 +527,7 @@ export default function ProfilePage() {
           {/* 隐私政策 */}
           <View
             className="setting-item"
-            onClick={() => handleCopyLink('隐私政策', 'http://8.163.69.199/privacy')}
+            onClick={() => handleCopyLink('隐私政策', 'https://yijiahu.com.cn/privacy')}
           >
             <View className="setting-left">
               <Image className="setting-icon" src={require('../../assets/icons/doc.png')} />
@@ -543,7 +543,7 @@ export default function ProfilePage() {
           {/* 用户协议 */}
           <View
             className="setting-item"
-            onClick={() => handleCopyLink('用户协议', 'http://8.163.69.199/terms')}
+            onClick={() => handleCopyLink('用户协议', 'https://yijiahu.com.cn/terms')}
           >
             <View className="setting-left">
               <Image className="setting-icon" src={require('../../assets/icons/doc.png')} />

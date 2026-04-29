@@ -40,7 +40,7 @@ page {
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  padding: 16rpx 24rpx;
+  padding: 16rpx 24rpx 16rpx 16rpx;
   padding-top: calc(16rpx + env(safe-area-inset-top));
   background-color: $color-surface;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
@@ -89,8 +89,6 @@ page {
 .med-scroll {
   flex: 1;
   height: 0;
-  padding: 0 32rpx;
-  padding-top: 16rpx;
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -267,7 +265,7 @@ page {
 // ═══════════════════════════════════════════════════════════════════
 
 .form-section {
-  padding: 24rpx 0 40rpx;
+  padding: 24rpx 16rpx 40rpx;
   display: flex;
   flex-direction: column;
   gap: 0;

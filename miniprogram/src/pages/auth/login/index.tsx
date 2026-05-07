@@ -1,35 +1,32 @@
 import { useState } from 'react';
-import { View, Text, Input, Button, Image } from '@tarojs/components';
+import { View, Text, /*Input,*/ Button, Image } from '@tarojs/components';
 import Taro from '@tarojs/taro';
-import { wechatLogin, phoneLogin, sendCode } from '../../../services/auth.service';
-import { isValidPhone } from '../../../shared/utils/phone';
+import { wechatLogin /*, phoneLogin, sendCode*/ } from '../../../services/auth.service';
+// import { isValidPhone } from '../../../shared/utils/phone';
 import './index.scss';
 
-/** 登录页
- * 与 Flutter login_page.dart 风格对齐
- * 默认微信登录，可切换到手机号登录
- */
+/** 登录页（当前仅开放微信一键登录，手机号验证码登录已注释） */
 
 // PNG 图标（对应 Flutter prefixIcon）
-const PhoneIcon = () => (
-  <Image className="field-icon-img" src={require('../../../assets/icons/phone.png')} />
-);
-
-const KeyIcon = () => (
-  <Image className="field-icon-img" src={require('../../../assets/icons/key.png')} />
-);
+// const PhoneIcon = () => (
+//   <Image className="field-icon-img" src={require('../../../assets/icons/phone.png')} />
+// );
+//
+// const KeyIcon = () => (
+//   <Image className="field-icon-img" src={require('../../../assets/icons/key.png')} />
+// );
 
 export default function LoginPage() {
-  const [mode, setMode] = useState<'wechat' | 'phone'>('wechat');
-  const [phone, setPhone] = useState('');
-  const [code, setCode] = useState('');
-  const [countdown, setCountdown] = useState(0);
+  // const [mode, setMode] = useState<'wechat' | 'phone'>('wechat');
   const [loading, setLoading] = useState(false);
-  const [phoneError, setPhoneError] = useState('');
-  const [codeError, setCodeError] = useState('');
+  // const [phone, setPhone] = useState('');
+  // const [code, setCode] = useState('');
+  // const [countdown, setCountdown] = useState(0);
+  // const [phoneError, setPhoneError] = useState('');
+  // const [codeError, setCodeError] = useState('');
 
   const handleWechatLogin = async () => {
-    if (loading) return; // 防止重复点击
+    if (loading) return;
     setLoading(true);
     try {
       await wechatLogin();
@@ -41,65 +38,62 @@ export default function LoginPage() {
     }
   };
 
-  const handleSendCode = async () => {
-    if (!isValidPhone(phone)) {
-      setPhoneError('请输入正确的手机号');
-      return;
-    }
-    setPhoneError('');
-    try {
-      const res = await sendCode(phone);
-      if (res.mockCode) {
-        // 开发/测试模式：直接显示虚拟验证码
-        Taro.showModal({
-          title: '测试验证码',
-          content: `验证码：${res.mockCode}`,
-          showCancel: false,
-        });
-      } else {
-        Taro.showToast({ title: '验证码已发送', icon: 'success' });
-      }
-      setCountdown(60);
-      const timer = setInterval(() => {
-        setCountdown((c) => {
-          if (c <= 1) { clearInterval(timer); return 0; }
-          return c - 1;
-        });
-      }, 1000);
-    } catch (err: any) {
-      Taro.showToast({ title: err.message || '发送失败', icon: 'none' });
-    }
-  };
+  // const handleSendCode = async () => {
+  //   if (!isValidPhone(phone)) {
+  //     setPhoneError('请输入正确的手机号');
+  //     return;
+  //   }
+  //   setPhoneError('');
+  //   try {
+  //     const res = await sendCode(phone);
+  //     if (res.mockCode) {
+  //       Taro.showModal({
+  //         title: '测试验证码',
+  //         content: `验证码：${res.mockCode}`,
+  //         showCancel: false,
+  //       });
+  //     } else {
+  //       Taro.showToast({ title: '验证码已发送', icon: 'success' });
+  //     }
+  //     setCountdown(60);
+  //     const timer = setInterval(() => {
+  //       setCountdown((c) => {
+  //         if (c <= 1) { clearInterval(timer); return 0; }
+  //         return c - 1;
+  //       });
+  //     }, 1000);
+  //   } catch (err: any) {
+  //     Taro.showToast({ title: err.message || '发送失败', icon: 'none' });
+  //   }
+  // };
 
-  const handlePhoneLogin = async () => {
-    if (!isValidPhone(phone)) {
-      setPhoneError('请输入正确的手机号');
-      return;
-    }
-    if (code.length !== 6) {
-      setCodeError('请输入6位验证码');
-      return;
-    }
-    setLoading(true);
-    try {
-      await phoneLogin(phone, code);
-    } catch (err: any) {
-      console.error('[login] 手机号登录失败:', err);
-      Taro.showToast({ title: err.message || '登录失败', icon: 'none' });
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const handlePhoneLogin = async () => {
+  //   if (!isValidPhone(phone)) {
+  //     setPhoneError('请输入正确的手机号');
+  //     return;
+  //   }
+  //   if (code.length !== 6) {
+  //     setCodeError('请输入6位验证码');
+  //     return;
+  //   }
+  //   setLoading(true);
+  //   try {
+  //     await phoneLogin(phone, code);
+  //   } catch (err: any) {
+  //     console.error('[login] 手机号登录失败:', err);
+  //     Taro.showToast({ title: err.message || '登录失败', icon: 'none' });
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   return (
     <View className="login-page">
-      {/* 背景 */}
       <View className="bg-gradient" />
       <View className="bg-circle-top" />
       <View className="bg-circle-bottom" />
 
       <View className="login-content">
-        {/* Logo 区域 */}
         <View className="logo-area">
           <View className="logo-icon-wrap">
             <Image className="logo-heart" src={require('../../../assets/icons/heart-white.png')} />
@@ -108,27 +102,27 @@ export default function LoginPage() {
           <Text className="logo-slogan">家庭照护，从容有爱</Text>
         </View>
 
-        {/* 微信登录面板（默认展示） */}
-        {mode === 'wechat' && (
-          <View className="panel">
-            <Button
-              className="btn-wechat-primary"
-              onClick={handleWechatLogin}
-              disabled={loading}
-            >
-              <Text className="btn-wechat-text">微信一键登录</Text>
-            </Button>
+        {/* 微信登录面板 */}
+        <View className="panel">
+          <Button
+            className="btn-wechat-primary"
+            onClick={handleWechatLogin}
+            disabled={loading}
+          >
+            <Text className="btn-wechat-text">微信一键登录</Text>
+          </Button>
 
-            <Button
-              className="btn-ghost"
-              onClick={() => setMode('phone')}
-            >
-              使用手机号登录
-            </Button>
-          </View>
-        )}
+          {/* 手机号登录入口（暂隐藏）
+          <Button
+            className="btn-ghost"
+            onClick={() => setMode('phone')}
+          >
+            使用手机号登录
+          </Button>
+          */}
+        </View>
 
-        {/* 手机号登录面板 */}
+        {/* 手机号登录面板（暂隐藏）
         {mode === 'phone' && (
           <View className="panel">
             <View className="field-row">
@@ -186,8 +180,8 @@ export default function LoginPage() {
             </Button>
           </View>
         )}
+        */}
 
-        {/* 底部协议 */}
         <View className="disclaimer-wrap">
           <Text className="disclaimer">登录即表示同意</Text>
           <Text className="link">《用户协议》</Text>

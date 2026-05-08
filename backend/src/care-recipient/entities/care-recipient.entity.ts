@@ -40,7 +40,7 @@ export class CareRecipient {
   bloodType: string;
 
   @Column({ type: 'simple-array', nullable: true })
-  allergies: string[];
+  allergies: string[]; // TypeORM 自动序列化为逗号分隔字符串存入 text 列
 
   @Column({ type: 'simple-array', nullable: true })
   chronicConditions: string[];

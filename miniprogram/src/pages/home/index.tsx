@@ -6,6 +6,7 @@ import { View, Text, ScrollView, Image } from '@tarojs/components';
 import Taro, { useDidShow } from '@tarojs/taro';
 import { useState, useCallback, useEffect } from 'react';
 import { get, post } from '../../services/api';
+import { wechatLogin } from '../../services/auth.service';
 import { Storage } from '../../services/storage';
 import { store, selectCurrentFamilyId } from '../../store';
 import type {
@@ -164,7 +165,14 @@ export default function HomePage() {
       Taro.showToast({ title: '请先阅读并同意用户协议和隐私政策', icon: 'none' });
       return;
     }
-    Taro.redirectTo({ url: '/pages/auth/login/index' });
+    // 直接从访客页面发起微信登录，跳过中间登录页
+    try {
+      await wechatLogin();
+      // wechatLogin 内部已处理跳转，switchTab 不执行说明已在本页
+    } catch (err: any) {
+      console.error('[home] 访客登录失败:', err);
+      Taro.showToast({ title: err.message || '登录失败', icon: 'none' });
+    }
   };
 
   const loadData = useCallback(async () => {

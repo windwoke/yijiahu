@@ -42,6 +42,13 @@ class App extends Component<Props> {
           Taro.switchTab({ url: '/pages/home/index' });
         }
       } catch (err: any) {
+        // 检查 token 是否在验证期间已被新登录更新（避免异步竞态）
+        const currentToken = Storage.getToken();
+        if (currentToken !== token) {
+          // token 已被新登录更新，不干扰已登录的用户
+          console.log('[app] token 在验证期间已被更新，跳过清除');
+          return;
+        }
         // 只有 401（token 无效/过期）才清除 token 并跳转登录
         // 网络错误等临时问题不踢人，保留 token 等下次重试
         const isUnauthorized = err?.isUnauthorized || err?.code === 401 || err?.code === 20001;

@@ -273,6 +273,39 @@ $color-wechat: #07c160;
   gap: 0;
 }
 
+.agreement-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 6rpx;
+}
+
+.agreement-checkbox {
+  width: 32rpx;
+  height: 32rpx;
+  border: 2rpx solid $color-border;
+  border-radius: 8rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 4rpx;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.agreement-checked {
+  background-color: $color-primary;
+  border-color: $color-primary;
+}
+
+.agreement-checkmark {
+  color: #fff;
+  font-size: 20rpx;
+  font-weight: 700;
+  line-height: 1;
+}
+
 .disclaimer {
   font-size: 22rpx;
   color: $color-text-tertiary;

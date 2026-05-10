@@ -18,8 +18,13 @@ export default function BindPhonePage() {
   const [loading, setLoading] = useState(false);
   const [phoneError, setPhoneError] = useState('');
   const [codeError, setCodeError] = useState('');
+  const [agreed, setAgreed] = useState(false);
 
   const handleSendCode = async () => {
+    if (!agreed) {
+      Taro.showToast({ title: '请先阅读并同意用户协议和隐私政策', icon: 'none' });
+      return;
+    }
     if (!isValidPhone(phone)) {
       setPhoneError('请输入正确的手机号');
       return;
@@ -45,6 +50,10 @@ export default function BindPhonePage() {
   };
 
   const handleBind = async () => {
+    if (!agreed) {
+      Taro.showToast({ title: '请先阅读并同意用户协议和隐私政策', icon: 'none' });
+      return;
+    }
     if (!isValidPhone(phone)) {
       setPhoneError('请输入正确的手机号');
       return;
@@ -147,7 +156,15 @@ export default function BindPhonePage() {
 
       {/* 底部声明 */}
       <View className="bp-footer">
-        <Text className="bp-footer-text">绑定即表示同意《用户协议》和《隐私政策》</Text>
+        <View className="bp-agreement-row" onClick={() => setAgreed(!agreed)}>
+          <View className={`bp-agreement-checkbox ${agreed ? 'bp-agreement-checked' : ''}`}>
+            {agreed && <Text className="bp-agreement-checkmark">✓</Text>}
+          </View>
+          <Text className="bp-footer-text">我已阅读并同意</Text>
+          <Text className="bp-footer-link">《用户协议》</Text>
+          <Text className="bp-footer-text">和</Text>
+          <Text className="bp-footer-link">《隐私政策》</Text>
+        </View>
       </View>
     </View>
   );

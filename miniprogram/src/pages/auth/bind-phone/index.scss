@@ -191,8 +191,47 @@ $color-error: #E07B5D;
   text-align: center;
 }
 
+.bp-agreement-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 6rpx;
+}
+
+.bp-agreement-checkbox {
+  width: 32rpx;
+  height: 32rpx;
+  border: 2rpx solid $color-border;
+  border-radius: 8rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 4rpx;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.bp-agreement-checked {
+  background-color: $color-primary;
+  border-color: $color-primary;
+}
+
+.bp-agreement-checkmark {
+  color: #fff;
+  font-size: 20rpx;
+  font-weight: 700;
+  line-height: 1;
+}
+
 .bp-footer-text {
   font-size: 22rpx;
   color: $color-text-tertiary;
+  line-height: 1.6;
+}
+
+.bp-footer-link {
+  font-size: 22rpx;
+  color: $color-primary;
   line-height: 1.6;
 }

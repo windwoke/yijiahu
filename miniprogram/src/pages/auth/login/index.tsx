@@ -19,6 +19,7 @@ import './index.scss';
 export default function LoginPage() {
   // const [mode, setMode] = useState<'wechat' | 'phone'>('wechat');
   const [loading, setLoading] = useState(false);
+  const [agreed, setAgreed] = useState(false); // 用户协议勾选
   // const [phone, setPhone] = useState('');
   // const [code, setCode] = useState('');
   // const [countdown, setCountdown] = useState(0);
@@ -26,6 +27,10 @@ export default function LoginPage() {
   // const [codeError, setCodeError] = useState('');
 
   const handleWechatLogin = async () => {
+    if (!agreed) {
+      Taro.showToast({ title: '请先阅读并同意用户协议和隐私政策', icon: 'none' });
+      return;
+    }
     if (loading) return;
     setLoading(true);
     try {
@@ -183,10 +188,15 @@ export default function LoginPage() {
         */}
 
         <View className="disclaimer-wrap">
-          <Text className="disclaimer">登录即表示同意</Text>
-          <Text className="link">《用户协议》</Text>
-          <Text className="disclaimer">和</Text>
-          <Text className="link">《隐私政策》</Text>
+          <View className="agreement-row" onClick={() => setAgreed(!agreed)}>
+            <View className={`agreement-checkbox ${agreed ? 'agreement-checked' : ''}`}>
+              {agreed && <Text className="agreement-checkmark">✓</Text>}
+            </View>
+            <Text className="disclaimer">我已阅读并同意</Text>
+            <Text className="link">《用户协议》</Text>
+            <Text className="disclaimer">和</Text>
+            <Text className="link">《隐私政策》</Text>
+          </View>
         </View>
       </View>
     </View>

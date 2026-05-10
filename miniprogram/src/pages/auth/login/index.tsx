@@ -35,6 +35,10 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await wechatLogin();
+      // wechatLogin 内部已处理跳转，加个保险防止 switchTab 静默失败
+      setTimeout(() => {
+        Taro.switchTab({ url: '/pages/home/index' });
+      }, 1000);
     } catch (err: any) {
       console.error('[login] 微信登录失败:', err);
       Taro.showToast({ title: err.message || '登录失败', icon: 'none' });

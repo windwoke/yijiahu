@@ -179,12 +179,15 @@ export default function HomePage() {
       return;
     }
 
+    // 统一使用 noAuthRedirect，防止任何 401 被 interceptor 拦截跳回登录页
+    const _get = <T>(url: string, params?: Record<string, string | number>) =>
+      get<T>(url, params, { noAuthRedirect: true });
+
     setState((s) => ({ ...s, loading: true }));
 
     try {
       // 1. 先获取家庭信息（从 /users/me/families 的第一条）
-      // 用 noAuthRedirect 避免 401 时被 interceptor 跳回登录页
-      const familyRes = await get<{ families: Array<{ family: Family }> }>('/users/me/families', undefined, { noAuthRedirect: true });
+      const familyRes = await _get<{ families: Array<{ family: Family }> }>('/users/me/families');
       const familyList = familyRes?.families ?? [];
       // 用 Storage 中当前 familyId 精确查找，不用 [0]（后端排序不稳定）
       const currentFamily = familyList.find((item) => item.family?.id === familyId)?.family
@@ -196,19 +199,19 @@ export default function HomePage() {
       // 1b. 获取家庭成员数量
       let memberCount = 0;
       try {
-        const members = await get<any[]>(`/families/${familyIdFromRes}/members`);
+        const members = await _get<any[]>(`/families/${familyIdFromRes}/members`);
         memberCount = members?.length ?? 0;
       } catch {}
 
       // 2. 获取照护对象列表
       let careRecipients: CareRecipient[] = [];
       try {
-        careRecipients = await get<CareRecipient[]>('/care-recipients', { familyId }) || [];
+        careRecipients = await _get<CareRecipient[]>('/care-recipients', { familyId }) || [];
       } catch {}
 
       // 3. 照护对象获取成功后，并发请求今日用药汇总（每个照护对象一份）
       const medPromises = careRecipients.map((r) =>
-        get<TodayMedicationSummary>(`/medication-logs/today?recipientId=${r.id}&familyId=${familyId}`)
+        _get<TodayMedicationSummary>(`/medication-logs/today?recipientId=${r.id}&familyId=${familyId}`)
           .catch(() => null)
       );
       const medResults = await Promise.all(medPromises);
@@ -218,15 +221,15 @@ export default function HomePage() {
       // 4b. 获取未读通知数
       let unreadCount = 0;
       try {
-        const notifications = await get<{ items: any[] }>('/notifications', { unread: true, limit: 1 });
+        const notifications = await _get<{ items: any[] }>('/notifications', { unread: true, limit: 1 });
         // 获取总未读数（后端支持 count 字段）
         unreadCount = (notifications as any)?.totalUnread ?? 0;
       } catch {}
       const [appointmentsData, tasksData] = await Promise.allSettled([
         // 本月复诊日历
-        get<Appointment[]>(`/appointments/calendar?familyId=${familyId}&year=${new Date().getFullYear()}&month=${new Date().getMonth() + 1}`),
+        _get<Appointment[]>(`/appointments/calendar?familyId=${familyId}&year=${new Date().getFullYear()}&month=${new Date().getMonth() + 1}`),
         // 今日家庭任务（按年月筛选）
-        get<FamilyTask[]>(`/family-tasks?familyId=${familyId}&year=${new Date().getFullYear()}&month=${new Date().getMonth() + 1}`),
+        _get<FamilyTask[]>(`/family-tasks?familyId=${familyId}&year=${new Date().getFullYear()}&month=${new Date().getMonth() + 1}`),
       ]);
 
       // 过滤7天内即将到来的复诊
@@ -266,13 +269,13 @@ export default function HomePage() {
         const ids = careRecipients.map((r) => r.id).join(',');
 
         const [checkinsData, ...cgResults] = await Promise.all([
-          get<DailyCareCheckin[]>('/daily-care-checkins/today', {
+          _get<DailyCareCheckin[]>('/daily-care-checkins/today', {
             recipientIds: ids,
             todayDate,
             familyId,
           }).catch(() => [] as DailyCareCheckin[]),
           ...careRecipients.map((r) =>
-            get<CaregiverRecord>(`/caregiver-records/current`, {
+            _get<CaregiverRecord>(`/caregiver-records/current`, {
               careRecipientId: r.id,
               familyId,
             }).catch(() => null as CaregiverRecord | null)

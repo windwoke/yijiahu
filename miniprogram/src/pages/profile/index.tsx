@@ -579,16 +579,16 @@ export default function ProfilePage() {
           </View>
         </View>
 
-        {/* 底部留白（给退出按钮和安全区域） */}
+        {/* ── 退出登录按钮 ─────────────────────────────────────────── */}
+        <View className="logout-bar">
+          <View className="logout-btn" onClick={handleLogout}>
+            <Text className="logout-text">退出登录</Text>
+          </View>
+        </View>
+
+        {/* 底部留白 */}
         <View className="bottom-pad" />
       </ScrollView>
-
-      {/* ── 退出登录按钮 ─────────────────────────────────────────── */}
-      <View className="logout-bar">
-        <View className="logout-btn" onClick={handleLogout}>
-          <Text className="logout-text">退出登录</Text>
-        </View>
-      </View>
 
       {/* ── 底部 Sheet 遮罩层 ─────────────────────────────────────── */}
       {activeSheet !== null && (

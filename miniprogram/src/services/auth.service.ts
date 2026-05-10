@@ -51,8 +51,9 @@ export async function wechatLogin(): Promise<{
     console.log('[auth] /users/me/families 返回:', JSON.stringify(families));
     if (!families || families.length === 0) {
       // 无家庭，跳转到引导页
+      // 使用 reLaunch 而非 redirectTo，避免从 tab 页跳转时行为不稳定
       console.log('[auth] 无家庭，跳转引导页');
-      Taro.redirectTo({ url: '/pages/auth/onboarding/index' });
+      Taro.reLaunch({ url: '/pages/auth/onboarding/index' });
     } else {
       console.log('[auth] 有家庭，直接跳转首页');
       Storage.setCurrentFamilyId(families[0].family?.id || '');

@@ -172,8 +172,9 @@ export default function HomePage() {
   }, [todayDate]);
 
   const loadDataInner = useCallback(async () => {
+    const token = Storage.getToken();
     const familyId = Storage.getCurrentFamilyId();
-    if (!familyId) {
+    if (!familyId || !token) {
       setState((s) => ({ ...s, loading: false }));
       return;
     }
@@ -182,7 +183,8 @@ export default function HomePage() {
 
     try {
       // 1. 先获取家庭信息（从 /users/me/families 的第一条）
-      const familyRes = await get<{ families: Array<{ family: Family }> }>('/users/me/families');
+      // 用 noAuthRedirect 避免 401 时被 interceptor 跳回登录页
+      const familyRes = await get<{ families: Array<{ family: Family }> }>('/users/me/families', undefined, { noAuthRedirect: true });
       const familyList = familyRes?.families ?? [];
       // 用 Storage 中当前 familyId 精确查找，不用 [0]（后端排序不稳定）
       const currentFamily = familyList.find((item) => item.family?.id === familyId)?.family

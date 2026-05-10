@@ -46,7 +46,7 @@ export async function wechatLogin(): Promise<{
   // 5. 检查是否有家庭，无家庭则引导创建/加入
   try {
     console.log('[auth] 开始检查家庭...');
-    const res = await get<{ families: any[] }>('/users/me/families');
+    const res = await get<{ families: any[] }>('/users/me/families', undefined, { noAuthRedirect: true });
     const families = res?.families ?? [];
     console.log('[auth] /users/me/families 返回:', JSON.stringify(families));
     if (!families || families.length === 0) {

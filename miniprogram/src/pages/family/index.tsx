@@ -109,6 +109,9 @@ function isElevatedRole(role: FamilyMemberRole): boolean {
    ============================ */
 
 export default function FamilyPage() {
+  // ─── 访客模式检测 ──────────────────────────────
+  const isGuest = !Storage.getToken();
+
   const [family, setFamily] = useState<Family | null>(null);
   const [members, setMembers] = useState<FamilyMemberDetail[]>([]);
   const [recipients, setRecipients] = useState<CareRecipient[]>([]);
@@ -462,6 +465,24 @@ export default function FamilyPage() {
     'rgba(123, 158, 135, 0.25)',
     'rgba(123, 158, 135, 0.15)',
   ];
+
+  // ─── 访客模式 ──────────────────────────────────
+  if (isGuest) {
+    return (
+      <View className="family-page">
+        <View className="guest-prompt">
+          <View className="guest-prompt-card">
+            <Text className="guest-prompt-emoji">👨‍👩‍👧‍👦</Text>
+            <Text className="guest-prompt-title">登录后可查看家庭</Text>
+            <Text className="guest-prompt-desc">管理家庭成员，协作照护老人</Text>
+            <View className="guest-prompt-btn" onClick={() => Taro.redirectTo({ url: '/pages/auth/login/index' })}>
+              <Text className="guest-prompt-btn-text">微信一键登录</Text>
+            </View>
+          </View>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View className="family-page">

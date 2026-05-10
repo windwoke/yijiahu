@@ -55,9 +55,9 @@ class App extends Component<Props> {
         }
       }
     } else {
-      setTimeout(() => {
-        Taro.redirectTo({ url: '/pages/auth/login/index' });
-      }, 100);
+      // 无 token：不跳登录页，保持首页展示访客预览内容
+      // 用户点击功能时再提示登录
+      console.log('[app] 无 token，进入访客预览模式');
     }
   }
 

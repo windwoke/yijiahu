@@ -4,10 +4,7 @@
  */
 export default defineAppConfig({
   pages: [
-    'pages/auth/login/index',     // 登录页
-    'pages/auth/onboarding/index', // 家庭引导（首次登录无家庭时跳转）
-    'pages/auth/bind-phone/index', // 绑定手机号（微信一键授权）
-    'pages/home/index',            // 首页
+    'pages/home/index',            // 首页（第一个，作为默认入口）
     'pages/medication/index',     // 药品管理
     'pages/calendar/index',        // 日历
     'pages/care-log/index',       // 护理日志
@@ -21,6 +18,9 @@ export default defineAppConfig({
     'pages/medication/detail', // 药品详情
     'pages/family-task/add',   // 添加任务
     'pages/appointment/add',   // 添加复诊
+    'pages/auth/login/index',     // 登录页
+    'pages/auth/onboarding/index', // 家庭引导
+    'pages/auth/bind-phone/index', // 绑定手机号
   ],
   window: {
     backgroundTextStyle: 'light',

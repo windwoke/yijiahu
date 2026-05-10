@@ -153,6 +153,19 @@ export default function HomePage() {
     caregivers: {},
     loading: true,
   });
+  const [agreed, setAgreed] = useState(false);
+
+  // ─── 访客模式检测 ──────────────────────────────────────────────
+  const token = Storage.getToken();
+  const isGuest = !token;
+
+  const handleGuestLogin = async () => {
+    if (!agreed) {
+      Taro.showToast({ title: '请先阅读并同意用户协议和隐私政策', icon: 'none' });
+      return;
+    }
+    Taro.redirectTo({ url: '/pages/auth/login/index' });
+  };
 
   const loadData = useCallback(async () => {
     await loadDataInner();
@@ -340,6 +353,99 @@ export default function HomePage() {
   });
 
   // ─── 渲染 ──────────────────────────────────────────────────────────────────
+
+  if (isGuest) {
+    return (
+      <View className="home-page">
+        {/* ── 访客欢迎模式 ─────────────────────────────────────── */}
+        <ScrollView className="guest-scroll" scrollY>
+          <View className="guest-content">
+            {/* Logo */}
+            <View className="guest-logo-area">
+              <View className="guest-logo-icon">
+                <Image className="guest-logo-img" src={require('../../assets/icons/heart-white.png')} />
+              </View>
+              <Text className="guest-logo-name">一家护</Text>
+              <Text className="guest-slogan">家庭照护，从容有爱</Text>
+            </View>
+
+            {/* 功能预览卡片 */}
+            <View className="guest-features">
+              <View className="guest-feature-card">
+                <View className="guest-feature-icon guest-icon-green">
+                  <Text className="guest-feature-emoji">💊</Text>
+                </View>
+                <View className="guest-feature-text">
+                  <Text className="guest-feature-title">用药提醒</Text>
+                  <Text className="guest-feature-desc">定时提醒吃药，记录用药情况，避免漏服错服</Text>
+                </View>
+              </View>
+
+              <View className="guest-feature-card">
+                <View className="guest-feature-icon guest-icon-blue">
+                  <Text className="guest-feature-emoji">🩺</Text>
+                </View>
+                <View className="guest-feature-text">
+                  <Text className="guest-feature-title">健康记录</Text>
+                  <Text className="guest-feature-desc">血压、血糖等指标追踪，趋势图表一目了然</Text>
+                </View>
+              </View>
+
+              <View className="guest-feature-card">
+                <View className="guest-feature-icon guest-icon-coral">
+                  <Text className="guest-feature-emoji">🆘</Text>
+                </View>
+                <View className="guest-feature-text">
+                  <Text className="guest-feature-title">SOS 紧急求助</Text>
+                  <Text className="guest-feature-desc">一键发送求助信号，家人即时响应</Text>
+                </View>
+              </View>
+
+              <View className="guest-feature-card">
+                <View className="guest-feature-icon guest-icon-purple">
+                  <Text className="guest-feature-emoji">👨‍👩‍👧‍👦</Text>
+                </View>
+                <View className="guest-feature-text">
+                  <Text className="guest-feature-title">家庭协作</Text>
+                  <Text className="guest-feature-desc">多成员共同照护，任务分工清晰明确</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* 分隔线 */}
+            <View className="guest-divider" />
+
+            {/* 登录按钮 */}
+            <View className="guest-login-section">
+              <Text className="guest-login-hint">登录后即可使用全部功能</Text>
+              <View className="guest-login-btn" onClick={handleGuestLogin}>
+                <Text className="guest-login-btn-text">微信一键登录</Text>
+              </View>
+
+              {/* 隐私勾选框 */}
+              <View className="guest-agreement" onClick={() => setAgreed(!agreed)}>
+                <View className={`guest-checkbox ${agreed ? 'guest-checked' : ''}`}>
+                  {agreed && <Text className="guest-checkmark">✓</Text>}
+                </View>
+                <Text className="guest-disclaimer">我已阅读并同意</Text>
+                <Text className="guest-link">《用户协议》</Text>
+                <Text className="guest-disclaimer">和</Text>
+                <Text className="guest-link">《隐私政策》</Text>
+              </View>
+            </View>
+          </View>
+        </ScrollView>
+
+        {/* SOS 紧急按钮（访客也可访问） */}
+        <View className="sos-btn-wrap" onClick={() => Taro.navigateTo({ url: '/pages/sos/index' })}>
+          <View className="sos-inner">
+            <Image className="sos-icon-img" src={require('../../assets/icons/sos.png')} mode="aspectFit" />
+            <Text className="sos-label">紧急求助</Text>
+          </View>
+        </View>
+      </View>
+    );
+  }
 
   const { familyName, familyAvatarUrl, memberCount, unreadCount, recipients, medicationSummaries, checkins, caregivers, appointments, tasks, loading } = state;
   const hasRecipients = recipients.length > 0;

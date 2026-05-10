@@ -204,6 +204,9 @@ function getDefaultAvatarUrl(): string {
    ============================ */
 
 export default function CareLogPage() {
+  // ─── 访客模式检测 ──────────────────────────────
+  const isGuest = !Storage.getToken();
+
   const [filterType, setFilterType] = useState<string | null>(null);
   const [selectedRecipientId, setSelectedRecipientId] = useState<string | null>(null);
   const [recipients, setRecipients] = useState<CareRecipient[]>([]);
@@ -615,6 +618,24 @@ export default function CareLogPage() {
   const titleLabel = selectedRecipientId
     ? (recipients.find((r) => r.id === selectedRecipientId)?.name ?? '照护对象') + '的日志'
     : '照护日志';
+
+  // ─── 访客模式 ──────────────────────────────────
+  if (isGuest) {
+    return (
+      <View className="care-log-page">
+        <View className="guest-prompt">
+          <View className="guest-prompt-card">
+            <Text className="guest-prompt-emoji">📝</Text>
+            <Text className="guest-prompt-title">登录后可查看护理日志</Text>
+            <Text className="guest-prompt-desc">记录老人的每日照护情况，与家人共享温暖时刻</Text>
+            <View className="guest-prompt-btn" onClick={() => Taro.redirectTo({ url: '/pages/auth/login/index' })}>
+              <Text className="guest-prompt-btn-text">微信一键登录</Text>
+            </View>
+          </View>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View className="care-log-page">

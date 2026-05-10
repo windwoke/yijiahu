@@ -168,7 +168,9 @@ export default function HomePage() {
     // 直接从访客页面发起微信登录，跳过中间登录页
     try {
       await wechatLogin();
-      // wechatLogin 内部已处理跳转，switchTab 不执行说明已在本页
+      // wechatLogin 内部调了 switchTab 回家，但已在首页时 switchTab 是空操作，
+      // 需要手动触发 loadDataInner 加载数据
+      loadDataInner();
     } catch (err: any) {
       console.error('[home] 访客登录失败:', err);
       Taro.showToast({ title: err.message || '登录失败', icon: 'none' });

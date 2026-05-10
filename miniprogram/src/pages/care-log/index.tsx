@@ -204,8 +204,8 @@ function getDefaultAvatarUrl(): string {
    ============================ */
 
 export default function CareLogPage() {
-  // ─── 访客模式检测 ──────────────────────────────
-  const isGuest = !Storage.getToken();
+  // ─── 访客模式检测（用 state 确保切换 tab 时能重渲染）──────
+  const [isGuest, setIsGuest] = useState(() => !Storage.getToken());
 
   const [filterType, setFilterType] = useState<string | null>(null);
   const [selectedRecipientId, setSelectedRecipientId] = useState<string | null>(null);
@@ -490,10 +490,8 @@ export default function CareLogPage() {
   }, [familyId, filterType, selectedRecipientId]);
 
   useDidShow(() => {
-    if (familyId) {
-      loadTimeline(true);
-      loadRecipients();
-    }
+    // 重新检查登录状态，触发重渲染 → 闭包中 familyId 更新 → useEffect 自动加载
+    setIsGuest(!Storage.getToken());
   });
 
   const onScrollToLower = useCallback(() => {

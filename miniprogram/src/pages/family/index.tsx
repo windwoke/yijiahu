@@ -109,8 +109,8 @@ function isElevatedRole(role: FamilyMemberRole): boolean {
    ============================ */
 
 export default function FamilyPage() {
-  // ─── 访客模式检测 ──────────────────────────────
-  const isGuest = !Storage.getToken();
+  // ─── 访客模式检测（用 state 确保切换 tab 时能重渲染）──────
+  const [isGuest, setIsGuest] = useState(() => !Storage.getToken());
 
   const [family, setFamily] = useState<Family | null>(null);
   const [members, setMembers] = useState<FamilyMemberDetail[]>([]);
@@ -254,7 +254,8 @@ export default function FamilyPage() {
   }, [loadAll]);
 
   useDidShow(() => {
-    if (familyId) loadAll();
+    // 重新检查登录状态，触发重渲染 → 闭包中的 familyId 更新 → loadAll 自动触发
+    setIsGuest(!Storage.getToken());
   });
 
   /* ─── 复制邀请码 ─── */

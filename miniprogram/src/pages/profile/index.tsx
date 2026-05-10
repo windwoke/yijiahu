@@ -32,8 +32,8 @@ interface ProfileState {
 }
 
 export default function ProfilePage() {
-  // ─── 访客模式检测 ──────────────────────────────
-  const isGuest = !Storage.getToken();
+  // ─── 访客模式检测（用 state 确保切换 tab 时能重渲染）──────
+  const [isGuest, setIsGuest] = useState(() => !Storage.getToken());
 
   const [state, setState] = useState<ProfileState>({
     user: null,
@@ -63,9 +63,11 @@ export default function ProfilePage() {
     }
   }, []);
 
-  // 每次页面显示时刷新用户数据
+  // 每次页面显示时刷新用户数据 & 重新检查登录状态
   useDidShow(() => {
-    if (isGuest) return;
+    const guest = !Storage.getToken();
+    setIsGuest(guest);
+    if (guest) return;
     loadUser();
     loadFamilies();
   });

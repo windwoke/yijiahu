@@ -279,12 +279,20 @@ $color-wechat: #07c160;
   align-items: center;
   justify-content: center;
   gap: 6rpx;
+  flex-wrap: wrap;
+}
+
+.agreement-row-check {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6rpx;
 }
 
 .agreement-checkbox {
-  width: 32rpx;
-  height: 32rpx;
-  border: 2rpx solid $color-border;
+  width: 36rpx;
+  height: 36rpx;
+  border: 2rpx solid $color-primary;
   border-radius: 8rpx;
   display: flex;
   align-items: center;
@@ -301,18 +309,18 @@ $color-wechat: #07c160;
 
 .agreement-checkmark {
   color: #fff;
-  font-size: 20rpx;
+  font-size: 22rpx;
   font-weight: 700;
   line-height: 1;
 }
 
 .disclaimer {
-  font-size: 22rpx;
-  color: $color-text-tertiary;
+  font-size: 24rpx;
+  color: $color-text-secondary;
   line-height: 1.6;
 }
 
 .link {
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: $color-primary;
 }

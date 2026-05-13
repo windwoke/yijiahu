@@ -21,6 +21,7 @@ export default defineAppConfig({
     'pages/auth/login/index',     // 登录页
     'pages/auth/onboarding/index', // 家庭引导
     'pages/auth/bind-phone/index', // 绑定手机号
+    'pages/webview/index', // 通用 WebView
   ],
   window: {
     backgroundTextStyle: 'light',

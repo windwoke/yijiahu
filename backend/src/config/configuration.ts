@@ -51,6 +51,12 @@ export default () => ({
     masterSecret: process.env.JPUSH_MASTER_SECRET || '',
   },
 
+  // Sentry 崩溃采集
+  sentry: {
+    dsn: process.env.SENTRY_DSN || '',
+    environment: process.env.NODE_ENV || 'development',
+  },
+
   // 微信小程序/服务号配置
   wechat: {
     // 小程序配置（用于微信登录）

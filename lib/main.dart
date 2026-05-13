@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'core/theme/app_theme.dart';
 import 'core/router/app_router.dart';
 import 'core/env/env_config.dart';
@@ -15,6 +16,7 @@ Future<void> main() async {
   // 打印当前环境
   debugPrint('🚀 启动环境: ${AppEnv.current.label}');
   debugPrint('📡 API: ${ApiConfig.baseUrl}');
+  debugPrint('🔍 Sentry 崩溃采集: ${SentryConfig.enabled ? "已启用" : "未配置"}');
 
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -35,9 +37,22 @@ Future<void> main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  runApp(
-    const ProviderScope(
-      child: YijiahuApp(),
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    Sentry.captureFlutterError(details);
+  };
+
+  await SentryFlutter.init(
+    (options) {
+      options.dsn = SentryConfig.dsn;
+      options.environment = AppEnv.current.label;
+      options.release = 'yijiahu@${AppConfig.version}+${AppConfig.buildNumber}';
+      options.tracesSampleRate = AppEnv.current == AppEnv.prod ? 0.1 : 1.0;
+    },
+    appRunner: () => runApp(
+      const ProviderScope(
+        child: YijiahuApp(),
+      ),
     ),
   );
 }

@@ -104,20 +104,24 @@ jobs:
         env:
           OSS_BASE_URL: ${{ secrets.OSS_BASE_URL }}
           API_BASE_URL: ${{ secrets.API_BASE_URL }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         run: |
           flutter build ios --simulator --no-codesign \
             --dart-define=OSS_BASE_URL="$OSS_BASE_URL" \
-            --dart-define=API_BASE_URL="$API_BASE_URL"
+            --dart-define=API_BASE_URL="$API_BASE_URL" \
+            --dart-define=SENTRY_DSN="$SENTRY_DSN"
         working-directory: lib
 
       - name: Build Android APK
         env:
           OSS_BASE_URL: ${{ secrets.OSS_BASE_URL }}
           API_BASE_URL: ${{ secrets.API_BASE_URL }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         run: |
           flutter build apk --debug \
             --dart-define=OSS_BASE_URL="$OSS_BASE_URL" \
-            --dart-define=API_BASE_URL="$API_BASE_URL"
+            --dart-define=API_BASE_URL="$API_BASE_URL" \
+            --dart-define=SENTRY_DSN="$SENTRY_DSN"
         working-directory: lib
 
       - name: Upload Flutter artifact
@@ -165,6 +169,7 @@ jobs:
           OSS_SECRET: ${{ secrets.ALIYUN_ACCESS_KEY_SECRET }}
           OSS_ENDPOINT: ${{ secrets.ALIYUN_OSS_ENDPOINT }}
           OSS_BUCKET: ${{ secrets.ALIYUN_OSS_BUCKET }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         run: |
           echo "打包代码（包含预编译的 dist）..."
           tar --exclude='.git' \
@@ -208,6 +213,13 @@ jobs:
                 echo "ALIYUN_OSS_BUCKET=$OSS_BUCKET"
               } >> "$ENV_FILE"
               echo "OSS 凭证已更新"
+            fi
+
+            # 配置 Sentry DSN
+            if [ -n "$SENTRY_DSN" ]; then
+              sed -i "/^SENTRY_DSN=/d" "$ENV_FILE" 2>/dev/null || true
+              echo "SENTRY_DSN=$SENTRY_DSN" >> "$ENV_FILE"
+              echo "Sentry DSN 已配置"
             fi
 
             # 安装依赖（跳过 build，dist 已预编译）

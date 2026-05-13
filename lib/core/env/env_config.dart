@@ -62,6 +62,13 @@ class ApiConfig {
   static Duration get receiveTimeout => const Duration(seconds: 30);
 }
 
+/// Sentry 配置
+class SentryConfig {
+  static String get dsn =>
+      const String.fromEnvironment('SENTRY_DSN', defaultValue: '');
+  static bool get enabled => dsn.isNotEmpty;
+}
+
 /// App 配置
 class AppConfig {
   static String get version =>

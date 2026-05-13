@@ -162,7 +162,7 @@ export default function HomePage() {
 
   const handleGuestLogin = async () => {
     if (!agreed) {
-      Taro.showToast({ title: '请先阅读并同意用户协议和隐私政策', icon: 'none' });
+      Taro.showToast({ title: '请勾选并同意用户协议和隐私政策', icon: 'none' });
       return;
     }
     // 直接从访客页面发起微信登录，跳过中间登录页
@@ -438,14 +438,28 @@ export default function HomePage() {
               </View>
 
               {/* 隐私勾选框 */}
-              <View className="guest-agreement" onClick={() => setAgreed(!agreed)}>
-                <View className={`guest-checkbox ${agreed ? 'guest-checked' : ''}`}>
-                  {agreed && <Text className="guest-checkmark">✓</Text>}
+              <View className="guest-agreement">
+                <View className="guest-agreement-check" onClick={() => setAgreed(!agreed)}>
+                  <View className={`guest-checkbox ${agreed ? 'guest-checked' : ''}`}>
+                    {agreed && <Text className="guest-checkmark">✓</Text>}
+                  </View>
+                  <Text className="guest-disclaimer">我已阅读并同意</Text>
                 </View>
-                <Text className="guest-disclaimer">我已阅读并同意</Text>
-                <Text className="guest-link">《用户协议》</Text>
+                <Text
+                  className="guest-link"
+                  onClick={(e) => {
+                    e.stopPropagation?.();
+                    Taro.navigateTo({ url: '/pages/webview/index?url=https://yijiahu.com.cn/agreement.html' });
+                  }}
+                >《用户协议》</Text>
                 <Text className="guest-disclaimer">和</Text>
-                <Text className="guest-link">《隐私政策》</Text>
+                <Text
+                  className="guest-link"
+                  onClick={(e) => {
+                    e.stopPropagation?.();
+                    Taro.navigateTo({ url: '/pages/webview/index?url=https://yijiahu.com.cn/privacy.html' });
+                  }}
+                >《隐私政策》</Text>
               </View>
             </View>
           </View>

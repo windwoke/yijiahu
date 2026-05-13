@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import * as Sentry from '@sentry/node';
 import { join } from 'path';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
@@ -10,6 +11,19 @@ import { PlatformInterceptor } from './common/interceptors/platform.interceptor'
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // 初始化 Sentry
+  if (process.env.SENTRY_DSN) {
+    Sentry.init({
+      dsn: process.env.SENTRY_DSN,
+      environment: process.env.NODE_ENV || 'development',
+      tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+    });
+    console.log('🔍 Sentry 崩溃采集已启用');
+  }
+
+  // Sentry 请求上下文
+  app.use(Sentry.Handlers.requestHandler());
 
   // 全局前缀
   app.setGlobalPrefix('v1');
@@ -23,7 +37,7 @@ async function bootstrap() {
     }),
   );
 
-  // 全局过滤器 - 统一响应格式
+  // 全局过滤器 - 统一响应格式（含 Sentry 上报）
   app.useGlobalFilters(new HttpExceptionFilter());
 
   // 全局拦截器 - X-Platform 平台识别

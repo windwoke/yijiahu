@@ -6,7 +6,7 @@
 import { View, Text, Image, Input, ScrollView } from '@tarojs/components';
 import Taro, { useDidShow } from '@tarojs/taro';
 import { useState, useEffect, useCallback } from 'react';
-import { get, post, put, uploadFile } from '../../services/api';
+import { get, post, put, patch, uploadFile } from '../../services/api';
 import { Storage } from '../../services/storage';
 import { getImageUrl } from '../../shared/utils/image';
 import { store, selectCurrentFamilyId } from '../../store';
@@ -130,6 +130,11 @@ export default function ProfilePage() {
       }
     } catch (err: any) {
       Taro.hideLoading();
+      // 用户取消选择不弹错误提示
+      if (err?.errMsg?.includes('cancel') || err?.message?.includes('cancel')) {
+        console.log('[profile] 用户取消选择头像');
+        return;
+      }
       console.error('[profile] 头像上传失败:', err);
       Taro.showToast({ title: err?.message || '上传失败', icon: 'none', duration: 2000 });
     }
@@ -155,7 +160,7 @@ export default function ProfilePage() {
     }
     setSheetLoading(true);
     try {
-      await put<User>('/users/me', { name });
+      await patch<User>('/users/me', { name });
       const updatedUser = { ...(state.user || {}), name };
       store.dispatch({ type: 'auth/setUser', payload: updatedUser });
       setState((s) => ({ ...s, user: updatedUser, activeSheet: null }));

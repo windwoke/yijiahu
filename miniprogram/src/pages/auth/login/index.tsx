@@ -28,7 +28,7 @@ export default function LoginPage() {
 
   const handleWechatLogin = async () => {
     if (!agreed) {
-      Taro.showToast({ title: '请先阅读并同意用户协议和隐私政策', icon: 'none' });
+      Taro.showToast({ title: '请勾选并同意用户协议和隐私政策', icon: 'none' });
       return;
     }
     if (loading) return;
@@ -192,14 +192,28 @@ export default function LoginPage() {
         */}
 
         <View className="disclaimer-wrap">
-          <View className="agreement-row" onClick={() => setAgreed(!agreed)}>
-            <View className={`agreement-checkbox ${agreed ? 'agreement-checked' : ''}`}>
-              {agreed && <Text className="agreement-checkmark">✓</Text>}
+          <View className="agreement-row">
+            <View className="agreement-row-check" onClick={() => setAgreed(!agreed)}>
+              <View className={`agreement-checkbox ${agreed ? 'agreement-checked' : ''}`}>
+                {agreed && <Text className="agreement-checkmark">✓</Text>}
+              </View>
+              <Text className="disclaimer">我已阅读并同意</Text>
             </View>
-            <Text className="disclaimer">我已阅读并同意</Text>
-            <Text className="link">《用户协议》</Text>
+            <Text
+              className="link"
+              onClick={(e) => {
+                e.stopPropagation?.();
+                Taro.navigateTo({ url: '/pages/webview/index?url=https://yijiahu.com.cn/agreement.html' });
+              }}
+            >《用户协议》</Text>
             <Text className="disclaimer">和</Text>
-            <Text className="link">《隐私政策》</Text>
+            <Text
+              className="link"
+              onClick={(e) => {
+                e.stopPropagation?.();
+                Taro.navigateTo({ url: '/pages/webview/index?url=https://yijiahu.com.cn/privacy.html' });
+              }}
+            >《隐私政策》</Text>
           </View>
         </View>
       </View>

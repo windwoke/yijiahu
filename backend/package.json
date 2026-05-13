@@ -37,6 +37,7 @@
     "class-validator": "^0.14.4",
     "dotenv": "^17.4.1",
     "ioredis": "^5.10.1",
+    "@sentry/node": "^9.0.0",
     "jpush-sdk": "^3.5.0",
     "multer": "^2.1.1",
     "passport": "^0.7.0",

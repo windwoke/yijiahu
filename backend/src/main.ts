@@ -22,8 +22,7 @@ async function bootstrap() {
     console.log('🔍 Sentry 崩溃采集已启用');
   }
 
-  // Sentry 请求上下文
-  app.use(Sentry.Handlers.requestHandler());
+  // Sentry 请求上下文（v9 默认启用 requestDataIntegration，无需手动添加 middleware）
 
   // 全局前缀
   app.setGlobalPrefix('v1');

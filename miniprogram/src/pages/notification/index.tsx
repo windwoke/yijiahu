@@ -1,27 +1,21 @@
 /**
  * 微信通知页
- * 小程序引流到 App：提示用户下载 App 享受完整通知体验
+ * 小程序引流到官网下载 App
  */
 import { View, Text } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import './index.scss';
 
 export default function NotificationPage() {
-  const handleDownload = () => {
-    // 复制下载链接到剪贴板
-    Taro.setClipboardData({
-      data: 'https://yijiahu.com/download',
-      success: () => {
-        Taro.showToast({ title: '链接已复制，请在浏览器打开', icon: 'none', duration: 2500 });
-      },
-    });
+  const handleGoWebsite = () => {
+    Taro.navigateTo({ url: '/pages/webview/index?url=https://yijiahu.com.cn' });
   };
 
-  const handleCopyAppName = () => {
+  const handleCopyLink = () => {
     Taro.setClipboardData({
-      data: '一家护',
+      data: 'https://yijiahu.com.cn',
       success: () => {
-        Taro.showToast({ title: '已复制 App 名称', icon: 'success', duration: 1500 });
+        Taro.showToast({ title: '链接已复制，请在浏览器打开', icon: 'none', duration: 2500 });
       },
     });
   };
@@ -68,14 +62,14 @@ export default function NotificationPage() {
       <View className="action-card">
         <Text className="action-title">下载一家护 App</Text>
         <Text className="action-desc">
-          在各大应用商店搜索「一家护」下载，或点击下方复制下载链接
+          前往官网下载 Android 版，即将上架各大应用商店
         </Text>
-        <View className="action-btn" onClick={handleDownload}>
-          <Text className="action-btn-text">复制下载链接</Text>
+        <View className="action-btn" onClick={handleGoWebsite}>
+          <Text className="action-btn-text">前往官网下载</Text>
         </View>
         <View className="action-hint">
-          <Text className="action-hint-text" onClick={handleCopyAppName}>
-            在应用商店搜索：一家护
+          <Text className="action-hint-text" onClick={handleCopyLink}>
+            或复制官网链接在浏览器打开
           </Text>
         </View>
       </View>

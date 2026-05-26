@@ -106,6 +106,9 @@ export class MedicationLogService {
       order: { scheduledTime: 'ASC' },
     });
 
+    // 过滤掉已删除药品的记录（药品软删除后 relation 为 null）
+    const activeLogs = logs.filter((log) => log.medication != null);
+
     // 取出打卡人信息（用 FamilyMember.nickname）
     // takenBy 存的是 userId，通过 userId + familyId 匹配 FamilyMember 查 nickname
     const userIds = logs.map((l) => l.takenBy).filter(Boolean);
@@ -128,7 +131,7 @@ export class MedicationLogService {
       ]),
     );
 
-    const items = logs.map((log) => ({
+    const items = activeLogs.map((log) => ({
       id: log.id,
       medicationId: log.medicationId,
       medicationName: log.medication?.name || '',

@@ -4,9 +4,13 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { Medication } from './entities/medication.entity';
 import { CareRecipient } from '../care-recipient/entities/care-recipient.entity';
+import {
+  MedicationLog,
+  MedicationLogStatus,
+} from '../medication-log/entities/medication-log.entity';
 import { CreateMedicationDto, UpdateMedicationDto } from './dto/medication.dto';
 
 @Injectable()
@@ -15,6 +19,8 @@ export class MedicationService {
     @InjectRepository(Medication) private repo: Repository<Medication>,
     @InjectRepository(CareRecipient)
     private recipientRepo: Repository<CareRecipient>,
+    @InjectRepository(MedicationLog)
+    private logRepo: Repository<MedicationLog>,
   ) {}
 
   /** 验证照护对象属于指定家庭 */
@@ -96,6 +102,14 @@ export class MedicationService {
 
   async delete(id: string, familyId: string) {
     await this.findOne(id, familyId);
+
+    // 清理该药品所有未完成的打卡记录（pending/missed）
+    await this.logRepo.delete({
+      medicationId: id,
+      status: In([MedicationLogStatus.PENDING, MedicationLogStatus.MISSED]),
+    });
+
+    // 软删除药品
     await this.repo.update(id, { deletedAt: new Date() } as any);
     return { message: '药品已删除' };
   }

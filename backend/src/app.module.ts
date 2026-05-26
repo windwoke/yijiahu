@@ -21,6 +21,7 @@ import { DailyCareCheckinModule } from './daily-care-checkin/daily-care-checkin.
 import { SosModule } from './sos/sos.module';
 import { NotificationModule } from './notification/notification.module';
 import { WechatModule } from './wechat/wechat.module';
+import { FeedbackModule } from './feedback/feedback.module';
 
 @Module({
   imports: [
@@ -68,6 +69,7 @@ import { WechatModule } from './wechat/wechat.module';
     SosModule,
     NotificationModule,
     WechatModule,
+    FeedbackModule,
   ],
 })
 export class AppModule {}

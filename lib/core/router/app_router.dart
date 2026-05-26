@@ -28,6 +28,7 @@ import '../../presentation/pages/care-recipient/care_recipient_detail_page.dart'
 import '../../presentation/pages/daily-care/daily_care_page.dart';
 import '../../presentation/pages/notification/notification_list_page.dart';
 import '../../presentation/pages/notification/notification_settings_page.dart';
+import '../../presentation/pages/feedback/feedback_page.dart';
 import '../../presentation/providers/auth_provider.dart';
 
 /// 路由名称
@@ -51,6 +52,7 @@ class AppRoutes {
   static const String dailyCare = '/daily-care';
   static const String notifications = '/notifications';
   static const String notificationSettings = '/notifications/settings';
+  static const String feedback = '/feedback';
 }
 
 /// 路由配置
@@ -186,6 +188,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.notificationSettings,
         builder: (context, state) => const NotificationSettingsPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.feedback,
+        builder: (context, state) => const FeedbackPage(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

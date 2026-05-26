@@ -690,10 +690,21 @@ export default function HomePage() {
                       );
                     })}
 
-                    {/* 空状态：无药品 */}
+                    {/* 空状态：无药品，引导添加 */}
                     {(!summary.items || summary.items.length === 0) && (
-                      <View className="med-empty">
-                        <Text className="med-empty-text">今日暂无用药计划</Text>
+                      <View className="med-empty-action">
+                        <Text className="med-empty-icon">💊</Text>
+                        <Text className="med-empty-text">还没有添加药品</Text>
+                        <Text className="med-empty-sub">添加后可设置用药提醒与打卡</Text>
+                        <View
+                          className="med-empty-btn"
+                          onClick={(e) => {
+                            e.stopPropagation?.();
+                            Taro.navigateTo({ url: `/pages/medication/index?addForRecipientId=${summary.recipientId}` });
+                          }}
+                        >
+                          <Text className="med-empty-btn-text">+ 添加药品</Text>
+                        </View>
                       </View>
                     )}
                   </View>

@@ -350,6 +350,12 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             ),
             _buildDivider(),
             _buildSettingItem(
+              icon: Icons.feedback_outlined,
+              title: '问题反馈',
+              onTap: () => context.push(AppRoutes.feedback),
+            ),
+            _buildDivider(),
+            _buildSettingItem(
               icon: Icons.info_outline_rounded,
               title: '版本',
               trailing: const Text('1.0.0',

@@ -57,6 +57,11 @@ export default () => ({
     environment: process.env.NODE_ENV || 'development',
   },
 
+  // 飞书 webhook
+  feishu: {
+    webhookUrl: process.env.FEISHU_WEBHOOK_URL || '',
+  },
+
   // 微信小程序/服务号配置
   wechat: {
     // 小程序配置（用于微信登录）

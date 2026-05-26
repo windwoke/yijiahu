@@ -537,6 +537,22 @@ export default function ProfilePage() {
         <View className="section-title">关于</View>
         <View className="section-card">
 
+          {/* 问题反馈 */}
+          <View
+            className="setting-item"
+            onClick={() => Taro.navigateTo({ url: '/pages/feedback/index' })}
+          >
+            <View className="setting-left">
+              <Image className="setting-icon" src={require('../../assets/icons/info.png')} />
+              <Text className="setting-label">问题反馈</Text>
+            </View>
+            <View className="setting-right">
+              <Text className="setting-chevron">›</Text>
+            </View>
+          </View>
+
+          <View className="setting-divider" />
+
           {/* 关于我们 */}
           <View
             className="setting-item"
